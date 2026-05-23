@@ -30,6 +30,9 @@ jobs:
       source_sha: ${{ inputs.source_sha || '' }}
     secrets:
       repo-settings-token: ${{ secrets.REPO_SETTINGS_TOKEN }}
+      ORG_NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      ORG_RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      ORG_REPO_SYNC_TOKEN: ${{ secrets.REPO_SYNC_TOKEN }}
 
   sync-files:
     uses: f5xc-salesdemos/docs-control/.github/workflows/sync-managed-files.yml@main
