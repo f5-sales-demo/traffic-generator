@@ -146,6 +146,20 @@ docs/api-reference/
 .etag
 .github_release
 
+# Autoresearch session artifacts
+autoresearch.sh
+autoresearch.md
+autoresearch.program.md
+autoresearch.checks.sh
+autoresearch-loop.sh
+autoresearch.ideas.md
+autoresearch-queries.txt
+autoresearch.jsonl
+.autoresearch/
+
+# Session-resume files
+handoff.md
+
 # Union from xcsh fork (promoted 2026-04-19)
 .npm/
 packages/*/dist/
