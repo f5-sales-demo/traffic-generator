@@ -36,7 +36,22 @@
         "file-?type(s)?",
         "lock[- ]file(s)?",
         "re[- ]export(s|ing|ed)?",
-        "copy[- ]past(e|ed|ing)?"
+        "copy[- ]past(e|ed|ing)?",
+        "Base64",
+        "base64",
+        "(?i)clickhouse",
+        "cdn",
+        "CDN",
+        "User Name",
+        "username",
+        "Internet",
+        "internet",
+        "Javascript",
+        "MAC OS",
+        "OS X",
+        "Sdk",
+        "Client Side",
+        "Code Base"
       ]
     }
   }
