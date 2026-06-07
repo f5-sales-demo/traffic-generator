@@ -1,0 +1,192 @@
+---
+title: Integrazione
+description: >-
+  Integration guide for the traffic generator with origin-server, F5 XC HTTP
+  load balancer, CSD demo, and CDN simulator: architecture diagrams, targeting
+  configuration, direct vs LB traffic comparison, and multi-component deployment
+sidebar:
+  order: 7
+i18n:
+  sourceHash: 542ecf0ca77e
+  translator: machine
+---
+
+## Architettura Completa
+
+Il generatore di traffico è un componente all'interno di un ambiente demo multi-livello. L'architettura completa quando tutti i componenti sono distribuiti:
+
+```
+Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
+                         |
+               CDN Simulator (optional)
+```
+
+```mermaid
+graph LR
+    TG[Traffic Generator VM] -->|Attack Traffic<br/>HTTPS| XCHLB[F5 XC HTTP LB]
+    XCHLB -->|WAF / Bot / API / CSD| ORIGIN[Origin Server VM<br/>Juice Shop, DVWA,<br/>VAmPI, httpbin, whoami]
+    CDN[CDN Simulator<br/>optional] -->|Cached Requests| XCHLB
+    TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
+```
+
+Ogni componente è distribuito e configurato in modo indipendente tramite Terraform. Il generatore di traffico punta all'FQDN del load balancer F5 XC, non direttamente al server di origine.
+
+## Integrazione con il Server di Origine
+
+Il [server di origine](https://f5xc-salesdemos.github.io/origin-server/) fornisce le applicazioni backend che le suite di attacco del generatore di traffico prendono di mira:
+
+| Suite di Traffico | Applicazione di Origine | Percorso |
+|---|---|---|
+| api-attacks | VAmPI | `/vampi/` |
+| bot-simulation | Tutte le applicazioni | Tutti i percorsi |
+| cdn-load-testing | CDN Simulator | Endpoint CDN |
+| crapi-exploits | crAPI | `/crapi/` |
+| csd-demo-attacks | CSD Demo | `/csd-demo/` |
+| dvga-exploits | DVGA | `/dvga/` |
+| dvwa-exploits | DVWA | `/dvwa/` |
+| javascript-exploits | CSD Demo | `/csd-demo/` |
+| juice-shop-exploits | Juice Shop | `/juice-shop/` |
+| mitre-attack | Tutte le applicazioni | Tutti i percorsi |
+| owasp-scanning | Tutte le applicazioni | Tutti i percorsi |
+| performance-testing | Tutte le applicazioni | Tutti i percorsi |
+| reconnaissance | Tutte le applicazioni | Tutti i percorsi |
+| restaurant-exploits | Restaurant API | `/restaurant/` |
+| ssl-scanning | F5 XC LB (non direttamente l'origine) | N/A |
+| traffic-generation | Tutte le applicazioni | Tutti i percorsi |
+| web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
+
+### Ordine di Distribuzione
+
+1. Distribuire prima il **server di origine** — fornisce le applicazioni backend
+2. Configurare il **load balancer HTTP F5 XC** con il server di origine come origin pool
+3. Collegare le **policy WAF, Bot Defense, API Security e CSD** al load balancer
+4. Distribuire il **generatore di traffico** con `target_fqdn` impostato sul dominio del LB F5 XC
+
+### Configurazione del Target
+
+Il file `config.env` del generatore di traffico lo collega al resto dell'architettura:
+
+```bash
+# Target the F5 XC load balancer (traffic passes through security policies)
+TARGET_FQDN=demo.example.com
+
+# Optional: target the origin server directly (bypasses F5 XC)
+TARGET_ORIGIN_IP=20.10.5.100
+```
+
+Quando `TARGET_FQDN` è impostato, tutti gli script delle suite inviano traffico a `https://<TARGET_FQDN>/...`. Il load balancer F5 XC riceve le richieste, applica le policy di sicurezza e inoltra il traffico consentito al server di origine.
+
+## Integrazione con la Demo CSD
+
+La suite `javascript-exploits` è specificamente progettata per la demo Client-Side Defense sul server di origine. Questa suite valida la funzionalità CSD Fase 2:
+
+**Flusso della Fase 2:**
+
+1. Il server di origine ospita la pagina demo CSD su `/csd-demo/`
+2. F5 XC CSD inietta il proprio JavaScript di monitoraggio nella pagina
+3. La suite javascript-exploits del generatore di traffico tenta di:
+   - Iniettare script inline che imitano skimmer Magecart
+   - Modificare elementi DOM per reindirizzare l'invio dei form
+   - Caricare JavaScript di terze parti non autorizzato
+4. F5 XC CSD rileva queste modifiche e le segnala nella dashboard CSD
+
+Per utilizzare la suite javascript-exploits:
+
+```bash
+# Ensure CSD is enabled on the F5 XC HTTP LB for the /csd-demo/ path
+# Then run the suite
+/opt/traffic-generator/suites/runner.sh javascript-exploits
+```
+
+## Integrazione con il CDN Simulator
+
+Quando il CDN Simulator è distribuito, l'architettura aggiunge un livello di caching:
+
+```
+Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
+```
+
+Il CDN Simulator si posiziona davanti al load balancer F5 XC, memorizzando le risposte nella cache e aggiungendo header tipici del CDN. Per indirizzare il traffico attraverso il CDN:
+
+```bash
+# Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
+TARGET_FQDN=cdn.demo.example.com
+```
+
+Questo è utile per dimostrare come F5 XC gestisce il traffico che arriva attraverso un CDN, inclusi:
+
+- Identificazione del vero IP client dietro gli header proxy del CDN
+- Applicazione delle regole WAF alle richieste che potrebbero essere state modificate dal CDN
+- Classificazione Bot Defense quando il CDN modifica le fingerprint del browser
+
+## Confronto Traffico Diretto vs Attraverso il LB
+
+Il generatore di traffico supporta l'invio di traffico sia attraverso F5 XC che direttamente al server di origine. Questo confronto dimostra il valore delle funzionalità di sicurezza F5 XC:
+
+### Attraverso F5 XC (predefinito)
+
+```bash
+# Traffic goes: Generator -> F5 XC LB -> Origin
+TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+Risultato atteso: il WAF blocca i payload di SQL injection, XSS e command injection. La dashboard Security Events mostra le richieste bloccate con i dettagli delle violazioni.
+
+### Direttamente all'Origine (baseline)
+
+```bash
+# Traffic goes: Generator -> Origin (no security layer)
+TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+Risultato atteso: tutti i payload raggiungono le applicazioni di origine senza filtraggio. Juice Shop e DVWA elaborano i payload di attacco. Questo dimostra cosa succede senza la protezione F5 XC.
+
+### Flusso Demo Affiancato
+
+Per una demo convincente, eseguire la stessa suite in entrambi i modi:
+
+1. Eseguire `web-app-attacks` direttamente contro l'origine — mostrare che gli attacchi hanno successo
+2. Eseguire `web-app-attacks` attraverso F5 XC — mostrare che gli attacchi vengono bloccati
+3. Aprire la dashboard Security Events di F5 XC per visualizzare le richieste bloccate
+4. Confrontare i risultati `meta.json` delle suite: le esecuzioni dirette mostrano più "passed" (attacchi riusciti), le esecuzioni attraverso il LB mostrano più "failed" (attacchi bloccati)
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+ORIGIN_IP="20.10.5.100"
+LB_FQDN="demo.example.com"
+
+# Run 1: Direct (baseline)
+ssh azureuser@${TGEN_IP} "TARGET_FQDN=${ORIGIN_IP} /opt/traffic-generator/suites/runner.sh web-app-attacks"
+
+# Run 2: Through F5 XC
+ssh azureuser@${TGEN_IP} "TARGET_FQDN=${LB_FQDN} /opt/traffic-generator/suites/runner.sh web-app-attacks"
+
+# Compare results
+ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | head -2); do echo "=== $d ==="; cat /opt/traffic-generator/results/$d/meta.json; echo; done'
+```
+
+## Distribuzione Terraform Multi-Componente
+
+Quando si distribuisce l'intero ambiente lab, utilizzare workspace o directory Terraform separati per ogni componente:
+
+```bash
+# 1. Deploy origin server
+cd origin-server
+terraform apply -var="subscription_id=YOUR_SUB_ID"
+ORIGIN_IP=$(terraform output -raw public_ip)
+
+# 2. Configure F5 XC (manual or via separate Terraform)
+# Create origin pool -> HTTP LB -> attach WAF/Bot/API/CSD policies
+# LB_FQDN=demo.example.com
+
+# 3. Deploy traffic generator targeting the F5 XC LB
+cd ../traffic-generator
+terraform apply \
+  -var="subscription_id=YOUR_SUB_ID" \
+  -var="target_fqdn=demo.example.com" \
+  -var="target_origin_ip=${ORIGIN_IP}"
+
+# 4. Generate traffic
+TGEN_IP=$(terraform output -raw public_ip)
+ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
+```

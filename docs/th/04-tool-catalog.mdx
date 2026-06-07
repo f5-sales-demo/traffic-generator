@@ -1,0 +1,147 @@
+---
+title: แคตตาล็อกเครื่องมือ
+description: >-
+  แคตตาล็อกฉบับสมบูรณ์ของเครื่องมือรักษาความปลอดภัยกว่า 50 รายการที่ติดตั้งบน VM
+  สร้างทราฟฟิก จัดหมวดหมู่ตามประเภทพร้อมวิธีการติดตั้ง คำสั่งตัวอย่าง
+  และการแมปชุดทดสอบทราฟฟิก
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 8b6dc7f24a02
+  translator: machine
+---
+
+เครื่องมือทุกรายการด้านล่างนี้ได้รับการติดตั้งล่วงหน้าระหว่างการ provisioning ด้วย cloud-init ไม่จำเป็นต้องติดตั้งด้วยตนเองหลังการ deploy
+
+## การทดสอบเว็บแอปพลิเคชัน
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| nikto | apt | `nikto -h https://TARGET -maxtime 120s` | web-app-attacks |
+| sqlmap | apt | `sqlmap --batch -u "https://TARGET/dvwa/vulnerabilities/sqli/?id=1"` | web-app-attacks, api-attacks |
+| nuclei | ghlatest | `nuclei -u https://TARGET -severity medium,high,critical` | web-app-attacks |
+| dalfox | ghlatest | `dalfox url "https://TARGET/search?q=test" --silence` | web-app-attacks |
+| ffuf | ghlatest | `ffuf -u https://TARGET/FUZZ -w wordlist.txt -mc all -fc 404` | api-attacks |
+| gobuster | ghlatest | `gobuster dir -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/common.txt` | reconnaissance |
+| feroxbuster | ghlatest | `feroxbuster -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/raft-medium-directories.txt` | reconnaissance |
+| dirb | apt | `dirb https://TARGET /usr/share/dirb/wordlists/common.txt` | reconnaissance |
+| whatweb | apt | `whatweb https://TARGET` | reconnaissance |
+| wfuzz | pip | `wfuzz -c -z file,wordlist.txt -e urlencode,double_urlencode "https://TARGET/FUZZ"` | waf-encoding-evasion |
+
+## การทดสอบการหลีกเลี่ยง WAF
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
+| waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
+
+GoTestWAF (โดย Wallarm) เป็นเฟรมเวิร์กประเมิน WAF ที่เป็นมาตรฐานอุตสาหกรรม ซึ่งทำการคูณ payload ผ่านตัวเข้ารหัสหลายรูปแบบ (URL, Base64, JSUnicode) และโซนการวาง (body, header, URL param, cookie) waf-bypass (โดย Nemesida) ส่ง payload ด้วยการเข้ารหัส Base64, HTML-ENTITY และ UTF-16 ผ่านโซน ARGS, BODY, COOKIE และ HEADER
+
+## การวิเคราะห์เครือข่าย
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| nmap | apt | `nmap -sV -sC -p 80,443 TARGET_IP` | reconnaissance |
+| masscan | apt | `masscan TARGET_IP -p 1-1000 --rate=1000` | reconnaissance |
+| tshark | apt | `tshark -i eth0 -c 100 -f "host TARGET_IP"` | -- |
+| hping3 | apt | `hping3 -S -p 443 -c 10 TARGET_IP` | reconnaissance |
+| tcpdump | apt | `tcpdump -i eth0 -c 50 host TARGET_IP` | -- |
+| netcat | apt | `nc -zv TARGET_IP 80 443` | reconnaissance |
+| ngrep | apt | `ngrep -q -d eth0 "HTTP" host TARGET_IP` | -- |
+| iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
+| mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
+
+## การทดสอบ SSL/TLS
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| sslscan | apt | `sslscan TARGET:443` | ssl-scanning |
+| sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
+| testssl.sh | git clone | `/opt/testssl.sh/testssl.sh TARGET:443` | ssl-scanning |
+
+## MITM และ Proxy
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| mitmproxy | uv | `mitmproxy --mode reverse:https://TARGET -p 8080` | -- |
+| socat | apt | `socat TCP-LISTEN:8080,fork TCP:TARGET:443` | -- |
+
+## การทำงานอัตโนมัติของเบราว์เซอร์
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
+| puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
+| puppeteer-extra-plugin-stealth | npm | ใช้เป็นปลั๊กอิน Puppeteer สำหรับการท่องเว็บแบบซ่อนตัว | bot-simulation |
+
+Playwright ติดตั้งไบนารี Chromium ของตัวเองผ่าน `playwright install chromium` Puppeteer ใช้ Chromium ของระบบเมื่อเป็นไปได้
+
+## การสำรวจ Subdomain และ DNS
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| subfinder | ghlatest | `subfinder -d example.com -silent` | reconnaissance |
+| httpx | ghlatest | `echo TARGET | httpx -status-code -title` | reconnaissance |
+| amass | ghlatest | `amass enum -passive -d example.com` | reconnaissance |
+| dnsrecon | uv | `dnsrecon -d example.com -t std` | reconnaissance |
+| fierce | uv | `fierce --domain example.com` | reconnaissance |
+| whois | apt | `whois example.com` | reconnaissance |
+| dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
+
+## การทดสอบข้อมูลประจำตัว
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| hydra | apt | `hydra -l admin -P /opt/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt TARGET https-post-form "/dvwa/login.php:..."` | web-app-attacks |
+| medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
+| ncrack | apt | `ncrack -vv --user admin -P passwords.txt TARGET:443` | web-app-attacks |
+
+## ไลบรารีความปลอดภัย Python
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| scapy | pip | `python3 -c "from scapy.all import *; sr1(IP(dst='TARGET')/TCP(dport=443,flags='S'))"` | reconnaissance |
+| impacket | pip | `python3 -m impacket.smbclient TARGET` | reconnaissance |
+| arjun | pip | `arjun -u https://TARGET/endpoint` | api-attacks |
+| pwntools | pip | `python3 -c "from pwn import *; r=remote('TARGET',443)"` | -- |
+| hashid | pip | `hashid 'HASH_VALUE'` | -- |
+| theHarvester | uv | `theHarvester -d example.com -b all` | reconnaissance |
+
+## OSINT และ Recon
+
+| เครื่องมือ | วิธีการติดตั้ง | ตำแหน่ง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| recon-ng | git clone | `/opt/recon-ng/` | reconnaissance |
+| spiderfoot | git clone | `/opt/spiderfoot/` | reconnaissance |
+| SecLists | git clone | `/opt/SecLists/` | web-app-attacks, api-attacks, reconnaissance |
+| PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
+| waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
+
+SecLists จัดเตรียม wordlist ที่ใช้โดยเครื่องมือหลายตัว รวมถึง ffuf, gobuster, feroxbuster, dirb และ hydra PayloadsAllTheThings จัดเตรียม payload การโจมตีแบบเข้ารหัสหลายรูปแบบที่คัดสรรแล้ว จัดระเบียบตามประเภทการโจมตี (XSS, SQLi, XXE) พร้อมตัวแปร hex, octal, Unicode, HTML entity, double URL encoding และ JSFuck
+
+## ระดับ Full เท่านั้น
+
+เครื่องมือเหล่านี้จะถูกติดตั้งเฉพาะเมื่อ `tool_tier = "full"` เท่านั้น:
+
+| เครื่องมือ | วิธีการติดตั้ง | คำสั่งตัวอย่าง | ใช้โดยชุดทดสอบ |
+|---|---|---|---|
+| ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
+| Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
+
+:::note
+ZAP และ Metasploit เพิ่มพื้นที่ดิสก์ประมาณ 1.5 GiB และเวลา provisioning ประมาณ 5-10 นาที ใช้ระดับ full เฉพาะเมื่อคุณต้องการเครื่องมือเหล่านี้สำหรับการสาธิตเท่านั้น
+:::
+
+## อ้างอิงวิธีการติดตั้ง
+
+| วิธีการ | คำอธิบาย |
+|---|---|
+| apt | ติดตั้งจากที่เก็บ APT ของ Ubuntu 24.04 ผ่าน `apt-get install` |
+| ghlatest | ไบนารีล่าสุดดาวน์โหลดจาก GitHub Releases โดยใช้ `ghlatest.sh` และ `install-release.sh` |
+| uv | ติดตั้งเป็นเครื่องมือ Python โดยใช้ตัวจัดการแพ็กเกจ `uv` |
+| pip | ติดตั้งเป็นแพ็กเกจ Python โดยใช้ `pip install` เข้าสู่ Python ของระบบ |
+| npm | ติดตั้งเป็นแพ็กเกจ Node.js แบบ global โดยใช้ `npm install -g` |
+| go install | คอมไพล์จากซอร์สโค้ดโดยใช้ `go install` และติดตั้งไปที่ `/usr/local/bin` |
+| git clone | โคลน repository ไปยังไดเรกทอรี `/opt/` |
+| git clone + pip | โคลน repository และติดตั้ง dependency ของ Python |
+| installer script | สคริปต์ตัวติดตั้งจากผู้ผลิตที่รันระหว่าง cloud-init |

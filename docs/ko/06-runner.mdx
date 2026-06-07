@@ -1,0 +1,241 @@
+---
+title: Runner
+description: >-
+  Usage guide for runner.sh suite orchestrator: execution modes, config.env
+  configuration, environment variable overrides, dry-run mode, results directory
+  structure, meta.json format, standalone script execution, and remote SSH
+  invocation
+sidebar:
+  order: 6
+i18n:
+  sourceHash: c476d62976ae
+  translator: machine
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## 개요
+
+`runner.sh`는 스위트 디렉토리 내의 모든 번호가 매겨진 스크립트를 순서대로 실행하고, 출력을 캡처하며, 결과 메타데이터를 기록하는 스위트 오케스트레이터입니다. VM의 `/opt/traffic-generator/suites/runner.sh`에 설치됩니다.
+
+## 사용법
+
+```bash
+runner.sh <suite-name> [--dry-run]
+```
+
+**인수:**
+
+| 인수 | 필수 여부 | 설명 |
+|---|---|---|
+| `suite-name` | 예 | 스위트 디렉토리의 이름 (예: `web-app-attacks`, `api-attacks`) |
+| `--dry-run` | 아니오 | 스크립트를 실행하지 않고 실행될 내용만 출력 |
+
+**예시:**
+
+```bash
+# web-app-attacks 스위트 실행
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# api-attacks 스크립트를 미리 확인하기 위한 드라이런
+/opt/traffic-generator/suites/runner.sh api-attacks --dry-run
+
+# 봇 시뮬레이션 실행
+/opt/traffic-generator/suites/runner.sh bot-simulation
+```
+
+## 구성
+
+### config.env
+
+러너는 `/opt/traffic-generator/config.env`에서 구성을 읽습니다:
+
+```bash
+# Required: target FQDN (F5 XC load balancer domain)
+TARGET_FQDN=demo.example.com
+
+# Optional: direct origin IP for baseline testing (bypasses F5 XC)
+TARGET_ORIGIN_IP=
+```
+
+이 파일은 Terraform 프로비저닝 중에 `target_fqdn` 및 `target_origin_ip` 변수로부터 자동으로 작성됩니다. 배포 후 대상을 변경하려면 VM에서 이 파일을 직접 편집하십시오.
+
+### 환경 변수 오버라이드
+
+`config.env`의 모든 변수는 스위트 실행 전에 내보내기(export)하여 오버라이드할 수 있습니다:
+
+```bash
+# 단일 실행에 대한 대상 FQDN 오버라이드
+TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# export를 통한 오버라이드
+export TARGET_FQDN=staging.example.com
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+구성 파일 경로 자체도 오버라이드할 수 있습니다:
+
+```bash
+CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+## 드라이런 모드
+
+`--dry-run` 플래그는 실제로 실행하지 않고 실행될 각 스크립트를 출력합니다:
+
+```bash
+/opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
+```
+
+출력:
+
+```
+=== 01-sqli.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+=== 02-xss.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/02-xss.sh demo.example.com
+=== 03-command-injection.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/03-command-injection.sh demo.example.com
+=== 04-path-traversal.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/04-path-traversal.sh demo.example.com
+=== 05-nikto-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/05-nikto-scan.sh demo.example.com
+=== 06-nuclei-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/06-nuclei-scan.sh demo.example.com
+=== Suite Complete ===
+Passed: 0 | Failed: 0 | Skipped: 6
+Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
+```
+
+배포 후 스위트 구조를 확인하거나 새로운 대상에 스위트를 실행하기 전에 드라이런을 사용하십시오.
+
+## 결과 디렉토리
+
+각 스위트 실행은 타임스탬프가 포함된 결과 디렉토리를 생성합니다:
+
+```
+/opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
+```
+
+**구조:**
+
+```
+/opt/traffic-generator/results/20260425-143000-web-app-attacks/
+  meta.json
+  01-sqli.sh.log
+  02-xss.sh.log
+  03-command-injection.sh.log
+  04-path-traversal.sh.log
+  05-nikto-scan.sh.log
+  06-nuclei-scan.sh.log
+```
+
+각 스크립트의 stdout과 stderr는 스크립트 이름으로 된 `.log` 파일에 캡처됩니다.
+
+### meta.json 형식
+
+`meta.json` 파일은 스위트 실행 메타데이터를 기록합니다:
+
+```json
+{
+  "suite": "web-app-attacks",
+  "target": "demo.example.com",
+  "started": "2026-04-25T14:30:00Z",
+  "completed": "2026-04-25T14:45:23Z",
+  "status": "completed",
+  "passed": 5,
+  "failed": 1,
+  "skipped": 0
+}
+```
+
+| 필드 | 설명 |
+|---|---|
+| `suite` | 스위트 이름 |
+| `target` | 실행에 사용된 대상 FQDN |
+| `started` | 스위트가 시작된 UTC 타임스탬프 |
+| `completed` | 스위트가 완료된 UTC 타임스탬프 |
+| `status` | 실행 중에는 `running`, 완료 시 `completed` |
+| `passed` | 종료 코드 0으로 종료된 스크립트 수 |
+| `failed` | 0이 아닌 종료 코드로 종료된 스크립트 수 |
+| `skipped` | 건너뛴 스크립트 수 (실행 불가 또는 드라이런) |
+
+<Aside type="tip">
+스크립트의 0이 아닌 종료 코드가 반드시 스위트 실패를 의미하지는 않습니다. 많은 보안 도구는 취약점을 발견하면 0이 아닌 코드로 종료하며, 이는 공격 트래픽 생성 시 예상되는 동작입니다.
+</Aside>
+
+## 개별 스크립트 실행
+
+각 스크립트는 러너 없이 독립적으로 실행할 수 있습니다:
+
+```bash
+# 단일 스크립트 직접 실행
+/opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+
+# 특정 API 공격 실행
+/opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
+```
+
+스크립트는 대상 FQDN을 첫 번째 위치 인수로 받습니다. 스크립트는 `config.env`를 직접 읽지 않으며, 러너만 이를 읽습니다. 독립 실행 시 FQDN을 명시적으로 전달해야 합니다.
+
+## 모든 스위트 순차 실행
+
+모든 스위트를 연속으로 실행하려면:
+
+```bash
+for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
+  echo "========================================="
+  echo "Starting suite: ${suite}"
+  echo "========================================="
+  /opt/traffic-generator/suites/runner.sh "$suite"
+  echo ""
+done
+```
+
+이렇게 하면 모든 F5 XC 보안 기능에 걸쳐 포괄적인 트래픽이 생성됩니다. 전체 실행은 대상의 응답 시간에 따라 45-80분 정도 소요됩니다.
+
+## SSH를 통한 원격 실행
+
+SSH 세션을 유지하지 않고 로컬 머신에서 스위트를 실행합니다:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# 단일 스위트 실행
+ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
+
+# 대상 오버라이드와 함께 스위트 실행
+ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
+
+# 백그라운드에서 실행 (연결 해제에 안전)
+ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
+
+# 나중에 결과 확인
+ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
+ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
+```
+
+장시간 실행되는 스위트의 경우 `nohup` 또는 `tmux`를 사용하여 SSH 연결 해제로 인한 프로세스 종료를 방지하십시오:
+
+```bash
+ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
+
+# 나중에 다시 연결하여 진행 상황 확인
+ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
+```
+
+## 실행 흐름
+
+<Steps>
+
+1. **구성 로드** -- 러너가 `config.env`(또는 `CONFIG_FILE` 오버라이드)를 읽은 후 환경에서 `TARGET_FQDN`을 확인합니다.
+
+2. **스위트 검증** -- 지정된 스위트 디렉토리가 스위트 디렉토리 하위에 존재하는지 확인합니다. 찾을 수 없으면 사용 가능한 스위트 목록을 표시합니다.
+
+3. **결과 디렉토리 생성** -- `/opt/traffic-generator/results/<timestamp>-<suite>/`를 생성하고 `status: running`으로 초기 `meta.json`을 작성합니다.
+
+4. **스크립트 실행** -- 스위트 디렉토리에서 `[0-9]*`와 일치하는 파일을 이름순으로 정렬하여 순회합니다. 실행 불가능한 파일은 건너뜁니다. `TARGET_FQDN`을 첫 번째 인수로 전달합니다. 출력을 `<script-name>.log`에 캡처합니다.
+
+5. **결과 기록** -- 완료 타임스탬프와 성공/실패/건너뜀 카운트로 `meta.json`을 업데이트합니다.
+
+</Steps>

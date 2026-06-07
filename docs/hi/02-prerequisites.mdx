@@ -1,0 +1,92 @@
+---
+title: पूर्वापेक्षाएँ
+description: >-
+  Azure subscription with Contributor role, Terraform >= 1.5, SSH key pair
+  (Ed25519 recommended), Azure CLI for subscription_id lookup, and outbound
+  HTTPS for tool downloads during cloud-init provisioning
+sidebar:
+  order: 2
+i18n:
+  sourceHash: fd94de6375d4
+  translator: machine
+---
+
+## आवश्यक
+
+### Azure सब्सक्रिप्शन
+
+निम्नलिखित बनाने के लिए Contributor भूमिका या समकक्ष अनुमतियों वाला एक सक्रिय Azure सब्सक्रिप्शन:
+
+- रिसोर्स ग्रुप
+- वर्चुअल नेटवर्क और सबनेट
+- नेटवर्क सिक्योरिटी ग्रुप
+- पब्लिक IP एड्रेस
+- वर्चुअल मशीन (डिफ़ॉल्ट Standard_F16s_v2)
+
+### Azure CLI
+
+अपनी सब्सक्रिप्शन ID प्राप्त करने के लिए Azure CLI इंस्टॉल करें और प्रमाणित करें:
+
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+az login
+
+az account show --query '{name:name, id:id}' -o table
+```
+
+`id` मान कॉपी करें -- यह Terraform द्वारा आवश्यक `subscription_id` है।
+
+### Terraform
+
+Terraform >= 1.5 आवश्यक है:
+
+```bash
+terraform version
+```
+
+यदि इंस्टॉल नहीं है, तो HashiCorp APT रिपॉजिटरी का उपयोग करें:
+
+```bash
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+```
+
+### SSH कुंजी जोड़ी
+
+VM एक्सेस के लिए एक SSH कुंजी जोड़ी। Ed25519 अनुशंसित है:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
+```
+
+### नेटवर्क एक्सेस
+
+Traffic Generator VM को प्रोविज़निंग के दौरान निम्नलिखित स्रोतों से टूल्स डाउनलोड करने के लिए आउटबाउंड HTTPS एक्सेस की आवश्यकता होती है:
+
+- GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
+- PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
+- npm रजिस्ट्री (puppeteer, puppeteer-extra-plugin-stealth)
+- Ubuntu APT रिपॉजिटरी (nikto, nmap, masscan, hydra, tshark, और अन्य सिस्टम पैकेज)
+- Git रिपॉजिटरी (testssl.sh, recon-ng, spiderfoot, SecLists)
+
+यदि आपका Azure सब्सक्रिप्शन आउटबाउंड फ़ायरवॉल नियम या NSG प्रतिबंध लागू करता है, तो सुनिश्चित करें कि प्रारंभिक प्रोविज़निंग विंडो (15-25 मिनट) के दौरान इन स्रोतों तक HTTPS (पोर्ट 443) की अनुमति दी गई है।
+
+### पूर्व-तैनात घटक
+
+Traffic Generator को तैनात करने से पहले, आपके पास निम्नलिखित होने चाहिए:
+
+1. **Origin Server** तैनात और पहुँच योग्य (देखें [origin-server डॉक्स](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+2. **F5 XC HTTP Load Balancer** ओरिजिन सर्वर को बैकएंड के रूप में कॉन्फ़िगर किया गया हो
+3. लोड बैलेंसर से जुड़ी एक **WAF पॉलिसी** (WAF ट्रैफ़िक सत्यापन के लिए)
+
+`target_fqdn` Terraform वेरिएबल को F5 XC लोड बैलेंसर के पब्लिक डोमेन पर सेट किया जाना चाहिए।
+
+:::tip
+जब लैब उपयोग में न हो तो चल रहे खर्चों से बचने के लिए `terraform destroy` का उपयोग करें। प्रक्रिया के लिए [टियरडाउन](../08-teardown/) देखें।
+:::
+
+:::note
+Standard_F16s_v2 (32 GiB RAM) डिफ़ॉल्ट है क्योंकि सूट निष्पादन के दौरान कई टूल्स एक साथ चलते हैं। हेडलेस Chromium के साथ ब्राउज़र ऑटोमेशन (Playwright, Puppeteer) प्राथमिक मेमोरी उपभोक्ता है। छोटे F-series SKU नॉन-ब्राउज़र सूट्स के लिए काम करेंगे लेकिन बॉट-सिमुलेशन चलाते समय अपर्याप्त हो सकते हैं।
+:::

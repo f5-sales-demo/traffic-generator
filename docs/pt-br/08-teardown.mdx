@@ -1,0 +1,78 @@
+---
+title: Teardown
+description: >-
+  terraform destroy to remove all Azure resources, verify resource group
+  deletion with az CLI, and clean local state files
+sidebar:
+  order: 8
+i18n:
+  sourceHash: acaae5a3d897
+  translator: machine
+---
+
+Quando a sessão de laboratório estiver concluída, destrua todos os recursos Azure para interromper a cobrança.
+
+## Terraform Destroy
+
+A partir do diretório `terraform/`:
+
+```bash
+cd terraform/
+
+terraform plan -destroy
+
+terraform destroy
+```
+
+O Terraform solicitará confirmação. Digite `yes` para prosseguir.
+
+## Verificar Limpeza
+
+Confirme que todos os recursos foram removidos:
+
+```bash
+RG_NAME=$(terraform output -raw resource_group_name)
+
+az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
+  && echo "Resource group deleted" \
+  || echo "Resource group still exists"
+
+az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
+```
+
+## Limpar Estado Local
+
+Remova o estado do Terraform e os arquivos em cache:
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
+
+## Preservar Resultados (Opcional)
+
+Se você deseja manter os resultados das suítes de tráfego antes de destruir a VM, copie-os localmente:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Copy all results to local machine
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
+
+# Or copy just the latest run
+LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+```
+
+## Limpeza do F5 XC
+
+Se você também deseja remover a configuração do F5 XC que o gerador de tráfego estava direcionando:
+
+1. Exclua o HTTP load balancer
+2. Exclua o origin pool
+3. Exclua quaisquer políticas WAF, configurações de Bot Defense, políticas de API Security ou configurações de CSD criadas para teste
+
+Esses recursos do F5 XC não geram custos Azure, mas devem ser limpos quando o ambiente de demonstração não for mais necessário.
+
+:::tip
+Para uso recorrente de demonstrações, considere criar scripts para o ciclo de vida completo: `cd terraform && terraform apply` antes de uma demonstração, execute as suítes e depois `terraform destroy` ao finalizar. O tier padrão é provisionado em 15-20 minutos, tornando a configuração e o teardown no mesmo dia algo prático.
+:::

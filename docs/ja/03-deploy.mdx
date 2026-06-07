@@ -1,0 +1,244 @@
+---
+title: Deploy
+description: >-
+  Terraform IaC deployment of the traffic generator Azure VM — F-series
+  compute-optimized VM with Ubuntu 24.04, kernel tuning, 50+ security tools, and
+  19 traffic suites provisioned via cloud-init. All configuration files are in
+  the terraform/ directory.
+sidebar:
+  order: 3
+i18n:
+  sourceHash: bc522cf1cb30
+  translator: machine
+---
+
+すべてのTerraformファイルは[`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform)ディレクトリにあります。リポジトリをクローンして直接デプロイしてください：
+
+```bash
+git clone https://github.com/f5xc-salesdemos/traffic-generator.git
+cd traffic-generator/terraform
+cp terraform.tfvars.example terraform.tfvars
+# terraform.tfvarsにAzureサブスクリプションIDとターゲットFQDNを編集してください
+```
+
+## Terraform構成
+
+### Terraformファイル構造
+
+terraformディレクトリには、Demo Resource Standardに準拠した9つのファイルが含まれています：
+
+- `versions.tf` -- Terraformおよびプロバイダーのバージョン制約（azurerm ~> 4.0、azuread ~> 3.0）
+- `providers.tf` -- Azure RMおよびAzure ADプロバイダー構成
+- `data.tf` -- デプロイヤー自動解決のためのAzure ADデータソース
+- `locals.tf` -- デプロイヤー解決、Azure Cloud Adoption Frameworkリソース命名、標準タグ
+- `main.tf` -- リソースグループ（`rg-traffic-generator-{environment}-{deployer}`として命名）
+- `variables.tf` -- すべての入力変数（必須2、オプション9）、Azure ADによるデプロイヤー自動解決付き
+- `network.tf` -- VNet（10.201.0.0/16）、サブネット、パブリックIP、NSG（ポート22 SSH）、NIC
+- `vm.tf` -- templatefile()によるcloud-init付きUbuntu 24.04 VM
+- `outputs.tf` -- 17の出力：すべてのデモリソースで共有される15の標準出力（deployer、public_ip、private_ip、ssh_command、resource_group_name、vm_name、nsg_name、vnet_name、subnet_id、component、environment、resource_group_id、vm_id、nsg_id、location）と2つのコンポーネント固有出力（target_fqdn、status_check）
+
+### プロバイダーと変数
+
+`main.tf`はAzureプロバイダーを構成します：
+
+```hcl file=./_data/main.tf
+```
+
+`variables.tf`はすべての設定可能なパラメータを定義します。`vm_size`のデフォルトは`Standard_F16s_v2`（16 vCPUコンピューティング最適化）です -- スケーリングのガイダンスは[VMサイジング](#vmサイジング)を参照してください：
+
+```hcl file=./_data/variables.tf
+```
+
+### ネットワークインフラストラクチャ
+
+`network.tf`はVNet、サブネット、パブリックIP、NSG（ポート22 SSH）、NICを作成します：
+
+```hcl file=./_data/network.tf
+```
+
+### Cloud-Init付き仮想マシン
+
+`vm.tf`はUbuntu 24.04 VMを作成し、ターゲットおよびツール変数を含むcloud-initテンプレートを渡します：
+
+```hcl file=./_data/vm.tf
+```
+
+### Cloud-Initプロビジョニング
+
+`cloud-init.yaml`は、4回のオリジン耐久テストを含む48時間以上の連続負荷テストで検証済みの本番構成です。リトライロジック付きヘルパーライブラリ、`/var/log/cloud-init-progress.log`への進捗ログ、9つのプロビジョニングフェーズ、条件付きステータスレポート（`status.json`でready/degraded）を使用します。プロビジョニング内容：
+
+- **カーネルチューニング** -- `somaxconn=131072`、`tcp_max_tw_buckets=4000000`、`tcp_fin_timeout=5`、64 MiBソケットバッファ、`file-max=4194304`
+- **NIC最適化** -- 全コアにわたるRPS/RFS、ethtoolによるリングバッファ最大化、THP=always
+- **APTパッケージ** -- nikto、nmap、masscan、sqlmap、hydra、medusa、ncrack、tshark、hping3、tcpdump、netcat、ngrep、iperf3、mtr、sslscan、socat、dirb、whatweb、wrk、hey、vegeta、ethtool
+- **GitHubリリース** -- nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass
+- **Pythonパッケージ** -- mitmproxy、sslyze、dnsrecon、fierce、theHarvester、playwright、scapy、impacket、arjun
+- **Node.js 20.x** -- ボットシミュレーション用のステルスプラグイン付きPuppeteer
+- **ブラウザ自動化** -- ヘッドレスブラウザテスト用のPlaywright Chromium
+- **Gitクローン** -- testssl.sh、recon-ng、spiderfoot、SecLists、waf-bypass、PayloadsAllTheThings
+- **スイートデプロイ** -- このリポジトリから`/opt/traffic-generator/suites/`に19のトラフィックスイートをクローン
+- **設定ファイル** -- `TARGET_FQDN`、`TARGET_ORIGIN_IP`、`CRAPI_PORT`を含む`config.env`
+
+cloud-initはTerraformテンプレート変数`${target_fqdn}`、`${target_origin_ip}`、`${tool_tier}`を使用します。`$NPROC`のようなシェル変数は、Terraform templatefileでは`$$NPROC`としてエスケープされます。
+
+```yaml file=./_data/cloud-init.yaml
+```
+
+### 出力
+
+`outputs.tf`はパブリック/プライベートIP、SSHコマンド、リソース識別子、コンポーネント固有の値（target_fqdn、status_check）を含む17の出力を公開します：
+
+```hcl file=./_data/outputs.tf
+```
+
+### 変数ファイルの例
+
+`terraform.tfvars.example`を`terraform.tfvars`にコピーして、値を入力してください。`.gitignore`は認証情報のコミットを防ぐため`terraform.tfvars`を除外しています：
+
+```hcl file=./_data/terraform.tfvars.example
+```
+
+`subscription_id`をAzureサブスクリプションID（`az account show --query id -o tsv`で取得）に、`target_fqdn`をF5 XCロードバランサーのドメインに置き換えてください。
+
+## デプロイ
+
+```bash
+terraform init
+
+terraform plan
+
+terraform apply
+```
+
+デプロイが成功すると、TerraformはパブリックIP、SSHコマンド、ターゲットFQDNを出力します。
+
+## VMサイジング
+
+FシリーズのコンピューティングVMは、このCPUバウンドなトラフィック生成ワークロードに推奨されます。cloud-initのカーネルチューニングとツールの並行性は、vCPU数に応じて自動的にスケールします。
+
+| VM SKU | vCPU | RAM | ネットワーク | ユースケース |
+|---|---|---|---|---|
+| Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | 軽量ラボ/デモ |
+| Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | 標準デモ |
+| Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | 負荷テスト（デフォルト） |
+| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | 大規模ベンチマーク |
+| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM集約型ワークロード |
+
+:::tip
+F16s_v2は、CDN F16s_v2およびF32s_v2ターゲットに対するA/B/C/Dベンチマークテストにより、最適なコストパフォーマンスオプションとして検証されました。完全な結果は[benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks)を参照してください。
+:::
+
+## デプロイ後の検証
+
+cloud-initプロビジョニングには**標準ティアで15〜20分**、**フルティアで約25分**かかります。VMにはすぐにSSH経由でアクセスできますが、cloud-initが完了するまでツールのインストールは継続中です。
+
+### Cloud-Initの完了を待つ
+
+VMにSSH接続し、プロビジョニングの完了を待ちます：
+
+```bash
+ssh azureuser@$(terraform output -raw public_ip)
+
+cloud-init status --wait
+```
+
+完了時の期待される出力：
+
+```
+status: done
+```
+
+### ステータスファイルの確認
+
+cloud-initスクリプトは完了時にステータスファイルを書き込みます：
+
+```bash
+cat /opt/traffic-generator/status.json
+```
+
+期待される出力：
+
+```json
+{
+  "status": "ready",
+  "tier": "standard",
+  "target_fqdn": "demo.example.com",
+  "completed": "2026-04-25T14:30:00Z",
+  "tools_installed": true
+}
+```
+
+### 重要なツールの検証
+
+各重要ツールがPATH上で利用可能であることを確認する検証ループを実行します：
+
+```bash
+for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
+  hydra medusa ncrack sslscan tshark hping3 mitmproxy sslyze subfinder httpx \
+  amass arjun mtr whatweb dirb socat netcat ngrep iperf3 whois dig wrk hey; do
+  if command -v "$tool" > /dev/null 2>&1; then
+    echo "OK: $tool"
+  else
+    echo "MISSING: $tool"
+  fi
+done
+```
+
+### スイートランナーの検証
+
+ランナーとスイートがインストールされていることを確認します：
+
+```bash
+ls /opt/traffic-generator/suites/runner.sh
+ls /opt/traffic-generator/suites/*/
+
+/opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
+```
+
+## Terraform出力
+
+| 出力 | 説明 | 例 |
+|---|---|---|
+| `deployer` | 解決されたデプロイヤー識別子 | `jsmith` |
+| `public_ip` | トラフィックジェネレーターVMのパブリックIPアドレス | `20.12.78.200` |
+| `private_ip` | VMのプライベートIPアドレス | `10.201.0.4` |
+| `ssh_command` | VMに接続するためのSSHコマンド | `ssh azureuser@20.12.78.200` |
+| `resource_group_name` | リソースグループ名 | `rg-traffic-generator-dev-jsmith` |
+| `resource_group_id` | リソースグループのAzureリソースID | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith` |
+| `vm_name` | 仮想マシン名 | `vm-traffic-generator-dev-jsmith` |
+| `vm_id` | 仮想マシンのAzureリソースID | `/subscriptions/.../virtualMachines/vm-traffic-generator-dev-jsmith` |
+| `nsg_name` | ネットワークセキュリティグループ名 | `nsg-traffic-generator-dev-jsmith` |
+| `nsg_id` | ネットワークセキュリティグループのAzureリソースID | `/subscriptions/.../networkSecurityGroups/nsg-traffic-generator-dev-jsmith` |
+| `vnet_name` | 仮想ネットワーク名 | `vnet-traffic-generator-dev-jsmith` |
+| `subnet_id` | サブネットのAzureリソースID | `/subscriptions/.../subnets/snet-traffic-generator-dev-jsmith` |
+| `component` | コンポーネント識別子 | `traffic-generator` |
+| `environment` | デプロイ環境 | `dev` |
+| `location` | Azureリージョン | `eastus2` |
+| `target_fqdn` | トラフィックスイート用に設定されたターゲットFQDN | `demo.example.com` |
+| `status_check` | プロビジョニングステータスを確認するコマンド | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
+
+任意の出力を取得：
+
+```bash
+terraform output -raw public_ip
+terraform output -raw ssh_command
+```
+
+## アップストリームコンポーネントからの接続
+
+トラフィックジェネレーターは、オリジンサーバーをフロントするF5 XC HTTPロードバランサーをターゲットとします。まずオリジンサーバーをデプロイし、F5 XCを構成してから、`target_fqdn`をロードバランサーのFQDNに設定してください：
+
+```bash
+# origin-serverをデプロイしてF5 XC HTTPロードバランサーを作成した後：
+cat > terraform.tfvars <<EOF
+subscription_id  = "your-subscription-id"
+target_fqdn      = "your-xc-load-balancer.example.com"
+target_origin_ip = "$(cd ../../origin-server/terraform && terraform output -raw public_ip)"
+EOF
+```
+
+| 必須変数 | ソース | 説明 |
+|---|---|---|
+| `target_fqdn` | F5 XCコンソール | オリジンサーバーを保護するHTTPロードバランサーのFQDN |
+| `target_origin_ip` | オリジンサーバーの`public_ip`出力 | バイパステスト用の直接オリジンIP（オプション） |
+
+完全なツールリファレンスについては[ツールカタログ](../04-tool-catalog/)へ、トラフィック生成を開始するには[スイート](../05-suites/)へ進んでください。

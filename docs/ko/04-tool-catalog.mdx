@@ -1,0 +1,144 @@
+---
+title: 도구 카탈로그
+description: '트래픽 생성기 VM에 설치된 50개 이상의 보안 도구 전체 카탈로그, 카테고리별 정리 및 설치 방법, 예제 명령어, 트래픽 스위트 매핑 포함'
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 8b6dc7f24a02
+  translator: machine
+---
+
+아래에 나열된 모든 도구는 cloud-init 프로비저닝 중에 사전 설치됩니다. 배포 후 수동 설치가 필요하지 않습니다.
+
+## 웹 애플리케이션 테스트
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| nikto | apt | `nikto -h https://TARGET -maxtime 120s` | web-app-attacks |
+| sqlmap | apt | `sqlmap --batch -u "https://TARGET/dvwa/vulnerabilities/sqli/?id=1"` | web-app-attacks, api-attacks |
+| nuclei | ghlatest | `nuclei -u https://TARGET -severity medium,high,critical` | web-app-attacks |
+| dalfox | ghlatest | `dalfox url "https://TARGET/search?q=test" --silence` | web-app-attacks |
+| ffuf | ghlatest | `ffuf -u https://TARGET/FUZZ -w wordlist.txt -mc all -fc 404` | api-attacks |
+| gobuster | ghlatest | `gobuster dir -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/common.txt` | reconnaissance |
+| feroxbuster | ghlatest | `feroxbuster -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/raft-medium-directories.txt` | reconnaissance |
+| dirb | apt | `dirb https://TARGET /usr/share/dirb/wordlists/common.txt` | reconnaissance |
+| whatweb | apt | `whatweb https://TARGET` | reconnaissance |
+| wfuzz | pip | `wfuzz -c -z file,wordlist.txt -e urlencode,double_urlencode "https://TARGET/FUZZ"` | waf-encoding-evasion |
+
+## WAF 우회 테스트
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
+| waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
+
+GoTestWAF(Wallarm 제공)는 여러 인코더(URL, Base64, JSUnicode)와 배치 영역(body, header, URL param, cookie)에 걸쳐 페이로드를 곱하여 생성하는 업계 표준 WAF 평가 프레임워크입니다. waf-bypass(Nemesida 제공)는 Base64, HTML-ENTITY, UTF-16 인코딩을 사용하여 ARGS, BODY, COOKIE, HEADER 영역에 걸쳐 페이로드를 전송합니다.
+
+## 네트워크 분석
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| nmap | apt | `nmap -sV -sC -p 80,443 TARGET_IP` | reconnaissance |
+| masscan | apt | `masscan TARGET_IP -p 1-1000 --rate=1000` | reconnaissance |
+| tshark | apt | `tshark -i eth0 -c 100 -f "host TARGET_IP"` | -- |
+| hping3 | apt | `hping3 -S -p 443 -c 10 TARGET_IP` | reconnaissance |
+| tcpdump | apt | `tcpdump -i eth0 -c 50 host TARGET_IP` | -- |
+| netcat | apt | `nc -zv TARGET_IP 80 443` | reconnaissance |
+| ngrep | apt | `ngrep -q -d eth0 "HTTP" host TARGET_IP` | -- |
+| iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
+| mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
+
+## SSL/TLS 테스트
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| sslscan | apt | `sslscan TARGET:443` | ssl-scanning |
+| sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
+| testssl.sh | git clone | `/opt/testssl.sh/testssl.sh TARGET:443` | ssl-scanning |
+
+## MITM 및 프록시
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| mitmproxy | uv | `mitmproxy --mode reverse:https://TARGET -p 8080` | -- |
+| socat | apt | `socat TCP-LISTEN:8080,fork TCP:TARGET:443` | -- |
+
+## 브라우저 자동화
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
+| puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
+| puppeteer-extra-plugin-stealth | npm | 스텔스 브라우징을 위한 Puppeteer 플러그인으로 사용 | bot-simulation |
+
+Playwright는 `playwright install chromium`을 통해 자체 Chromium 바이너리를 설치합니다. Puppeteer는 가능한 경우 동일한 시스템 Chromium을 사용합니다.
+
+## 서브도메인 및 DNS 열거
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| subfinder | ghlatest | `subfinder -d example.com -silent` | reconnaissance |
+| httpx | ghlatest | `echo TARGET | httpx -status-code -title` | reconnaissance |
+| amass | ghlatest | `amass enum -passive -d example.com` | reconnaissance |
+| dnsrecon | uv | `dnsrecon -d example.com -t std` | reconnaissance |
+| fierce | uv | `fierce --domain example.com` | reconnaissance |
+| whois | apt | `whois example.com` | reconnaissance |
+| dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
+
+## 자격 증명 테스트
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| hydra | apt | `hydra -l admin -P /opt/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt TARGET https-post-form "/dvwa/login.php:..."` | web-app-attacks |
+| medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
+| ncrack | apt | `ncrack -vv --user admin -P passwords.txt TARGET:443` | web-app-attacks |
+
+## Python 보안 라이브러리
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| scapy | pip | `python3 -c "from scapy.all import *; sr1(IP(dst='TARGET')/TCP(dport=443,flags='S'))"` | reconnaissance |
+| impacket | pip | `python3 -m impacket.smbclient TARGET` | reconnaissance |
+| arjun | pip | `arjun -u https://TARGET/endpoint` | api-attacks |
+| pwntools | pip | `python3 -c "from pwn import *; r=remote('TARGET',443)"` | -- |
+| hashid | pip | `hashid 'HASH_VALUE'` | -- |
+| theHarvester | uv | `theHarvester -d example.com -b all` | reconnaissance |
+
+## OSINT 및 정찰
+
+| 도구 | 설치 방법 | 위치 | 사용 스위트 |
+|---|---|---|---|
+| recon-ng | git clone | `/opt/recon-ng/` | reconnaissance |
+| spiderfoot | git clone | `/opt/spiderfoot/` | reconnaissance |
+| SecLists | git clone | `/opt/SecLists/` | web-app-attacks, api-attacks, reconnaissance |
+| PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
+| waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
+
+SecLists는 ffuf, gobuster, feroxbuster, dirb, hydra를 포함한 여러 도구에서 사용하는 워드리스트를 제공합니다. PayloadsAllTheThings는 공격 클래스(XSS, SQLi, XXE)별로 정리된 큐레이션된 다중 인코딩 공격 페이로드를 제공하며, hex, octal, Unicode, HTML entity, 이중 URL 인코딩, JSFuck 변형을 포함합니다.
+
+## Full 티어 전용
+
+이 도구들은 `tool_tier = "full"`인 경우에만 설치됩니다:
+
+| 도구 | 설치 방법 | 예제 명령어 | 사용 스위트 |
+|---|---|---|---|
+| ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
+| Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
+
+:::note
+ZAP과 Metasploit은 디스크 사용량에 약 1.5 GiB를 추가하고 프로비저닝 시간에 5-10분을 더합니다. 데모에 이러한 도구가 특별히 필요한 경우에만 full 티어를 사용하세요.
+:::
+
+## 설치 방법 참조
+
+| 방법 | 설명 |
+|---|---|
+| apt | `apt-get install`을 통해 Ubuntu 24.04 APT 리포지토리에서 설치 |
+| ghlatest | `ghlatest.sh` 및 `install-release.sh`를 사용하여 GitHub Releases에서 최신 바이너리 다운로드 |
+| uv | `uv` 패키지 매니저를 사용하여 Python 도구로 설치 |
+| pip | `pip install`을 사용하여 시스템 Python에 Python 패키지로 설치 |
+| npm | `npm install -g`를 사용하여 전역 Node.js 패키지로 설치 |
+| go install | `go install`을 사용하여 소스에서 컴파일하고 `/usr/local/bin`에 설치 |
+| git clone | `/opt/` 디렉토리에 리포지토리 클론 |
+| git clone + pip | 리포지토리 클론 후 Python 종속성 설치 |
+| installer script | cloud-init 중에 벤더 제공 설치 스크립트 실행 |

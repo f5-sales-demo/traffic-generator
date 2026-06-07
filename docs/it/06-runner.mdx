@@ -1,0 +1,241 @@
+---
+title: Runner
+description: >-
+  Usage guide for runner.sh suite orchestrator: execution modes, config.env
+  configuration, environment variable overrides, dry-run mode, results directory
+  structure, meta.json format, standalone script execution, and remote SSH
+  invocation
+sidebar:
+  order: 6
+i18n:
+  sourceHash: c476d62976ae
+  translator: machine
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## Panoramica
+
+`runner.sh` è l'orchestratore di suite che esegue tutti gli script numerati in una directory di suite in ordine, cattura l'output e registra i metadati dei risultati. È installato in `/opt/traffic-generator/suites/runner.sh` sulla VM.
+
+## Utilizzo
+
+```bash
+runner.sh <suite-name> [--dry-run]
+```
+
+**Argomenti:**
+
+| Argomento | Obbligatorio | Descrizione |
+|---|---|---|
+| `suite-name` | Sì | Nome della directory della suite (ad es. `web-app-attacks`, `api-attacks`) |
+| `--dry-run` | No | Stampa ciò che verrebbe eseguito senza eseguire alcuno script |
+
+**Esempi:**
+
+```bash
+# Run the web-app-attacks suite
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# Dry-run to preview api-attacks scripts
+/opt/traffic-generator/suites/runner.sh api-attacks --dry-run
+
+# Run bot simulation
+/opt/traffic-generator/suites/runner.sh bot-simulation
+```
+
+## Configurazione
+
+### config.env
+
+Il runner legge la configurazione da `/opt/traffic-generator/config.env`:
+
+```bash
+# Required: target FQDN (F5 XC load balancer domain)
+TARGET_FQDN=demo.example.com
+
+# Optional: direct origin IP for baseline testing (bypasses F5 XC)
+TARGET_ORIGIN_IP=
+```
+
+Questo file viene scritto automaticamente durante il provisioning Terraform dalle variabili `target_fqdn` e `target_origin_ip`. Per modificare il target dopo il deployment, modificate questo file direttamente sulla VM.
+
+### Override tramite variabili d'ambiente
+
+Qualsiasi variabile in `config.env` può essere sovrascritta esportandola prima di eseguire la suite:
+
+```bash
+# Override target FQDN for a single run
+TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# Override via export
+export TARGET_FQDN=staging.example.com
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+Anche il percorso del file di configurazione può essere sovrascritto:
+
+```bash
+CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+## Modalità Dry-Run
+
+Il flag `--dry-run` stampa ogni script che verrebbe eseguito senza eseguirlo effettivamente:
+
+```bash
+/opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
+```
+
+Output:
+
+```
+=== 01-sqli.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+=== 02-xss.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/02-xss.sh demo.example.com
+=== 03-command-injection.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/03-command-injection.sh demo.example.com
+=== 04-path-traversal.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/04-path-traversal.sh demo.example.com
+=== 05-nikto-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/05-nikto-scan.sh demo.example.com
+=== 06-nuclei-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/06-nuclei-scan.sh demo.example.com
+=== Suite Complete ===
+Passed: 0 | Failed: 0 | Skipped: 6
+Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
+```
+
+Utilizzate il dry-run per verificare la struttura della suite dopo il deployment o prima di eseguire una suite contro un nuovo target.
+
+## Directory dei risultati
+
+Ogni esecuzione di suite crea una directory dei risultati con timestamp:
+
+```
+/opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
+```
+
+**Struttura:**
+
+```
+/opt/traffic-generator/results/20260425-143000-web-app-attacks/
+  meta.json
+  01-sqli.sh.log
+  02-xss.sh.log
+  03-command-injection.sh.log
+  04-path-traversal.sh.log
+  05-nikto-scan.sh.log
+  06-nuclei-scan.sh.log
+```
+
+Lo stdout e lo stderr di ogni script vengono catturati in un file `.log` denominato come lo script.
+
+### Formato meta.json
+
+Il file `meta.json` registra i metadati di esecuzione della suite:
+
+```json
+{
+  "suite": "web-app-attacks",
+  "target": "demo.example.com",
+  "started": "2026-04-25T14:30:00Z",
+  "completed": "2026-04-25T14:45:23Z",
+  "status": "completed",
+  "passed": 5,
+  "failed": 1,
+  "skipped": 0
+}
+```
+
+| Campo | Descrizione |
+|---|---|
+| `suite` | Nome della suite |
+| `target` | FQDN del target utilizzato per l'esecuzione |
+| `started` | Timestamp UTC di inizio della suite |
+| `completed` | Timestamp UTC di completamento della suite |
+| `status` | `running` durante l'esecuzione, `completed` al termine |
+| `passed` | Numero di script terminati con codice di uscita 0 |
+| `failed` | Numero di script terminati con codice di uscita diverso da zero |
+| `skipped` | Numero di script saltati (non eseguibili o in dry-run) |
+
+<Aside type="tip">
+Un codice di uscita diverso da zero di uno script non significa necessariamente che la suite sia fallita. Molti strumenti di sicurezza terminano con codice diverso da zero quando trovano vulnerabilità, il che è il comportamento atteso durante la generazione di traffico di attacco.
+</Aside>
+
+## Esecuzione di singoli script
+
+Ogni script può essere eseguito in modo autonomo senza il runner:
+
+```bash
+# Run a single script directly
+/opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+
+# Run a specific API attack
+/opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
+```
+
+Gli script accettano l'FQDN del target come primo argomento posizionale. Non leggono direttamente `config.env` -- lo fa solo il runner. Quando si esegue in modo autonomo, è necessario passare l'FQDN esplicitamente.
+
+## Esecuzione di tutte le suite in sequenza
+
+Per eseguire tutte le suite una dopo l'altra:
+
+```bash
+for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
+  echo "========================================="
+  echo "Starting suite: ${suite}"
+  echo "========================================="
+  /opt/traffic-generator/suites/runner.sh "$suite"
+  echo ""
+done
+```
+
+Questo genera traffico completo su tutte le funzionalità di sicurezza F5 XC. L'esecuzione completa richiede dai 45 agli 80 minuti a seconda dei tempi di risposta del target.
+
+## Esecuzione remota tramite SSH
+
+Eseguite le suite dalla vostra macchina locale senza mantenere una sessione SSH:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Run a single suite
+ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
+
+# Run a suite with target override
+ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
+
+# Run in background (disconnection-safe)
+ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
+
+# Check results later
+ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
+ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
+```
+
+Per le suite di lunga durata, utilizzate `nohup` o `tmux` per evitare che una disconnessione SSH termini il processo:
+
+```bash
+ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
+
+# Reattach later to watch progress
+ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
+```
+
+## Flusso di esecuzione
+
+<Steps>
+
+1. **Caricamento della configurazione** -- Il runner legge `config.env` (o l'override `CONFIG_FILE`), quindi verifica la presenza di `TARGET_FQDN` nell'ambiente.
+
+2. **Validazione della suite** -- Conferma che la directory della suite specificata esiste nella directory delle suite. Elenca le suite disponibili se non trovata.
+
+3. **Creazione della directory dei risultati** -- Crea `/opt/traffic-generator/results/<timestamp>-<suite>/` e scrive il `meta.json` iniziale con `status: running`.
+
+4. **Esecuzione degli script** -- Itera attraverso i file che corrispondono a `[0-9]*` nella directory della suite, ordinati per nome. Salta i file non eseguibili. Passa `TARGET_FQDN` come primo argomento. Cattura l'output in `<script-name>.log`.
+
+5. **Registrazione dei risultati** -- Aggiorna `meta.json` con il timestamp di completamento e i conteggi di passati/falliti/saltati.
+
+</Steps>

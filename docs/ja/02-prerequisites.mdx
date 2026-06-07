@@ -1,0 +1,92 @@
+---
+title: 前提条件
+description: >-
+  Azure subscription with Contributor role, Terraform >= 1.5, SSH key pair
+  (Ed25519 recommended), Azure CLI for subscription_id lookup, and outbound
+  HTTPS for tool downloads during cloud-init provisioning
+sidebar:
+  order: 2
+i18n:
+  sourceHash: fd94de6375d4
+  translator: machine
+---
+
+## 必須要件
+
+### Azure サブスクリプション
+
+以下のリソースを作成するための Contributor ロールまたは同等の権限を持つアクティブな Azure サブスクリプション：
+
+- リソースグループ
+- 仮想ネットワークとサブネット
+- ネットワークセキュリティグループ
+- パブリック IP アドレス
+- 仮想マシン（デフォルトは Standard_F16s_v2）
+
+### Azure CLI
+
+Azure CLI をインストールし、認証を行ってサブスクリプション ID を取得します：
+
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+az login
+
+az account show --query '{name:name, id:id}' -o table
+```
+
+`id` の値をコピーしてください。これが Terraform で必要な `subscription_id` です。
+
+### Terraform
+
+Terraform >= 1.5 が必要です：
+
+```bash
+terraform version
+```
+
+インストールされていない場合は、HashiCorp APT リポジトリを使用してください：
+
+```bash
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+```
+
+### SSH キーペア
+
+VM アクセス用の SSH キーペア。Ed25519 を推奨します：
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
+```
+
+### ネットワークアクセス
+
+Traffic Generator VM は、プロビジョニング中に以下のソースからツールをダウンロードするためにアウトバウンド HTTPS アクセスが必要です：
+
+- GitHub Releases（nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass）
+- PyPI（sqlmap、scapy、impacket、arjun、pwntools、mitmproxy、sslyze、playwright）
+- npm レジストリ（puppeteer、puppeteer-extra-plugin-stealth）
+- Ubuntu APT リポジトリ（nikto、nmap、masscan、hydra、tshark、およびその他のシステムパッケージ）
+- Git リポジトリ（testssl.sh、recon-ng、spiderfoot、SecLists）
+
+Azure サブスクリプションでアウトバウンドファイアウォールルールや NSG 制限が適用されている場合は、初期プロビジョニング期間（15〜25 分）中にこれらのソースへの HTTPS（ポート 443）が許可されていることを確認してください。
+
+### 事前デプロイ済みコンポーネント
+
+Traffic Generator をデプロイする前に、以下が準備されている必要があります：
+
+1. **Origin Server** がデプロイされ、到達可能であること（[origin-server ドキュメント](https://f5xc-salesdemos.github.io/origin-server/03-deploy/)を参照）
+2. **F5 XC HTTP ロードバランサー** がオリジンサーバーをバックエンドとして構成されていること
+3. ロードバランサーに **WAF ポリシー** がアタッチされていること（WAF トラフィック検証用）
+
+`target_fqdn` Terraform 変数には、F5 XC ロードバランサーのパブリックドメインを設定してください。
+
+:::tip
+ラボを使用していないときは `terraform destroy` を実行して、継続的な課金を回避してください。手順は[破棄](../08-teardown/)を参照してください。
+:::
+
+:::note
+Standard_F16s_v2（32 GiB RAM）がデフォルトです。これは、スイート実行中に複数のツールが同時に動作するためです。ヘッドレス Chromium を使用したブラウザ自動化（Playwright、Puppeteer）が主なメモリ消費要因です。小さい F シリーズ SKU はブラウザを使用しないスイートでは動作しますが、ボットシミュレーションの実行時にはメモリが不足する可能性があります。
+:::

@@ -1,0 +1,241 @@
+---
+title: Runner
+description: >-
+  Usage guide for runner.sh suite orchestrator: execution modes, config.env
+  configuration, environment variable overrides, dry-run mode, results directory
+  structure, meta.json format, standalone script execution, and remote SSH
+  invocation
+sidebar:
+  order: 6
+i18n:
+  sourceHash: c476d62976ae
+  translator: machine
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## نظرة عامة
+
+`runner.sh` هو منسق المجموعة الذي ينفذ جميع السكربتات المرقمة في مجلد المجموعة بالترتيب، ويلتقط المخرجات، ويسجل بيانات النتائج الوصفية. يتم تثبيته في المسار `/opt/traffic-generator/suites/runner.sh` على الجهاز الافتراضي.
+
+## الاستخدام
+
+```bash
+runner.sh <suite-name> [--dry-run]
+```
+
+**الوسائط:**
+
+| الوسيط | مطلوب | الوصف |
+|---|---|---|
+| `suite-name` | نعم | اسم مجلد المجموعة (مثل `web-app-attacks`، `api-attacks`) |
+| `--dry-run` | لا | طباعة ما سيتم تنفيذه دون تشغيل أي سكربتات |
+
+**أمثلة:**
+
+```bash
+# Run the web-app-attacks suite
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# Dry-run to preview api-attacks scripts
+/opt/traffic-generator/suites/runner.sh api-attacks --dry-run
+
+# Run bot simulation
+/opt/traffic-generator/suites/runner.sh bot-simulation
+```
+
+## التكوين
+
+### config.env
+
+يقرأ المنسق التكوين من `/opt/traffic-generator/config.env`:
+
+```bash
+# Required: target FQDN (F5 XC load balancer domain)
+TARGET_FQDN=demo.example.com
+
+# Optional: direct origin IP for baseline testing (bypasses F5 XC)
+TARGET_ORIGIN_IP=
+```
+
+يتم كتابة هذا الملف تلقائيًا أثناء توفير Terraform من المتغيرين `target_fqdn` و `target_origin_ip`. لتغيير الهدف بعد النشر، قم بتحرير هذا الملف مباشرة على الجهاز الافتراضي.
+
+### تجاوز متغيرات البيئة
+
+يمكن تجاوز أي متغير في `config.env` عن طريق تصديره قبل تشغيل المجموعة:
+
+```bash
+# Override target FQDN for a single run
+TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# Override via export
+export TARGET_FQDN=staging.example.com
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+يمكن أيضًا تجاوز مسار ملف التكوين نفسه:
+
+```bash
+CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+## وضع التشغيل التجريبي
+
+يطبع العلم `--dry-run` كل سكربت سيتم تنفيذه دون تشغيله فعليًا:
+
+```bash
+/opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
+```
+
+المخرجات:
+
+```
+=== 01-sqli.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+=== 02-xss.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/02-xss.sh demo.example.com
+=== 03-command-injection.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/03-command-injection.sh demo.example.com
+=== 04-path-traversal.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/04-path-traversal.sh demo.example.com
+=== 05-nikto-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/05-nikto-scan.sh demo.example.com
+=== 06-nuclei-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/06-nuclei-scan.sh demo.example.com
+=== Suite Complete ===
+Passed: 0 | Failed: 0 | Skipped: 6
+Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
+```
+
+استخدم التشغيل التجريبي للتحقق من بنية المجموعة بعد النشر أو قبل تشغيل مجموعة ضد هدف جديد.
+
+## مجلد النتائج
+
+ينشئ كل تشغيل لمجموعة مجلد نتائج مختومًا بالتاريخ والوقت:
+
+```
+/opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
+```
+
+**البنية:**
+
+```
+/opt/traffic-generator/results/20260425-143000-web-app-attacks/
+  meta.json
+  01-sqli.sh.log
+  02-xss.sh.log
+  03-command-injection.sh.log
+  04-path-traversal.sh.log
+  05-nikto-scan.sh.log
+  06-nuclei-scan.sh.log
+```
+
+يتم التقاط المخرجات القياسية ومخرجات الأخطاء لكل سكربت في ملف `.log` مسمى باسم السكربت.
+
+### تنسيق meta.json
+
+يسجل ملف `meta.json` البيانات الوصفية لتنفيذ المجموعة:
+
+```json
+{
+  "suite": "web-app-attacks",
+  "target": "demo.example.com",
+  "started": "2026-04-25T14:30:00Z",
+  "completed": "2026-04-25T14:45:23Z",
+  "status": "completed",
+  "passed": 5,
+  "failed": 1,
+  "skipped": 0
+}
+```
+
+| الحقل | الوصف |
+|---|---|
+| `suite` | اسم المجموعة |
+| `target` | اسم النطاق الكامل (FQDN) المستخدم للتشغيل |
+| `started` | الطابع الزمني بتوقيت UTC عند بدء المجموعة |
+| `completed` | الطابع الزمني بتوقيت UTC عند انتهاء المجموعة |
+| `status` | `running` أثناء التنفيذ، `completed` عند الانتهاء |
+| `passed` | عدد السكربتات التي خرجت برمز 0 |
+| `failed` | عدد السكربتات التي خرجت برمز غير صفري |
+| `skipped` | عدد السكربتات التي تم تخطيها (غير قابلة للتنفيذ أو في وضع التشغيل التجريبي) |
+
+<Aside type="tip">
+لا يعني بالضرورة رمز خروج غير صفري من سكربت أن المجموعة فشلت. تخرج العديد من أدوات الأمان برمز غير صفري عندما تجد ثغرات أمنية، وهو السلوك المتوقع أثناء توليد حركة مرور الهجمات.
+</Aside>
+
+## تشغيل السكربتات الفردية
+
+يمكن تنفيذ كل سكربت بشكل مستقل بدون المنسق:
+
+```bash
+# Run a single script directly
+/opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+
+# Run a specific API attack
+/opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
+```
+
+تقبل السكربتات اسم النطاق الكامل (FQDN) للهدف كأول وسيط موضعي. لا تقرأ `config.env` مباشرة -- فقط المنسق يقوم بذلك. عند التشغيل المستقل، يجب تمرير FQDN بشكل صريح.
+
+## تشغيل جميع المجموعات بالتتابع
+
+لتشغيل كل المجموعات واحدة تلو الأخرى:
+
+```bash
+for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
+  echo "========================================="
+  echo "Starting suite: ${suite}"
+  echo "========================================="
+  /opt/traffic-generator/suites/runner.sh "$suite"
+  echo ""
+done
+```
+
+يولد هذا حركة مرور شاملة عبر جميع ميزات أمان F5 XC. توقع أن يستغرق التشغيل الكامل من 45 إلى 80 دقيقة حسب أوقات استجابة الهدف.
+
+## التنفيذ عن بُعد عبر SSH
+
+قم بتشغيل المجموعات من جهازك المحلي دون الحاجة للحفاظ على جلسة SSH:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Run a single suite
+ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
+
+# Run a suite with target override
+ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
+
+# Run in background (disconnection-safe)
+ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
+
+# Check results later
+ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
+ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
+```
+
+بالنسبة للمجموعات طويلة التشغيل، استخدم `nohup` أو `tmux` لمنع قطع اتصال SSH من إنهاء العملية:
+
+```bash
+ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
+
+# Reattach later to watch progress
+ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
+```
+
+## تدفق التنفيذ
+
+<Steps>
+
+1. **تحميل التكوين** -- يقرأ المنسق `config.env` (أو تجاوز `CONFIG_FILE`)، ثم يتحقق من وجود `TARGET_FQDN` في البيئة.
+
+2. **التحقق من المجموعة** -- يؤكد وجود مجلد المجموعة المسمى ضمن مجلد المجموعات. يعرض المجموعات المتاحة إذا لم يتم العثور عليه.
+
+3. **إنشاء مجلد النتائج** -- ينشئ `/opt/traffic-generator/results/<timestamp>-<suite>/` ويكتب `meta.json` الأولي بحالة `status: running`.
+
+4. **تنفيذ السكربتات** -- يتكرر عبر الملفات المطابقة لنمط `[0-9]*` في مجلد المجموعة، مرتبة حسب الاسم. يتخطى الملفات غير القابلة للتنفيذ. يمرر `TARGET_FQDN` كأول وسيط. يلتقط المخرجات في `<script-name>.log`.
+
+5. **تسجيل النتائج** -- يحدّث `meta.json` بالطابع الزمني للاكتمال وأعداد النجاح/الفشل/التخطي.
+
+</Steps>
