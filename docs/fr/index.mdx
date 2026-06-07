@@ -1,0 +1,81 @@
+---
+title: Générateur de trafic
+description: >-
+  VM Azure Ubuntu 24.04 préchargée avec des outils de test de sécurité pour la
+  validation du WAF, de la défense contre les bots, de la sécurité API et de la
+  défense côté client contre F5 Distributed Cloud
+template: splash
+hero:
+  tagline: >-
+    Deploy a traffic generation VM with 50+ security tools, 19 organized attack
+    suites, and headless Chrome automation for comprehensive F5 XC demo
+    validation.
+  actions:
+    - text: Get Started
+      link: /traffic-generator/01-architecture/
+      icon: right-arrow
+      variant: primary
+    - text: Deploy Now
+      link: /traffic-generator/03-deploy/
+      icon: rocket
+      variant: minimal
+i18n:
+  sourceHash: dc5763d5e9c5
+  translator: machine
+---
+
+import { CardGrid } from '@astrojs/starlight/components';
+import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
+
+## Ce que cela fournit
+
+Le Générateur de trafic est une VM Azure conçue spécifiquement pour produire du trafic d'attaque réaliste, des scans de reconnaissance, de la simulation de bots et des schémas d'abus d'API contre un répartiteur de charge HTTP F5 Distributed Cloud. Il valide que les politiques WAF, la défense contre les bots, la sécurité API et la défense côté client sont correctement configurées en générant exactement le trafic que ces fonctionnalités sont conçues pour détecter et bloquer.
+
+Tous les outils sont pré-installés via cloud-init lors du provisionnement Terraform. Le trafic est organisé en suites qui peuvent être exécutées individuellement ou en séquence à l'aide de l'orchestrateur `runner.sh` inclus.
+
+## Catégories de suites de trafic
+
+| Suite | Description | Fonctionnalité F5 XC validée |
+|---|---|---|
+| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, mode API SQLMap, découverte de paramètres, fuzzing d'endpoints | Sécurité API |
+| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Chrome headless, Puppeteer stealth, automatisation Playwright, crawling rapide | Défense contre les bots |
+| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | Comportement du cache, effet de troupeau, pool de connexions, multiplexage HTTP/2 | Intégration CDN |
+| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, bruteforce OTP, manipulation JWT, SSRF, injection NoSQL, IDOR | Sécurité API |
+| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | Card skimmer, formjacker, keylogger, cryptominer, détournement DOM | Défense côté client |
+| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | DoS par requêtes par lots, récursion profonde, injection SQL, abus d'introspection | Sécurité API (GraphQL) |
+| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | Force brute, injection de commandes, CSRF, inclusion de fichiers, SQLi, XSS | WAF |
+| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | Manipulation DOM, injection de scripts inline, payloads de skimming style Magecart | Défense côté client |
+| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | Contournement de connexion SQLi, XSS, IDOR, accès admin, accès fichier par octet nul | WAF, Défense contre les bots |
+| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | Tactiques ATT&CK : reconnaissance, accès initial, accès aux identifiants, exfiltration | WAF, Défense contre les bots, Sécurité API |
+| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | Scan de vulnérabilités ZAP, Nikto, Nuclei, Nmap, rapport OWASP combiné | WAF, Scan d'applications web |
+| [performance-testing](/traffic-generator/05-suites/#performance-testing) | Montée en concurrence, charge soutenue, test de pic, découverte du point de rupture | DDoS, Limitation de débit |
+| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, force brute de répertoires | WAF / Défense contre les bots |
+| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, contournement de limitation de débit, secret faible JWT | Sécurité API |
+| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | Analyse de configuration TLS avec SSLScan, sslyze, testssl.sh | WAF |
+| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | Trafic HTTP légitime à haut volume pour les tests de référence et de charge | Toutes |
+| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | Encodage URL/HTML/Unicode multicouche, encodage imbriqué mixte, TE chunked, injection d'en-têtes | WAF |
+| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | Injection SQL, XSS, injection de commandes, traversée de chemin, Nikto, Nuclei | WAF |
+| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi, XSS, traversée de chemin contre les endpoints de test WAF F5 DemoApp | WAF |
+
+<CardGrid>
+  <LinkCard
+    title="Architecture"
+    description="Disposition de la VM, catégories d'outils, installation par niveaux et points d'intégration avec le serveur d'origine et F5 XC."
+    href="01-architecture/"
+  />
+  <LinkCard
+    title="Déploiement"
+    description="Guide complet Terraform : cloner, configurer, appliquer et vérifier que tous les outils sont opérationnels."
+    href="03-deploy/"
+  />
+  <LinkCard
+    title="Catalogue d'outils"
+    description="Chaque outil installé organisé par catégorie avec la méthode d'installation, des exemples de commandes et les correspondances avec les suites."
+    href="04-tool-catalog/"
+  />
+  <LinkCard
+    title="Référence des suites"
+    description="Description détaillée de chaque suite de trafic, scripts, outils utilisés et résultats de détection F5 XC attendus."
+    href="05-suites/"
+  />
+</CardGrid>

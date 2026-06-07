@@ -1,0 +1,241 @@
+---
+title: Runner
+description: >-
+  Usage guide for runner.sh suite orchestrator: execution modes, config.env
+  configuration, environment variable overrides, dry-run mode, results directory
+  structure, meta.json format, standalone script execution, and remote SSH
+  invocation
+sidebar:
+  order: 6
+i18n:
+  sourceHash: c476d62976ae
+  translator: machine
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## ภาพรวม
+
+`runner.sh` คือตัวจัดการชุดทดสอบ (suite orchestrator) ที่รันสคริปต์ที่มีหมายเลขทั้งหมดในไดเรกทอรีของชุดทดสอบตามลำดับ บันทึกผลลัพธ์ และจัดเก็บข้อมูลเมตาของผลลัพธ์ มันถูกติดตั้งที่ `/opt/traffic-generator/suites/runner.sh` บน VM
+
+## การใช้งาน
+
+```bash
+runner.sh <suite-name> [--dry-run]
+```
+
+**อาร์กิวเมนต์:**
+
+| อาร์กิวเมนต์ | จำเป็น | คำอธิบาย |
+|---|---|---|
+| `suite-name` | ใช่ | ชื่อไดเรกทอรีของชุดทดสอบ (เช่น `web-app-attacks`, `api-attacks`) |
+| `--dry-run` | ไม่ | แสดงสิ่งที่จะถูกรันโดยไม่รันสคริปต์ใดๆ จริง |
+
+**ตัวอย่าง:**
+
+```bash
+# Run the web-app-attacks suite
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# Dry-run to preview api-attacks scripts
+/opt/traffic-generator/suites/runner.sh api-attacks --dry-run
+
+# Run bot simulation
+/opt/traffic-generator/suites/runner.sh bot-simulation
+```
+
+## การตั้งค่า
+
+### config.env
+
+runner อ่านการตั้งค่าจาก `/opt/traffic-generator/config.env`:
+
+```bash
+# Required: target FQDN (F5 XC load balancer domain)
+TARGET_FQDN=demo.example.com
+
+# Optional: direct origin IP for baseline testing (bypasses F5 XC)
+TARGET_ORIGIN_IP=
+```
+
+ไฟล์นี้จะถูกเขียนโดยอัตโนมัติระหว่างการจัดเตรียมโดย Terraform จากตัวแปร `target_fqdn` และ `target_origin_ip` หากต้องการเปลี่ยนเป้าหมายหลังจากการ deploy แล้ว ให้แก้ไขไฟล์นี้โดยตรงบน VM
+
+### การแทนที่ด้วยตัวแปรสภาพแวดล้อม
+
+ตัวแปรใดๆ ใน `config.env` สามารถถูกแทนที่ได้โดยการ export ก่อนรันชุดทดสอบ:
+
+```bash
+# Override target FQDN for a single run
+TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# Override via export
+export TARGET_FQDN=staging.example.com
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+เส้นทางของไฟล์ config เองก็สามารถถูกแทนที่ได้เช่นกัน:
+
+```bash
+CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+## โหมด Dry-Run
+
+แฟล็ก `--dry-run` จะแสดงแต่ละสคริปต์ที่จะถูกรันโดยไม่รันจริง:
+
+```bash
+/opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
+```
+
+ผลลัพธ์:
+
+```
+=== 01-sqli.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+=== 02-xss.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/02-xss.sh demo.example.com
+=== 03-command-injection.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/03-command-injection.sh demo.example.com
+=== 04-path-traversal.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/04-path-traversal.sh demo.example.com
+=== 05-nikto-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/05-nikto-scan.sh demo.example.com
+=== 06-nuclei-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/06-nuclei-scan.sh demo.example.com
+=== Suite Complete ===
+Passed: 0 | Failed: 0 | Skipped: 6
+Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
+```
+
+ใช้ dry-run เพื่อตรวจสอบโครงสร้างชุดทดสอบหลังจาก deploy หรือก่อนรันชุดทดสอบกับเป้าหมายใหม่
+
+## ไดเรกทอรีผลลัพธ์
+
+แต่ละครั้งที่รันชุดทดสอบจะสร้างไดเรกทอรีผลลัพธ์พร้อม timestamp:
+
+```
+/opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
+```
+
+**โครงสร้าง:**
+
+```
+/opt/traffic-generator/results/20260425-143000-web-app-attacks/
+  meta.json
+  01-sqli.sh.log
+  02-xss.sh.log
+  03-command-injection.sh.log
+  04-path-traversal.sh.log
+  05-nikto-scan.sh.log
+  06-nuclei-scan.sh.log
+```
+
+stdout และ stderr ของแต่ละสคริปต์จะถูกบันทึกลงไฟล์ `.log` ที่ตั้งชื่อตามสคริปต์
+
+### รูปแบบ meta.json
+
+ไฟล์ `meta.json` บันทึกข้อมูลเมตาการรันชุดทดสอบ:
+
+```json
+{
+  "suite": "web-app-attacks",
+  "target": "demo.example.com",
+  "started": "2026-04-25T14:30:00Z",
+  "completed": "2026-04-25T14:45:23Z",
+  "status": "completed",
+  "passed": 5,
+  "failed": 1,
+  "skipped": 0
+}
+```
+
+| ฟิลด์ | คำอธิบาย |
+|---|---|
+| `suite` | ชื่อชุดทดสอบ |
+| `target` | Target FQDN ที่ใช้ในการรัน |
+| `started` | timestamp UTC เมื่อชุดทดสอบเริ่มทำงาน |
+| `completed` | timestamp UTC เมื่อชุดทดสอบทำงานเสร็จ |
+| `status` | `running` ระหว่างทำงาน, `completed` เมื่อเสร็จสิ้น |
+| `passed` | จำนวนสคริปต์ที่ออกด้วยโค้ด 0 |
+| `failed` | จำนวนสคริปต์ที่ออกด้วยโค้ดที่ไม่ใช่ศูนย์ |
+| `skipped` | จำนวนสคริปต์ที่ถูกข้าม (ไม่สามารถรันได้หรืออยู่ในโหมด dry-run) |
+
+<Aside type="tip">
+exit code ที่ไม่ใช่ศูนย์จากสคริปต์ไม่ได้หมายความว่าชุดทดสอบล้มเหลวเสมอไป เครื่องมือด้านความปลอดภัยหลายตัวจะออกด้วยโค้ดที่ไม่ใช่ศูนย์เมื่อพบช่องโหว่ ซึ่งเป็นพฤติกรรมที่คาดหวังระหว่างการสร้างทราฟฟิกการโจมตี
+</Aside>
+
+## การรันสคริปต์แต่ละตัว
+
+แต่ละสคริปต์สามารถรันแบบเดี่ยวได้โดยไม่ต้องใช้ runner:
+
+```bash
+# Run a single script directly
+/opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+
+# Run a specific API attack
+/opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
+```
+
+สคริปต์รับ target FQDN เป็นอาร์กิวเมนต์ตำแหน่งแรก สคริปต์ไม่ได้อ่าน `config.env` โดยตรง -- มีเฉพาะ runner เท่านั้นที่ทำ เมื่อรันแบบเดี่ยว คุณต้องส่ง FQDN อย่างชัดเจน
+
+## การรันชุดทดสอบทั้งหมดตามลำดับ
+
+หากต้องการรันทุกชุดทดสอบต่อเนื่องกัน:
+
+```bash
+for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
+  echo "========================================="
+  echo "Starting suite: ${suite}"
+  echo "========================================="
+  /opt/traffic-generator/suites/runner.sh "$suite"
+  echo ""
+done
+```
+
+วิธีนี้จะสร้างทราฟฟิกครอบคลุมทุกฟีเจอร์ด้านความปลอดภัยของ F5 XC คาดว่าการรันทั้งหมดจะใช้เวลา 45-80 นาทีขึ้นอยู่กับเวลาตอบสนองของเป้าหมาย
+
+## การรันระยะไกลผ่าน SSH
+
+รันชุดทดสอบจากเครื่องภายในของคุณโดยไม่ต้องรักษาเซสชัน SSH:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Run a single suite
+ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
+
+# Run a suite with target override
+ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
+
+# Run in background (disconnection-safe)
+ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
+
+# Check results later
+ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
+ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
+```
+
+สำหรับชุดทดสอบที่ใช้เวลานาน ให้ใช้ `nohup` หรือ `tmux` เพื่อป้องกันไม่ให้การตัดการเชื่อมต่อ SSH หยุดกระบวนการ:
+
+```bash
+ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
+
+# Reattach later to watch progress
+ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
+```
+
+## ลำดับการทำงาน
+
+<Steps>
+
+1. **โหลดการตั้งค่า** -- Runner อ่าน `config.env` (หรือค่าแทนที่จาก `CONFIG_FILE`) จากนั้นตรวจสอบ `TARGET_FQDN` ในตัวแปรสภาพแวดล้อม
+
+2. **ตรวจสอบชุดทดสอบ** -- ยืนยันว่าไดเรกทอรีของชุดทดสอบที่ระบุชื่อมีอยู่ภายใต้ไดเรกทอรี suites แสดงรายการชุดทดสอบที่มีอยู่หากไม่พบ
+
+3. **สร้างไดเรกทอรีผลลัพธ์** -- สร้าง `/opt/traffic-generator/results/<timestamp>-<suite>/` และเขียน `meta.json` เริ่มต้นพร้อม `status: running`
+
+4. **รันสคริปต์** -- วนซ้ำผ่านไฟล์ที่ตรงกับ `[0-9]*` ในไดเรกทอรีของชุดทดสอบ เรียงตามชื่อ ข้ามไฟล์ที่ไม่สามารถรันได้ ส่ง `TARGET_FQDN` เป็นอาร์กิวเมนต์แรก บันทึกผลลัพธ์ลง `<script-name>.log`
+
+5. **บันทึกผลลัพธ์** -- อัปเดต `meta.json` ด้วย timestamp เมื่อเสร็จสิ้นและจำนวน pass/fail/skip
+
+</Steps>

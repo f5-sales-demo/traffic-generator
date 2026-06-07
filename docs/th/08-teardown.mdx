@@ -1,0 +1,78 @@
+---
+title: Teardown
+description: >-
+  terraform destroy to remove all Azure resources, verify resource group
+  deletion with az CLI, and clean local state files
+sidebar:
+  order: 8
+i18n:
+  sourceHash: acaae5a3d897
+  translator: machine
+---
+
+เมื่อเซสชันแล็บเสร็จสิ้น ให้ทำลายทรัพยากร Azure ทั้งหมดเพื่อหยุดการเรียกเก็บเงิน
+
+## Terraform Destroy
+
+จากไดเรกทอรี `terraform/`:
+
+```bash
+cd terraform/
+
+terraform plan -destroy
+
+terraform destroy
+```
+
+Terraform จะขอการยืนยัน พิมพ์ `yes` เพื่อดำเนินการต่อ
+
+## ตรวจสอบการล้างข้อมูล
+
+ยืนยันว่าทรัพยากรทั้งหมดถูกลบออกแล้ว:
+
+```bash
+RG_NAME=$(terraform output -raw resource_group_name)
+
+az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
+  && echo "Resource group deleted" \
+  || echo "Resource group still exists"
+
+az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
+```
+
+## ล้าง State ในเครื่อง
+
+ลบไฟล์ Terraform state และไฟล์แคช:
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
+
+## เก็บผลลัพธ์ไว้ (ไม่บังคับ)
+
+หากคุณต้องการเก็บผลลัพธ์ของชุดทดสอบ traffic ไว้ก่อนที่จะทำลาย VM ให้คัดลอกมาไว้ในเครื่อง:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Copy all results to local machine
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
+
+# Or copy just the latest run
+LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+```
+
+## ล้างข้อมูล F5 XC
+
+หากคุณต้องการลบการกำหนดค่า F5 XC ที่ตัวสร้าง traffic กำลังเล็งเป้าหมายอยู่ด้วย:
+
+1. ลบ HTTP load balancer
+2. ลบ origin pool
+3. ลบนโยบาย WAF, การกำหนดค่า Bot Defense, นโยบาย API Security หรือการกำหนดค่า CSD ที่สร้างขึ้นสำหรับการทดสอบ
+
+ทรัพยากร F5 XC เหล่านี้ไม่มีค่าใช้จ่าย Azure แต่ควรล้างออกเมื่อไม่ต้องการสภาพแวดล้อมสาธิตอีกต่อไป
+
+:::tip
+สำหรับการใช้งานสาธิตที่ทำซ้ำ ให้พิจารณาเขียนสคริปต์สำหรับวงจรชีวิตแบบเต็ม: `cd terraform && terraform apply` ก่อนการสาธิต รันชุดทดสอบ จากนั้น `terraform destroy` หลังเสร็จสิ้น ระดับมาตรฐานใช้เวลาจัดเตรียม 15-20 นาที ทำให้การตั้งค่าและทำลายในวันเดียวกันเป็นไปได้จริง
+:::

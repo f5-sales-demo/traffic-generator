@@ -1,0 +1,80 @@
+---
+title: 트래픽 생성기
+description: >-
+  F5 Distributed Cloud에 대한 WAF, Bot Defense, API Security, Client-Side Defense
+  검증을 위한 보안 테스트 도구가 사전 설치된 Azure Ubuntu 24.04 VM
+template: splash
+hero:
+  tagline: >-
+    Deploy a traffic generation VM with 50+ security tools, 19 organized attack
+    suites, and headless Chrome automation for comprehensive F5 XC demo
+    validation.
+  actions:
+    - text: Get Started
+      link: /traffic-generator/01-architecture/
+      icon: right-arrow
+      variant: primary
+    - text: Deploy Now
+      link: /traffic-generator/03-deploy/
+      icon: rocket
+      variant: minimal
+i18n:
+  sourceHash: dc5763d5e9c5
+  translator: machine
+---
+
+import { CardGrid } from '@astrojs/starlight/components';
+import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
+
+## 제공 기능
+
+트래픽 생성기는 F5 Distributed Cloud HTTP 로드 밸런서를 대상으로 실제적인 공격 트래픽, 정찰 스캔, 봇 시뮬레이션, API 남용 패턴을 생성하기 위해 특별히 제작된 Azure VM입니다. WAF 정책, Bot Defense, API Security, Client-Side Defense가 올바르게 구성되었는지 검증하기 위해 해당 기능들이 탐지하고 차단하도록 설계된 정확한 트래픽을 생성합니다.
+
+모든 도구는 Terraform 프로비저닝 중에 cloud-init을 통해 사전 설치됩니다. 트래픽은 개별적으로 또는 포함된 `runner.sh` 오케스트레이터를 사용하여 순차적으로 실행할 수 있는 스위트로 구성되어 있습니다.
+
+## 트래픽 스위트 카테고리
+
+| 스위트 | 설명 | 검증되는 F5 XC 기능 |
+|---|---|---|
+| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, SQLMap API 모드, 파라미터 탐색, 엔드포인트 퍼징 | API Security |
+| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | 헤드리스 Chrome, Puppeteer 스텔스, Playwright 자동화, 고속 크롤링 | Bot Defense |
+| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | 캐시 동작, 썬더링 허드, 커넥션 풀, HTTP/2 멀티플렉싱 | CDN 통합 |
+| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, OTP 브루트포스, JWT 조작, SSRF, NoSQL 인젝션, IDOR | API Security |
+| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | 카드 스키머, 폼재커, 키로거, 크립토마이너, DOM 하이재킹 | Client-Side Defense |
+| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | 배치 쿼리 DoS, 딥 리커전, SQL 인젝션, 인트로스펙션 남용 | API Security (GraphQL) |
+| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | 브루트 포스, 커맨드 인젝션, CSRF, 파일 인클루전, SQLi, XSS | WAF |
+| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM 조작, 인라인 스크립트 인젝션, Magecart 스타일 스키밍 페이로드 | Client-Side Defense |
+| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi 로그인 우회, XSS, IDOR, 관리자 접근, 널 바이트 파일 접근 | WAF, Bot Defense |
+| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK 전술: 정찰, 초기 접근, 자격 증명 접근, 데이터 유출 | WAF, Bot Defense, API Security |
+| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, Nmap 취약점 스캐닝, 통합 OWASP 보고서 | WAF, 웹 앱 스캐닝 |
+| [performance-testing](/traffic-generator/05-suites/#performance-testing) | 동시성 램프, 지속 부하, 스파이크 테스트, 브레이크포인트 탐색 | DDoS, 속도 제한 |
+| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, 디렉토리 브루트포싱 | WAF / Bot Defense |
+| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, 속도 제한 우회, JWT 약한 시크릿 | API Security |
+| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan, sslyze, testssl.sh TLS 구성 분석 | WAF |
+| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | 베이스라인 및 부하 테스트를 위한 대량 정상 HTTP 트래픽 | 전체 |
+| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | 다중 레이어 URL/HTML/Unicode 인코딩, 혼합 중첩 인코딩, 청크 TE, 헤더 인젝션 | WAF |
+| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | SQL 인젝션, XSS, 커맨드 인젝션, 경로 탐색, Nikto, Nuclei | WAF |
+| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | F5 DemoApp WAF 테스트 엔드포인트를 대상으로 한 SQLi, XSS, 경로 탐색 | WAF |
+
+<CardGrid>
+  <LinkCard
+    title="아키텍처"
+    description="VM 레이아웃, 도구 카테고리, 계층별 설치, origin-server 및 F5 XC와의 통합 지점."
+    href="01-architecture/"
+  />
+  <LinkCard
+    title="배포"
+    description="완전한 Terraform 가이드: 클론, 구성, 적용 및 모든 도구의 작동 확인."
+    href="03-deploy/"
+  />
+  <LinkCard
+    title="도구 카탈로그"
+    description="카테고리별로 정리된 모든 설치 도구, 설치 방법, 예제 명령어, 스위트 매핑 포함."
+    href="04-tool-catalog/"
+  />
+  <LinkCard
+    title="스위트 레퍼런스"
+    description="각 트래픽 스위트의 상세 설명, 스크립트, 사용 도구, 예상 F5 XC 탐지 결과."
+    href="05-suites/"
+  />
+</CardGrid>

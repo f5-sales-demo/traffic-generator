@@ -1,0 +1,78 @@
+---
+title: Teardown
+description: >-
+  terraform destroy to remove all Azure resources, verify resource group
+  deletion with az CLI, and clean local state files
+sidebar:
+  order: 8
+i18n:
+  sourceHash: acaae5a3d897
+  translator: machine
+---
+
+Wenn die Lab-Sitzung abgeschlossen ist, zerstören Sie alle Azure-Ressourcen, um die Abrechnung zu stoppen.
+
+## Terraform Destroy
+
+Aus dem `terraform/`-Verzeichnis:
+
+```bash
+cd terraform/
+
+terraform plan -destroy
+
+terraform destroy
+```
+
+Terraform fordert zur Bestätigung auf. Geben Sie `yes` ein, um fortzufahren.
+
+## Bereinigung überprüfen
+
+Bestätigen Sie, dass alle Ressourcen entfernt wurden:
+
+```bash
+RG_NAME=$(terraform output -raw resource_group_name)
+
+az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
+  && echo "Resource group deleted" \
+  || echo "Resource group still exists"
+
+az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
+```
+
+## Lokalen State bereinigen
+
+Entfernen Sie Terraform-State- und Cache-Dateien:
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
+
+## Ergebnisse sichern (Optional)
+
+Wenn Sie die Traffic-Suite-Ergebnisse vor dem Zerstören der VM behalten möchten, kopieren Sie diese lokal:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Copy all results to local machine
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
+
+# Or copy just the latest run
+LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+```
+
+## F5 XC Bereinigung
+
+Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Traffic-Generator abgezielt hat:
+
+1. Löschen Sie den HTTP Load Balancer
+2. Löschen Sie den Origin Pool
+3. Löschen Sie alle WAF-Richtlinien, Bot-Defense-Konfigurationen, API-Security-Richtlinien oder CSD-Konfigurationen, die für Tests erstellt wurden
+
+Diese F5 XC-Ressourcen verursachen keine Azure-Kosten, sollten aber bereinigt werden, wenn die Demo-Umgebung nicht mehr benötigt wird.
+
+:::tip
+Für wiederkehrende Demo-Nutzung sollten Sie den gesamten Lebenszyklus skripten: `cd terraform && terraform apply` vor einer Demo, Suites ausführen, dann anschließend `terraform destroy`. Der Standard-Tier wird in 15-20 Minuten bereitgestellt, was ein Setup und Teardown am selben Tag praktikabel macht.
+:::

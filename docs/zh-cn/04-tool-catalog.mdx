@@ -1,0 +1,144 @@
+---
+title: 工具目录
+description: 安装在流量生成器虚拟机上的 50 多种安全工具完整目录，按类别组织，包含安装方式、示例命令和流量套件映射
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 8b6dc7f24a02
+  translator: machine
+---
+
+以下列出的所有工具均在 cloud-init 配置过程中预安装。部署后无需手动安装。
+
+## Web 应用测试
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| nikto | apt | `nikto -h https://TARGET -maxtime 120s` | web-app-attacks |
+| sqlmap | apt | `sqlmap --batch -u "https://TARGET/dvwa/vulnerabilities/sqli/?id=1"` | web-app-attacks, api-attacks |
+| nuclei | ghlatest | `nuclei -u https://TARGET -severity medium,high,critical` | web-app-attacks |
+| dalfox | ghlatest | `dalfox url "https://TARGET/search?q=test" --silence` | web-app-attacks |
+| ffuf | ghlatest | `ffuf -u https://TARGET/FUZZ -w wordlist.txt -mc all -fc 404` | api-attacks |
+| gobuster | ghlatest | `gobuster dir -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/common.txt` | reconnaissance |
+| feroxbuster | ghlatest | `feroxbuster -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/raft-medium-directories.txt` | reconnaissance |
+| dirb | apt | `dirb https://TARGET /usr/share/dirb/wordlists/common.txt` | reconnaissance |
+| whatweb | apt | `whatweb https://TARGET` | reconnaissance |
+| wfuzz | pip | `wfuzz -c -z file,wordlist.txt -e urlencode,double_urlencode "https://TARGET/FUZZ"` | waf-encoding-evasion |
+
+## WAF 绕过测试
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
+| waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
+
+GoTestWAF（由 Wallarm 开发）是一个行业标准的 WAF 评估框架，它通过多种编码器（URL、Base64、JSUnicode）和放置区域（body、header、URL 参数、cookie）对载荷进行组合扩展。waf-bypass（由 Nemesida 开发）使用 Base64、HTML-ENTITY 和 UTF-16 编码，在 ARGS、BODY、COOKIE 和 HEADER 区域发送载荷。
+
+## 网络分析
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| nmap | apt | `nmap -sV -sC -p 80,443 TARGET_IP` | reconnaissance |
+| masscan | apt | `masscan TARGET_IP -p 1-1000 --rate=1000` | reconnaissance |
+| tshark | apt | `tshark -i eth0 -c 100 -f "host TARGET_IP"` | -- |
+| hping3 | apt | `hping3 -S -p 443 -c 10 TARGET_IP` | reconnaissance |
+| tcpdump | apt | `tcpdump -i eth0 -c 50 host TARGET_IP` | -- |
+| netcat | apt | `nc -zv TARGET_IP 80 443` | reconnaissance |
+| ngrep | apt | `ngrep -q -d eth0 "HTTP" host TARGET_IP` | -- |
+| iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
+| mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
+
+## SSL/TLS 测试
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| sslscan | apt | `sslscan TARGET:443` | ssl-scanning |
+| sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
+| testssl.sh | git clone | `/opt/testssl.sh/testssl.sh TARGET:443` | ssl-scanning |
+
+## 中间人攻击与代理
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| mitmproxy | uv | `mitmproxy --mode reverse:https://TARGET -p 8080` | -- |
+| socat | apt | `socat TCP-LISTEN:8080,fork TCP:TARGET:443` | -- |
+
+## 浏览器自动化
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
+| puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
+| puppeteer-extra-plugin-stealth | npm | 作为 Puppeteer 插件用于隐身浏览 | bot-simulation |
+
+Playwright 通过 `playwright install chromium` 安装自带的 Chromium 二进制文件。Puppeteer 尽可能使用相同的系统 Chromium。
+
+## 子域名与 DNS 枚举
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| subfinder | ghlatest | `subfinder -d example.com -silent` | reconnaissance |
+| httpx | ghlatest | `echo TARGET | httpx -status-code -title` | reconnaissance |
+| amass | ghlatest | `amass enum -passive -d example.com` | reconnaissance |
+| dnsrecon | uv | `dnsrecon -d example.com -t std` | reconnaissance |
+| fierce | uv | `fierce --domain example.com` | reconnaissance |
+| whois | apt | `whois example.com` | reconnaissance |
+| dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
+
+## 凭据测试
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| hydra | apt | `hydra -l admin -P /opt/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt TARGET https-post-form "/dvwa/login.php:..."` | web-app-attacks |
+| medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
+| ncrack | apt | `ncrack -vv --user admin -P passwords.txt TARGET:443` | web-app-attacks |
+
+## Python 安全库
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| scapy | pip | `python3 -c "from scapy.all import *; sr1(IP(dst='TARGET')/TCP(dport=443,flags='S'))"` | reconnaissance |
+| impacket | pip | `python3 -m impacket.smbclient TARGET` | reconnaissance |
+| arjun | pip | `arjun -u https://TARGET/endpoint` | api-attacks |
+| pwntools | pip | `python3 -c "from pwn import *; r=remote('TARGET',443)"` | -- |
+| hashid | pip | `hashid 'HASH_VALUE'` | -- |
+| theHarvester | uv | `theHarvester -d example.com -b all` | reconnaissance |
+
+## OSINT 与侦察
+
+| 工具 | 安装方式 | 位置 | 所属套件 |
+|---|---|---|---|
+| recon-ng | git clone | `/opt/recon-ng/` | reconnaissance |
+| spiderfoot | git clone | `/opt/spiderfoot/` | reconnaissance |
+| SecLists | git clone | `/opt/SecLists/` | web-app-attacks, api-attacks, reconnaissance |
+| PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
+| waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
+
+SecLists 提供多个工具使用的字典文件，包括 ffuf、gobuster、feroxbuster、dirb 和 hydra。PayloadsAllTheThings 提供按攻击类别（XSS、SQLi、XXE）整理的多编码攻击载荷，包含十六进制、八进制、Unicode、HTML 实体、双重 URL 编码和 JSFuck 变体。
+
+## 仅完整版包含
+
+以下工具仅在 `tool_tier = "full"` 时安装：
+
+| 工具 | 安装方式 | 示例命令 | 所属套件 |
+|---|---|---|---|
+| ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
+| Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
+
+:::note
+ZAP 和 Metasploit 会增加约 1.5 GiB 的磁盘占用和 5-10 分钟的配置时间。仅在演示中确实需要这些工具时才使用完整版。
+:::
+
+## 安装方式参考
+
+| 方式 | 说明 |
+|---|---|
+| apt | 通过 `apt-get install` 从 Ubuntu 24.04 APT 仓库安装 |
+| ghlatest | 使用 `ghlatest.sh` 和 `install-release.sh` 从 GitHub Releases 下载最新二进制文件 |
+| uv | 使用 `uv` 包管理器作为 Python 工具安装 |
+| pip | 使用 `pip install` 安装到系统 Python 中的 Python 包 |
+| npm | 使用 `npm install -g` 安装的全局 Node.js 包 |
+| go install | 使用 `go install` 从源码编译并安装到 `/usr/local/bin` |
+| git clone | 仓库克隆到 `/opt/` 目录 |
+| git clone + pip | 仓库克隆后安装 Python 依赖 |
+| installer script | 在 cloud-init 期间执行供应商提供的安装脚本 |

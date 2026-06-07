@@ -1,0 +1,192 @@
+---
+title: Integrate
+description: >-
+  Integration guide for the traffic generator with origin-server, F5 XC HTTP
+  load balancer, CSD demo, and CDN simulator: architecture diagrams, targeting
+  configuration, direct vs LB traffic comparison, and multi-component deployment
+sidebar:
+  order: 7
+i18n:
+  sourceHash: 542ecf0ca77e
+  translator: machine
+---
+
+## สถาปัตยกรรมแบบเต็ม
+
+ตัวสร้างทราฟฟิกเป็นหนึ่งในส่วนประกอบของสภาพแวดล้อมสาธิตแบบหลายชั้น สถาปัตยกรรมที่สมบูรณ์เมื่อทุกส่วนประกอบถูกติดตั้งใช้งาน:
+
+```
+Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
+                         |
+               CDN Simulator (optional)
+```
+
+```mermaid
+graph LR
+    TG[Traffic Generator VM] -->|Attack Traffic<br/>HTTPS| XCHLB[F5 XC HTTP LB]
+    XCHLB -->|WAF / Bot / API / CSD| ORIGIN[Origin Server VM<br/>Juice Shop, DVWA,<br/>VAmPI, httpbin, whoami]
+    CDN[CDN Simulator<br/>optional] -->|Cached Requests| XCHLB
+    TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
+```
+
+แต่ละส่วนประกอบถูกติดตั้งใช้งานและกำหนดค่าอย่างอิสระผ่าน Terraform ตัวสร้างทราฟฟิกมุ่งเป้าไปที่ FQDN ของ F5 XC load balancer ไม่ใช่ origin server โดยตรง
+
+## การเชื่อมต่อกับ Origin Server
+
+[origin server](https://f5xc-salesdemos.github.io/origin-server/) ให้บริการแอปพลิเคชันแบ็กเอนด์ที่ชุดโจมตีของตัวสร้างทราฟฟิกมุ่งเป้าไปที่:
+
+| ชุดทราฟฟิก | แอปพลิเคชัน Origin | เส้นทาง |
+|---|---|---|
+| api-attacks | VAmPI | `/vampi/` |
+| bot-simulation | แอปพลิเคชันทั้งหมด | ทุกเส้นทาง |
+| cdn-load-testing | CDN Simulator | CDN endpoint |
+| crapi-exploits | crAPI | `/crapi/` |
+| csd-demo-attacks | CSD Demo | `/csd-demo/` |
+| dvga-exploits | DVGA | `/dvga/` |
+| dvwa-exploits | DVWA | `/dvwa/` |
+| javascript-exploits | CSD Demo | `/csd-demo/` |
+| juice-shop-exploits | Juice Shop | `/juice-shop/` |
+| mitre-attack | แอปพลิเคชันทั้งหมด | ทุกเส้นทาง |
+| owasp-scanning | แอปพลิเคชันทั้งหมด | ทุกเส้นทาง |
+| performance-testing | แอปพลิเคชันทั้งหมด | ทุกเส้นทาง |
+| reconnaissance | แอปพลิเคชันทั้งหมด | ทุกเส้นทาง |
+| restaurant-exploits | Restaurant API | `/restaurant/` |
+| ssl-scanning | F5 XC LB (ไม่ใช่ origin โดยตรง) | N/A |
+| traffic-generation | แอปพลิเคชันทั้งหมด | ทุกเส้นทาง |
+| web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
+
+### ลำดับการติดตั้งใช้งาน
+
+1. ติดตั้งใช้งาน **origin server** ก่อน -- เป็นส่วนที่ให้บริการแอปพลิเคชันแบ็กเอนด์
+2. กำหนดค่า **F5 XC HTTP load balancer** โดยตั้ง origin server เป็น origin pool
+3. แนบ **นโยบาย WAF, Bot Defense, API Security, และ CSD** เข้ากับ load balancer
+4. ติดตั้งใช้งาน **ตัวสร้างทราฟฟิก** โดยตั้ง `target_fqdn` เป็นโดเมนของ F5 XC LB
+
+### การกำหนดค่าเป้าหมาย
+
+`config.env` ของตัวสร้างทราฟฟิกเชื่อมต่อกับส่วนที่เหลือของสถาปัตยกรรม:
+
+```bash
+# Target the F5 XC load balancer (traffic passes through security policies)
+TARGET_FQDN=demo.example.com
+
+# Optional: target the origin server directly (bypasses F5 XC)
+TARGET_ORIGIN_IP=20.10.5.100
+```
+
+เมื่อตั้งค่า `TARGET_FQDN` สคริปต์ของทุกชุดจะส่งทราฟฟิกไปที่ `https://<TARGET_FQDN>/...` F5 XC load balancer รับคำขอ ใช้นโยบายความปลอดภัย และส่งต่อทราฟฟิกที่อนุญาตไปยัง origin server
+
+## การเชื่อมต่อกับ CSD Demo
+
+ชุด `javascript-exploits` ถูกออกแบบเฉพาะสำหรับการสาธิต Client-Side Defense บน origin server ชุดนี้ตรวจสอบฟังก์ชันการทำงาน CSD Phase 2:
+
+**ขั้นตอน Phase 2:**
+
+1. Origin server โฮสต์หน้า CSD demo ที่ `/csd-demo/`
+2. F5 XC CSD แทรก JavaScript สำหรับตรวจสอบเข้าไปในหน้า
+3. ชุด javascript-exploits ของตัวสร้างทราฟฟิกพยายาม:
+   - แทรกสคริปต์แบบ inline ที่เลียนแบบ Magecart skimmers
+   - แก้ไของค์ประกอบ DOM เพื่อเปลี่ยนเส้นทางการส่งฟอร์ม
+   - โหลด JavaScript ของบุคคลที่สามที่ไม่ได้รับอนุญาต
+4. F5 XC CSD ตรวจจับการแก้ไขเหล่านี้และรายงานในแดชบอร์ด CSD
+
+การใช้งานชุด javascript-exploits:
+
+```bash
+# Ensure CSD is enabled on the F5 XC HTTP LB for the /csd-demo/ path
+# Then run the suite
+/opt/traffic-generator/suites/runner.sh javascript-exploits
+```
+
+## การเชื่อมต่อกับ CDN Simulator
+
+เมื่อ CDN Simulator ถูกติดตั้งใช้งาน สถาปัตยกรรมจะเพิ่มชั้นแคช:
+
+```
+Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
+```
+
+CDN Simulator อยู่ด้านหน้า F5 XC load balancer ทำหน้าที่แคชการตอบกลับและเพิ่มเฮดเดอร์แบบ CDN เพื่อส่งทราฟฟิกผ่าน CDN:
+
+```bash
+# Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
+TARGET_FQDN=cdn.demo.example.com
+```
+
+สิ่งนี้มีประโยชน์สำหรับการสาธิตว่า F5 XC จัดการทราฟฟิกที่มาผ่าน CDN อย่างไร รวมถึง:
+
+- การระบุ IP ของไคลเอนต์จริงที่อยู่เบื้องหลังเฮดเดอร์พร็อกซีของ CDN
+- การใช้กฎ WAF กับคำขอที่อาจถูกแก้ไขโดย CDN
+- การจำแนก Bot Defense เมื่อ CDN แก้ไข browser fingerprints
+
+## การเปรียบเทียบทราฟฟิกโดยตรง vs ผ่าน LB
+
+ตัวสร้างทราฟฟิกรองรับการส่งทราฟฟิกทั้งผ่าน F5 XC และโดยตรงไปยัง origin การเปรียบเทียบนี้แสดงให้เห็นคุณค่าของฟีเจอร์ความปลอดภัยของ F5 XC:
+
+### ผ่าน F5 XC (ค่าเริ่มต้น)
+
+```bash
+# Traffic goes: Generator -> F5 XC LB -> Origin
+TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+ผลลัพธ์ที่คาดหวัง: WAF บล็อก SQL injection, XSS และ command injection payloads แดชบอร์ด Security Events แสดงคำขอที่ถูกบล็อกพร้อมรายละเอียดการละเมิด
+
+### โดยตรงไปยัง Origin (ค่าพื้นฐาน)
+
+```bash
+# Traffic goes: Generator -> Origin (no security layer)
+TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+ผลลัพธ์ที่คาดหวัง: payloads ทั้งหมดเข้าถึงแอปพลิเคชัน origin โดยไม่ผ่านการกรอง Juice Shop และ DVWA ประมวลผล attack payloads สิ่งนี้แสดงให้เห็นสิ่งที่เกิดขึ้นเมื่อไม่มีการป้องกันจาก F5 XC
+
+### ขั้นตอนการสาธิตแบบเคียงข้างกัน
+
+สำหรับการสาธิตที่น่าสนใจ ให้รันชุดเดียวกันทั้งสองแบบ:
+
+1. รัน `web-app-attacks` โดยตรงกับ origin -- แสดงให้เห็นว่าการโจมตีสำเร็จ
+2. รัน `web-app-attacks` ผ่าน F5 XC -- แสดงให้เห็นว่าการโจมตีถูกบล็อก
+3. เปิดแดชบอร์ด F5 XC Security Events เพื่อแสดงคำขอที่ถูกบล็อก
+4. เปรียบเทียบผลลัพธ์ `meta.json` ของชุด: การรันโดยตรงแสดง "passed" มากกว่า (การโจมตีสำเร็จ) การรันผ่าน LB แสดง "failed" มากกว่า (การโจมตีถูกบล็อก)
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+ORIGIN_IP="20.10.5.100"
+LB_FQDN="demo.example.com"
+
+# Run 1: Direct (baseline)
+ssh azureuser@${TGEN_IP} "TARGET_FQDN=${ORIGIN_IP} /opt/traffic-generator/suites/runner.sh web-app-attacks"
+
+# Run 2: Through F5 XC
+ssh azureuser@${TGEN_IP} "TARGET_FQDN=${LB_FQDN} /opt/traffic-generator/suites/runner.sh web-app-attacks"
+
+# Compare results
+ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | head -2); do echo "=== $d ==="; cat /opt/traffic-generator/results/$d/meta.json; echo; done'
+```
+
+## การติดตั้งใช้งาน Terraform แบบหลายส่วนประกอบ
+
+เมื่อติดตั้งใช้งานสภาพแวดล้อมแล็บแบบเต็ม ให้ใช้ Terraform workspace หรือไดเรกทอรีแยกกันสำหรับแต่ละส่วนประกอบ:
+
+```bash
+# 1. Deploy origin server
+cd origin-server
+terraform apply -var="subscription_id=YOUR_SUB_ID"
+ORIGIN_IP=$(terraform output -raw public_ip)
+
+# 2. Configure F5 XC (manual or via separate Terraform)
+# Create origin pool -> HTTP LB -> attach WAF/Bot/API/CSD policies
+# LB_FQDN=demo.example.com
+
+# 3. Deploy traffic generator targeting the F5 XC LB
+cd ../traffic-generator
+terraform apply \
+  -var="subscription_id=YOUR_SUB_ID" \
+  -var="target_fqdn=demo.example.com" \
+  -var="target_origin_ip=${ORIGIN_IP}"
+
+# 4. Generate traffic
+TGEN_IP=$(terraform output -raw public_ip)
+ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
+```

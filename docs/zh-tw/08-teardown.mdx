@@ -1,0 +1,76 @@
+---
+title: 拆除環境
+description: 使用 terraform destroy 移除所有 Azure 資源，透過 az CLI 驗證資源群組刪除，並清理本機狀態檔案
+sidebar:
+  order: 8
+i18n:
+  sourceHash: acaae5a3d897
+  translator: machine
+---
+
+當實驗課程結束後，銷毀所有 Azure 資源以停止計費。
+
+## Terraform 銷毀
+
+從 `terraform/` 目錄執行：
+
+```bash
+cd terraform/
+
+terraform plan -destroy
+
+terraform destroy
+```
+
+Terraform 會提示確認。輸入 `yes` 以繼續。
+
+## 驗證清理
+
+確認所有資源已被移除：
+
+```bash
+RG_NAME=$(terraform output -raw resource_group_name)
+
+az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
+  && echo "Resource group deleted" \
+  || echo "Resource group still exists"
+
+az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
+```
+
+## 清理本機狀態
+
+移除 Terraform 狀態和快取檔案：
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
+
+## 保留結果（選用）
+
+如果您想在銷毀 VM 之前保留流量測試套件結果，請將其複製到本機：
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Copy all results to local machine
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
+
+# Or copy just the latest run
+LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+```
+
+## F5 XC 清理
+
+如果您也想移除流量產生器所針對的 F5 XC 組態：
+
+1. 刪除 HTTP 負載平衡器
+2. 刪除來源池
+3. 刪除為測試建立的任何 WAF 策略、Bot Defense 組態、API Security 策略或 CSD 組態
+
+這些 F5 XC 資源不會產生 Azure 費用，但當示範環境不再需要時應予以清理。
+
+:::tip
+若需要重複進行示範，建議將完整生命週期腳本化：在示範前執行 `cd terraform && terraform apply`，運行測試套件，然後在結束後執行 `terraform destroy`。標準層級的佈建時間約為 15-20 分鐘，使得當天設置和拆除變得切實可行。
+:::

@@ -1,0 +1,92 @@
+---
+title: Prerequisiti
+description: >-
+  Azure subscription with Contributor role, Terraform >= 1.5, SSH key pair
+  (Ed25519 recommended), Azure CLI for subscription_id lookup, and outbound
+  HTTPS for tool downloads during cloud-init provisioning
+sidebar:
+  order: 2
+i18n:
+  sourceHash: fd94de6375d4
+  translator: machine
+---
+
+## Obbligatori
+
+### Sottoscrizione Azure
+
+Una sottoscrizione Azure attiva con ruolo Contributor o permessi equivalenti per creare:
+
+- Gruppi di risorse
+- Reti virtuali e subnet
+- Gruppi di sicurezza di rete
+- Indirizzi IP pubblici
+- Macchine virtuali (Standard_F16s_v2 predefinita)
+
+### Azure CLI
+
+Installare e autenticarsi con Azure CLI per recuperare l'ID della sottoscrizione:
+
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+az login
+
+az account show --query '{name:name, id:id}' -o table
+```
+
+Copiare il valore `id` -- questo è il `subscription_id` richiesto da Terraform.
+
+### Terraform
+
+È richiesto Terraform >= 1.5:
+
+```bash
+terraform version
+```
+
+Se non installato, utilizzare il repository APT di HashiCorp:
+
+```bash
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+```
+
+### Coppia di chiavi SSH
+
+Una coppia di chiavi SSH per l'accesso alla VM. Ed25519 è raccomandato:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
+```
+
+### Accesso di rete
+
+La VM del Traffic Generator richiede accesso HTTPS in uscita durante il provisioning per scaricare strumenti da:
+
+- GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
+- PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
+- Registro npm (puppeteer, puppeteer-extra-plugin-stealth)
+- Repository APT Ubuntu (nikto, nmap, masscan, hydra, tshark e altri pacchetti di sistema)
+- Repository Git (testssl.sh, recon-ng, spiderfoot, SecLists)
+
+Se la sottoscrizione Azure applica regole firewall in uscita o restrizioni NSG, assicurarsi che HTTPS (porta 443) verso queste fonti sia consentito durante la finestra iniziale di provisioning (15-25 minuti).
+
+### Componenti pre-distribuiti
+
+Prima di distribuire il Traffic Generator, è necessario disporre di:
+
+1. **Origin Server** distribuito e raggiungibile (vedere la [documentazione origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+2. **F5 XC HTTP Load Balancer** configurato con l'origin server come backend
+3. Una **policy WAF** associata al load balancer (per la validazione del traffico WAF)
+
+La variabile Terraform `target_fqdn` deve essere impostata sul dominio pubblico del load balancer F5 XC.
+
+:::tip
+Utilizzare `terraform destroy` quando il laboratorio non è in uso per evitare costi continuativi. Vedere [Dismissione](../08-teardown/) per la procedura.
+:::
+
+:::note
+Standard_F16s_v2 (32 GiB RAM) è l'impostazione predefinita perché diversi strumenti vengono eseguiti contemporaneamente durante l'esecuzione delle suite. L'automazione del browser (Playwright, Puppeteer) con Chromium headless è il principale consumatore di memoria. SKU F-series più piccoli funzioneranno per le suite senza browser, ma potrebbero risultare limitati durante l'esecuzione della bot-simulation.
+:::

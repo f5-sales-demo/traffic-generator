@@ -1,0 +1,146 @@
+---
+title: كتالوج الأدوات
+description: >-
+  كتالوج شامل لأكثر من 50 أداة أمنية مثبتة على جهاز مولد حركة المرور الافتراضي،
+  منظمة حسب الفئة مع طريقة التثبيت وأوامر أمثلة وربط مجموعات حركة المرور
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 8b6dc7f24a02
+  translator: machine
+---
+
+جميع الأدوات المدرجة أدناه مثبتة مسبقاً أثناء عملية التهيئة عبر cloud-init. لا حاجة لأي تثبيت يدوي بعد النشر.
+
+## اختبار تطبيقات الويب
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| nikto | apt | `nikto -h https://TARGET -maxtime 120s` | web-app-attacks |
+| sqlmap | apt | `sqlmap --batch -u "https://TARGET/dvwa/vulnerabilities/sqli/?id=1"` | web-app-attacks, api-attacks |
+| nuclei | ghlatest | `nuclei -u https://TARGET -severity medium,high,critical` | web-app-attacks |
+| dalfox | ghlatest | `dalfox url "https://TARGET/search?q=test" --silence` | web-app-attacks |
+| ffuf | ghlatest | `ffuf -u https://TARGET/FUZZ -w wordlist.txt -mc all -fc 404` | api-attacks |
+| gobuster | ghlatest | `gobuster dir -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/common.txt` | reconnaissance |
+| feroxbuster | ghlatest | `feroxbuster -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/raft-medium-directories.txt` | reconnaissance |
+| dirb | apt | `dirb https://TARGET /usr/share/dirb/wordlists/common.txt` | reconnaissance |
+| whatweb | apt | `whatweb https://TARGET` | reconnaissance |
+| wfuzz | pip | `wfuzz -c -z file,wordlist.txt -e urlencode,double_urlencode "https://TARGET/FUZZ"` | waf-encoding-evasion |
+
+## اختبار تجاوز جدار حماية تطبيقات الويب (WAF)
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
+| waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
+
+GoTestWAF (من Wallarm) هو إطار عمل معياري لتقييم جدار حماية تطبيقات الويب يضاعف الحمولات عبر مُرمِّزات متعددة (URL، Base64، JSUnicode) ومناطق وضع متنوعة (الجسم، الترويسة، معامل URL، الكوكي). أما waf-bypass (من Nemesida) فيرسل الحمولات بترميز Base64 وHTML-ENTITY وUTF-16 عبر مناطق ARGS وBODY وCOOKIE وHEADER.
+
+## تحليل الشبكة
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| nmap | apt | `nmap -sV -sC -p 80,443 TARGET_IP` | reconnaissance |
+| masscan | apt | `masscan TARGET_IP -p 1-1000 --rate=1000` | reconnaissance |
+| tshark | apt | `tshark -i eth0 -c 100 -f "host TARGET_IP"` | -- |
+| hping3 | apt | `hping3 -S -p 443 -c 10 TARGET_IP` | reconnaissance |
+| tcpdump | apt | `tcpdump -i eth0 -c 50 host TARGET_IP` | -- |
+| netcat | apt | `nc -zv TARGET_IP 80 443` | reconnaissance |
+| ngrep | apt | `ngrep -q -d eth0 "HTTP" host TARGET_IP` | -- |
+| iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
+| mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
+
+## اختبار SSL/TLS
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| sslscan | apt | `sslscan TARGET:443` | ssl-scanning |
+| sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
+| testssl.sh | git clone | `/opt/testssl.sh/testssl.sh TARGET:443` | ssl-scanning |
+
+## الوكيل وهجمات الرجل في المنتصف (MITM)
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| mitmproxy | uv | `mitmproxy --mode reverse:https://TARGET -p 8080` | -- |
+| socat | apt | `socat TCP-LISTEN:8080,fork TCP:TARGET:443` | -- |
+
+## أتمتة المتصفح
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
+| puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
+| puppeteer-extra-plugin-stealth | npm | يُستخدم كإضافة لـ Puppeteer للتصفح الخفي | bot-simulation |
+
+يقوم Playwright بتثبيت ملف Chromium الثنائي الخاص به عبر `playwright install chromium`. يستخدم Puppeteer نفس Chromium المثبت على النظام حيثما أمكن.
+
+## تعداد النطاقات الفرعية و DNS
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| subfinder | ghlatest | `subfinder -d example.com -silent` | reconnaissance |
+| httpx | ghlatest | `echo TARGET | httpx -status-code -title` | reconnaissance |
+| amass | ghlatest | `amass enum -passive -d example.com` | reconnaissance |
+| dnsrecon | uv | `dnsrecon -d example.com -t std` | reconnaissance |
+| fierce | uv | `fierce --domain example.com` | reconnaissance |
+| whois | apt | `whois example.com` | reconnaissance |
+| dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
+
+## اختبار بيانات الاعتماد
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| hydra | apt | `hydra -l admin -P /opt/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt TARGET https-post-form "/dvwa/login.php:..."` | web-app-attacks |
+| medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
+| ncrack | apt | `ncrack -vv --user admin -P passwords.txt TARGET:443` | web-app-attacks |
+
+## مكتبات Python الأمنية
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| scapy | pip | `python3 -c "from scapy.all import *; sr1(IP(dst='TARGET')/TCP(dport=443,flags='S'))"` | reconnaissance |
+| impacket | pip | `python3 -m impacket.smbclient TARGET` | reconnaissance |
+| arjun | pip | `arjun -u https://TARGET/endpoint` | api-attacks |
+| pwntools | pip | `python3 -c "from pwn import *; r=remote('TARGET',443)"` | -- |
+| hashid | pip | `hashid 'HASH_VALUE'` | -- |
+| theHarvester | uv | `theHarvester -d example.com -b all` | reconnaissance |
+
+## الاستخبارات مفتوحة المصدر (OSINT) والاستطلاع
+
+| الأداة | طريقة التثبيت | الموقع | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| recon-ng | git clone | `/opt/recon-ng/` | reconnaissance |
+| spiderfoot | git clone | `/opt/spiderfoot/` | reconnaissance |
+| SecLists | git clone | `/opt/SecLists/` | web-app-attacks, api-attacks, reconnaissance |
+| PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
+| waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
+
+توفر SecLists قوائم كلمات تستخدمها أدوات متعددة بما في ذلك ffuf وgobuster وferoxbuster وdirb وhydra. توفر PayloadsAllTheThings حمولات هجوم منسقة متعددة الترميز ومنظمة حسب فئة الهجوم (XSS، SQLi، XXE) مع متغيرات hex وoctal وUnicode وHTML entity وdouble URL encoding وJSFuck.
+
+## المستوى الكامل فقط
+
+يتم تثبيت هذه الأدوات فقط عند تعيين `tool_tier = "full"`:
+
+| الأداة | طريقة التثبيت | أمر مثال | تُستخدم بواسطة المجموعة |
+|---|---|---|---|
+| ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
+| Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
+
+:::note
+يضيف ZAP وMetasploit ما يقارب 1.5 جيجابايت إلى حجم القرص ومن 5 إلى 10 دقائق إلى وقت التهيئة. استخدم المستوى الكامل فقط إذا كنت تحتاج هذه الأدوات تحديداً لعرض توضيحي.
+:::
+
+## مرجع طرق التثبيت
+
+| الطريقة | الوصف |
+|---|---|
+| apt | مثبتة من مستودعات APT لنظام Ubuntu 24.04 عبر `apt-get install` |
+| ghlatest | أحدث ملف ثنائي يتم تنزيله من إصدارات GitHub باستخدام `ghlatest.sh` و `install-release.sh` |
+| uv | مثبتة كأداة Python باستخدام مدير الحزم `uv` |
+| pip | مثبتة كحزمة Python باستخدام `pip install` في Python النظام |
+| npm | مثبتة كحزمة Node.js عامة باستخدام `npm install -g` |
+| go install | مُجمَّعة من المصدر باستخدام `go install` ومثبتة في `/usr/local/bin` |
+| git clone | المستودع مُستنسَخ في مجلد `/opt/` |
+| git clone + pip | المستودع مُستنسَخ مع تثبيت اعتماديات Python |
+| installer script | سكريبت تثبيت مقدم من المورد يتم تنفيذه أثناء cloud-init |

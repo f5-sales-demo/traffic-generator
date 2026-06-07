@@ -1,0 +1,80 @@
+---
+title: 流量生成器
+description: >-
+  Azure Ubuntu 24.04 虚拟机，预装安全测试工具，用于针对 F5 Distributed Cloud 进行 WAF、Bot
+  Defense、API Security 和 Client-Side Defense 验证
+template: splash
+hero:
+  tagline: >-
+    Deploy a traffic generation VM with 50+ security tools, 19 organized attack
+    suites, and headless Chrome automation for comprehensive F5 XC demo
+    validation.
+  actions:
+    - text: Get Started
+      link: /traffic-generator/01-architecture/
+      icon: right-arrow
+      variant: primary
+    - text: Deploy Now
+      link: /traffic-generator/03-deploy/
+      icon: rocket
+      variant: minimal
+i18n:
+  sourceHash: dc5763d5e9c5
+  translator: machine
+---
+
+import { CardGrid } from '@astrojs/starlight/components';
+import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
+
+## 功能概述
+
+流量生成器是一台专门构建的 Azure 虚拟机，能够针对 F5 Distributed Cloud HTTP 负载均衡器生成真实的攻击流量、侦察扫描、Bot 模拟和 API 滥用模式。它通过生成这些功能所设计检测和拦截的精确流量，来验证 WAF 策略、Bot Defense、API Security 和 Client-Side Defense 是否已正确配置。
+
+所有工具均在 Terraform 配置期间通过 cloud-init 预安装。流量按套件组织，可以使用内置的 `runner.sh` 编排器单独运行或按顺序运行。
+
+## 流量套件分类
+
+| 套件 | 描述 | 验证的 F5 XC 功能 |
+|---|---|---|
+| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10、SQLMap API 模式、参数发现、端点模糊测试 | API Security |
+| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | 无头 Chrome、Puppeteer 隐身模式、Playwright 自动化、快速爬取 | Bot Defense |
+| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | 缓存行为、惊群效应、连接池、HTTP/2 多路复用 | CDN 集成 |
+| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA、OTP 暴力破解、JWT 篡改、SSRF、NoSQL 注入、IDOR | API Security |
+| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | 银行卡窃取器、表单劫持、键盘记录器、加密矿工、DOM 劫持 | Client-Side Defense |
+| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | 批量查询 DoS、深度递归、SQL 注入、内省滥用 | API Security (GraphQL) |
+| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | 暴力破解、命令注入、CSRF、文件包含、SQLi、XSS | WAF |
+| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM 操纵、内联脚本注入、Magecart 风格窃取载荷 | Client-Side Defense |
+| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi 登录绕过、XSS、IDOR、管理员访问、空字节文件访问 | WAF、Bot Defense |
+| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK 战术：侦察、初始访问、凭据访问、数据渗出 | WAF、Bot Defense、API Security |
+| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP、Nikto、Nuclei、Nmap 漏洞扫描、综合 OWASP 报告 | WAF、Web 应用扫描 |
+| [performance-testing](/traffic-generator/05-suites/#performance-testing) | 并发递增、持续负载、峰值测试、断点发现 | DDoS、速率限制 |
+| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap、Masscan、Gobuster、Subfinder、目录暴力枚举 | WAF / Bot Defense |
+| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA、BOPLA、BFLA、速率限制绕过、JWT 弱密钥 | API Security |
+| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan、sslyze、testssl.sh TLS 配置分析 | WAF |
+| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | 大流量合法 HTTP 流量，用于基线和负载测试 | 全部 |
+| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | 多层 URL/HTML/Unicode 编码、混合嵌套编码、分块传输编码、头部注入 | WAF |
+| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | SQL 注入、XSS、命令注入、路径遍历、Nikto、Nuclei | WAF |
+| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | 针对 F5 DemoApp WAF 测试端点的 SQLi、XSS、路径遍历 | WAF |
+
+<CardGrid>
+  <LinkCard
+    title="架构"
+    description="虚拟机布局、工具分类、分层安装以及与 origin-server 和 F5 XC 的集成点。"
+    href="01-architecture/"
+  />
+  <LinkCard
+    title="部署"
+    description="完整的 Terraform 操作指南：克隆、配置、应用并验证所有工具均可正常运行。"
+    href="03-deploy/"
+  />
+  <LinkCard
+    title="工具目录"
+    description="按类别组织的所有已安装工具，包含安装方式、示例命令和套件映射。"
+    href="04-tool-catalog/"
+  />
+  <LinkCard
+    title="套件参考"
+    description="每个流量套件的详细描述，包括脚本、使用的工具以及预期的 F5 XC 检测结果。"
+    href="05-suites/"
+  />
+</CardGrid>

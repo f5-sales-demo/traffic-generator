@@ -1,0 +1,147 @@
+---
+title: Catalogo degli Strumenti
+description: >-
+  Catalogo completo di oltre 50 strumenti di sicurezza installati sulla VM del
+  generatore di traffico, organizzati per categoria con metodo di installazione,
+  comandi di esempio e mappature delle suite di traffico
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 8b6dc7f24a02
+  translator: machine
+---
+
+Tutti gli strumenti elencati di seguito sono pre-installati durante il provisioning cloud-init. Non è necessaria alcuna installazione manuale dopo il deployment.
+
+## Test di Applicazioni Web
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| nikto | apt | `nikto -h https://TARGET -maxtime 120s` | web-app-attacks |
+| sqlmap | apt | `sqlmap --batch -u "https://TARGET/dvwa/vulnerabilities/sqli/?id=1"` | web-app-attacks, api-attacks |
+| nuclei | ghlatest | `nuclei -u https://TARGET -severity medium,high,critical` | web-app-attacks |
+| dalfox | ghlatest | `dalfox url "https://TARGET/search?q=test" --silence` | web-app-attacks |
+| ffuf | ghlatest | `ffuf -u https://TARGET/FUZZ -w wordlist.txt -mc all -fc 404` | api-attacks |
+| gobuster | ghlatest | `gobuster dir -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/common.txt` | reconnaissance |
+| feroxbuster | ghlatest | `feroxbuster -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/raft-medium-directories.txt` | reconnaissance |
+| dirb | apt | `dirb https://TARGET /usr/share/dirb/wordlists/common.txt` | reconnaissance |
+| whatweb | apt | `whatweb https://TARGET` | reconnaissance |
+| wfuzz | pip | `wfuzz -c -z file,wordlist.txt -e urlencode,double_urlencode "https://TARGET/FUZZ"` | waf-encoding-evasion |
+
+## Test di Evasione WAF
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
+| waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
+
+GoTestWAF (di Wallarm) è un framework di valutazione WAF standard del settore che moltiplica i payload attraverso diversi encoder (URL, Base64, JSUnicode) e zone di inserimento (body, header, parametro URL, cookie). waf-bypass (di Nemesida) invia payload con codifica Base64, HTML-ENTITY e UTF-16 attraverso le zone ARGS, BODY, COOKIE e HEADER.
+
+## Analisi di Rete
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| nmap | apt | `nmap -sV -sC -p 80,443 TARGET_IP` | reconnaissance |
+| masscan | apt | `masscan TARGET_IP -p 1-1000 --rate=1000` | reconnaissance |
+| tshark | apt | `tshark -i eth0 -c 100 -f "host TARGET_IP"` | -- |
+| hping3 | apt | `hping3 -S -p 443 -c 10 TARGET_IP` | reconnaissance |
+| tcpdump | apt | `tcpdump -i eth0 -c 50 host TARGET_IP` | -- |
+| netcat | apt | `nc -zv TARGET_IP 80 443` | reconnaissance |
+| ngrep | apt | `ngrep -q -d eth0 "HTTP" host TARGET_IP` | -- |
+| iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
+| mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
+
+## Test SSL/TLS
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| sslscan | apt | `sslscan TARGET:443` | ssl-scanning |
+| sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
+| testssl.sh | git clone | `/opt/testssl.sh/testssl.sh TARGET:443` | ssl-scanning |
+
+## MITM e Proxy
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| mitmproxy | uv | `mitmproxy --mode reverse:https://TARGET -p 8080` | -- |
+| socat | apt | `socat TCP-LISTEN:8080,fork TCP:TARGET:443` | -- |
+
+## Automazione Browser
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
+| puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
+| puppeteer-extra-plugin-stealth | npm | Utilizzato come plugin Puppeteer per navigazione stealth | bot-simulation |
+
+Playwright installa il proprio binario Chromium tramite `playwright install chromium`. Puppeteer utilizza lo stesso Chromium di sistema dove possibile.
+
+## Enumerazione Sottodomini e DNS
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| subfinder | ghlatest | `subfinder -d example.com -silent` | reconnaissance |
+| httpx | ghlatest | `echo TARGET | httpx -status-code -title` | reconnaissance |
+| amass | ghlatest | `amass enum -passive -d example.com` | reconnaissance |
+| dnsrecon | uv | `dnsrecon -d example.com -t std` | reconnaissance |
+| fierce | uv | `fierce --domain example.com` | reconnaissance |
+| whois | apt | `whois example.com` | reconnaissance |
+| dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
+
+## Test delle Credenziali
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| hydra | apt | `hydra -l admin -P /opt/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt TARGET https-post-form "/dvwa/login.php:..."` | web-app-attacks |
+| medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
+| ncrack | apt | `ncrack -vv --user admin -P passwords.txt TARGET:443` | web-app-attacks |
+
+## Librerie Python per la Sicurezza
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| scapy | pip | `python3 -c "from scapy.all import *; sr1(IP(dst='TARGET')/TCP(dport=443,flags='S'))"` | reconnaissance |
+| impacket | pip | `python3 -m impacket.smbclient TARGET` | reconnaissance |
+| arjun | pip | `arjun -u https://TARGET/endpoint` | api-attacks |
+| pwntools | pip | `python3 -c "from pwn import *; r=remote('TARGET',443)"` | -- |
+| hashid | pip | `hashid 'HASH_VALUE'` | -- |
+| theHarvester | uv | `theHarvester -d example.com -b all` | reconnaissance |
+
+## OSINT e Ricognizione
+
+| Strumento | Metodo di Installazione | Posizione | Utilizzato dalla Suite |
+|---|---|---|---|
+| recon-ng | git clone | `/opt/recon-ng/` | reconnaissance |
+| spiderfoot | git clone | `/opt/spiderfoot/` | reconnaissance |
+| SecLists | git clone | `/opt/SecLists/` | web-app-attacks, api-attacks, reconnaissance |
+| PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
+| waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
+
+SecLists fornisce wordlist utilizzate da diversi strumenti tra cui ffuf, gobuster, feroxbuster, dirb e hydra. PayloadsAllTheThings fornisce payload di attacco curati con codifiche multiple, organizzati per classe di attacco (XSS, SQLi, XXE) con varianti hex, ottale, Unicode, entità HTML, doppia codifica URL e JSFuck.
+
+## Solo Livello Full
+
+Questi strumenti vengono installati solo quando `tool_tier = "full"`:
+
+| Strumento | Metodo di Installazione | Comando di Esempio | Utilizzato dalla Suite |
+|---|---|---|---|
+| ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
+| Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
+
+:::note
+ZAP e Metasploit aggiungono circa 1,5 GiB all'occupazione su disco e 5-10 minuti al tempo di provisioning. Utilizzare il livello full solo se si necessita specificamente di questi strumenti per una demo.
+:::
+
+## Riferimento Metodi di Installazione
+
+| Metodo | Descrizione |
+|---|---|
+| apt | Installato dai repository APT di Ubuntu 24.04 tramite `apt-get install` |
+| ghlatest | Ultimo binario scaricato da GitHub Releases utilizzando `ghlatest.sh` e `install-release.sh` |
+| uv | Installato come strumento Python utilizzando il gestore di pacchetti `uv` |
+| pip | Installato come pacchetto Python utilizzando `pip install` nel Python di sistema |
+| npm | Installato come pacchetto globale Node.js utilizzando `npm install -g` |
+| go install | Compilato dal sorgente utilizzando `go install` e installato in `/usr/local/bin` |
+| git clone | Repository clonato nella directory `/opt/` |
+| git clone + pip | Repository clonato e dipendenze Python installate |
+| installer script | Script di installazione fornito dal vendor eseguito durante il cloud-init |

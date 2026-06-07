@@ -1,0 +1,147 @@
+---
+title: टूल कैटलॉग
+description: >-
+  ट्रैफिक जनरेटर VM पर इंस्टॉल किए गए 50+ सुरक्षा टूल्स की पूर्ण कैटलॉग, श्रेणी
+  के अनुसार व्यवस्थित, इंस्टॉल विधि, उदाहरण कमांड और ट्रैफिक सूट मैपिंग के साथ
+sidebar:
+  order: 4
+  label: टूल कैटलॉग
+i18n:
+  sourceHash: 8b6dc7f24a02
+  translator: machine
+---
+
+नीचे सूचीबद्ध हर टूल cloud-init प्रोविजनिंग के दौरान पूर्व-स्थापित होता है। डिप्लॉयमेंट के बाद किसी मैन्युअल इंस्टॉलेशन की आवश्यकता नहीं है।
+
+## वेब एप्लिकेशन टेस्टिंग
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| nikto | apt | `nikto -h https://TARGET -maxtime 120s` | web-app-attacks |
+| sqlmap | apt | `sqlmap --batch -u "https://TARGET/dvwa/vulnerabilities/sqli/?id=1"` | web-app-attacks, api-attacks |
+| nuclei | ghlatest | `nuclei -u https://TARGET -severity medium,high,critical` | web-app-attacks |
+| dalfox | ghlatest | `dalfox url "https://TARGET/search?q=test" --silence` | web-app-attacks |
+| ffuf | ghlatest | `ffuf -u https://TARGET/FUZZ -w wordlist.txt -mc all -fc 404` | api-attacks |
+| gobuster | ghlatest | `gobuster dir -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/common.txt` | reconnaissance |
+| feroxbuster | ghlatest | `feroxbuster -u https://TARGET -w /opt/SecLists/Discovery/Web-Content/raft-medium-directories.txt` | reconnaissance |
+| dirb | apt | `dirb https://TARGET /usr/share/dirb/wordlists/common.txt` | reconnaissance |
+| whatweb | apt | `whatweb https://TARGET` | reconnaissance |
+| wfuzz | pip | `wfuzz -c -z file,wordlist.txt -e urlencode,double_urlencode "https://TARGET/FUZZ"` | waf-encoding-evasion |
+
+## WAF इवेज़न टेस्टिंग
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
+| waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
+
+GoTestWAF (Wallarm द्वारा) एक उद्योग-मानक WAF मूल्यांकन फ्रेमवर्क है जो पेलोड्स को कई एनकोडर्स (URL, Base64, JSUnicode) और प्लेसमेंट ज़ोन (body, header, URL param, cookie) के माध्यम से गुणित करता है। waf-bypass (Nemesida द्वारा) Base64, HTML-ENTITY, और UTF-16 एन्कोडिंग के साथ ARGS, BODY, COOKIE, और HEADER ज़ोन में पेलोड्स भेजता है।
+
+## नेटवर्क विश्लेषण
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| nmap | apt | `nmap -sV -sC -p 80,443 TARGET_IP` | reconnaissance |
+| masscan | apt | `masscan TARGET_IP -p 1-1000 --rate=1000` | reconnaissance |
+| tshark | apt | `tshark -i eth0 -c 100 -f "host TARGET_IP"` | -- |
+| hping3 | apt | `hping3 -S -p 443 -c 10 TARGET_IP` | reconnaissance |
+| tcpdump | apt | `tcpdump -i eth0 -c 50 host TARGET_IP` | -- |
+| netcat | apt | `nc -zv TARGET_IP 80 443` | reconnaissance |
+| ngrep | apt | `ngrep -q -d eth0 "HTTP" host TARGET_IP` | -- |
+| iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
+| mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
+
+## SSL/TLS टेस्टिंग
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| sslscan | apt | `sslscan TARGET:443` | ssl-scanning |
+| sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
+| testssl.sh | git clone | `/opt/testssl.sh/testssl.sh TARGET:443` | ssl-scanning |
+
+## MITM और प्रॉक्सी
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| mitmproxy | uv | `mitmproxy --mode reverse:https://TARGET -p 8080` | -- |
+| socat | apt | `socat TCP-LISTEN:8080,fork TCP:TARGET:443` | -- |
+
+## ब्राउज़र ऑटोमेशन
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
+| puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
+| puppeteer-extra-plugin-stealth | npm | स्टेल्थ ब्राउज़िंग के लिए Puppeteer प्लगइन के रूप में उपयोग किया जाता है | bot-simulation |
+
+Playwright अपना स्वयं का Chromium बाइनरी `playwright install chromium` के माध्यम से इंस्टॉल करता है। Puppeteer जहाँ संभव हो वही सिस्टम Chromium उपयोग करता है।
+
+## सबडोमेन और DNS एन्यूमरेशन
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| subfinder | ghlatest | `subfinder -d example.com -silent` | reconnaissance |
+| httpx | ghlatest | `echo TARGET | httpx -status-code -title` | reconnaissance |
+| amass | ghlatest | `amass enum -passive -d example.com` | reconnaissance |
+| dnsrecon | uv | `dnsrecon -d example.com -t std` | reconnaissance |
+| fierce | uv | `fierce --domain example.com` | reconnaissance |
+| whois | apt | `whois example.com` | reconnaissance |
+| dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
+
+## क्रेडेंशियल टेस्टिंग
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| hydra | apt | `hydra -l admin -P /opt/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt TARGET https-post-form "/dvwa/login.php:..."` | web-app-attacks |
+| medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
+| ncrack | apt | `ncrack -vv --user admin -P passwords.txt TARGET:443` | web-app-attacks |
+
+## Python सुरक्षा लाइब्रेरीज़
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| scapy | pip | `python3 -c "from scapy.all import *; sr1(IP(dst='TARGET')/TCP(dport=443,flags='S'))"` | reconnaissance |
+| impacket | pip | `python3 -m impacket.smbclient TARGET` | reconnaissance |
+| arjun | pip | `arjun -u https://TARGET/endpoint` | api-attacks |
+| pwntools | pip | `python3 -c "from pwn import *; r=remote('TARGET',443)"` | -- |
+| hashid | pip | `hashid 'HASH_VALUE'` | -- |
+| theHarvester | uv | `theHarvester -d example.com -b all` | reconnaissance |
+
+## OSINT और रीकॉन
+
+| टूल | इंस्टॉल विधि | स्थान | सूट द्वारा उपयोग |
+|---|---|---|---|
+| recon-ng | git clone | `/opt/recon-ng/` | reconnaissance |
+| spiderfoot | git clone | `/opt/spiderfoot/` | reconnaissance |
+| SecLists | git clone | `/opt/SecLists/` | web-app-attacks, api-attacks, reconnaissance |
+| PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
+| waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
+
+SecLists कई टूल्स द्वारा उपयोग की जाने वाली वर्डलिस्ट प्रदान करता है जिनमें ffuf, gobuster, feroxbuster, dirb, और hydra शामिल हैं। PayloadsAllTheThings हमले की श्रेणी (XSS, SQLi, XXE) के अनुसार व्यवस्थित क्यूरेटेड मल्टी-एन्कोडिंग अटैक पेलोड्स प्रदान करता है जिनमें hex, octal, Unicode, HTML entity, double URL encoding, और JSFuck वेरिएंट शामिल हैं।
+
+## केवल फुल टियर
+
+ये टूल्स केवल तब इंस्टॉल होते हैं जब `tool_tier = "full"` हो:
+
+| टूल | इंस्टॉल विधि | उदाहरण कमांड | सूट द्वारा उपयोग |
+|---|---|---|---|
+| ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
+| Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
+
+:::note
+ZAP और Metasploit डिस्क फुटप्रिंट में लगभग 1.5 GiB और प्रोविजनिंग समय में 5-10 मिनट जोड़ते हैं। फुल टियर का उपयोग केवल तभी करें जब आपको डेमो के लिए विशेष रूप से इन टूल्स की आवश्यकता हो।
+:::
+
+## इंस्टॉल विधि संदर्भ
+
+| विधि | विवरण |
+|---|---|
+| apt | `apt-get install` के माध्यम से Ubuntu 24.04 APT रिपॉजिटरीज़ से इंस्टॉल किया गया |
+| ghlatest | `ghlatest.sh` और `install-release.sh` का उपयोग करके GitHub Releases से नवीनतम बाइनरी डाउनलोड की गई |
+| uv | `uv` पैकेज मैनेजर का उपयोग करके Python टूल के रूप में इंस्टॉल किया गया |
+| pip | सिस्टम Python में `pip install` का उपयोग करके Python पैकेज के रूप में इंस्टॉल किया गया |
+| npm | `npm install -g` का उपयोग करके ग्लोबल Node.js पैकेज के रूप में इंस्टॉल किया गया |
+| go install | `go install` का उपयोग करके सोर्स से कंपाइल किया गया और `/usr/local/bin` में इंस्टॉल किया गया |
+| git clone | रिपॉजिटरी `/opt/` डायरेक्टरी में क्लोन की गई |
+| git clone + pip | रिपॉजिटरी क्लोन की गई और Python डिपेंडेंसीज़ इंस्टॉल की गईं |
+| installer script | cloud-init के दौरान वेंडर द्वारा प्रदान की गई इंस्टॉलर स्क्रिप्ट निष्पादित की गई |

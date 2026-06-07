@@ -1,0 +1,92 @@
+---
+title: ข้อกำหนดเบื้องต้น
+description: >-
+  Azure subscription with Contributor role, Terraform >= 1.5, SSH key pair
+  (Ed25519 recommended), Azure CLI for subscription_id lookup, and outbound
+  HTTPS for tool downloads during cloud-init provisioning
+sidebar:
+  order: 2
+i18n:
+  sourceHash: fd94de6375d4
+  translator: machine
+---
+
+## สิ่งที่จำเป็น
+
+### Azure Subscription
+
+Azure subscription ที่ใช้งานอยู่พร้อมสิทธิ์ Contributor role หรือสิทธิ์เทียบเท่าเพื่อสร้าง:
+
+- Resource groups
+- Virtual networks และ subnets
+- Network security groups
+- Public IP addresses
+- Virtual machines (ค่าเริ่มต้นคือ Standard_F16s_v2)
+
+### Azure CLI
+
+ติดตั้งและยืนยันตัวตนกับ Azure CLI เพื่อดึง subscription ID ของคุณ:
+
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+az login
+
+az account show --query '{name:name, id:id}' -o table
+```
+
+คัดลอกค่า `id` -- นี่คือ `subscription_id` ที่ Terraform ต้องการ
+
+### Terraform
+
+ต้องใช้ Terraform >= 1.5:
+
+```bash
+terraform version
+```
+
+หากยังไม่ได้ติดตั้ง ให้ใช้ HashiCorp APT repository:
+
+```bash
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+```
+
+### คู่กุญแจ SSH
+
+คู่กุญแจ SSH สำหรับการเข้าถึง VM แนะนำให้ใช้ Ed25519:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
+```
+
+### การเข้าถึงเครือข่าย
+
+Traffic Generator VM ต้องการการเข้าถึง HTTPS ขาออกระหว่างการจัดเตรียมระบบเพื่อดาวน์โหลดเครื่องมือจาก:
+
+- GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
+- PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
+- npm registry (puppeteer, puppeteer-extra-plugin-stealth)
+- Ubuntu APT repositories (nikto, nmap, masscan, hydra, tshark และแพ็คเกจระบบอื่น ๆ)
+- Git repositories (testssl.sh, recon-ng, spiderfoot, SecLists)
+
+หาก Azure subscription ของคุณบังคับใช้กฎ firewall ขาออกหรือข้อจำกัด NSG ให้ตรวจสอบว่า HTTPS (พอร์ต 443) ไปยังแหล่งเหล่านี้ได้รับอนุญาตระหว่างช่วงเวลาจัดเตรียมระบบเริ่มต้น (15-25 นาที)
+
+### คอมโพเนนต์ที่ต้องติดตั้งล่วงหน้า
+
+ก่อนการติดตั้ง Traffic Generator คุณควรมี:
+
+1. **Origin Server** ที่ติดตั้งแล้วและเข้าถึงได้ (ดู [เอกสาร origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+2. **F5 XC HTTP Load Balancer** ที่กำหนดค่าแล้วโดยมี origin server เป็น backend
+3. **นโยบาย WAF** ที่แนบกับ load balancer (สำหรับการตรวจสอบ WAF traffic)
+
+ตัวแปร Terraform `target_fqdn` ควรตั้งค่าเป็นโดเมนสาธารณะของ F5 XC load balancer
+
+:::tip
+ใช้ `terraform destroy` เมื่อไม่ได้ใช้งานแล็บเพื่อหลีกเลี่ยงค่าใช้จ่ายที่เกิดขึ้นต่อเนื่อง ดู [การรื้อถอนระบบ](../08-teardown/) สำหรับขั้นตอน
+:::
+
+:::note
+Standard_F16s_v2 (32 GiB RAM) เป็นค่าเริ่มต้นเนื่องจากเครื่องมือหลายตัวทำงานพร้อมกันระหว่างการรัน suite ระบบอัตโนมัติเบราว์เซอร์ (Playwright, Puppeteer) ที่ใช้ headless Chromium เป็นตัวใช้หน่วยความจำหลัก SKU F-series ที่เล็กกว่าสามารถใช้ได้สำหรับ suite ที่ไม่ใช้เบราว์เซอร์ แต่อาจมีหน่วยความจำจำกัดเมื่อรัน bot-simulation
+:::

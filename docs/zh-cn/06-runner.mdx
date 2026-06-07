@@ -1,0 +1,239 @@
+---
+title: Runner
+description: >-
+  runner.sh 套件编排器使用指南：执行模式、config.env 配置、环境变量覆盖、干运行模式、结果目录结构、meta.json
+  格式、独立脚本执行及远程 SSH 调用
+sidebar:
+  order: 6
+i18n:
+  sourceHash: c476d62976ae
+  translator: machine
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+## 概述
+
+`runner.sh` 是一个套件编排器，它按顺序执行套件目录中所有编号的脚本，捕获输出并记录结果元数据。它安装在虚拟机的 `/opt/traffic-generator/suites/runner.sh` 路径下。
+
+## 用法
+
+```bash
+runner.sh <suite-name> [--dry-run]
+```
+
+**参数：**
+
+| 参数 | 是否必需 | 描述 |
+|---|---|---|
+| `suite-name` | 是 | 套件目录的名称（例如 `web-app-attacks`、`api-attacks`） |
+| `--dry-run` | 否 | 打印将要执行的内容，但不实际运行任何脚本 |
+
+**示例：**
+
+```bash
+# 运行 web-app-attacks 套件
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# 干运行以预览 api-attacks 脚本
+/opt/traffic-generator/suites/runner.sh api-attacks --dry-run
+
+# 运行 bot 模拟
+/opt/traffic-generator/suites/runner.sh bot-simulation
+```
+
+## 配置
+
+### config.env
+
+Runner 从 `/opt/traffic-generator/config.env` 读取配置：
+
+```bash
+# Required: target FQDN (F5 XC load balancer domain)
+TARGET_FQDN=demo.example.com
+
+# Optional: direct origin IP for baseline testing (bypasses F5 XC)
+TARGET_ORIGIN_IP=
+```
+
+此文件在 Terraform 配置期间会根据 `target_fqdn` 和 `target_origin_ip` 变量自动写入。如需在部署后更改目标，请直接在虚拟机上编辑此文件。
+
+### 环境变量覆盖
+
+`config.env` 中的任何变量都可以通过在运行套件之前导出来覆盖：
+
+```bash
+# Override target FQDN for a single run
+TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
+
+# Override via export
+export TARGET_FQDN=staging.example.com
+/opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+配置文件路径本身也可以被覆盖：
+
+```bash
+CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
+```
+
+## 干运行模式
+
+`--dry-run` 标志会打印每个将要执行的脚本，但不会实际运行：
+
+```bash
+/opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
+```
+
+输出：
+
+```
+=== 01-sqli.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+=== 02-xss.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/02-xss.sh demo.example.com
+=== 03-command-injection.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/03-command-injection.sh demo.example.com
+=== 04-path-traversal.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/04-path-traversal.sh demo.example.com
+=== 05-nikto-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/05-nikto-scan.sh demo.example.com
+=== 06-nuclei-scan.sh ===
+[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/06-nuclei-scan.sh demo.example.com
+=== Suite Complete ===
+Passed: 0 | Failed: 0 | Skipped: 6
+Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
+```
+
+使用干运行可以在部署后验证套件结构，或在针对新目标运行套件之前进行预览。
+
+## 结果目录
+
+每次套件运行都会创建一个带时间戳的结果目录：
+
+```
+/opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
+```
+
+**结构：**
+
+```
+/opt/traffic-generator/results/20260425-143000-web-app-attacks/
+  meta.json
+  01-sqli.sh.log
+  02-xss.sh.log
+  03-command-injection.sh.log
+  04-path-traversal.sh.log
+  05-nikto-scan.sh.log
+  06-nuclei-scan.sh.log
+```
+
+每个脚本的 stdout 和 stderr 都会被捕获到以脚本命名的 `.log` 文件中。
+
+### meta.json 格式
+
+`meta.json` 文件记录套件执行的元数据：
+
+```json
+{
+  "suite": "web-app-attacks",
+  "target": "demo.example.com",
+  "started": "2026-04-25T14:30:00Z",
+  "completed": "2026-04-25T14:45:23Z",
+  "status": "completed",
+  "passed": 5,
+  "failed": 1,
+  "skipped": 0
+}
+```
+
+| 字段 | 描述 |
+|---|---|
+| `suite` | 套件名称 |
+| `target` | 本次运行使用的目标 FQDN |
+| `started` | 套件开始的 UTC 时间戳 |
+| `completed` | 套件完成的 UTC 时间戳 |
+| `status` | 执行期间为 `running`，完成后为 `completed` |
+| `passed` | 退出码为 0 的脚本数量 |
+| `failed` | 退出码为非零的脚本数量 |
+| `skipped` | 被跳过的脚本数量（不可执行或干运行） |
+
+<Aside type="tip">
+脚本的非零退出码并不一定意味着套件失败。许多安全工具在发现漏洞时会以非零退出码退出，这在攻击流量生成过程中是预期行为。
+</Aside>
+
+## 单独运行脚本
+
+每个脚本都可以在不使用 Runner 的情况下独立执行：
+
+```bash
+# Run a single script directly
+/opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
+
+# Run a specific API attack
+/opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
+```
+
+脚本接受目标 FQDN 作为第一个位置参数。它们不会直接读取 `config.env`——只有 Runner 会读取。独立运行时，您必须显式传递 FQDN。
+
+## 按顺序运行所有套件
+
+要依次运行所有套件：
+
+```bash
+for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
+  echo "========================================="
+  echo "Starting suite: ${suite}"
+  echo "========================================="
+  /opt/traffic-generator/suites/runner.sh "$suite"
+  echo ""
+done
+```
+
+这将生成覆盖所有 F5 XC 安全功能的综合流量。预计完整运行需要 45-80 分钟，具体取决于目标的响应时间。
+
+## 通过 SSH 远程执行
+
+从本地机器运行套件，无需维持 SSH 会话：
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Run a single suite
+ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
+
+# Run a suite with target override
+ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
+
+# Run in background (disconnection-safe)
+ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
+
+# Check results later
+ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
+ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
+```
+
+对于长时间运行的套件，使用 `nohup` 或 `tmux` 来防止 SSH 断开连接导致进程被终止：
+
+```bash
+ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
+
+# Reattach later to watch progress
+ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
+```
+
+## 执行流程
+
+<Steps>
+
+1. **加载配置** -- Runner 读取 `config.env`（或 `CONFIG_FILE` 覆盖值），然后检查环境中的 `TARGET_FQDN`。
+
+2. **验证套件** -- 确认指定的套件目录存在于 suites 目录下。如果未找到，则列出可用的套件。
+
+3. **创建结果目录** -- 创建 `/opt/traffic-generator/results/<timestamp>-<suite>/` 并写入初始 `meta.json`，状态为 `status: running`。
+
+4. **执行脚本** -- 遍历套件目录中匹配 `[0-9]*` 的文件，按名称排序。跳过不可执行的文件。将 `TARGET_FQDN` 作为第一个参数传递。将输出捕获到 `<script-name>.log`。
+
+5. **记录结果** -- 更新 `meta.json`，写入完成时间戳以及通过/失败/跳过的计数。
+
+</Steps>

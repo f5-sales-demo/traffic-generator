@@ -1,0 +1,78 @@
+---
+title: Teardown
+description: >-
+  terraform destroy to remove all Azure resources, verify resource group
+  deletion with az CLI, and clean local state files
+sidebar:
+  order: 8
+i18n:
+  sourceHash: acaae5a3d897
+  translator: machine
+---
+
+Cuando la sesión de laboratorio esté completa, destruya todos los recursos de Azure para detener la facturación.
+
+## Terraform Destroy
+
+Desde el directorio `terraform/`:
+
+```bash
+cd terraform/
+
+terraform plan -destroy
+
+terraform destroy
+```
+
+Terraform solicitará confirmación. Escriba `yes` para continuar.
+
+## Verificar la limpieza
+
+Confirme que todos los recursos han sido eliminados:
+
+```bash
+RG_NAME=$(terraform output -raw resource_group_name)
+
+az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
+  && echo "Resource group deleted" \
+  || echo "Resource group still exists"
+
+az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
+```
+
+## Limpiar el estado local
+
+Elimine el estado de Terraform y los archivos en caché:
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
+
+## Preservar resultados (Opcional)
+
+Si desea conservar los resultados de la suite de tráfico antes de destruir la VM, cópielos localmente:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Copy all results to local machine
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
+
+# Or copy just the latest run
+LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+```
+
+## Limpieza de F5 XC
+
+Si también desea eliminar la configuración de F5 XC que el generador de tráfico estaba apuntando:
+
+1. Elimine el balanceador de carga HTTP
+2. Elimine el origin pool
+3. Elimine cualquier política WAF, configuración de Bot Defense, políticas de API Security o configuraciones de CSD creadas para las pruebas
+
+Estos recursos de F5 XC no generan costos de Azure, pero deben limpiarse cuando el entorno de demostración ya no sea necesario.
+
+:::tip
+Para uso recurrente de demostraciones, considere crear un script para el ciclo de vida completo: `cd terraform && terraform apply` antes de una demostración, ejecutar las suites y luego `terraform destroy` después. El tier estándar se aprovisiona en 15-20 minutos, lo que hace práctico configurar y desmontar el mismo día.
+:::

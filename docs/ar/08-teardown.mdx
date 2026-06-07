@@ -1,0 +1,78 @@
+---
+title: Teardown
+description: >-
+  terraform destroy to remove all Azure resources, verify resource group
+  deletion with az CLI, and clean local state files
+sidebar:
+  order: 8
+i18n:
+  sourceHash: acaae5a3d897
+  translator: machine
+---
+
+عند اكتمال جلسة المختبر، قم بتدمير جميع موارد Azure لإيقاف الفوترة.
+
+## تدمير Terraform
+
+من مجلد `terraform/`:
+
+```bash
+cd terraform/
+
+terraform plan -destroy
+
+terraform destroy
+```
+
+سيطلب Terraform تأكيدًا. اكتب `yes` للمتابعة.
+
+## التحقق من التنظيف
+
+تأكد من إزالة جميع الموارد:
+
+```bash
+RG_NAME=$(terraform output -raw resource_group_name)
+
+az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
+  && echo "Resource group deleted" \
+  || echo "Resource group still exists"
+
+az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
+```
+
+## تنظيف الحالة المحلية
+
+قم بإزالة حالة Terraform والملفات المخزنة مؤقتًا:
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
+
+## حفظ النتائج (اختياري)
+
+إذا كنت ترغب في الاحتفاظ بنتائج مجموعة حركة المرور قبل تدمير الجهاز الافتراضي، انسخها محليًا:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Copy all results to local machine
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
+
+# Or copy just the latest run
+LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+```
+
+## تنظيف F5 XC
+
+إذا كنت ترغب أيضًا في إزالة تكوين F5 XC الذي كان مولد حركة المرور يستهدفه:
+
+1. احذف موازن الحمل HTTP
+2. احذف مجمع الأصل
+3. احذف أي سياسات WAF أو تكوينات Bot Defense أو سياسات API Security أو تكوينات CSD التي تم إنشاؤها للاختبار
+
+لا تتسبب موارد F5 XC هذه في تكاليف Azure ولكن يجب تنظيفها عندما لم تعد بيئة العرض التوضيحي مطلوبة.
+
+:::tip
+للاستخدام المتكرر للعروض التوضيحية، فكر في كتابة سكريبت لدورة الحياة الكاملة: `cd terraform && terraform apply` قبل العرض التوضيحي، ثم تشغيل المجموعات، ثم `terraform destroy` بعد ذلك. يتم توفير المستوى القياسي في 15-20 دقيقة، مما يجعل الإعداد والتفكيك في نفس اليوم أمرًا عمليًا.
+:::

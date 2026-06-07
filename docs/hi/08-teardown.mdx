@@ -1,0 +1,78 @@
+---
+title: Teardown
+description: >-
+  terraform destroy to remove all Azure resources, verify resource group
+  deletion with az CLI, and clean local state files
+sidebar:
+  order: 8
+i18n:
+  sourceHash: acaae5a3d897
+  translator: machine
+---
+
+जब लैब सत्र पूरा हो जाए, तो बिलिंग रोकने के लिए सभी Azure संसाधनों को नष्ट कर दें।
+
+## Terraform Destroy
+
+`terraform/` डायरेक्टरी से:
+
+```bash
+cd terraform/
+
+terraform plan -destroy
+
+terraform destroy
+```
+
+Terraform पुष्टि के लिए प्रॉम्प्ट करेगा। आगे बढ़ने के लिए `yes` टाइप करें।
+
+## क्लीनअप सत्यापित करें
+
+पुष्टि करें कि सभी संसाधन हटा दिए गए हैं:
+
+```bash
+RG_NAME=$(terraform output -raw resource_group_name)
+
+az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
+  && echo "Resource group deleted" \
+  || echo "Resource group still exists"
+
+az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
+```
+
+## लोकल स्टेट की सफाई
+
+Terraform स्टेट और कैश्ड फाइलें हटाएं:
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
+
+## परिणाम सुरक्षित रखें (वैकल्पिक)
+
+यदि आप VM को नष्ट करने से पहले ट्रैफिक सूट के परिणामों को रखना चाहते हैं, तो उन्हें लोकल मशीन पर कॉपी करें:
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# Copy all results to local machine
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
+
+# Or copy just the latest run
+LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+```
+
+## F5 XC क्लीनअप
+
+यदि आप उस F5 XC कॉन्फ़िगरेशन को भी हटाना चाहते हैं जिसे ट्रैफिक जनरेटर लक्षित कर रहा था:
+
+1. HTTP लोड बैलेंसर डिलीट करें
+2. ऑरिजिन पूल डिलीट करें
+3. परीक्षण के लिए बनाई गई किसी भी WAF पॉलिसी, Bot Defense कॉन्फ़िगरेशन, API Security पॉलिसी, या CSD कॉन्फ़िगरेशन को डिलीट करें
+
+ये F5 XC संसाधन Azure लागत उत्पन्न नहीं करते हैं, लेकिन जब डेमो वातावरण की आवश्यकता न रहे तो इन्हें साफ कर दिया जाना चाहिए।
+
+:::tip
+बार-बार होने वाले डेमो उपयोग के लिए, पूर्ण जीवनचक्र को स्क्रिप्ट करने पर विचार करें: डेमो से पहले `cd terraform && terraform apply`, सूट चलाएं, फिर बाद में `terraform destroy`। स्टैंडर्ड टियर 15-20 मिनट में प्रोविज़न होता है, जिससे उसी दिन सेटअप और टियरडाउन व्यावहारिक हो जाता है।
+:::

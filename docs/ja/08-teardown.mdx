@@ -1,0 +1,78 @@
+---
+title: Teardown
+description: >-
+  terraform destroy to remove all Azure resources, verify resource group
+  deletion with az CLI, and clean local state files
+sidebar:
+  order: 8
+i18n:
+  sourceHash: acaae5a3d897
+  translator: machine
+---
+
+ラボセッションが完了したら、課金を停止するためにすべての Azure リソースを破棄します。
+
+## Terraform Destroy
+
+`terraform/` ディレクトリから実行します：
+
+```bash
+cd terraform/
+
+terraform plan -destroy
+
+terraform destroy
+```
+
+Terraform が確認を求めます。`yes` と入力して続行してください。
+
+## クリーンアップの確認
+
+すべてのリソースが削除されたことを確認します：
+
+```bash
+RG_NAME=$(terraform output -raw resource_group_name)
+
+az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
+  && echo "Resource group deleted" \
+  || echo "Resource group still exists"
+
+az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
+```
+
+## ローカルステートのクリーンアップ
+
+Terraform のステートファイルとキャッシュファイルを削除します：
+
+```bash
+rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
+
+## 結果の保存（オプション）
+
+VM を破棄する前にトラフィックスイートの結果を保持したい場合は、ローカルにコピーします：
+
+```bash
+TGEN_IP=$(terraform output -raw public_ip)
+
+# すべての結果をローカルマシンにコピー
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
+
+# または最新の実行結果のみをコピー
+LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
+scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+```
+
+## F5 XC のクリーンアップ
+
+トラフィックジェネレーターがターゲットにしていた F5 XC の設定も削除したい場合：
+
+1. HTTP ロードバランサーを削除する
+2. オリジンプールを削除する
+3. テスト用に作成した WAF ポリシー、Bot Defense 設定、API Security ポリシー、または CSD 設定を削除する
+
+これらの F5 XC リソースは Azure のコストは発生しませんが、デモ環境が不要になった際にはクリーンアップする必要があります。
+
+:::tip
+繰り返しデモで使用する場合は、フルライフサイクルのスクリプト化を検討してください：デモの前に `cd terraform && terraform apply` を実行し、スイートを実行した後、`terraform destroy` を実行します。Standard ティアは 15〜20 分でプロビジョニングされるため、当日中のセットアップとティアダウンが実用的です。
+:::
