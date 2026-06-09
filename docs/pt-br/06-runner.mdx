@@ -3,8 +3,8 @@ title: Runner
 description: >-
   Guia de uso do orquestrador de suítes runner.sh: modos de execução,
   configuração config.env, substituição de variáveis de ambiente, modo dry-run,
-  estrutura do diretório de resultados, formato meta.json, execução standalone
-  de scripts e invocação remota via SSH
+  estrutura do diretório de resultados, formato meta.json, execução de scripts
+  individuais e invocação remota via SSH
 sidebar:
   order: 6
 i18n:
@@ -16,7 +16,7 @@ import { Steps, Aside } from '@astrojs/starlight/components';
 
 ## Visão Geral
 
-`runner.sh` é o orquestrador de suítes que executa todos os scripts numerados em um diretório de suíte em ordem, captura a saída e registra metadados de resultados. Ele é instalado em `/opt/traffic-generator/suites/runner.sh` na VM.
+`runner.sh` é o orquestrador de suítes que executa todos os scripts numerados em um diretório de suíte em ordem, captura a saída e registra os metadados dos resultados. Ele é instalado em `/opt/traffic-generator/suites/runner.sh` na VM.
 
 ## Uso
 
@@ -28,7 +28,7 @@ runner.sh <suite-name> [--dry-run]
 
 | Argumento | Obrigatório | Descrição |
 |---|---|---|
-| `suite-name` | Sim | Nome do diretório da suíte (ex.: `web-app-attacks`, `api-attacks`) |
+| `suite-name` | Sim | Nome do diretório da suíte (por exemplo, `web-app-attacks`, `api-attacks`) |
 | `--dry-run` | Não | Exibe o que seria executado sem executar nenhum script |
 
 **Exemplos:**
@@ -60,7 +60,7 @@ TARGET_ORIGIN_IP=
 
 Este arquivo é escrito automaticamente durante o provisionamento do Terraform a partir das variáveis `target_fqdn` e `target_origin_ip`. Para alterar o alvo após a implantação, edite este arquivo diretamente na VM.
 
-### Substituição de Variáveis de Ambiente
+### Substituição de Variável de Ambiente
 
 Qualquer variável em `config.env` pode ser substituída exportando-a antes de executar a suíte:
 
@@ -73,7 +73,7 @@ export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-O caminho do arquivo de configuração também pode ser substituído:
+O caminho do arquivo de configuração em si também pode ser substituído:
 
 ```bash
 CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
@@ -81,7 +81,7 @@ CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-a
 
 ## Modo Dry-Run
 
-A flag `--dry-run` exibe cada script que seria executado sem executá-lo:
+A flag `--dry-run` exibe cada script que seria executado sem de fato executá-lo:
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
@@ -130,11 +130,11 @@ Cada execução de suíte cria um diretório de resultados com timestamp:
   06-nuclei-scan.sh.log
 ```
 
-O stdout e stderr de cada script são capturados em um arquivo `.log` nomeado com o nome do script.
+O stdout e stderr de cada script são capturados em um arquivo `.log` nomeado de acordo com o script.
 
 ### Formato meta.json
 
-O arquivo `meta.json` registra os metadados de execução da suíte:
+O arquivo `meta.json` registra os metadados da execução da suíte:
 
 ```json
 {
@@ -154,19 +154,19 @@ O arquivo `meta.json` registra os metadados de execução da suíte:
 | `suite` | Nome da suíte |
 | `target` | FQDN do alvo utilizado na execução |
 | `started` | Timestamp UTC de quando a suíte iniciou |
-| `completed` | Timestamp UTC de quando a suíte finalizou |
-| `status` | `running` durante a execução, `completed` quando concluída |
+| `completed` | Timestamp UTC de quando a suíte terminou |
+| `status` | `running` durante a execução, `completed` quando finalizada |
 | `passed` | Número de scripts que terminaram com código de saída 0 |
 | `failed` | Número de scripts que terminaram com código de saída diferente de zero |
 | `skipped` | Número de scripts ignorados (não executáveis ou dry-run) |
 
 <Aside type="tip">
-Um código de saída diferente de zero de um script não necessariamente significa que a suíte falhou. Muitas ferramentas de segurança retornam código diferente de zero quando encontram vulnerabilidades, o que é o comportamento esperado durante a geração de tráfego de ataque.
+Um código de saída diferente de zero de um script não significa necessariamente que a suíte falhou. Muitas ferramentas de segurança retornam códigos diferentes de zero quando encontram vulnerabilidades, o que é o comportamento esperado durante a geração de tráfego de ataque.
 </Aside>
 
 ## Executando Scripts Individuais
 
-Cada script pode ser executado de forma standalone sem o runner:
+Cada script pode ser executado de forma independente sem o runner:
 
 ```bash
 # Run a single script directly
@@ -176,7 +176,7 @@ Cada script pode ser executado de forma standalone sem o runner:
 /opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
 ```
 
-Os scripts aceitam o FQDN do alvo como o primeiro argumento posicional. Eles não leem o `config.env` diretamente -- apenas o runner faz isso. Ao executar de forma standalone, você deve passar o FQDN explicitamente.
+Os scripts aceitam o FQDN do alvo como primeiro argumento posicional. Eles não leem `config.env` diretamente -- apenas o runner faz isso. Ao executar de forma independente, você deve passar o FQDN explicitamente.
 
 ## Executando Todas as Suítes em Sequência
 
@@ -215,7 +215,7 @@ ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-Para suítes de longa duração, use `nohup` ou `tmux` para evitar que a desconexão SSH encerre o processo:
+Para suítes de longa duração, use `nohup` ou `tmux` para evitar que a desconexão do SSH encerre o processo:
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
@@ -228,13 +228,13 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 <Steps>
 
-1. **Carregar configuração** -- O runner lê o `config.env` (ou a substituição via `CONFIG_FILE`) e verifica a existência de `TARGET_FQDN` no ambiente.
+1. **Carregar configuração** -- O runner lê `config.env` (ou a substituição `CONFIG_FILE`), então verifica a existência de `TARGET_FQDN` no ambiente.
 
-2. **Validar suíte** -- Confirma que o diretório da suíte nomeada existe dentro do diretório de suítes. Lista as suítes disponíveis caso não seja encontrada.
+2. **Validar suíte** -- Confirma que o diretório da suíte nomeada existe sob o diretório de suítes. Lista as suítes disponíveis caso não seja encontrada.
 
-3. **Criar diretório de resultados** -- Cria `/opt/traffic-generator/results/<timestamp>-<suite>/` e grava o `meta.json` inicial com `status: running`.
+3. **Criar diretório de resultados** -- Cria `/opt/traffic-generator/results/<timestamp>-<suite>/` e escreve o `meta.json` inicial com `status: running`.
 
-4. **Executar scripts** -- Itera pelos arquivos correspondentes a `[0-9]*` no diretório da suíte, ordenados por nome. Ignora arquivos não executáveis. Passa `TARGET_FQDN` como o primeiro argumento. Captura a saída em `<script-name>.log`.
+4. **Executar scripts** -- Itera pelos arquivos que correspondem a `[0-9]*` no diretório da suíte, ordenados por nome. Ignora arquivos não executáveis. Passa `TARGET_FQDN` como primeiro argumento. Captura a saída em `<script-name>.log`.
 
 5. **Registrar resultados** -- Atualiza o `meta.json` com o timestamp de conclusão e as contagens de aprovados/reprovados/ignorados.
 

@@ -1,10 +1,9 @@
 ---
-title: Deploy
+title: デプロイ
 description: >-
-  Terraform IaC deployment of the traffic generator Azure VM — F-series
-  compute-optimized VM with Ubuntu 24.04, kernel tuning, 50+ security tools, and
-  19 traffic suites provisioned via cloud-init. All configuration files are in
-  the terraform/ directory.
+  トラフィックジェネレーター Azure VM の Terraform IaC デプロイ — Ubuntu 24.04 搭載の F シリーズコンピュート最適化
+  VM、カーネルチューニング、50 以上のセキュリティツール、cloud-init で 19 のトラフィックスイートをプロビジョニング。すべての設定ファイルは
+  terraform/ ディレクトリにあります。
 sidebar:
   order: 3
 i18n:
@@ -12,92 +11,92 @@ i18n:
   translator: machine
 ---
 
-すべてのTerraformファイルは[`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform)ディレクトリにあります。リポジトリをクローンして直接デプロイしてください：
+すべての Terraform ファイルは [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) ディレクトリにあります。リポジトリをクローンして直接デプロイしてください：
 
 ```bash
 git clone https://github.com/f5xc-salesdemos/traffic-generator.git
 cd traffic-generator/terraform
 cp terraform.tfvars.example terraform.tfvars
-# terraform.tfvarsにAzureサブスクリプションIDとターゲットFQDNを編集してください
+# terraform.tfvars を Azure サブスクリプション ID とターゲット FQDN で編集
 ```
 
-## Terraform構成
+## Terraform 設定
 
-### Terraformファイル構造
+### Terraform ファイル構成
 
-terraformディレクトリには、Demo Resource Standardに準拠した9つのファイルが含まれています：
+terraform ディレクトリには、デモリソース標準に従った 9 つのファイルが含まれています：
 
-- `versions.tf` -- Terraformおよびプロバイダーのバージョン制約（azurerm ~> 4.0、azuread ~> 3.0）
-- `providers.tf` -- Azure RMおよびAzure ADプロバイダー構成
-- `data.tf` -- デプロイヤー自動解決のためのAzure ADデータソース
-- `locals.tf` -- デプロイヤー解決、Azure Cloud Adoption Frameworkリソース命名、標準タグ
-- `main.tf` -- リソースグループ（`rg-traffic-generator-{environment}-{deployer}`として命名）
-- `variables.tf` -- すべての入力変数（必須2、オプション9）、Azure ADによるデプロイヤー自動解決付き
-- `network.tf` -- VNet（10.201.0.0/16）、サブネット、パブリックIP、NSG（ポート22 SSH）、NIC
-- `vm.tf` -- templatefile()によるcloud-init付きUbuntu 24.04 VM
-- `outputs.tf` -- 17の出力：すべてのデモリソースで共有される15の標準出力（deployer、public_ip、private_ip、ssh_command、resource_group_name、vm_name、nsg_name、vnet_name、subnet_id、component、environment、resource_group_id、vm_id、nsg_id、location）と2つのコンポーネント固有出力（target_fqdn、status_check）
+- `versions.tf` -- Terraform およびプロバイダーのバージョン制約（azurerm ~> 4.0, azuread ~> 3.0）
+- `providers.tf` -- Azure RM および Azure AD プロバイダー設定
+- `data.tf` -- デプロイヤー自動解決用の Azure AD データソース
+- `locals.tf` -- デプロイヤー解決、Azure Cloud Adoption Framework リソース命名、標準タグ
+- `main.tf` -- リソースグループ（`rg-traffic-generator-{environment}-{deployer}` という名前）
+- `variables.tf` -- すべての入力変数（必須 2 つ、オプション 9 つ）、Azure AD によるデプロイヤー自動解決
+- `network.tf` -- VNet（10.201.0.0/16）、サブネット、パブリック IP、NSG（ポート 22 SSH）、NIC
+- `vm.tf` -- templatefile() による cloud-init を使用した Ubuntu 24.04 VM
+- `outputs.tf` -- 17 の出力：すべてのデモリソースで共有される 15 の標準出力（deployer、public_ip、private_ip、ssh_command、resource_group_name、vm_name、nsg_name、vnet_name、subnet_id、component、environment、resource_group_id、vm_id、nsg_id、location）と 2 つのコンポーネント固有出力（target_fqdn、status_check）
 
 ### プロバイダーと変数
 
-`main.tf`はAzureプロバイダーを構成します：
+`main.tf` で Azure プロバイダーを設定します：
 
 ```hcl file=./_data/main.tf
 ```
 
-`variables.tf`はすべての設定可能なパラメータを定義します。`vm_size`のデフォルトは`Standard_F16s_v2`（16 vCPUコンピューティング最適化）です -- スケーリングのガイダンスは[VMサイジング](#vmサイジング)を参照してください：
+`variables.tf` ですべての設定可能なパラメータを定義します。`vm_size` のデフォルトは `Standard_F16s_v2`（16 vCPU コンピュート最適化）です。スケーリングのガイダンスについては [VM サイジング](#vm-サイジング)を参照してください：
 
 ```hcl file=./_data/variables.tf
 ```
 
 ### ネットワークインフラストラクチャ
 
-`network.tf`はVNet、サブネット、パブリックIP、NSG（ポート22 SSH）、NICを作成します：
+`network.tf` で VNet、サブネット、パブリック IP、NSG（ポート 22 SSH）、NIC を作成します：
 
 ```hcl file=./_data/network.tf
 ```
 
-### Cloud-Init付き仮想マシン
+### Cloud-Init を使用した仮想マシン
 
-`vm.tf`はUbuntu 24.04 VMを作成し、ターゲットおよびツール変数を含むcloud-initテンプレートを渡します：
+`vm.tf` で Ubuntu 24.04 VM を作成し、ターゲットおよびツール変数を含む cloud-init テンプレートを渡します：
 
 ```hcl file=./_data/vm.tf
 ```
 
-### Cloud-Initプロビジョニング
+### Cloud-Init プロビジョニング
 
-`cloud-init.yaml`は、4回のオリジン耐久テストを含む48時間以上の連続負荷テストで検証済みの本番構成です。リトライロジック付きヘルパーライブラリ、`/var/log/cloud-init-progress.log`への進捗ログ、9つのプロビジョニングフェーズ、条件付きステータスレポート（`status.json`でready/degraded）を使用します。プロビジョニング内容：
+`cloud-init.yaml` は、4 ラウンドのオリジン負荷テストを含む 48 時間以上の継続的な負荷テストで検証された本番環境対応の設定です。リトライロジックを備えたヘルパーライブラリ、`/var/log/cloud-init-progress.log` への進捗ログ、9 つのプロビジョニングフェーズ、条件付きステータスレポート（`status.json` での ready/degraded）を使用します。プロビジョニング内容：
 
-- **カーネルチューニング** -- `somaxconn=131072`、`tcp_max_tw_buckets=4000000`、`tcp_fin_timeout=5`、64 MiBソケットバッファ、`file-max=4194304`
-- **NIC最適化** -- 全コアにわたるRPS/RFS、ethtoolによるリングバッファ最大化、THP=always
-- **APTパッケージ** -- nikto、nmap、masscan、sqlmap、hydra、medusa、ncrack、tshark、hping3、tcpdump、netcat、ngrep、iperf3、mtr、sslscan、socat、dirb、whatweb、wrk、hey、vegeta、ethtool
-- **GitHubリリース** -- nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass
-- **Pythonパッケージ** -- mitmproxy、sslyze、dnsrecon、fierce、theHarvester、playwright、scapy、impacket、arjun
-- **Node.js 20.x** -- ボットシミュレーション用のステルスプラグイン付きPuppeteer
-- **ブラウザ自動化** -- ヘッドレスブラウザテスト用のPlaywright Chromium
-- **Gitクローン** -- testssl.sh、recon-ng、spiderfoot、SecLists、waf-bypass、PayloadsAllTheThings
-- **スイートデプロイ** -- このリポジトリから`/opt/traffic-generator/suites/`に19のトラフィックスイートをクローン
-- **設定ファイル** -- `TARGET_FQDN`、`TARGET_ORIGIN_IP`、`CRAPI_PORT`を含む`config.env`
+- **カーネルチューニング** -- `somaxconn=131072`、`tcp_max_tw_buckets=4000000`、`tcp_fin_timeout=5`、64 MiB ソケットバッファ、`file-max=4194304`
+- **NIC 最適化** -- 全コアにわたる RPS/RFS、ethtool によるリングバッファの最大化、THP=always
+- **APT パッケージ** -- nikto、nmap、masscan、sqlmap、hydra、medusa、ncrack、tshark、hping3、tcpdump、netcat、ngrep、iperf3、mtr、sslscan、socat、dirb、whatweb、wrk、hey、vegeta、ethtool
+- **GitHub Releases** -- nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass
+- **Python パッケージ** -- mitmproxy、sslyze、dnsrecon、fierce、theHarvester、playwright、scapy、impacket、arjun
+- **Node.js 20.x** -- ボットシミュレーション用のステルスプラグイン付き Puppeteer
+- **ブラウザ自動化** -- ヘッドレスブラウザテスト用の Playwright Chromium
+- **Git クローン** -- testssl.sh、recon-ng、spiderfoot、SecLists、waf-bypass、PayloadsAllTheThings
+- **スイートデプロイ** -- このリポジトリから 19 のトラフィックスイートを `/opt/traffic-generator/suites/` にクローン
+- **設定ファイル** -- `TARGET_FQDN`、`TARGET_ORIGIN_IP`、`CRAPI_PORT` を含む `config.env`
 
-cloud-initはTerraformテンプレート変数`${target_fqdn}`、`${target_origin_ip}`、`${tool_tier}`を使用します。`$NPROC`のようなシェル変数は、Terraform templatefileでは`$$NPROC`としてエスケープされます。
+cloud-init は Terraform テンプレート変数 `${target_fqdn}`、`${target_origin_ip}`、`${tool_tier}` を使用します。`$NPROC` のようなシェル変数は、Terraform の templatefile で `$$NPROC` としてエスケープされます。
 
 ```yaml file=./_data/cloud-init.yaml
 ```
 
 ### 出力
 
-`outputs.tf`はパブリック/プライベートIP、SSHコマンド、リソース識別子、コンポーネント固有の値（target_fqdn、status_check）を含む17の出力を公開します：
+`outputs.tf` は、パブリック/プライベート IP、SSH コマンド、リソース識別子、コンポーネント固有の値（target_fqdn、status_check）を含む 17 の出力を公開します：
 
 ```hcl file=./_data/outputs.tf
 ```
 
 ### 変数ファイルの例
 
-`terraform.tfvars.example`を`terraform.tfvars`にコピーして、値を入力してください。`.gitignore`は認証情報のコミットを防ぐため`terraform.tfvars`を除外しています：
+`terraform.tfvars.example` を `terraform.tfvars` にコピーして値を入力してください。`.gitignore` は認証情報のコミットを防ぐため `terraform.tfvars` を除外しています：
 
 ```hcl file=./_data/terraform.tfvars.example
 ```
 
-`subscription_id`をAzureサブスクリプションID（`az account show --query id -o tsv`で取得）に、`target_fqdn`をF5 XCロードバランサーのドメインに置き換えてください。
+`subscription_id` を Azure サブスクリプション ID（`az account show --query id -o tsv` で取得）に、`target_fqdn` を F5 XC ロードバランサーのドメインに置き換えてください。
 
 ## デプロイ
 
@@ -109,31 +108,31 @@ terraform plan
 terraform apply
 ```
 
-デプロイが成功すると、TerraformはパブリックIP、SSHコマンド、ターゲットFQDNを出力します。
+デプロイが成功すると、Terraform がパブリック IP、SSH コマンド、ターゲット FQDN を出力します。
 
-## VMサイジング
+## VM サイジング
 
-FシリーズのコンピューティングVMは、このCPUバウンドなトラフィック生成ワークロードに推奨されます。cloud-initのカーネルチューニングとツールの並行性は、vCPU数に応じて自動的にスケールします。
+F シリーズコンピュート最適化 VM は、この CPU バウンドなトラフィック生成ワークロードに推奨されます。cloud-init のカーネルチューニングとツールの同時実行数は、vCPU 数に応じて自動的にスケールします。
 
 | VM SKU | vCPU | RAM | ネットワーク | ユースケース |
 |---|---|---|---|---|
 | Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | 軽量ラボ/デモ |
 | Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | 標準デモ |
 | Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | 負荷テスト（デフォルト） |
-| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | 大規模ベンチマーク |
-| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM集約型ワークロード |
+| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | 高負荷ベンチマーク |
+| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM 重視ワークロード |
 
 :::tip
-F16s_v2は、CDN F16s_v2およびF32s_v2ターゲットに対するA/B/C/Dベンチマークテストにより、最適なコストパフォーマンスオプションとして検証されました。完全な結果は[benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks)を参照してください。
+F16s_v2 は、CDN F16s_v2 および F32s_v2 ターゲットに対する A/B/C/D ベンチマークテストにより、最適なコストパフォーマンスオプションとして検証されました。詳細な結果は [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) を参照してください。
 :::
 
 ## デプロイ後の検証
 
-cloud-initプロビジョニングには**標準ティアで15〜20分**、**フルティアで約25分**かかります。VMにはすぐにSSH経由でアクセスできますが、cloud-initが完了するまでツールのインストールは継続中です。
+Cloud-init プロビジョニングは、**standard ティアで 15〜20 分**、**full ティアで約 25 分**かかります。VM には SSH ですぐにアクセスできますが、cloud-init が完了するまでツールのインストールは継続中です。
 
-### Cloud-Initの完了を待つ
+### Cloud-Init の完了を待つ
 
-VMにSSH接続し、プロビジョニングの完了を待ちます：
+VM に SSH 接続してプロビジョニングの完了を待ちます：
 
 ```bash
 ssh azureuser@$(terraform output -raw public_ip)
@@ -149,7 +148,7 @@ status: done
 
 ### ステータスファイルの確認
 
-cloud-initスクリプトは完了時にステータスファイルを書き込みます：
+cloud-init スクリプトは完了時にステータスファイルを書き込みます：
 
 ```bash
 cat /opt/traffic-generator/status.json
@@ -167,9 +166,9 @@ cat /opt/traffic-generator/status.json
 }
 ```
 
-### 重要なツールの検証
+### 重要なツールの確認
 
-各重要ツールがPATH上で利用可能であることを確認する検証ループを実行します：
+各重要ツールが PATH 上で利用可能であることを確認する検証ループを実行します：
 
 ```bash
 for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
@@ -183,7 +182,7 @@ for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
 done
 ```
 
-### スイートランナーの検証
+### スイートランナーの確認
 
 ランナーとスイートがインストールされていることを確認します：
 
@@ -194,26 +193,26 @@ ls /opt/traffic-generator/suites/*/
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
 ```
 
-## Terraform出力
+## Terraform 出力
 
 | 出力 | 説明 | 例 |
 |---|---|---|
 | `deployer` | 解決されたデプロイヤー識別子 | `jsmith` |
-| `public_ip` | トラフィックジェネレーターVMのパブリックIPアドレス | `20.12.78.200` |
-| `private_ip` | VMのプライベートIPアドレス | `10.201.0.4` |
-| `ssh_command` | VMに接続するためのSSHコマンド | `ssh azureuser@20.12.78.200` |
+| `public_ip` | トラフィックジェネレーター VM のパブリック IP アドレス | `20.12.78.200` |
+| `private_ip` | VM のプライベート IP アドレス | `10.201.0.4` |
+| `ssh_command` | VM に接続するための SSH コマンド | `ssh azureuser@20.12.78.200` |
 | `resource_group_name` | リソースグループ名 | `rg-traffic-generator-dev-jsmith` |
-| `resource_group_id` | リソースグループのAzureリソースID | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith` |
+| `resource_group_id` | リソースグループの Azure リソース ID | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith` |
 | `vm_name` | 仮想マシン名 | `vm-traffic-generator-dev-jsmith` |
-| `vm_id` | 仮想マシンのAzureリソースID | `/subscriptions/.../virtualMachines/vm-traffic-generator-dev-jsmith` |
+| `vm_id` | 仮想マシンの Azure リソース ID | `/subscriptions/.../virtualMachines/vm-traffic-generator-dev-jsmith` |
 | `nsg_name` | ネットワークセキュリティグループ名 | `nsg-traffic-generator-dev-jsmith` |
-| `nsg_id` | ネットワークセキュリティグループのAzureリソースID | `/subscriptions/.../networkSecurityGroups/nsg-traffic-generator-dev-jsmith` |
+| `nsg_id` | ネットワークセキュリティグループの Azure リソース ID | `/subscriptions/.../networkSecurityGroups/nsg-traffic-generator-dev-jsmith` |
 | `vnet_name` | 仮想ネットワーク名 | `vnet-traffic-generator-dev-jsmith` |
-| `subnet_id` | サブネットのAzureリソースID | `/subscriptions/.../subnets/snet-traffic-generator-dev-jsmith` |
+| `subnet_id` | サブネットの Azure リソース ID | `/subscriptions/.../subnets/snet-traffic-generator-dev-jsmith` |
 | `component` | コンポーネント識別子 | `traffic-generator` |
 | `environment` | デプロイ環境 | `dev` |
-| `location` | Azureリージョン | `eastus2` |
-| `target_fqdn` | トラフィックスイート用に設定されたターゲットFQDN | `demo.example.com` |
+| `location` | Azure リージョン | `eastus2` |
+| `target_fqdn` | トラフィックスイート用に設定されたターゲット FQDN | `demo.example.com` |
 | `status_check` | プロビジョニングステータスを確認するコマンド | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
 
 任意の出力を取得：
@@ -225,10 +224,10 @@ terraform output -raw ssh_command
 
 ## アップストリームコンポーネントからの接続
 
-トラフィックジェネレーターは、オリジンサーバーをフロントするF5 XC HTTPロードバランサーをターゲットとします。まずオリジンサーバーをデプロイし、F5 XCを構成してから、`target_fqdn`をロードバランサーのFQDNに設定してください：
+トラフィックジェネレーターは、オリジンサーバーの前段にある F5 XC HTTP ロードバランサーをターゲットにします。まずオリジンサーバーをデプロイし、F5 XC を設定してから、`target_fqdn` にロードバランサーの FQDN を設定してください：
 
 ```bash
-# origin-serverをデプロイしてF5 XC HTTPロードバランサーを作成した後：
+# origin-server をデプロイし、F5 XC HTTP ロードバランサーを作成した後：
 cat > terraform.tfvars <<EOF
 subscription_id  = "your-subscription-id"
 target_fqdn      = "your-xc-load-balancer.example.com"
@@ -238,7 +237,7 @@ EOF
 
 | 必須変数 | ソース | 説明 |
 |---|---|---|
-| `target_fqdn` | F5 XCコンソール | オリジンサーバーを保護するHTTPロードバランサーのFQDN |
-| `target_origin_ip` | オリジンサーバーの`public_ip`出力 | バイパステスト用の直接オリジンIP（オプション） |
+| `target_fqdn` | F5 XC コンソール | オリジンサーバーを保護する HTTP ロードバランサーの FQDN |
+| `target_origin_ip` | オリジンサーバーの `public_ip` 出力 | バイパステスト用の直接オリジン IP（オプション） |
 
-完全なツールリファレンスについては[ツールカタログ](../04-tool-catalog/)へ、トラフィック生成を開始するには[スイート](../05-suites/)へ進んでください。
+ツールの完全なリファレンスは[ツールカタログ](../04-tool-catalog/)へ、トラフィック生成を開始するには[スイート](../05-suites/)へ進んでください。

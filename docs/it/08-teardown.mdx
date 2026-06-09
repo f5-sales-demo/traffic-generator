@@ -1,8 +1,9 @@
 ---
-title: Teardown
+title: Smantellamento
 description: >-
-  terraform destroy to remove all Azure resources, verify resource group
-  deletion with az CLI, and clean local state files
+  terraform destroy per rimuovere tutte le risorse Azure, verifica
+  dell'eliminazione del resource group con az CLI e pulizia dei file di stato
+  locali
 sidebar:
   order: 8
 i18n:
@@ -10,7 +11,7 @@ i18n:
   translator: machine
 ---
 
-Al termine della sessione di laboratorio, eliminare tutte le risorse Azure per interrompere la fatturazione.
+Al termine della sessione di laboratorio, distruggere tutte le risorse Azure per interrompere la fatturazione.
 
 ## Terraform Destroy
 
@@ -24,7 +25,7 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform richiederà una conferma. Digitare `yes` per procedere.
+Terraform chiederà una conferma. Digitare `yes` per procedere.
 
 ## Verifica della pulizia
 
@@ -50,7 +51,7 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## Conservare i risultati (Opzionale)
 
-Se si desidera conservare i risultati della suite di traffico prima di eliminare la VM, copiarli in locale:
+Se si desidera conservare i risultati della suite di traffico prima di distruggere la VM, copiarli localmente:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -63,16 +64,16 @@ LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head 
 scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
 ```
 
-## Pulizia F5 XC
+## Pulizia di F5 XC
 
-Se si desidera rimuovere anche la configurazione F5 XC verso cui il generatore di traffico era indirizzato:
+Se si desidera rimuovere anche la configurazione F5 XC verso cui era indirizzato il generatore di traffico:
 
 1. Eliminare l'HTTP load balancer
 2. Eliminare l'origin pool
 3. Eliminare eventuali policy WAF, configurazioni Bot Defense, policy API Security o configurazioni CSD create per i test
 
-Queste risorse F5 XC non comportano costi Azure, ma dovrebbero essere eliminate quando l'ambiente demo non è più necessario.
+Queste risorse F5 XC non comportano costi Azure, ma dovrebbero essere rimosse quando l'ambiente demo non è più necessario.
 
 :::tip
-Per un utilizzo demo ricorrente, considerare di automatizzare tramite script l'intero ciclo di vita: `cd terraform && terraform apply` prima di una demo, eseguire le suite, quindi `terraform destroy` al termine. Il tier standard viene provisioned in 15-20 minuti, rendendo pratico il setup e il teardown nella stessa giornata.
+Per un utilizzo demo ricorrente, considerare di automatizzare l'intero ciclo di vita tramite script: `cd terraform && terraform apply` prima di una demo, eseguire le suite, quindi `terraform destroy` al termine. Il tier standard viene provisionato in 15-20 minuti, rendendo pratica la configurazione e lo smantellamento nello stesso giorno.
 :::

@@ -13,7 +13,7 @@ i18n:
 
 Todas as ferramentas listadas abaixo são pré-instaladas durante o provisionamento via cloud-init. Nenhuma instalação manual é necessária após a implantação.
 
-## Testes de Aplicações Web
+## Teste de Aplicações Web
 
 | Ferramenta | Método de Instalação | Comando de Exemplo | Usada pela Suíte |
 |---|---|---|---|
@@ -28,14 +28,14 @@ Todas as ferramentas listadas abaixo são pré-instaladas durante o provisioname
 | whatweb | apt | `whatweb https://TARGET` | reconnaissance |
 | wfuzz | pip | `wfuzz -c -z file,wordlist.txt -e urlencode,double_urlencode "https://TARGET/FUZZ"` | waf-encoding-evasion |
 
-## Testes de Evasão de WAF
+## Teste de Evasão de WAF
 
 | Ferramenta | Método de Instalação | Comando de Exemplo | Usada pela Suíte |
 |---|---|---|---|
 | gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
 | waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
 
-GoTestWAF (da Wallarm) é um framework padrão da indústria para avaliação de WAF que multiplica payloads através de múltiplos codificadores (URL, Base64, JSUnicode) e zonas de inserção (body, header, parâmetro de URL, cookie). waf-bypass (da Nemesida) envia payloads com codificação Base64, HTML-ENTITY e UTF-16 através das zonas ARGS, BODY, COOKIE e HEADER.
+GoTestWAF (da Wallarm) é um framework padrão da indústria para avaliação de WAF que multiplica payloads através de múltiplos codificadores (URL, Base64, JSUnicode) e zonas de posicionamento (body, header, parâmetro de URL, cookie). waf-bypass (da Nemesida) envia payloads com codificação Base64, HTML-ENTITY e UTF-16 através das zonas ARGS, BODY, COOKIE e HEADER.
 
 ## Análise de Rede
 
@@ -51,7 +51,7 @@ GoTestWAF (da Wallarm) é um framework padrão da indústria para avaliação de
 | iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
 | mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
 
-## Testes de SSL/TLS
+## Teste de SSL/TLS
 
 | Ferramenta | Método de Instalação | Comando de Exemplo | Usada pela Suíte |
 |---|---|---|---|
@@ -88,7 +88,7 @@ O Playwright instala seu próprio binário do Chromium via `playwright install c
 | whois | apt | `whois example.com` | reconnaissance |
 | dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
 
-## Testes de Credenciais
+## Teste de Credenciais
 
 | Ferramenta | Método de Instalação | Comando de Exemplo | Usada pela Suíte |
 |---|---|---|---|
@@ -117,9 +117,9 @@ O Playwright instala seu próprio binário do Chromium via `playwright install c
 | PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
 | waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
 
-O SecLists fornece listas de palavras usadas por múltiplas ferramentas, incluindo ffuf, gobuster, feroxbuster, dirb e hydra. O PayloadsAllTheThings fornece payloads de ataque curados com múltiplas codificações, organizados por classe de ataque (XSS, SQLi, XXE) com variantes em hex, octal, Unicode, entidade HTML, codificação URL dupla e JSFuck.
+SecLists fornece listas de palavras utilizadas por múltiplas ferramentas, incluindo ffuf, gobuster, feroxbuster, dirb e hydra. PayloadsAllTheThings fornece payloads de ataque com múltiplas codificações, organizados por classe de ataque (XSS, SQLi, XXE) com variantes em hex, octal, Unicode, entidade HTML, codificação dupla de URL e JSFuck.
 
-## Somente Nível Completo
+## Apenas no Tier Completo
 
 Estas ferramentas são instaladas apenas quando `tool_tier = "full"`:
 
@@ -129,7 +129,7 @@ Estas ferramentas são instaladas apenas quando `tool_tier = "full"`:
 | Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
 
 :::note
-O ZAP e o Metasploit adicionam aproximadamente 1,5 GiB ao espaço em disco e de 5 a 10 minutos ao tempo de provisionamento. Utilize o nível completo apenas se você precisar especificamente dessas ferramentas para uma demonstração.
+ZAP e Metasploit adicionam aproximadamente 1,5 GiB ao espaço em disco e de 5 a 10 minutos ao tempo de provisionamento. Utilize o tier completo apenas se você precisar especificamente dessas ferramentas para uma demonstração.
 :::
 
 ## Referência de Métodos de Instalação

@@ -1,10 +1,8 @@
 ---
 title: 部署
 description: >-
-  Terraform IaC deployment of the traffic generator Azure VM — F-series
-  compute-optimized VM with Ubuntu 24.04, kernel tuning, 50+ security tools, and
-  19 traffic suites provisioned via cloud-init. All configuration files are in
-  the terraform/ directory.
+  流量生成器 Azure 虚拟机的 Terraform IaC 部署 — 使用 Ubuntu 24.04 的 F 系列计算优化虚拟机，包含内核调优、50+
+  安全工具和 19 个流量套件，通过 cloud-init 配置。所有配置文件位于 terraform/ 目录中。
 sidebar:
   order: 3
 i18n:
@@ -27,15 +25,15 @@ cp terraform.tfvars.example terraform.tfvars
 
 terraform 目录包含 9 个文件，遵循演示资源标准：
 
-- `versions.tf` -- Terraform 和提供程序版本约束（azurerm ~> 4.0, azuread ~> 3.0）
+- `versions.tf` -- Terraform 和提供程序版本约束（azurerm ~> 4.0、azuread ~> 3.0）
 - `providers.tf` -- Azure RM 和 Azure AD 提供程序配置
-- `data.tf` -- Azure AD 数据源，用于部署者自动解析
+- `data.tf` -- 用于部署者自动解析的 Azure AD 数据源
 - `locals.tf` -- 部署者解析、Azure 云采用框架资源命名、标准标签
 - `main.tf` -- 资源组（命名为 `rg-traffic-generator-{environment}-{deployer}`）
-- `variables.tf` -- 所有输入变量（2 个必需，9 个可选），通过 Azure AD 自动解析部署者
-- `network.tf` -- VNet (10.201.0.0/16)、子网、公共 IP、NSG（端口 22 SSH）、NIC
-- `vm.tf` -- Ubuntu 24.04 虚拟机，通过 templatefile() 使用 cloud-init
-- `outputs.tf` -- 17 个输出：15 个标准输出由所有演示资源共享（deployer、public_ip、private_ip、ssh_command、resource_group_name、vm_name、nsg_name、vnet_name、subnet_id、component、environment、resource_group_id、vm_id、nsg_id、location），另外 2 个组件特定输出（target_fqdn、status_check）
+- `variables.tf` -- 所有输入变量（2 个必需、9 个可选），通过 Azure AD 自动解析部署者
+- `network.tf` -- VNet（10.201.0.0/16）、子网、公共 IP、NSG（端口 22 SSH）、NIC
+- `vm.tf` -- 使用 cloud-init（通过 templatefile()）的 Ubuntu 24.04 虚拟机
+- `outputs.tf` -- 17 个输出：15 个所有演示资源共享的标准输出（deployer、public_ip、private_ip、ssh_command、resource_group_name、vm_name、nsg_name、vnet_name、subnet_id、component、environment、resource_group_id、vm_id、nsg_id、location）加上 2 个组件特定输出（target_fqdn、status_check）
 
 ### 提供程序和变量
 
@@ -44,7 +42,7 @@ terraform 目录包含 9 个文件，遵循演示资源标准：
 ```hcl file=./_data/main.tf
 ```
 
-`variables.tf` 定义所有可配置参数。`vm_size` 默认值为 `Standard_F16s_v2`（16 vCPU 计算优化型）——请参阅 [VM 规格选择](#vm-规格选择) 了解扩展指南：
+`variables.tf` 定义所有可配置参数。`vm_size` 默认值为 `Standard_F16s_v2`（16 vCPU 计算优化）—— 参见 [虚拟机规格选择](#虚拟机规格选择) 了解扩展指南：
 
 ```hcl file=./_data/variables.tf
 ```
@@ -56,27 +54,27 @@ terraform 目录包含 9 个文件，遵循演示资源标准：
 ```hcl file=./_data/network.tf
 ```
 
-### 带 Cloud-Init 的虚拟机
+### 带有 Cloud-Init 的虚拟机
 
-`vm.tf` 创建 Ubuntu 24.04 虚拟机，并通过模板传递 cloud-init 配置，包括目标和工具变量：
+`vm.tf` 创建 Ubuntu 24.04 虚拟机，并将 cloud-init 模板与目标和工具变量一起传递：
 
 ```hcl file=./_data/vm.tf
 ```
 
-### Cloud-Init 预配
+### Cloud-Init 配置
 
-`cloud-init.yaml` 是经过生产验证的配置，已通过 48 小时以上的持续负载测试验证，包括 4 轮源站压力测试。它使用带有重试逻辑的辅助库，将进度日志记录到 `/var/log/cloud-init-progress.log`，包含 9 个预配阶段，以及条件状态报告（在 `status.json` 中报告 ready/degraded）。它预配以下内容：
+`cloud-init.yaml` 是经过生产验证的配置，已在超过 48 小时的持续负载测试（包括 4 轮源站压力测试）中得到验证。它使用一个带有重试逻辑的辅助库、将进度记录到 `/var/log/cloud-init-progress.log`、9 个配置阶段以及条件状态报告（在 `status.json` 中显示 ready/degraded）。它配置了：
 
 - **内核调优** -- `somaxconn=131072`、`tcp_max_tw_buckets=4000000`、`tcp_fin_timeout=5`、64 MiB 套接字缓冲区、`file-max=4194304`
-- **NIC 优化** -- 跨所有核心的 RPS/RFS，通过 ethtool 最大化环形缓冲区，THP=always
-- **APT 软件包** -- nikto、nmap、masscan、sqlmap、hydra、medusa、ncrack、tshark、hping3、tcpdump、netcat、ngrep、iperf3、mtr、sslscan、socat、dirb、whatweb、wrk、hey、vegeta、ethtool
+- **NIC 优化** -- 跨所有核心的 RPS/RFS、通过 ethtool 最大化环形缓冲区、THP=always
+- **APT 包** -- nikto、nmap、masscan、sqlmap、hydra、medusa、ncrack、tshark、hping3、tcpdump、netcat、ngrep、iperf3、mtr、sslscan、socat、dirb、whatweb、wrk、hey、vegeta、ethtool
 - **GitHub Releases** -- nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass
-- **Python 软件包** -- mitmproxy、sslyze、dnsrecon、fierce、theHarvester、playwright、scapy、impacket、arjun
-- **Node.js 20.x** -- 带隐身插件的 Puppeteer，用于机器人模拟
+- **Python 包** -- mitmproxy、sslyze、dnsrecon、fierce、theHarvester、playwright、scapy、impacket、arjun
+- **Node.js 20.x** -- 带有隐身插件的 Puppeteer，用于机器人模拟
 - **浏览器自动化** -- Playwright Chromium，用于无头浏览器测试
 - **Git 克隆** -- testssl.sh、recon-ng、spiderfoot、SecLists、waf-bypass、PayloadsAllTheThings
-- **套件部署** -- 19 个流量套件从本仓库克隆到 `/opt/traffic-generator/suites/`
-- **配置文件** -- `config.env`，包含 `TARGET_FQDN`、`TARGET_ORIGIN_IP` 和 `CRAPI_PORT`
+- **套件部署** -- 从本仓库克隆 19 个流量套件到 `/opt/traffic-generator/suites/`
+- **配置文件** -- 包含 `TARGET_FQDN`、`TARGET_ORIGIN_IP` 和 `CRAPI_PORT` 的 `config.env`
 
 cloud-init 使用 Terraform 模板变量：`${target_fqdn}`、`${target_origin_ip}` 和 `${tool_tier}`。Shell 变量如 `$NPROC` 在 Terraform templatefile 中转义为 `$$NPROC`。
 
@@ -109,13 +107,13 @@ terraform plan
 terraform apply
 ```
 
-部署成功后，Terraform 将输出公共 IP、SSH 命令和目标 FQDN。
+部署成功后，Terraform 会输出公共 IP、SSH 命令和目标 FQDN。
 
-## VM 规格选择
+## 虚拟机规格选择
 
-推荐使用 F 系列计算优化型虚拟机来运行此 CPU 密集型流量生成工作负载。cloud-init 内核调优和工具并发度会随 vCPU 数量自动扩展。
+推荐使用 F 系列计算优化虚拟机来处理这种 CPU 密集型的流量生成工作负载。cloud-init 内核调优和工具并发会随 vCPU 数量自动扩展。
 
-| VM SKU | vCPU | 内存 | 网络 | 使用场景 |
+| 虚拟机 SKU | vCPU | 内存 | 网络 | 使用场景 |
 |---|---|---|---|---|
 | Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | 轻量实验/演示 |
 | Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | 标准演示 |
@@ -124,16 +122,16 @@ terraform apply
 | Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | 内存密集型工作负载 |
 
 :::tip
-F16s_v2 经过 A/B/C/D 基准测试验证，被确认为最佳性价比选项，测试对象包括 CDN F16s_v2 和 F32s_v2 目标。完整结果请参阅 [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks)。
+F16s_v2 通过针对 CDN F16s_v2 和 F32s_v2 目标的 A/B/C/D 基准测试，被验证为最佳性价比选项。完整结果请参见 [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks)。
 :::
 
 ## 部署后验证
 
-Cloud-init 预配 **标准层约需 15-20 分钟**，**完整层约需 25 分钟**。虚拟机可立即通过 SSH 访问，但工具仍在安装中，直到 cloud-init 完成。
+Cloud-init 配置过程**标准层级需要 15-20 分钟**，**完整层级大约需要 25 分钟**。虚拟机可以立即通过 SSH 访问，但在 cloud-init 完成之前工具仍在安装中。
 
 ### 等待 Cloud-Init 完成
 
-通过 SSH 登录虚拟机并等待预配完成：
+通过 SSH 连接到虚拟机并等待配置完成：
 
 ```bash
 ssh azureuser@$(terraform output -raw public_ip)
@@ -214,7 +212,7 @@ ls /opt/traffic-generator/suites/*/
 | `environment` | 部署环境 | `dev` |
 | `location` | Azure 区域 | `eastus2` |
 | `target_fqdn` | 为流量套件配置的目标 FQDN | `demo.example.com` |
-| `status_check` | 检查预配状态的命令 | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
+| `status_check` | 检查配置状态的命令 | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
 
 获取任意输出：
 
@@ -223,9 +221,9 @@ terraform output -raw public_ip
 terraform output -raw ssh_command
 ```
 
-## 从上游组件连接
+## 从上游组件接入
 
-流量生成器的目标是一个 F5 XC HTTP 负载均衡器，该负载均衡器位于源站服务器前端。请先部署源站服务器，配置 F5 XC，然后将 `target_fqdn` 设置为负载均衡器的 FQDN：
+流量生成器以 F5 XC HTTP 负载均衡器为目标，该负载均衡器位于源服务器前端。首先部署源服务器，配置 F5 XC，然后将 `target_fqdn` 设置为负载均衡器的 FQDN：
 
 ```bash
 # After deploying origin-server and creating an F5 XC HTTP load balancer:
@@ -238,7 +236,7 @@ EOF
 
 | 必需变量 | 来源 | 描述 |
 |---|---|---|
-| `target_fqdn` | F5 XC 控制台 | 保护源站服务器的 HTTP 负载均衡器的 FQDN |
-| `target_origin_ip` | 源站服务器 `public_ip` 输出 | 用于绕过测试的直接源站 IP（可选） |
+| `target_fqdn` | F5 XC 控制台 | 保护源服务器的 HTTP 负载均衡器的 FQDN |
+| `target_origin_ip` | 源服务器 `public_ip` 输出 | 用于绕过测试的直接源站 IP（可选） |
 
-继续前往[工具目录](../04-tool-catalog/)查看完整的工具参考，或前往[套件](../05-suites/)开始生成流量。
+继续前往[工具目录](../04-tool-catalog/)查看完整工具参考，或前往[套件](../05-suites/)开始生成流量。

@@ -1,20 +1,21 @@
 ---
 title: مولّد حركة المرور
 description: >-
-  جهاز افتراضي Azure Ubuntu 24.04 محمّل مسبقاً بأدوات اختبار الأمان للتحقق من
-  WAF وBot Defense وAPI Security وClient-Side Defense مقابل F5 Distributed Cloud
+  جهاز افتراضي Azure بنظام Ubuntu 24.04 محمّل مسبقاً بأدوات اختبار الأمان للتحقق
+  من WAF وحماية البوتات وأمان واجهات API وحماية جانب العميل مقابل F5 Distributed
+  Cloud
 template: splash
 hero:
   tagline: >-
-    Deploy a traffic generation VM with 50+ security tools, 19 organized attack
-    suites, and headless Chrome automation for comprehensive F5 XC demo
-    validation.
+    انشر جهازاً افتراضياً لتوليد حركة المرور مزوّداً بأكثر من 50 أداة أمان و19
+    مجموعة هجمات منظمة وأتمتة Chrome بدون واجهة للتحقق الشامل من عروض F5 XC
+    التوضيحية.
   actions:
-    - text: Get Started
+    - text: ابدأ الآن
       link: /traffic-generator/01-architecture/
       icon: right-arrow
       variant: primary
-    - text: Deploy Now
+    - text: انشر الآن
       link: /traffic-generator/03-deploy/
       icon: rocket
       variant: minimal
@@ -26,55 +27,55 @@ i18n:
 import { CardGrid } from '@astrojs/starlight/components';
 import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
 
-## ما الذي يوفره هذا
+## ما الذي يوفره هذا المشروع
 
-مولّد حركة المرور هو جهاز افتراضي Azure مصمم خصيصاً لإنتاج حركة مرور هجومية واقعية وعمليات استطلاع ومحاكاة للبوتات وأنماط إساءة استخدام واجهات برمجة التطبيقات ضد موازن أحمال HTTP في F5 Distributed Cloud. يتحقق من أن سياسات WAF وBot Defense وAPI Security وClient-Side Defense مُعدّة بشكل صحيح من خلال توليد حركة المرور الدقيقة التي صُممت هذه الميزات لاكتشافها وحظرها.
+مولّد حركة المرور هو جهاز افتراضي Azure مُصمّم خصيصاً لإنتاج حركة مرور هجومية واقعية وعمليات مسح استطلاعية ومحاكاة بوتات وأنماط إساءة استخدام واجهات API ضد موزّع حمل HTTP في F5 Distributed Cloud. يتحقق من أن سياسات WAF وحماية البوتات وأمان واجهات API وحماية جانب العميل مُعدّة بشكل صحيح من خلال توليد حركة المرور الدقيقة التي صُمّمت هذه الميزات لاكتشافها وحظرها.
 
-يتم تثبيت جميع الأدوات مسبقاً عبر cloud-init أثناء توفير Terraform. يتم تنظيم حركة المرور في مجموعات يمكن تشغيلها بشكل فردي أو بالتتابع باستخدام المنسّق المضمّن `runner.sh`.
+يتم تثبيت جميع الأدوات مسبقاً عبر cloud-init أثناء التوفير بواسطة Terraform. يتم تنظيم حركة المرور في مجموعات يمكن تشغيلها بشكل فردي أو بالتتابع باستخدام المنسّق المُضمّن `runner.sh`.
 
 ## فئات مجموعات حركة المرور
 
 | المجموعة | الوصف | ميزة F5 XC التي يتم التحقق منها |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10، وضع SQLMap لواجهات API، اكتشاف المعلمات، تشويش نقاط النهاية | API Security |
-| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Chrome بدون واجهة رسومية، Puppeteer خفي، أتمتة Playwright، زحف سريع | Bot Defense |
-| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | سلوك التخزين المؤقت، القطيع المتدافع، مجمع الاتصالات، تعدد إرسال HTTP/2 | CDN Integration |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA، القوة الغاشمة لـ OTP، التلاعب بـ JWT، SSRF، حقن NoSQL، IDOR | API Security |
-| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | سارق بطاقات، اختطاف نماذج، راصد لوحة مفاتيح، تعدين عملات مشفرة، اختطاف DOM | Client-Side Defense |
-| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | حرمان خدمة الاستعلامات المجمعة، تكرار عميق، حقن SQL، إساءة استخدام الاستبطان | API Security (GraphQL) |
+| [api-attacks](/traffic-generator/05-suites/#api-attacks) | قائمة OWASP API العشر الأوائل، وضع SQLMap لواجهات API، اكتشاف المعاملات، تشويش نقاط النهاية | أمان واجهات API |
+| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Chrome بدون واجهة، تخفي Puppeteer، أتمتة Playwright، زحف سريع | حماية البوتات |
+| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | سلوك التخزين المؤقت، تأثير القطيع المفاجئ، مجمع الاتصالات، تعدد إرسال HTTP/2 | تكامل CDN |
+| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA، هجوم القوة الغاشمة على OTP، التلاعب بـ JWT، SSRF، حقن NoSQL، IDOR | أمان واجهات API |
+| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | سارق البطاقات، اختطاف النماذج، مسجّل المفاتيح، تعدين العملات المشفرة، اختطاف DOM | حماية جانب العميل |
+| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | حرمان الخدمة بالاستعلامات المجمّعة، التكرار العميق، حقن SQL، إساءة استخدام الاستبطان | أمان واجهات API (GraphQL) |
 | [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | القوة الغاشمة، حقن الأوامر، CSRF، تضمين الملفات، SQLi، XSS | WAF |
-| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | التلاعب بـ DOM، حقن النصوص البرمجية المضمنة، حمولات سرقة بأسلوب Magecart | Client-Side Defense |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | تجاوز تسجيل الدخول بـ SQLi، XSS، IDOR، وصول المسؤول، الوصول للملفات عبر البايت الفارغ | WAF, Bot Defense |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | تكتيكات ATT&CK: الاستطلاع، الوصول الأولي، الوصول لبيانات الاعتماد، التسريب | WAF, Bot Defense, API Security |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | فحص الثغرات بـ ZAP وNikto وNuclei وNmap، تقرير OWASP مجمع | WAF, Web App Scanning |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | تصعيد التزامن، الحمل المستمر، اختبار الذروة، اكتشاف نقطة الانهيار | DDoS, Rate Limiting |
-| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap وMasscan وGobuster وSubfinder والقوة الغاشمة للمجلدات | WAF / Bot Defense |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA وBOPLA وBFLA، تجاوز تحديد المعدل، سر JWT ضعيف | API Security |
+| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | التلاعب بـ DOM، حقن النصوص البرمجية المضمّنة، حمولات سرقة بأسلوب Magecart | حماية جانب العميل |
+| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | تجاوز تسجيل الدخول بـ SQLi، XSS، IDOR، الوصول للمسؤول، الوصول للملفات بالبايت الفارغ | WAF، حماية البوتات |
+| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | تكتيكات ATT&CK: الاستطلاع، الوصول الأولي، الوصول لبيانات الاعتماد، تسريب البيانات | WAF، حماية البوتات، أمان واجهات API |
+| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | فحص الثغرات بـ ZAP وNikto وNuclei وNmap، تقرير OWASP مُجمّع | WAF، فحص تطبيقات الويب |
+| [performance-testing](/traffic-generator/05-suites/#performance-testing) | تدرج التزامن، الحمل المستمر، اختبار الذروة، اكتشاف نقطة الانهيار | حماية DDoS، تحديد المعدل |
+| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap، Masscan، Gobuster، Subfinder، هجوم القوة الغاشمة على المجلدات | WAF / حماية البوتات |
+| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA، BOPLA، BFLA، تجاوز تحديد المعدل، مفتاح JWT ضعيف | أمان واجهات API |
 | [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | تحليل تكوين TLS بـ SSLScan وsslyze وtestssl.sh | WAF |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | حركة مرور HTTP شرعية عالية الحجم لخط الأساس واختبار الحمل | All |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | ترميز URL/HTML/Unicode متعدد الطبقات، ترميز متداخل مختلط، TE مجزأ، حقن الترويسات | WAF |
+| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | حركة مرور HTTP مشروعة بحجم كبير لاختبار خط الأساس والحمل | الكل |
+| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | ترميز متعدد الطبقات URL/HTML/Unicode، ترميز متداخل مختلط، نقل مُجزّأ TE، حقن الترويسات | WAF |
 | [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | حقن SQL، XSS، حقن الأوامر، اجتياز المسار، Nikto، Nuclei | WAF |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi وXSS واجتياز المسار ضد نقاط نهاية اختبار WAF في F5 DemoApp | WAF |
+| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi، XSS، اجتياز المسار ضد نقاط اختبار WAF في F5 DemoApp | WAF |
 
 <CardGrid>
   <LinkCard
     title="البنية المعمارية"
-    description="تخطيط الجهاز الافتراضي وفئات الأدوات والتثبيت المتدرج ونقاط التكامل مع خادم الأصل وF5 XC."
+    description="تخطيط الجهاز الافتراضي، فئات الأدوات، التثبيت المتدرج، ونقاط التكامل مع خادم المصدر وF5 XC."
     href="01-architecture/"
   />
   <LinkCard
     title="النشر"
-    description="شرح تفصيلي كامل لـ Terraform: الاستنساخ والتكوين والتطبيق والتحقق من تشغيل جميع الأدوات."
+    description="دليل Terraform الكامل: الاستنساخ، التكوين، التطبيق، والتحقق من أن جميع الأدوات تعمل."
     href="03-deploy/"
   />
   <LinkCard
     title="كتالوج الأدوات"
-    description="كل أداة مثبتة منظمة حسب الفئة مع طريقة التثبيت وأوامر المثال وربط المجموعات."
+    description="كل أداة مُثبّتة منظمة حسب الفئة مع طريقة التثبيت وأوامر أمثلة وربط المجموعات."
     href="04-tool-catalog/"
   />
   <LinkCard
     title="مرجع المجموعات"
-    description="وصف تفصيلي لكل مجموعة حركة مرور والنصوص البرمجية والأدوات المستخدمة ونتائج اكتشاف F5 XC المتوقعة."
+    description="وصف تفصيلي لكل مجموعة حركة مرور والنصوص البرمجية والأدوات المستخدمة ونتائج الاكتشاف المتوقعة من F5 XC."
     href="05-suites/"
   />
 </CardGrid>

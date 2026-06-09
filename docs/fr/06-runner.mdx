@@ -1,10 +1,10 @@
 ---
 title: Runner
 description: >-
-  Usage guide for runner.sh suite orchestrator: execution modes, config.env
-  configuration, environment variable overrides, dry-run mode, results directory
-  structure, meta.json format, standalone script execution, and remote SSH
-  invocation
+  Guide d'utilisation de l'orchestrateur de suite runner.sh : modes d'exécution,
+  configuration config.env, surcharge de variables d'environnement, mode
+  dry-run, structure du répertoire de résultats, format meta.json, exécution
+  autonome de scripts et invocation SSH distante
 sidebar:
   order: 6
 i18n:
@@ -14,9 +14,9 @@ i18n:
 
 import { Steps, Aside } from '@astrojs/starlight/components';
 
-## Présentation
+## Vue d'ensemble
 
-`runner.sh` est l'orchestrateur de suites qui exécute tous les scripts numérotés dans un répertoire de suite dans l'ordre, capture la sortie et enregistre les métadonnées des résultats. Il est installé dans `/opt/traffic-generator/suites/runner.sh` sur la VM.
+`runner.sh` est l'orchestrateur de suite qui exécute tous les scripts numérotés dans un répertoire de suite dans l'ordre, capture la sortie et enregistre les métadonnées des résultats. Il est installé à `/opt/traffic-generator/suites/runner.sh` sur la VM.
 
 ## Utilisation
 
@@ -58,11 +58,11 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=
 ```
 
-Ce fichier est écrit automatiquement lors du provisionnement Terraform à partir des variables `target_fqdn` et `target_origin_ip`. Pour modifier la cible après le déploiement, modifiez ce fichier directement sur la VM.
+Ce fichier est écrit automatiquement lors du provisionnement Terraform à partir des variables `target_fqdn` et `target_origin_ip`. Pour changer la cible après le déploiement, modifiez ce fichier directement sur la VM.
 
-### Substitution par variable d'environnement
+### Surcharge de variables d'environnement
 
-Toute variable dans `config.env` peut être substituée en l'exportant avant l'exécution de la suite :
+Toute variable dans `config.env` peut être surchargée en l'exportant avant l'exécution de la suite :
 
 ```bash
 # Override target FQDN for a single run
@@ -73,7 +73,7 @@ export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-Le chemin du fichier de configuration lui-même peut également être substitué :
+Le chemin du fichier de configuration lui-même peut également être surchargé :
 
 ```bash
 CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
@@ -180,7 +180,7 @@ Les scripts acceptent le FQDN cible comme premier argument positionnel. Ils ne l
 
 ## Exécution de toutes les suites en séquence
 
-Pour exécuter toutes les suites l'une après l'autre :
+Pour exécuter chaque suite l'une après l'autre :
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -192,9 +192,9 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-Cela génère un trafic complet couvrant toutes les fonctionnalités de sécurité F5 XC. Prévoyez 45 à 80 minutes pour l'exécution complète, selon les temps de réponse de la cible.
+Cela génère un trafic complet couvrant toutes les fonctionnalités de sécurité F5 XC. Prévoyez que l'exécution complète prenne 45 à 80 minutes selon les temps de réponse de la cible.
 
-## Exécution à distance via SSH
+## Exécution distante via SSH
 
 Exécutez des suites depuis votre machine locale sans maintenir une session SSH :
 
@@ -215,7 +215,7 @@ ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-Pour les suites de longue durée, utilisez `nohup` ou `tmux` pour empêcher qu'une déconnexion SSH ne tue le processus :
+Pour les suites à longue durée d'exécution, utilisez `nohup` ou `tmux` pour empêcher qu'une déconnexion SSH ne tue le processus :
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
@@ -228,7 +228,7 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 <Steps>
 
-1. **Chargement de la configuration** -- Le runner lit `config.env` (ou la substitution `CONFIG_FILE`), puis vérifie la présence de `TARGET_FQDN` dans l'environnement.
+1. **Chargement de la configuration** -- Le runner lit `config.env` (ou la surcharge `CONFIG_FILE`), puis vérifie la présence de `TARGET_FQDN` dans l'environnement.
 
 2. **Validation de la suite** -- Confirme que le répertoire de suite nommé existe dans le répertoire des suites. Affiche les suites disponibles s'il n'est pas trouvé.
 

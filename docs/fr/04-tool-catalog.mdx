@@ -1,8 +1,8 @@
 ---
 title: Catalogue des outils
 description: >-
-  Catalogue complet de plus de 50 outils de sécurité installés sur la VM du
-  générateur de trafic, organisés par catégorie avec la méthode d'installation,
+  Catalogue complet de plus de 50 outils de sécurité installés sur la VM de
+  génération de trafic, organisés par catégorie avec la méthode d'installation,
   des exemples de commandes et les correspondances avec les suites de trafic
 sidebar:
   order: 4
@@ -35,7 +35,7 @@ Tous les outils listés ci-dessous sont pré-installés lors du provisionnement 
 | gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
 | waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
 
-GoTestWAF (par Wallarm) est un framework d'évaluation WAF standard de l'industrie qui multiplie les charges utiles à travers plusieurs encodeurs (URL, Base64, JSUnicode) et zones de placement (body, header, paramètre URL, cookie). waf-bypass (par Nemesida) envoie des charges utiles avec les encodages Base64, HTML-ENTITY et UTF-16 à travers les zones ARGS, BODY, COOKIE et HEADER.
+GoTestWAF (par Wallarm) est un framework d'évaluation de WAF reconnu dans l'industrie qui multiplie les charges utiles à travers plusieurs encodeurs (URL, Base64, JSUnicode) et zones de placement (body, header, paramètre URL, cookie). waf-bypass (par Nemesida) envoie des charges utiles avec un encodage Base64, HTML-ENTITY et UTF-16 à travers les zones ARGS, BODY, COOKIE et HEADER.
 
 ## Analyse réseau
 
@@ -117,7 +117,7 @@ Playwright installe son propre binaire Chromium via `playwright install chromium
 | PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
 | waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
 
-SecLists fournit des listes de mots utilisées par plusieurs outils, notamment ffuf, gobuster, feroxbuster, dirb et hydra. PayloadsAllTheThings fournit des charges utiles d'attaque multi-encodage organisées par classe d'attaque (XSS, SQLi, XXE) avec des variantes hex, octal, Unicode, entité HTML, double encodage URL et JSFuck.
+SecLists fournit des listes de mots utilisées par plusieurs outils dont ffuf, gobuster, feroxbuster, dirb et hydra. PayloadsAllTheThings fournit des charges utiles d'attaque multi-encodage sélectionnées, organisées par classe d'attaque (XSS, SQLi, XXE) avec des variantes hex, octal, Unicode, entité HTML, double encodage URL et JSFuck.
 
 ## Niveau complet uniquement
 
@@ -137,11 +137,11 @@ ZAP et Metasploit ajoutent environ 1,5 Gio à l'empreinte disque et 5 à 10 minu
 | Méthode | Description |
 |---|---|
 | apt | Installé depuis les dépôts APT d'Ubuntu 24.04 via `apt-get install` |
-| ghlatest | Dernier binaire téléchargé depuis les GitHub Releases en utilisant `ghlatest.sh` et `install-release.sh` |
+| ghlatest | Dernier binaire téléchargé depuis les GitHub Releases à l'aide de `ghlatest.sh` et `install-release.sh` |
 | uv | Installé en tant qu'outil Python à l'aide du gestionnaire de paquets `uv` |
-| pip | Installé en tant que paquet Python à l'aide de `pip install` dans le Python système |
-| npm | Installé en tant que paquet Node.js global à l'aide de `npm install -g` |
-| go install | Compilé depuis les sources à l'aide de `go install` et installé dans `/usr/local/bin` |
+| pip | Installé en tant que paquet Python via `pip install` dans le Python système |
+| npm | Installé en tant que paquet Node.js global via `npm install -g` |
+| go install | Compilé depuis les sources via `go install` et installé dans `/usr/local/bin` |
 | git clone | Dépôt cloné dans le répertoire `/opt/` |
 | git clone + pip | Dépôt cloné et dépendances Python installées |
-| installer script | Script d'installation fourni par l'éditeur exécuté pendant le cloud-init |
+| installer script | Script d'installation fourni par l'éditeur exécuté pendant cloud-init |

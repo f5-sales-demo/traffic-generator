@@ -1,9 +1,9 @@
 ---
 title: Architektur
 description: >-
-  Ubuntu 24.04 Azure VM mit über 50 vorinstallierten Sicherheitstools,
-  organisiert in 19 Traffic-Suiten, die F5 XC HTTP Load Balancer zum Schutz von
-  Origin-Server-Anwendungen für WAF-, Bot Defense-, API Security- und
+  Ubuntu 24.04 Azure-VM mit über 50 vorinstallierten Sicherheitstools,
+  organisiert in 19 Traffic-Suites, die F5 XC HTTP Load Balancer zum Schutz von
+  Origin-Server-Anwendungen für WAF-, Bot-Defense-, API-Security- und
   CSD-Validierung ansprechen
 sidebar:
   order: 1
@@ -14,7 +14,7 @@ i18n:
 
 ## Zweck
 
-Diese Komponente stellt eine automatisierte Plattform zur Traffic-Generierung bereit, die Angriffsverkehr, Reconnaissance-Scans, Bot-Simulationen und API-Missbrauch gegen einen F5 Distributed Cloud HTTP Load Balancer erzeugt. Sie ist der "Angreifer" in einer typischen Demo-Architektur – die Quelle für bösartigen und verdächtigen Datenverkehr, den die Sicherheitsfunktionen von F5 XC erkennen und blockieren sollen.
+Diese Komponente stellt eine automatisierte Traffic-Generierungsplattform bereit, die Angriffsverkehr, Reconnaissance-Scans, Bot-Simulation und API-Missbrauch gegen einen F5 Distributed Cloud HTTP Load Balancer erzeugt. Sie ist der "Angreifer" in einer typischen Demo-Architektur – die Quelle von bösartigem und verdächtigem Traffic, den die Sicherheitsfunktionen von F5 XC erkennen und blockieren sollen.
 
 In der Demo-Architektur:
 
@@ -22,7 +22,7 @@ In der Demo-Architektur:
 Traffic Generator VM -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server VM
 ```
 
-Der Traffic Generator sendet Anfragen an den öffentlichen FQDN des F5 XC Load Balancers. Die F5 XC-Plattform inspiziert und filtert den Datenverkehr, bevor sie legitime Anfragen an den Origin Server weiterleitet. Der Operator überprüft anschließend die F5 XC-Sicherheitsereignisprotokolle, um die Erkennung und Durchsetzung zu demonstrieren.
+Der Traffic Generator sendet Anfragen an den öffentlichen FQDN des F5 XC Load Balancers. Die F5 XC-Plattform inspiziert und filtert den Traffic, bevor sie legitime Anfragen an den Origin Server weiterleitet. Der Operator überprüft anschließend die F5 XC-Sicherheitsereignisprotokolle, um die Erkennung und Durchsetzung zu demonstrieren.
 
 ## Architektur
 
@@ -38,8 +38,8 @@ graph LR
 Die Traffic Generator VM läuft auf Azure mit:
 
 - **Ubuntu 24.04 LTS** als Basis-Image
-- **Über 50 Sicherheitstools**, installiert via cloud-init während der Bereitstellung
-- **19 organisierte Traffic-Suiten** mit nummerierten Skripten, die in Reihenfolge ausgeführt werden
+- **Über 50 Sicherheitstools**, die während der Bereitstellung via cloud-init installiert werden
+- **19 organisierten Traffic-Suites** mit nummerierten Skripten, die in Reihenfolge ausgeführt werden
 - **runner.sh** als Orchestrator für die Suite-Ausführung mit Ergebnisprotokollierung
 - **config.env** für die Zielkonfiguration (FQDN, Origin-IP)
 
@@ -53,35 +53,35 @@ Die Traffic Generator VM läuft auf Azure mit:
 | SSL/TLS-Tests | sslscan, sslyze, testssl.sh | TLS-Konfigurationsscanning |
 | Browser-Automatisierung | playwright, puppeteer, puppeteer-extra-plugin-stealth | Bot-Simulation mit Headless Chrome |
 | Subdomain und DNS | subfinder, httpx, amass, dnsrecon, fierce, whois, dnsutils | Reconnaissance und Enumeration |
-| Credential-Tests | hydra, medusa, ncrack | Authentifizierungsangriffssimulation |
+| Credential-Tests | hydra, medusa, ncrack | Simulation von Authentifizierungsangriffen |
 | WAF-Evasion-Tests | gotestwaf, waf-bypass, wfuzz | Multi-Layer-Encoding-Evasion und WAF-Bypass-Bewertung |
-| Exploit-Frameworks | ZAP, Metasploit (nur Full-Tier) | Umfassendes Schwachstellenscanning |
+| Exploit-Frameworks | ZAP, Metasploit (nur Full Tier) | Umfassendes Schwachstellen-Scanning |
 
 ## Gestufte Installation
 
 Der Traffic Generator unterstützt zwei Installationsstufen, die über die Terraform-Variable `tool_tier` gesteuert werden:
 
-### Standard-Tier (Standard)
+### Standard Tier (Standard)
 
-Installiert alle im Tool-Katalog aufgeführten Tools außer ZAP und Metasploit. Die Bereitstellung wird in 15-20 Minuten abgeschlossen. Diese Stufe deckt alle 19 Traffic-Suiten ab und ist für die meisten Demo-Szenarien ausreichend.
+Installiert alle im Tool-Katalog aufgeführten Tools mit Ausnahme von ZAP und Metasploit. Die Bereitstellung wird in 15-20 Minuten abgeschlossen. Diese Stufe deckt alle 19 Traffic-Suites ab und ist für die meisten Demo-Szenarien ausreichend.
 
-### Full-Tier
+### Full Tier
 
-Fügt OWASP ZAP und das Metasploit Framework zusätzlich zum Standard-Tier hinzu. Die Bereitstellung dauert ungefähr 25 Minuten. Diese Tools sind groß (ZAP ~500 MiB, Metasploit ~1 GiB) und werden nur für fortgeschrittene Schwachstellenscanning-Demos benötigt.
+Fügt OWASP ZAP und Metasploit Framework zusätzlich zur Standard-Stufe hinzu. Die Bereitstellung dauert ungefähr 25 Minuten. Diese Tools sind groß (ZAP ~500 MiB, Metasploit ~1 GiB) und werden nur für fortgeschrittene Schwachstellen-Scanning-Demos benötigt.
 
-Aktuelle VM-Kosten finden Sie im Azure-Preisrechner. Die standardmäßige Standard_F16s_v2 ist eine compute-optimierte Instanz, die für nachhaltige Traffic-Generierung geeignet ist.
+Aktuelle VM-Kosten finden Sie im Azure-Preisrechner. Die standardmäßige Standard_F16s_v2 ist eine compute-optimierte Instanz, die für anhaltende Traffic-Generierung geeignet ist.
 
 :::tip
-Verwenden Sie `terraform destroy`, wenn das Lab nicht in Benutzung ist, um laufende Kosten zu vermeiden. Siehe [Abbau](../08-teardown/) für die Vorgehensweise.
+Verwenden Sie `terraform destroy`, wenn das Lab nicht in Gebrauch ist, um laufende Kosten zu vermeiden. Siehe [Abbau](../08-teardown/) für die Vorgehensweise.
 :::
 
 ## Integrationspunkte
 
-Diese Komponente integriert sich mit zwei weiteren Demo-Komponenten:
+Diese Komponente integriert sich mit zwei anderen Demo-Komponenten:
 
 - **Origin Server** – Das Ziel-Backend, das Juice Shop, DVWA, VAmPI, httpbin und whoami hostet. Der Traffic Generator sendet Angriffsverkehr über F5 XC, um diese Anwendungen zu erreichen. Siehe [Integration](../07-integrate/) für vollständige Architekturdetails.
 
-- **CSD-Demo** – Die Client-Side Defense Demo-Anwendung auf dem Origin Server. Die `javascript-exploits` Traffic-Suite generiert Magecart-artige Script-Injection-Payloads, die F5 XC Client-Side Defense erkennt. Dies validiert die CSD Phase 2-Funktionalität.
+- **CSD-Demo** – Die Client-Side-Defense-Demoanwendung auf dem Origin Server. Die `javascript-exploits`-Traffic-Suite generiert Magecart-artige Skript-Injection-Payloads, die F5 XC Client-Side Defense erkennt. Dies validiert die CSD-Phase-2-Funktionalität.
 
 ## Modulares Komponentendesign
 
@@ -90,6 +90,6 @@ Jede Lab-Komponente ist eigenständig und wird unabhängig bereitgestellt:
 - **Traffic Generator** (diese Komponente) stellt die Angriffsquelle bereit
 - **Origin Server** stellt die verwundbaren Anwendungsziele bereit
 - **CDN Simulator** stellt die CDN-Edge-Caching-Schicht bereit (optional)
-- **F5 XC-Konfiguration** stellt WAF-, Bot Defense-, API Security- und CSD-Richtlinien bereit
+- **F5 XC-Konfiguration** stellt WAF-, Bot-Defense-, API-Security- und CSD-Richtlinien bereit
 
 Der menschliche Operator oder KI-Assistent fügt Komponenten einzeln hinzu. Stellen Sie zuerst den Origin Server bereit, konfigurieren Sie F5 XC davor und stellen Sie dann den Traffic Generator bereit, der auf den FQDN des F5 XC Load Balancers zielt.

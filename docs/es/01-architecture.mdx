@@ -14,7 +14,7 @@ i18n:
 
 ## Propósito
 
-Este componente proporciona una plataforma automatizada de generación de tráfico que produce tráfico de ataque, escaneos de reconocimiento, simulación de bots y abuso de API contra un balanceador de carga HTTP de F5 Distributed Cloud. Es el "atacante" en una arquitectura de demostración típica: la fuente de tráfico malicioso y sospechoso que las funcionalidades de seguridad de F5 XC están diseñadas para detectar y bloquear.
+Este componente proporciona una plataforma automatizada de generación de tráfico que produce tráfico de ataque, escaneos de reconocimiento, simulación de bots y abuso de API contra un balanceador de carga HTTP de F5 Distributed Cloud. Es el "atacante" en una arquitectura de demostración típica -- la fuente de tráfico malicioso y sospechoso que las funciones de seguridad de F5 XC están diseñadas para detectar y bloquear.
 
 En la arquitectura de demostración:
 
@@ -22,7 +22,7 @@ En la arquitectura de demostración:
 Traffic Generator VM -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server VM
 ```
 
-El Generador de Tráfico envía solicitudes al FQDN público del balanceador de carga de F5 XC. La plataforma F5 XC inspecciona y filtra el tráfico antes de reenviar las solicitudes legítimas al servidor de origen. El operador luego revisa los registros de eventos de seguridad de F5 XC para demostrar la detección y la aplicación de políticas.
+El Generador de Tráfico envía solicitudes al FQDN público del balanceador de carga de F5 XC. La plataforma F5 XC inspecciona y filtra el tráfico antes de reenviar las solicitudes legítimas al servidor de origen. El operador luego revisa los registros de eventos de seguridad de F5 XC para demostrar la detección y aplicación de políticas.
 
 ## Arquitectura
 
@@ -38,52 +38,52 @@ graph LR
 La VM del Generador de Tráfico se ejecuta en Azure con:
 
 - **Ubuntu 24.04 LTS** como imagen base
-- **Más de 50 herramientas de seguridad** instaladas vía cloud-init durante el aprovisionamiento
+- **Más de 50 herramientas de seguridad** instaladas mediante cloud-init durante el aprovisionamiento
 - **19 suites de tráfico organizadas** con scripts numerados ejecutados en orden
 - **runner.sh** como orquestador para la ejecución de suites con registro de resultados
 - **config.env** para la configuración del objetivo (FQDN, IP de origen)
 
-## Categorías de Herramientas
+## Categorías de herramientas
 
 | Categoría | Herramientas | Propósito |
 |---|---|---|
-| Pruebas de Aplicaciones Web | nikto, sqlmap, nuclei, dalfox, ffuf, gobuster, feroxbuster, dirb, whatweb | Generación de payloads de ataque para WAF |
-| Análisis de Red | nmap, masscan, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr | Reconocimiento y sondeo de red |
-| MITM y Proxy | mitmproxy, socat | Interceptación y manipulación de tráfico |
+| Pruebas de aplicaciones web | nikto, sqlmap, nuclei, dalfox, ffuf, gobuster, feroxbuster, dirb, whatweb | Generación de payloads de ataque WAF |
+| Análisis de red | nmap, masscan, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr | Reconocimiento y sondeo de red |
+| MITM y proxy | mitmproxy, socat | Interceptación y manipulación de tráfico |
 | Pruebas SSL/TLS | sslscan, sslyze, testssl.sh | Escaneo de configuración TLS |
-| Automatización de Navegador | playwright, puppeteer, puppeteer-extra-plugin-stealth | Simulación de bots con Chrome headless |
+| Automatización de navegador | playwright, puppeteer, puppeteer-extra-plugin-stealth | Simulación de bots con Chrome headless |
 | Subdominios y DNS | subfinder, httpx, amass, dnsrecon, fierce, whois, dnsutils | Reconocimiento y enumeración |
-| Pruebas de Credenciales | hydra, medusa, ncrack | Simulación de ataques de autenticación |
-| Pruebas de Evasión de WAF | gotestwaf, waf-bypass, wfuzz | Evasión de codificación multicapa y evaluación de bypass de WAF |
-| Frameworks de Explotación | ZAP, Metasploit (solo en tier completo) | Escaneo integral de vulnerabilidades |
+| Pruebas de credenciales | hydra, medusa, ncrack | Simulación de ataques de autenticación |
+| Pruebas de evasión de WAF | gotestwaf, waf-bypass, wfuzz | Evasión con codificación multicapa y evaluación de bypass de WAF |
+| Frameworks de explotación | ZAP, Metasploit (solo nivel completo) | Escaneo integral de vulnerabilidades |
 
-## Instalación por Niveles
+## Instalación por niveles
 
 El Generador de Tráfico soporta dos niveles de instalación controlados por la variable de Terraform `tool_tier`:
 
-### Nivel Estándar (predeterminado)
+### Nivel estándar (predeterminado)
 
 Instala todas las herramientas listadas en el catálogo de herramientas excepto ZAP y Metasploit. El aprovisionamiento se completa en 15-20 minutos. Este nivel cubre las 19 suites de tráfico y es suficiente para la mayoría de los escenarios de demostración.
 
-### Nivel Completo
+### Nivel completo
 
 Añade OWASP ZAP y Metasploit Framework sobre el nivel estándar. El aprovisionamiento toma aproximadamente 25 minutos. Estas herramientas son grandes (ZAP ~500 MiB, Metasploit ~1 GiB) y solo son necesarias para demostraciones avanzadas de escaneo de vulnerabilidades.
 
-Consulte la calculadora de precios de Azure para los costos actuales de las VM. La instancia predeterminada Standard_F16s_v2 es una instancia optimizada para cómputo, adecuada para la generación sostenida de tráfico.
+Consulte la calculadora de precios de Azure para los costos actuales de VM. El Standard_F16s_v2 predeterminado es una instancia optimizada para cómputo, adecuada para la generación sostenida de tráfico.
 
 :::tip
-Use `terraform destroy` cuando el laboratorio no esté en uso para evitar cargos continuos. Consulte [Desmantelamiento](../08-teardown/) para el procedimiento.
+Use `terraform destroy` cuando el laboratorio no esté en uso para evitar cargos continuos. Consulte [Desmontaje](../08-teardown/) para el procedimiento.
 :::
 
-## Puntos de Integración
+## Puntos de integración
 
 Este componente se integra con otros dos componentes de demostración:
 
-- **Servidor de Origen** -- El backend objetivo que aloja Juice Shop, DVWA, VAmPI, httpbin y whoami. El Generador de Tráfico envía tráfico de ataque a través de F5 XC para alcanzar estas aplicaciones. Consulte [Integración](../07-integrate/) para los detalles completos de la arquitectura.
+- **Servidor de origen** -- El backend objetivo que aloja Juice Shop, DVWA, VAmPI, httpbin y whoami. El Generador de Tráfico envía tráfico de ataque a través de F5 XC para alcanzar estas aplicaciones. Consulte [Integración](../07-integrate/) para los detalles completos de la arquitectura.
 
-- **Demo de CSD** -- La aplicación de demostración de Client-Side Defense en el servidor de origen. La suite de tráfico `javascript-exploits` genera payloads de inyección de scripts estilo Magecart que F5 XC Client-Side Defense detecta. Esto valida la funcionalidad de CSD Fase 2.
+- **Demo CSD** -- La aplicación de demostración de Client-Side Defense en el servidor de origen. La suite de tráfico `javascript-exploits` genera payloads de inyección de scripts estilo Magecart que F5 XC Client-Side Defense detecta. Esto valida la funcionalidad de CSD Fase 2.
 
-## Diseño Modular de Componentes
+## Diseño modular de componentes
 
 Cada componente del laboratorio es autónomo y se despliega de forma independiente:
 
@@ -92,4 +92,4 @@ Cada componente del laboratorio es autónomo y se despliega de forma independien
 - **Simulador de CDN** proporciona la capa de caché de borde CDN (opcional)
 - **Configuración de F5 XC** proporciona las políticas de WAF, Bot Defense, API Security y CSD
 
-El operador humano o el asistente de IA añade componentes uno a la vez. Despliegue primero el servidor de origen, configure F5 XC delante de él, y luego despliegue el generador de tráfico apuntando al FQDN del balanceador de carga de F5 XC.
+El operador humano o el asistente de IA añade componentes uno a la vez. Despliegue primero el servidor de origen, configure F5 XC delante de él, luego despliegue el generador de tráfico apuntando al FQDN del balanceador de carga de F5 XC.

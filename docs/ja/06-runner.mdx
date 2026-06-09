@@ -1,10 +1,9 @@
 ---
-title: Runner
+title: ランナー
 description: >-
-  Usage guide for runner.sh suite orchestrator: execution modes, config.env
-  configuration, environment variable overrides, dry-run mode, results directory
-  structure, meta.json format, standalone script execution, and remote SSH
-  invocation
+  runner.sh スイートオーケストレーターの使用ガイド：実行モード、config.env
+  設定、環境変数によるオーバーライド、ドライランモード、結果ディレクトリ構造、meta.json フォーマット、スタンドアロンスクリプト実行、リモート SSH
+  呼び出し
 sidebar:
   order: 6
 i18n:
@@ -16,7 +15,7 @@ import { Steps, Aside } from '@astrojs/starlight/components';
 
 ## 概要
 
-`runner.sh` は、スイートディレクトリ内のすべての番号付きスクリプトを順番に実行し、出力をキャプチャし、結果メタデータを記録するスイートオーケストレーターです。VM上の `/opt/traffic-generator/suites/runner.sh` にインストールされます。
+`runner.sh` は、スイートディレクトリ内のすべての番号付きスクリプトを順番に実行し、出力をキャプチャし、結果のメタデータを記録するスイートオーケストレーターです。VM 上の `/opt/traffic-generator/suites/runner.sh` にインストールされます。
 
 ## 使用方法
 
@@ -28,7 +27,7 @@ runner.sh <suite-name> [--dry-run]
 
 | 引数 | 必須 | 説明 |
 |---|---|---|
-| `suite-name` | はい | スイートディレクトリの名前（例: `web-app-attacks`、`api-attacks`） |
+| `suite-name` | はい | スイートディレクトリの名前（例：`web-app-attacks`、`api-attacks`） |
 | `--dry-run` | いいえ | スクリプトを実行せずに、実行される内容を表示する |
 
 **例:**
@@ -37,7 +36,7 @@ runner.sh <suite-name> [--dry-run]
 # web-app-attacks スイートを実行
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 
-# api-attacks スクリプトをプレビューするためのドライラン
+# api-attacks スクリプトをドライランでプレビュー
 /opt/traffic-generator/suites/runner.sh api-attacks --dry-run
 
 # ボットシミュレーションを実行
@@ -48,7 +47,7 @@ runner.sh <suite-name> [--dry-run]
 
 ### config.env
 
-ランナーは `/opt/traffic-generator/config.env` から設定を読み取ります:
+ランナーは `/opt/traffic-generator/config.env` から設定を読み取ります：
 
 ```bash
 # Required: target FQDN (F5 XC load balancer domain)
@@ -58,11 +57,11 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=
 ```
 
-このファイルは、Terraformプロビジョニング時に `target_fqdn` および `target_origin_ip` 変数から自動的に書き込まれます。デプロイ後にターゲットを変更するには、VM上でこのファイルを直接編集してください。
+このファイルは、Terraform プロビジョニング時に `target_fqdn` および `target_origin_ip` 変数から自動的に書き込まれます。デプロイ後にターゲットを変更するには、VM 上でこのファイルを直接編集してください。
 
 ### 環境変数によるオーバーライド
 
-`config.env` 内の任意の変数は、スイート実行前にエクスポートすることでオーバーライドできます:
+`config.env` 内の任意の変数は、スイートの実行前にエクスポートすることでオーバーライドできます：
 
 ```bash
 # 単一の実行でターゲット FQDN をオーバーライド
@@ -73,7 +72,7 @@ export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-設定ファイルのパス自体もオーバーライドできます:
+設定ファイルのパス自体もオーバーライドできます：
 
 ```bash
 CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
@@ -81,13 +80,13 @@ CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-a
 
 ## ドライランモード
 
-`--dry-run` フラグは、実行される各スクリプトを実際に実行せずに表示します:
+`--dry-run` フラグは、実行せずに各スクリプトが実行される内容を表示します：
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
 ```
 
-出力:
+出力：
 
 ```
 === 01-sqli.sh ===
@@ -107,11 +106,11 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-デプロイ後のスイート構造の確認や、新しいターゲットに対してスイートを実行する前の検証にドライランを使用してください。
+ドライランを使用して、デプロイ後のスイート構造の確認や、新しいターゲットに対してスイートを実行する前の検証を行います。
 
 ## 結果ディレクトリ
 
-各スイートの実行ごとにタイムスタンプ付きの結果ディレクトリが作成されます:
+各スイートの実行ごとに、タイムスタンプ付きの結果ディレクトリが作成されます：
 
 ```
 /opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
@@ -130,11 +129,11 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
   06-nuclei-scan.sh.log
 ```
 
-各スクリプトの stdout と stderr は、スクリプト名に基づいた `.log` ファイルにキャプチャされます。
+各スクリプトの stdout と stderr は、スクリプト名にちなんだ `.log` ファイルにキャプチャされます。
 
 ### meta.json フォーマット
 
-`meta.json` ファイルはスイート実行のメタデータを記録します:
+`meta.json` ファイルはスイートの実行メタデータを記録します：
 
 ```json
 {
@@ -153,20 +152,20 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 |---|---|
 | `suite` | スイート名 |
 | `target` | 実行に使用されたターゲット FQDN |
-| `started` | スイート開始時の UTC タイムスタンプ |
-| `completed` | スイート完了時の UTC タイムスタンプ |
+| `started` | スイートが開始された UTC タイムスタンプ |
+| `completed` | スイートが完了した UTC タイムスタンプ |
 | `status` | 実行中は `running`、完了時は `completed` |
 | `passed` | 終了コード 0 で終了したスクリプトの数 |
-| `failed` | ゼロ以外の終了コードで終了したスクリプトの数 |
-| `skipped` | スキップされたスクリプトの数（実行権限なしまたはドライラン） |
+| `failed` | 非ゼロの終了コードで終了したスクリプトの数 |
+| `skipped` | スキップされたスクリプトの数（実行不可またはドライラン） |
 
 <Aside type="tip">
-スクリプトのゼロ以外の終了コードは、必ずしもスイートが失敗したことを意味しません。多くのセキュリティツールは脆弱性を検出した際にゼロ以外で終了しますが、これは攻撃トラフィック生成時の想定された動作です。
+スクリプトの非ゼロの終了コードは、必ずしもスイートが失敗したことを意味しません。多くのセキュリティツールは脆弱性を発見すると非ゼロで終了しますが、これは攻撃トラフィック生成時の期待される動作です。
 </Aside>
 
 ## 個別スクリプトの実行
 
-各スクリプトはランナーなしでスタンドアロンで実行できます:
+各スクリプトはランナーなしでスタンドアロンで実行できます：
 
 ```bash
 # 単一のスクリプトを直接実行
@@ -180,7 +179,7 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 
 ## すべてのスイートを順番に実行
 
-すべてのスイートを連続して実行するには:
+すべてのスイートを連続して実行するには：
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -192,11 +191,11 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-これにより、すべての F5 XC セキュリティ機能にわたる包括的なトラフィックが生成されます。ターゲットの応答時間に応じて、完全な実行には 45〜80 分かかることが予想されます。
+これにより、すべての F5 XC セキュリティ機能にわたる包括的なトラフィックが生成されます。ターゲットの応答時間に応じて、フル実行には 45〜80 分かかることが想定されます。
 
 ## SSH 経由のリモート実行
 
-SSH セッションを維持せずにローカルマシンからスイートを実行できます:
+SSH セッションを維持せずに、ローカルマシンからスイートを実行します：
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -204,23 +203,23 @@ TGEN_IP=$(terraform output -raw public_ip)
 # 単一のスイートを実行
 ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
 
-# ターゲットオーバーライドでスイートを実行
+# ターゲットをオーバーライドしてスイートを実行
 ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
 
-# バックグラウンドで実行（切断セーフ）
+# バックグラウンドで実行（切断に対して安全）
 ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
 
-# 後で結果を確認
+# 後から結果を確認
 ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-長時間実行されるスイートの場合、SSH切断によるプロセスの終了を防ぐために `nohup` または `tmux` を使用してください:
+長時間実行されるスイートの場合、SSH の切断によりプロセスが終了するのを防ぐため、`nohup` または `tmux` を使用してください：
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
 
-# 後で再接続して進捗を確認
+# 後から再アタッチして進捗を確認
 ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 ```
 
@@ -228,14 +227,14 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 <Steps>
 
-1. **設定の読み込み** -- ランナーは `config.env`（または `CONFIG_FILE` オーバーライド）を読み取り、環境内の `TARGET_FQDN` を確認します。
+1. **設定の読み込み** -- ランナーは `config.env`（または `CONFIG_FILE` オーバーライド）を読み取り、次に環境内の `TARGET_FQDN` を確認します。
 
 2. **スイートの検証** -- 指定されたスイートディレクトリがスイートディレクトリ配下に存在することを確認します。見つからない場合は、利用可能なスイートを一覧表示します。
 
 3. **結果ディレクトリの作成** -- `/opt/traffic-generator/results/<timestamp>-<suite>/` を作成し、`status: running` で初期 `meta.json` を書き込みます。
 
-4. **スクリプトの実行** -- スイートディレクトリ内の `[0-9]*` にマッチするファイルを名前順にイテレートします。実行権限のないファイルはスキップします。`TARGET_FQDN` を最初の引数として渡します。出力を `<script-name>.log` にキャプチャします。
+4. **スクリプトの実行** -- スイートディレクトリ内の `[0-9]*` にマッチするファイルを名前順に反復処理します。実行不可能なファイルはスキップします。`TARGET_FQDN` を最初の引数として渡します。出力を `<script-name>.log` にキャプチャします。
 
-5. **結果の記録** -- 完了タイムスタンプとパス/失敗/スキップのカウントで `meta.json` を更新します。
+5. **結果の記録** -- 完了タイムスタンプと成功/失敗/スキップの件数で `meta.json` を更新します。
 
 </Steps>

@@ -8,11 +8,11 @@ i18n:
   translator: machine
 ---
 
-实验会话完成后，请销毁所有 Azure 资源以停止计费。
+实验会话完成后，销毁所有 Azure 资源以停止计费。
 
 ## Terraform 销毁
 
-在 `terraform/` 目录中执行：
+从 `terraform/` 目录执行：
 
 ```bash
 cd terraform/
@@ -22,7 +22,7 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform 将提示确认。输入 `yes` 以继续。
+Terraform 会提示确认。输入 `yes` 继续。
 
 ## 验证清理
 
@@ -48,7 +48,7 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## 保留结果（可选）
 
-如果您希望在销毁虚拟机之前保留流量套件结果，请将其复制到本地：
+如果您想在销毁虚拟机之前保留流量套件结果，请将其复制到本地：
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -69,8 +69,8 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 2. 删除源站池
 3. 删除为测试创建的任何 WAF 策略、Bot Defense 配置、API Security 策略或 CSD 配置
 
-这些 F5 XC 资源不会产生 Azure 费用，但在演示环境不再需要时应予以清理。
+这些 F5 XC 资源不会产生 Azure 费用，但在不再需要演示环境时应予以清理。
 
 :::tip
-对于重复使用的演示场景，建议将完整生命周期编写为脚本：在演示前执行 `cd terraform && terraform apply`，运行套件，然后执行 `terraform destroy`。标准层级的资源配置需要 15-20 分钟，使得当天搭建和拆除完全可行。
+对于重复的演示使用，建议将完整生命周期脚本化：演示前执行 `cd terraform && terraform apply`，运行套件，然后执行 `terraform destroy`。标准层级在 15-20 分钟内即可完成配置，使当天搭建和清理成为可行方案。
 :::

@@ -1,21 +1,21 @@
 ---
-title: Traffic Generator
+title: เครื่องสร้างทราฟฟิก
 description: >-
-  Azure Ubuntu 24.04 VM
-  ที่ติดตั้งเครื่องมือทดสอบความปลอดภัยล่วงหน้าสำหรับการตรวจสอบ WAF, Bot Defense,
-  API Security และ Client-Side Defense กับ F5 Distributed Cloud
+  Azure Ubuntu 24.04 VM pre-loaded with security testing tools for WAF, Bot
+  Defense, API Security, and Client-Side Defense validation against F5
+  Distributed Cloud
 template: splash
 hero:
   tagline: >-
-    Deploy a traffic generation VM with 50+ security tools, 19 organized attack
-    suites, and headless Chrome automation for comprehensive F5 XC demo
-    validation.
+    ปรับใช้ VM สร้างทราฟฟิกพร้อมเครื่องมือรักษาความปลอดภัยกว่า 50 รายการ,
+    ชุดการโจมตีที่จัดระบบ 19 ชุด และระบบอัตโนมัติ Headless Chrome
+    สำหรับการตรวจสอบ F5 XC Demo อย่างครอบคลุม
   actions:
-    - text: Get Started
+    - text: เริ่มต้นใช้งาน
       link: /traffic-generator/01-architecture/
       icon: right-arrow
       variant: primary
-    - text: Deploy Now
+    - text: ปรับใช้เลย
       link: /traffic-generator/03-deploy/
       icon: rocket
       variant: minimal
@@ -27,55 +27,55 @@ i18n:
 import { CardGrid } from '@astrojs/starlight/components';
 import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
 
-## สิ่งที่ระบบนี้มอบให้
+## สิ่งที่ได้รับ
 
-Traffic Generator คือ Azure VM ที่สร้างขึ้นเฉพาะสำหรับผลิตทราฟฟิกการโจมตีที่สมจริง การสแกนตรวจสอบ การจำลองบอท และรูปแบบการใช้งาน API ในทางที่ผิดต่อ F5 Distributed Cloud HTTP load balancer ระบบนี้ตรวจสอบว่านโยบาย WAF, Bot Defense, API Security และ Client-Side Defense ได้รับการกำหนดค่าอย่างถูกต้องโดยการสร้างทราฟฟิกที่ตรงกับสิ่งที่ฟีเจอร์เหล่านั้นได้รับการออกแบบมาเพื่อตรวจจับและบล็อก
+เครื่องสร้างทราฟฟิกเป็น Azure VM ที่สร้างขึ้นโดยเฉพาะเพื่อผลิตทราฟฟิกการโจมตีที่สมจริง การสแกนสำรวจ การจำลองบอท และรูปแบบการใช้งาน API ในทางที่ผิดต่อ F5 Distributed Cloud HTTP load balancer โดยจะตรวจสอบว่านโยบาย WAF, Bot Defense, API Security และ Client-Side Defense ได้รับการกำหนดค่าอย่างถูกต้องโดยการสร้างทราฟฟิกที่ฟีเจอร์เหล่านั้นถูกออกแบบมาเพื่อตรวจจับและบล็อก
 
-เครื่องมือทั้งหมดถูกติดตั้งล่วงหน้าผ่าน cloud-init ระหว่างการจัดเตรียมด้วย Terraform ทราฟฟิกถูกจัดระเบียบเป็นชุดที่สามารถรันทีละชุดหรือรันตามลำดับโดยใช้ตัวจัดการ `runner.sh` ที่รวมมาให้
+เครื่องมือทั้งหมดได้รับการติดตั้งล่วงหน้าผ่าน cloud-init ระหว่างการจัดเตรียมด้วย Terraform ทราฟฟิกถูกจัดระบบเป็นชุดที่สามารถรันแยกเดี่ยวหรือรันตามลำดับโดยใช้ตัวจัดการ `runner.sh` ที่รวมมาให้
 
 ## หมวดหมู่ชุดทราฟฟิก
 
-| ชุด | คำอธิบาย | ฟีเจอร์ F5 XC ที่ได้รับการตรวจสอบ |
+| ชุด | รายละเอียด | ฟีเจอร์ F5 XC ที่ตรวจสอบ |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, โหมด SQLMap API, การค้นหาพารามิเตอร์, การ fuzz endpoint | API Security |
-| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Headless Chrome, Puppeteer stealth, ระบบอัตโนมัติ Playwright, การ crawl แบบรวดเร็ว | Bot Defense |
+| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, SQLMap โหมด API, การค้นหาพารามิเตอร์, การ fuzz endpoint | API Security |
+| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Headless Chrome, Puppeteer stealth, Playwright automation, การ crawl แบบรวดเร็ว | Bot Defense |
 | [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | พฤติกรรมแคช, thundering herd, connection pool, HTTP/2 multiplexing | CDN Integration |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, OTP bruteforce, การจัดการ JWT, SSRF, NoSQL injection, IDOR | API Security |
+| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, OTP bruteforce, JWT manipulation, SSRF, NoSQL injection, IDOR | API Security |
 | [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | Card skimmer, formjacker, keylogger, cryptominer, DOM hijack | Client-Side Defense |
 | [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | Batch query DoS, deep recursion, SQL injection, introspection abuse | API Security (GraphQL) |
 | [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | Brute force, command injection, CSRF, file inclusion, SQLi, XSS | WAF |
-| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | การจัดการ DOM, การฉีดสคริปต์แบบ inline, เพย์โหลดสกิมมิงสไตล์ Magecart | Client-Side Defense |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi login bypass, XSS, IDOR, การเข้าถึงแอดมิน, การเข้าถึงไฟล์ด้วย null byte | WAF, Bot Defense |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | กลยุทธ์ ATT&CK: การสำรวจ, การเข้าถึงเบื้องต้น, การเข้าถึงข้อมูลรับรอง, การขโมยข้อมูล | WAF, Bot Defense, API Security |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | การสแกนช่องโหว่ด้วย ZAP, Nikto, Nuclei, Nmap, รายงาน OWASP รวม | WAF, Web App Scanning |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | การเพิ่ม concurrency, โหลดต่อเนื่อง, การทดสอบ spike, การค้นหาจุดแตกหัก | DDoS, Rate Limiting |
-| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, การ brute-force ไดเรกทอรี | WAF / Bot Defense |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, การหลีกเลี่ยง rate limiting, JWT weak secret | API Security |
-| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | การวิเคราะห์การกำหนดค่า TLS ด้วย SSLScan, sslyze, testssl.sh | WAF |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | ทราฟฟิก HTTP ที่ถูกต้องปริมาณสูงสำหรับ baseline และการทดสอบโหลด | All |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | การเข้ารหัส URL/HTML/Unicode หลายชั้น, การเข้ารหัสซ้อนแบบผสม, chunked TE, header injection | WAF |
+| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM manipulation, inline script injection, Magecart-style skimming payloads | Client-Side Defense |
+| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi login bypass, XSS, IDOR, admin access, null byte file access | WAF, Bot Defense |
+| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK tactics: การสำรวจ, การเข้าถึงเริ่มต้น, การเข้าถึงข้อมูลรับรอง, การขโมยข้อมูล | WAF, Bot Defense, API Security |
+| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, Nmap vulnerability scanning, รายงาน OWASP แบบรวม | WAF, Web App Scanning |
+| [performance-testing](/traffic-generator/05-suites/#performance-testing) | การเพิ่ม concurrency, โหลดแบบต่อเนื่อง, spike testing, การค้นหาจุดวิกฤต | DDoS, Rate Limiting |
+| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, directory brute-forcing | WAF / Bot Defense |
+| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, rate limiting bypass, JWT weak secret | API Security |
+| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan, sslyze, testssl.sh วิเคราะห์การกำหนดค่า TLS | WAF |
+| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | ทราฟฟิก HTTP ปริมาณสูงที่ถูกต้องสำหรับการทดสอบ baseline และ load | ทั้งหมด |
+| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | การเข้ารหัสหลายชั้น URL/HTML/Unicode, การเข้ารหัสซ้อนแบบผสม, chunked TE, header injection | WAF |
 | [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | SQL injection, XSS, command injection, path traversal, Nikto, Nuclei | WAF |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi, XSS, path traversal ต่อ endpoint ทดสอบ WAF ของ F5 DemoApp | WAF |
+| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi, XSS, path traversal ต่อ F5 DemoApp WAF testing endpoints | WAF |
 
 <CardGrid>
   <LinkCard
     title="สถาปัตยกรรม"
-    description="โครงสร้าง VM, หมวดหมู่เครื่องมือ, การติดตั้งแบบลำดับชั้น และจุดเชื่อมต่อกับ origin-server และ F5 XC"
+    description="การจัดวาง VM, หมวดหมู่เครื่องมือ, การติดตั้งแบบแบ่งชั้น และจุดเชื่อมต่อกับ origin-server และ F5 XC"
     href="01-architecture/"
   />
   <LinkCard
     title="การปรับใช้"
-    description="คำแนะนำ Terraform ฉบับสมบูรณ์: โคลน, กำหนดค่า, apply และตรวจสอบว่าเครื่องมือทั้งหมดทำงานได้"
+    description="คู่มือ Terraform ฉบับสมบูรณ์: clone, กำหนดค่า, apply และตรวจสอบว่าเครื่องมือทั้งหมดพร้อมใช้งาน"
     href="03-deploy/"
   />
   <LinkCard
-    title="แค็ตตาล็อกเครื่องมือ"
-    description="เครื่องมือที่ติดตั้งทั้งหมดจัดระเบียบตามหมวดหมู่พร้อมวิธีการติดตั้ง, คำสั่งตัวอย่าง และการแมปชุด"
+    title="แคตตาล็อกเครื่องมือ"
+    description="เครื่องมือที่ติดตั้งทุกรายการจัดระบบตามหมวดหมู่พร้อมวิธีการติดตั้ง คำสั่งตัวอย่าง และการเชื่อมโยงกับชุดทราฟฟิก"
     href="04-tool-catalog/"
   />
   <LinkCard
-    title="ข้อมูลอ้างอิงชุดทราฟฟิก"
-    description="คำอธิบายโดยละเอียดของแต่ละชุดทราฟฟิก, สคริปต์, เครื่องมือที่ใช้ และผลการตรวจจับ F5 XC ที่คาดหวัง"
+    title="อ้างอิงชุดทราฟฟิก"
+    description="รายละเอียดของชุดทราฟฟิกแต่ละชุด สคริปต์ เครื่องมือที่ใช้ และผลลัพธ์การตรวจจับ F5 XC ที่คาดหวัง"
     href="05-suites/"
   />
 </CardGrid>
