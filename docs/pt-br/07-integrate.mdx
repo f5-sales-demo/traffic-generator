@@ -3,8 +3,8 @@ title: Integrar
 description: >-
   Guia de integração para o gerador de tráfego com servidor de origem, F5 XC
   HTTP load balancer, demo CSD e simulador CDN: diagramas de arquitetura,
-  configuração de direcionamento, comparação de tráfego direto vs LB e
-  implantação multicomponente
+  configuração de destino, comparação de tráfego direto vs LB e implantação
+  multicomponente
 sidebar:
   order: 7
 i18n:
@@ -30,11 +30,11 @@ graph LR
     TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
 ```
 
-Cada componente é implantado e configurado de forma independente via Terraform. O gerador de tráfego direciona o FQDN do load balancer F5 XC, não o servidor de origem diretamente.
+Cada componente é implantado e configurado independentemente via Terraform. O gerador de tráfego tem como alvo o FQDN do load balancer F5 XC, não o servidor de origem diretamente.
 
 ## Integração com o Servidor de Origem
 
-O [servidor de origem](https://f5xc-salesdemos.github.io/origin-server/) fornece as aplicações backend que as suítes de ataque do gerador de tráfego direcionam:
+O [servidor de origem](https://f5xc-salesdemos.github.io/origin-server/) fornece as aplicações backend que as suítes de ataque do gerador de tráfego visam:
 
 | Suíte de Tráfego | Aplicação de Origem | Caminho |
 |---|---|---|
@@ -59,11 +59,11 @@ O [servidor de origem](https://f5xc-salesdemos.github.io/origin-server/) fornece
 ### Ordem de Implantação
 
 1. Implante o **servidor de origem** primeiro -- ele fornece as aplicações backend
-2. Configure o **F5 XC HTTP load balancer** com o servidor de origem como pool de origem
+2. Configure o **F5 XC HTTP load balancer** com o servidor de origem como origin pool
 3. Anexe as **políticas de WAF, Bot Defense, API Security e CSD** ao load balancer
 4. Implante o **gerador de tráfego** com `target_fqdn` definido para o domínio do F5 XC LB
 
-### Configuração de Direcionamento
+### Configuração de Destino
 
 O `config.env` do gerador de tráfego o conecta ao restante da arquitetura:
 
@@ -75,9 +75,9 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-Quando `TARGET_FQDN` está definido, todos os scripts das suítes enviam tráfego para `https://<TARGET_FQDN>/...`. O load balancer F5 XC recebe as requisições, aplica as políticas de segurança e encaminha o tráfego permitido para o servidor de origem.
+Quando `TARGET_FQDN` está definido, todos os scripts das suítes enviam tráfego para `https://<TARGET_FQDN>/...`. O load balancer F5 XC recebe as requisições, aplica as políticas de segurança e encaminha o tráfego permitido ao servidor de origem.
 
-## Integração com CSD Demo
+## Integração com o CSD Demo
 
 A suíte `javascript-exploits` é especificamente projetada para a demonstração de Client-Side Defense no servidor de origem. Esta suíte valida a funcionalidade da Fase 2 do CSD:
 
@@ -101,13 +101,13 @@ Para usar a suíte javascript-exploits:
 
 ## Integração com o Simulador CDN
 
-Quando o Simulador CDN é implantado, a arquitetura adiciona uma camada de cache:
+Quando o Simulador CDN está implantado, a arquitetura adiciona uma camada de cache:
 
 ```
 Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 ```
 
-O Simulador CDN fica na frente do load balancer F5 XC, fazendo cache de respostas e adicionando cabeçalhos semelhantes aos de CDN. Para direcionar o tráfego através do CDN:
+O Simulador CDN fica na frente do load balancer F5 XC, armazenando respostas em cache e adicionando cabeçalhos semelhantes aos de CDN. Para direcionar o tráfego através do CDN:
 
 ```bash
 # Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
@@ -122,16 +122,16 @@ Isso é útil para demonstrar como o F5 XC lida com tráfego que chega através 
 
 ## Comparação de Tráfego Direto vs LB
 
-O gerador de tráfego suporta o envio de tráfego tanto pelo F5 XC quanto diretamente para a origem. Esta comparação demonstra o valor dos recursos de segurança do F5 XC:
+O gerador de tráfego suporta o envio de tráfego tanto através do F5 XC quanto diretamente para a origem. Esta comparação demonstra o valor dos recursos de segurança do F5 XC:
 
-### Pelo F5 XC (padrão)
+### Através do F5 XC (padrão)
 
 ```bash
 # Traffic goes: Generator -> F5 XC LB -> Origin
 TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-Esperado: O WAF bloqueia payloads de SQL injection, XSS e command injection. O painel de Security Events mostra as requisições bloqueadas com detalhes das violações.
+Esperado: O WAF bloqueia payloads de SQL injection, XSS e command injection. O painel de Security Events mostra requisições bloqueadas com detalhes das violações.
 
 ### Direto para a Origem (linha de base)
 
@@ -140,16 +140,16 @@ Esperado: O WAF bloqueia payloads de SQL injection, XSS e command injection. O p
 TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-Esperado: Todos os payloads chegam às aplicações de origem sem filtragem. Juice Shop e DVWA processam os payloads de ataque. Isso demonstra o que acontece sem a proteção do F5 XC.
+Esperado: Todos os payloads alcançam as aplicações de origem sem filtragem. Juice Shop e DVWA processam os payloads de ataque. Isso demonstra o que acontece sem a proteção do F5 XC.
 
 ### Fluxo de Demonstração Lado a Lado
 
 Para uma demonstração convincente, execute a mesma suíte de ambas as formas:
 
 1. Execute `web-app-attacks` diretamente contra a origem -- mostre que os ataques são bem-sucedidos
-2. Execute `web-app-attacks` pelo F5 XC -- mostre que os ataques são bloqueados
+2. Execute `web-app-attacks` através do F5 XC -- mostre que os ataques são bloqueados
 3. Abra o painel de Security Events do F5 XC para exibir as requisições bloqueadas
-4. Compare os resultados do `meta.json` da suíte: execuções diretas mostram mais "passed" (ataques bem-sucedidos), execuções pelo LB mostram mais "failed" (ataques bloqueados)
+4. Compare os resultados do `meta.json` da suíte: execuções diretas mostram mais "passed" (ataques bem-sucedidos), execuções via LB mostram mais "failed" (ataques bloqueados)
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)

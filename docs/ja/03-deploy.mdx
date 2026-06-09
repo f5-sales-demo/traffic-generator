@@ -1,9 +1,9 @@
 ---
 title: デプロイ
 description: >-
-  トラフィックジェネレーター Azure VM の Terraform IaC デプロイ — Ubuntu 24.04 搭載の F シリーズコンピュート最適化
-  VM、カーネルチューニング、50 以上のセキュリティツール、cloud-init で 19 のトラフィックスイートをプロビジョニング。すべての設定ファイルは
-  terraform/ ディレクトリにあります。
+  トラフィックジェネレーター Azure VM の Terraform IaC デプロイ — Ubuntu 24.04 搭載の F シリーズ
+  コンピューティング最適化 VM、カーネルチューニング、50 以上のセキュリティツール、cloud-init でプロビジョニングされる 19
+  のトラフィックスイート。すべての構成ファイルは terraform/ ディレクトリにあります。
 sidebar:
   order: 3
 i18n:
@@ -20,64 +20,64 @@ cp terraform.tfvars.example terraform.tfvars
 # terraform.tfvars を Azure サブスクリプション ID とターゲット FQDN で編集
 ```
 
-## Terraform 設定
+## Terraform 構成
 
-### Terraform ファイル構成
+### Terraform ファイル構造
 
 terraform ディレクトリには、デモリソース標準に従った 9 つのファイルが含まれています：
 
-- `versions.tf` -- Terraform およびプロバイダーのバージョン制約（azurerm ~> 4.0, azuread ~> 3.0）
-- `providers.tf` -- Azure RM および Azure AD プロバイダー設定
+- `versions.tf` -- Terraform およびプロバイダーのバージョン制約 (azurerm ~> 4.0, azuread ~> 3.0)
+- `providers.tf` -- Azure RM および Azure AD プロバイダー構成
 - `data.tf` -- デプロイヤー自動解決用の Azure AD データソース
 - `locals.tf` -- デプロイヤー解決、Azure Cloud Adoption Framework リソース命名、標準タグ
 - `main.tf` -- リソースグループ（`rg-traffic-generator-{environment}-{deployer}` という名前）
-- `variables.tf` -- すべての入力変数（必須 2 つ、オプション 9 つ）、Azure AD によるデプロイヤー自動解決
-- `network.tf` -- VNet（10.201.0.0/16）、サブネット、パブリック IP、NSG（ポート 22 SSH）、NIC
-- `vm.tf` -- templatefile() による cloud-init を使用した Ubuntu 24.04 VM
+- `variables.tf` -- すべての入力変数（必須 2、オプション 9）と Azure AD によるデプロイヤー自動解決
+- `network.tf` -- VNet (10.201.0.0/16)、サブネット、パブリック IP、NSG（ポート 22 SSH）、NIC
+- `vm.tf` -- templatefile() による cloud-init 付き Ubuntu 24.04 VM
 - `outputs.tf` -- 17 の出力：すべてのデモリソースで共有される 15 の標準出力（deployer、public_ip、private_ip、ssh_command、resource_group_name、vm_name、nsg_name、vnet_name、subnet_id、component、environment、resource_group_id、vm_id、nsg_id、location）と 2 つのコンポーネント固有出力（target_fqdn、status_check）
 
 ### プロバイダーと変数
 
-`main.tf` で Azure プロバイダーを設定します：
+`main.tf` は Azure プロバイダーを構成します：
 
 ```hcl file=./_data/main.tf
 ```
 
-`variables.tf` ですべての設定可能なパラメータを定義します。`vm_size` のデフォルトは `Standard_F16s_v2`（16 vCPU コンピュート最適化）です。スケーリングのガイダンスについては [VM サイジング](#vm-サイジング)を参照してください：
+`variables.tf` はすべての設定可能なパラメーターを定義します。`vm_size` のデフォルトは `Standard_F16s_v2`（16 vCPU コンピューティング最適化）です。スケーリングのガイダンスについては [VM サイジング](#vm-サイジング) を参照してください：
 
 ```hcl file=./_data/variables.tf
 ```
 
 ### ネットワークインフラストラクチャ
 
-`network.tf` で VNet、サブネット、パブリック IP、NSG（ポート 22 SSH）、NIC を作成します：
+`network.tf` は VNet、サブネット、パブリック IP、NSG（ポート 22 SSH）、NIC を作成します：
 
 ```hcl file=./_data/network.tf
 ```
 
-### Cloud-Init を使用した仮想マシン
+### Cloud-Init 付き仮想マシン
 
-`vm.tf` で Ubuntu 24.04 VM を作成し、ターゲットおよびツール変数を含む cloud-init テンプレートを渡します：
+`vm.tf` は Ubuntu 24.04 VM を作成し、ターゲットとツーリング変数を含む cloud-init テンプレートを渡します：
 
 ```hcl file=./_data/vm.tf
 ```
 
 ### Cloud-Init プロビジョニング
 
-`cloud-init.yaml` は、4 ラウンドのオリジン負荷テストを含む 48 時間以上の継続的な負荷テストで検証された本番環境対応の設定です。リトライロジックを備えたヘルパーライブラリ、`/var/log/cloud-init-progress.log` への進捗ログ、9 つのプロビジョニングフェーズ、条件付きステータスレポート（`status.json` での ready/degraded）を使用します。プロビジョニング内容：
+`cloud-init.yaml` は、4 ラウンドのオリジン耐久テストを含む 48 時間以上の継続的な負荷テストで検証された本番環境向け構成です。リトライロジック付きのヘルパーライブラリ、`/var/log/cloud-init-progress.log` への進捗ログ、9 つのプロビジョニングフェーズ、条件付きステータスレポート（`status.json` の ready/degraded）を使用します。プロビジョニング内容：
 
 - **カーネルチューニング** -- `somaxconn=131072`、`tcp_max_tw_buckets=4000000`、`tcp_fin_timeout=5`、64 MiB ソケットバッファ、`file-max=4194304`
-- **NIC 最適化** -- 全コアにわたる RPS/RFS、ethtool によるリングバッファの最大化、THP=always
+- **NIC 最適化** -- 全コアにわたる RPS/RFS、ethtool によるリングバッファ最大化、THP=always
 - **APT パッケージ** -- nikto、nmap、masscan、sqlmap、hydra、medusa、ncrack、tshark、hping3、tcpdump、netcat、ngrep、iperf3、mtr、sslscan、socat、dirb、whatweb、wrk、hey、vegeta、ethtool
-- **GitHub Releases** -- nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass
+- **GitHub リリース** -- nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass
 - **Python パッケージ** -- mitmproxy、sslyze、dnsrecon、fierce、theHarvester、playwright、scapy、impacket、arjun
 - **Node.js 20.x** -- ボットシミュレーション用のステルスプラグイン付き Puppeteer
 - **ブラウザ自動化** -- ヘッドレスブラウザテスト用の Playwright Chromium
 - **Git クローン** -- testssl.sh、recon-ng、spiderfoot、SecLists、waf-bypass、PayloadsAllTheThings
-- **スイートデプロイ** -- このリポジトリから 19 のトラフィックスイートを `/opt/traffic-generator/suites/` にクローン
+- **スイートデプロイ** -- このリポジトリから `/opt/traffic-generator/suites/` に 19 のトラフィックスイートをクローン
 - **設定ファイル** -- `TARGET_FQDN`、`TARGET_ORIGIN_IP`、`CRAPI_PORT` を含む `config.env`
 
-cloud-init は Terraform テンプレート変数 `${target_fqdn}`、`${target_origin_ip}`、`${tool_tier}` を使用します。`$NPROC` のようなシェル変数は、Terraform の templatefile で `$$NPROC` としてエスケープされます。
+cloud-init は Terraform テンプレート変数 `${target_fqdn}`、`${target_origin_ip}`、`${tool_tier}` を使用します。`$NPROC` のようなシェル変数は、Terraform templatefile 内で `$$NPROC` としてエスケープされます。
 
 ```yaml file=./_data/cloud-init.yaml
 ```
@@ -91,7 +91,7 @@ cloud-init は Terraform テンプレート変数 `${target_fqdn}`、`${target_o
 
 ### 変数ファイルの例
 
-`terraform.tfvars.example` を `terraform.tfvars` にコピーして値を入力してください。`.gitignore` は認証情報のコミットを防ぐため `terraform.tfvars` を除外しています：
+`terraform.tfvars.example` を `terraform.tfvars` にコピーして値を入力してください。`.gitignore` は認証情報のコミットを防ぐために `terraform.tfvars` を除外しています：
 
 ```hcl file=./_data/terraform.tfvars.example
 ```
@@ -108,11 +108,11 @@ terraform plan
 terraform apply
 ```
 
-デプロイが成功すると、Terraform がパブリック IP、SSH コマンド、ターゲット FQDN を出力します。
+デプロイが成功すると、Terraform はパブリック IP、SSH コマンド、ターゲット FQDN を出力します。
 
 ## VM サイジング
 
-F シリーズコンピュート最適化 VM は、この CPU バウンドなトラフィック生成ワークロードに推奨されます。cloud-init のカーネルチューニングとツールの同時実行数は、vCPU 数に応じて自動的にスケールします。
+F シリーズのコンピューティング最適化 VM は、この CPU バウンドなトラフィック生成ワークロードに推奨されます。cloud-init のカーネルチューニングとツールの並行処理は、vCPU 数に応じて自動的にスケールします。
 
 | VM SKU | vCPU | RAM | ネットワーク | ユースケース |
 |---|---|---|---|---|
@@ -120,19 +120,19 @@ F シリーズコンピュート最適化 VM は、この CPU バウンドなト
 | Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | 標準デモ |
 | Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | 負荷テスト（デフォルト） |
 | Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | 高負荷ベンチマーク |
-| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM 重視ワークロード |
+| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM 集約型ワークロード |
 
 :::tip
-F16s_v2 は、CDN F16s_v2 および F32s_v2 ターゲットに対する A/B/C/D ベンチマークテストにより、最適なコストパフォーマンスオプションとして検証されました。詳細な結果は [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) を参照してください。
+F16s_v2 は、CDN F16s_v2 および F32s_v2 ターゲットに対する A/B/C/D ベンチマークテストにより、最適なコストパフォーマンスオプションとして検証されました。完全な結果については [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) を参照してください。
 :::
 
 ## デプロイ後の検証
 
-Cloud-init プロビジョニングは、**standard ティアで 15〜20 分**、**full ティアで約 25 分**かかります。VM には SSH ですぐにアクセスできますが、cloud-init が完了するまでツールのインストールは継続中です。
+Cloud-init のプロビジョニングは、**standard ティアで 15〜20 分**、**full ティアで約 25 分**かかります。VM には SSH で即座にアクセスできますが、cloud-init が完了するまでツールのインストールが続行されます。
 
 ### Cloud-Init の完了を待つ
 
-VM に SSH 接続してプロビジョニングの完了を待ちます：
+VM に SSH 接続し、プロビジョニングの完了を待ちます：
 
 ```bash
 ssh azureuser@$(terraform output -raw public_ip)
@@ -148,7 +148,7 @@ status: done
 
 ### ステータスファイルの確認
 
-cloud-init スクリプトは完了時にステータスファイルを書き込みます：
+cloud-init スクリプトは完了時にステータスファイルを書き出します：
 
 ```bash
 cat /opt/traffic-generator/status.json
@@ -166,9 +166,9 @@ cat /opt/traffic-generator/status.json
 }
 ```
 
-### 重要なツールの確認
+### 重要なツールの検証
 
-各重要ツールが PATH 上で利用可能であることを確認する検証ループを実行します：
+各重要なツールが PATH 上で利用可能であることを確認するための検証ループを実行します：
 
 ```bash
 for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
@@ -182,7 +182,7 @@ for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
 done
 ```
 
-### スイートランナーの確認
+### スイートランナーの検証
 
 ランナーとスイートがインストールされていることを確認します：
 
@@ -224,7 +224,7 @@ terraform output -raw ssh_command
 
 ## アップストリームコンポーネントからの接続
 
-トラフィックジェネレーターは、オリジンサーバーの前段にある F5 XC HTTP ロードバランサーをターゲットにします。まずオリジンサーバーをデプロイし、F5 XC を設定してから、`target_fqdn` にロードバランサーの FQDN を設定してください：
+トラフィックジェネレーターは、オリジンサーバーの前段にある F5 XC HTTP ロードバランサーをターゲットとします。まずオリジンサーバーをデプロイし、F5 XC を構成してから、`target_fqdn` をロードバランサーの FQDN に設定します：
 
 ```bash
 # origin-server をデプロイし、F5 XC HTTP ロードバランサーを作成した後：
@@ -240,4 +240,4 @@ EOF
 | `target_fqdn` | F5 XC コンソール | オリジンサーバーを保護する HTTP ロードバランサーの FQDN |
 | `target_origin_ip` | オリジンサーバーの `public_ip` 出力 | バイパステスト用の直接オリジン IP（オプション） |
 
-ツールの完全なリファレンスは[ツールカタログ](../04-tool-catalog/)へ、トラフィック生成を開始するには[スイート](../05-suites/)へ進んでください。
+ツールの完全なリファレンスについては [ツールカタログ](../04-tool-catalog/) に、トラフィック生成を開始するには [スイート](../05-suites/) に進んでください。

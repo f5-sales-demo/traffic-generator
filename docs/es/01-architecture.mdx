@@ -14,7 +14,7 @@ i18n:
 
 ## Propósito
 
-Este componente proporciona una plataforma automatizada de generación de tráfico que produce tráfico de ataque, escaneos de reconocimiento, simulación de bots y abuso de API contra un balanceador de carga HTTP de F5 Distributed Cloud. Es el "atacante" en una arquitectura de demostración típica -- la fuente de tráfico malicioso y sospechoso que las funciones de seguridad de F5 XC están diseñadas para detectar y bloquear.
+Este componente proporciona una plataforma automatizada de generación de tráfico que produce tráfico de ataque, escaneos de reconocimiento, simulación de bots y abuso de API contra un balanceador de carga HTTP de F5 Distributed Cloud. Es el "atacante" en una arquitectura de demostración típica: la fuente de tráfico malicioso y sospechoso que las funciones de seguridad de F5 XC están diseñadas para detectar y bloquear.
 
 En la arquitectura de demostración:
 
@@ -49,7 +49,7 @@ La VM del Generador de Tráfico se ejecuta en Azure con:
 |---|---|---|
 | Pruebas de aplicaciones web | nikto, sqlmap, nuclei, dalfox, ffuf, gobuster, feroxbuster, dirb, whatweb | Generación de payloads de ataque WAF |
 | Análisis de red | nmap, masscan, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr | Reconocimiento y sondeo de red |
-| MITM y proxy | mitmproxy, socat | Interceptación y manipulación de tráfico |
+| MITM y Proxy | mitmproxy, socat | Interceptación y manipulación de tráfico |
 | Pruebas SSL/TLS | sslscan, sslyze, testssl.sh | Escaneo de configuración TLS |
 | Automatización de navegador | playwright, puppeteer, puppeteer-extra-plugin-stealth | Simulación de bots con Chrome headless |
 | Subdominios y DNS | subfinder, httpx, amass, dnsrecon, fierce, whois, dnsutils | Reconocimiento y enumeración |
@@ -59,7 +59,7 @@ La VM del Generador de Tráfico se ejecuta en Azure con:
 
 ## Instalación por niveles
 
-El Generador de Tráfico soporta dos niveles de instalación controlados por la variable de Terraform `tool_tier`:
+El Generador de Tráfico admite dos niveles de instalación controlados por la variable de Terraform `tool_tier`:
 
 ### Nivel estándar (predeterminado)
 
@@ -67,21 +67,21 @@ Instala todas las herramientas listadas en el catálogo de herramientas excepto 
 
 ### Nivel completo
 
-Añade OWASP ZAP y Metasploit Framework sobre el nivel estándar. El aprovisionamiento toma aproximadamente 25 minutos. Estas herramientas son grandes (ZAP ~500 MiB, Metasploit ~1 GiB) y solo son necesarias para demostraciones avanzadas de escaneo de vulnerabilidades.
+Agrega OWASP ZAP y Metasploit Framework sobre el nivel estándar. El aprovisionamiento tarda aproximadamente 25 minutos. Estas herramientas son grandes (ZAP ~500 MiB, Metasploit ~1 GiB) y solo se necesitan para demostraciones avanzadas de escaneo de vulnerabilidades.
 
-Consulte la calculadora de precios de Azure para los costos actuales de VM. El Standard_F16s_v2 predeterminado es una instancia optimizada para cómputo, adecuada para la generación sostenida de tráfico.
+Consulte la calculadora de precios de Azure para conocer los costos actuales de VM. El Standard_F16s_v2 predeterminado es una instancia optimizada para cómputo adecuada para la generación sostenida de tráfico.
 
 :::tip
-Use `terraform destroy` cuando el laboratorio no esté en uso para evitar cargos continuos. Consulte [Desmontaje](../08-teardown/) para el procedimiento.
+Use `terraform destroy` cuando el laboratorio no esté en uso para evitar cargos continuos. Consulte [Desmontaje](../08-teardown/) para conocer el procedimiento.
 :::
 
 ## Puntos de integración
 
 Este componente se integra con otros dos componentes de demostración:
 
-- **Servidor de origen** -- El backend objetivo que aloja Juice Shop, DVWA, VAmPI, httpbin y whoami. El Generador de Tráfico envía tráfico de ataque a través de F5 XC para alcanzar estas aplicaciones. Consulte [Integración](../07-integrate/) para los detalles completos de la arquitectura.
+- **Servidor de origen** -- El backend de destino que aloja Juice Shop, DVWA, VAmPI, httpbin y whoami. El Generador de Tráfico envía tráfico de ataque a través de F5 XC para alcanzar estas aplicaciones. Consulte [Integración](../07-integrate/) para los detalles completos de la arquitectura.
 
-- **Demo CSD** -- La aplicación de demostración de Client-Side Defense en el servidor de origen. La suite de tráfico `javascript-exploits` genera payloads de inyección de scripts estilo Magecart que F5 XC Client-Side Defense detecta. Esto valida la funcionalidad de CSD Fase 2.
+- **Demostración CSD** -- La aplicación de demostración de Client-Side Defense en el servidor de origen. La suite de tráfico `javascript-exploits` genera payloads de inyección de scripts estilo Magecart que F5 XC Client-Side Defense detecta. Esto valida la funcionalidad de CSD Fase 2.
 
 ## Diseño modular de componentes
 
@@ -89,7 +89,7 @@ Cada componente del laboratorio es autónomo y se despliega de forma independien
 
 - **Generador de Tráfico** (este componente) proporciona la fuente de ataques
 - **Servidor de Origen** proporciona los objetivos de aplicaciones vulnerables
-- **Simulador de CDN** proporciona la capa de caché de borde CDN (opcional)
+- **Simulador CDN** proporciona la capa de caché en el borde CDN (opcional)
 - **Configuración de F5 XC** proporciona las políticas de WAF, Bot Defense, API Security y CSD
 
-El operador humano o el asistente de IA añade componentes uno a la vez. Despliegue primero el servidor de origen, configure F5 XC delante de él, luego despliegue el generador de tráfico apuntando al FQDN del balanceador de carga de F5 XC.
+El operador humano o el asistente de IA agrega componentes uno a la vez. Despliegue primero el servidor de origen, configure F5 XC delante de él y luego despliegue el generador de tráfico apuntando al FQDN del balanceador de carga de F5 XC.

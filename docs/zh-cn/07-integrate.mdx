@@ -48,7 +48,7 @@ graph LR
 | performance-testing | 所有应用程序 | 所有路径 |
 | reconnaissance | 所有应用程序 | 所有路径 |
 | restaurant-exploits | Restaurant API | `/restaurant/` |
-| ssl-scanning | F5 XC LB（非直接源服务器） | 不适用 |
+| ssl-scanning | F5 XC LB（非直连源服务器） | N/A |
 | traffic-generation | 所有应用程序 | 所有路径 |
 | web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
 
@@ -71,21 +71,21 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-当设置了 `TARGET_FQDN` 时，所有套件脚本将流量发送到 `https://<TARGET_FQDN>/...`。F5 XC 负载均衡器接收请求、应用安全策略，并将允许的流量转发到源服务器。
+当设置了 `TARGET_FQDN` 后，所有套件脚本会将流量发送到 `https://<TARGET_FQDN>/...`。F5 XC 负载均衡器接收请求、应用安全策略，并将允许的流量转发到源服务器。
 
 ## CSD 演示集成
 
-`javascript-exploits` 套件专门为源服务器上的客户端防御演示而设计。该套件验证 CSD Phase 2 功能：
+`javascript-exploits` 套件专为源服务器上的客户端防御演示而设计。该套件验证 CSD Phase 2 功能：
 
 **Phase 2 流程：**
 
 1. 源服务器在 `/csd-demo/` 路径托管 CSD 演示页面
-2. F5 XC CSD 将其监控 JavaScript 注入到页面中
+2. F5 XC CSD 将其监控 JavaScript 注入页面
 3. 流量生成器的 javascript-exploits 套件尝试：
    - 注入模拟 Magecart 窃取器的内联脚本
    - 修改 DOM 元素以重定向表单提交
    - 加载未授权的第三方 JavaScript
-4. F5 XC CSD 检测这些修改并在 CSD 仪表板中报告
+4. F5 XC CSD 检测到这些修改并在 CSD 仪表板中报告
 
 使用 javascript-exploits 套件：
 
@@ -97,13 +97,13 @@ TARGET_ORIGIN_IP=20.10.5.100
 
 ## CDN 模拟器集成
 
-部署 CDN 模拟器后，架构中增加了一个缓存层：
+当部署了 CDN 模拟器时，架构中会增加一个缓存层：
 
 ```
 Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 ```
 
-CDN 模拟器位于 F5 XC 负载均衡器前面，缓存响应并添加类似 CDN 的头信息。要将流量通过 CDN 发送：
+CDN 模拟器位于 F5 XC 负载均衡器前面，缓存响应并添加类似 CDN 的头部。要将流量通过 CDN 发送：
 
 ```bash
 # Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
@@ -112,15 +112,15 @@ TARGET_FQDN=cdn.demo.example.com
 
 这对于演示 F5 XC 如何处理通过 CDN 到达的流量非常有用，包括：
 
-- 识别 CDN 代理头后面的真实客户端 IP
-- 对可能已被 CDN 修改的请求应用 WAF 规则
-- 当 CDN 修改浏览器指纹时的 Bot Defense 分类
+- 识别 CDN 代理头部后面的真实客户端 IP
+- 对可能被 CDN 修改的请求应用 WAF 规则
+- 当 CDN 修改浏览器指纹时进行 Bot Defense 分类
 
 ## 直连与负载均衡流量对比
 
 流量生成器支持同时通过 F5 XC 和直接向源服务器发送流量。这种对比展示了 F5 XC 安全功能的价值：
 
-### 通过 F5 XC（默认）
+### 通过 F5 XC（默认方式）
 
 ```bash
 # Traffic goes: Generator -> F5 XC LB -> Origin
@@ -136,16 +136,16 @@ TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-att
 TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-预期结果：所有载荷未经过滤地到达源应用程序。Juice Shop 和 DVWA 处理了攻击载荷。这展示了没有 F5 XC 保护时会发生什么。
+预期结果：所有载荷未经过滤地到达源应用程序。Juice Shop 和 DVWA 处理攻击载荷。这展示了没有 F5 XC 保护时会发生什么。
 
-### 并排演示流程
+### 并行演示流程
 
-要进行具有说服力的演示，以两种方式运行相同的套件：
+为了进行有说服力的演示，以两种方式运行相同的套件：
 
 1. 直接对源服务器运行 `web-app-attacks` -- 展示攻击成功
 2. 通过 F5 XC 运行 `web-app-attacks` -- 展示攻击被阻止
-3. 打开 F5 XC 安全事件仪表板，显示被阻止的请求
-4. 比较套件 `meta.json` 结果：直连运行显示更多 "passed"（攻击成功），LB 运行显示更多 "failed"（攻击被阻止）
+3. 打开 F5 XC 安全事件仪表板查看被阻止的请求
+4. 比较套件 `meta.json` 结果：直连运行显示更多 "passed"（攻击成功），负载均衡运行显示更多 "failed"（攻击被阻止）
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)

@@ -1,15 +1,15 @@
 ---
 title: Générateur de trafic
 description: >-
-  VM Azure Ubuntu 24.04 préchargée avec des outils de test de sécurité pour la
+  VM Azure Ubuntu 24.04 préchargée avec des outils de tests de sécurité pour la
   validation du WAF, de la défense contre les bots, de la sécurité API et de la
   défense côté client contre F5 Distributed Cloud
 template: splash
 hero:
   tagline: >-
     Déployez une VM de génération de trafic avec plus de 50 outils de sécurité,
-    19 suites d'attaques organisées et l'automatisation Chrome headless pour une
-    validation complète des démos F5 XC.
+    19 suites d'attaques organisées et une automatisation Chrome headless pour
+    une validation complète des démos F5 XC.
   actions:
     - text: Commencer
       link: /traffic-generator/01-architecture/
@@ -29,7 +29,7 @@ import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
 
 ## Ce que cela fournit
 
-Le générateur de trafic est une VM Azure spécialement conçue qui produit du trafic d'attaque réaliste, des scans de reconnaissance, de la simulation de bots et des schémas d'abus d'API contre un répartiteur de charge HTTP F5 Distributed Cloud. Il valide que les politiques WAF, la défense contre les bots, la sécurité API et la défense côté client sont correctement configurées en générant exactement le trafic que ces fonctionnalités sont conçues pour détecter et bloquer.
+Le générateur de trafic est une VM Azure spécialement conçue qui produit du trafic d'attaque réaliste, des scans de reconnaissance, des simulations de bots et des schémas d'abus d'API contre un répartiteur de charge HTTP F5 Distributed Cloud. Il valide que les politiques WAF, la défense contre les bots, la sécurité API et la défense côté client sont correctement configurées en générant exactement le trafic que ces fonctionnalités sont conçues pour détecter et bloquer.
 
 Tous les outils sont préinstallés via cloud-init lors du provisionnement Terraform. Le trafic est organisé en suites qui peuvent être exécutées individuellement ou en séquence à l'aide de l'orchestrateur `runner.sh` inclus.
 
@@ -37,25 +37,25 @@ Tous les outils sont préinstallés via cloud-init lors du provisionnement Terra
 
 | Suite | Description | Fonctionnalité F5 XC validée |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, mode API SQLMap, découverte de paramètres, fuzzing d'endpoints | Sécurité API |
+| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, mode API SQLMap, découverte de paramètres, fuzzing de points de terminaison | Sécurité API |
 | [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Chrome headless, Puppeteer stealth, automatisation Playwright, crawling rapide | Défense contre les bots |
 | [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | Comportement du cache, effet de troupeau, pool de connexions, multiplexage HTTP/2 | Intégration CDN |
 | [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, bruteforce OTP, manipulation JWT, SSRF, injection NoSQL, IDOR | Sécurité API |
-| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | Skimmer de carte, formjacker, keylogger, cryptominer, détournement DOM | Défense côté client |
+| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | Skimmer de carte, formjacker, keylogger, cryptomineur, détournement DOM | Défense côté client |
 | [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | DoS par requêtes groupées, récursion profonde, injection SQL, abus d'introspection | Sécurité API (GraphQL) |
 | [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | Force brute, injection de commandes, CSRF, inclusion de fichiers, SQLi, XSS | WAF |
 | [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | Manipulation DOM, injection de scripts inline, charges utiles de skimming de type Magecart | Défense côté client |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | Contournement de connexion SQLi, XSS, IDOR, accès administrateur, accès fichier par octet nul | WAF, Défense contre les bots |
+| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | Contournement de connexion SQLi, XSS, IDOR, accès admin, accès fichier par octet nul | WAF, Défense contre les bots |
 | [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | Tactiques ATT&CK : reconnaissance, accès initial, accès aux identifiants, exfiltration | WAF, Défense contre les bots, Sécurité API |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, scan de vulnérabilités Nmap, rapport OWASP combiné | WAF, Scan d'applications web |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | Montée en concurrence, charge soutenue, test de pics, découverte de points de rupture | DDoS, Limitation de débit |
+| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | Analyse de vulnérabilités ZAP, Nikto, Nuclei, Nmap, rapport OWASP combiné | WAF, Analyse d'applications web |
+| [performance-testing](/traffic-generator/05-suites/#performance-testing) | Montée en charge progressive, charge soutenue, test de pics, découverte de points de rupture | DDoS, Limitation de débit |
 | [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, force brute de répertoires | WAF / Défense contre les bots |
 | [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, contournement de limitation de débit, secret JWT faible | Sécurité API |
-| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan, sslyze, analyse de configuration TLS testssl.sh | WAF |
+| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | Analyse de configuration TLS avec SSLScan, sslyze, testssl.sh | WAF |
 | [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | Trafic HTTP légitime à haut volume pour les tests de référence et de charge | Tous |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | Encodage URL/HTML/Unicode multi-couches, encodage imbriqué mixte, TE chunked, injection d'en-têtes | WAF |
+| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | Encodage multicouche URL/HTML/Unicode, encodage imbriqué mixte, TE fragmenté, injection d'en-têtes | WAF |
 | [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | Injection SQL, XSS, injection de commandes, traversée de chemin, Nikto, Nuclei | WAF |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi, XSS, traversée de chemin contre les endpoints de test WAF de F5 DemoApp | WAF |
+| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi, XSS, traversée de chemin contre les points de terminaison de test WAF de F5 DemoApp | WAF |
 
 <CardGrid>
   <LinkCard

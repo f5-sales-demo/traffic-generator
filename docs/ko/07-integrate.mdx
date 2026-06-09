@@ -1,8 +1,8 @@
 ---
 title: 통합
 description: >-
-  트래픽 생성기와 오리진 서버, F5 XC HTTP 로드 밸런서, CSD 데모, CDN 시뮬레이터의 통합 가이드: 아키텍처 다이어그램, 타겟팅
-  구성, 직접 vs LB 트래픽 비교, 다중 컴포넌트 배포
+  오리진 서버, F5 XC HTTP 로드 밸런서, CSD 데모, CDN 시뮬레이터와의 트래픽 생성기 통합 가이드: 아키텍처 다이어그램, 타겟팅
+  구성, 직접 연결 vs LB 트래픽 비교, 다중 컴포넌트 배포
 sidebar:
   order: 7
 i18n:
@@ -12,7 +12,7 @@ i18n:
 
 ## 전체 아키텍처
 
-트래픽 생성기는 다중 레이어 데모 환경의 하나의 컴포넌트입니다. 모든 컴포넌트가 배포되었을 때의 전체 아키텍처는 다음과 같습니다:
+트래픽 생성기는 다중 레이어 데모 환경의 한 구성 요소입니다. 모든 구성 요소가 배포된 경우의 전체 아키텍처는 다음과 같습니다:
 
 ```
 Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
@@ -28,7 +28,7 @@ graph LR
     TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
 ```
 
-각 컴포넌트는 Terraform을 통해 독립적으로 배포 및 구성됩니다. 트래픽 생성기는 오리진 서버가 아닌 F5 XC 로드 밸런서 FQDN을 대상으로 합니다.
+각 구성 요소는 Terraform을 통해 독립적으로 배포 및 구성됩니다. 트래픽 생성기는 오리진 서버가 아닌 F5 XC 로드 밸런서 FQDN을 대상으로 합니다.
 
 ## 오리진 서버 통합
 
@@ -57,8 +57,8 @@ graph LR
 ### 배포 순서
 
 1. **오리진 서버**를 먼저 배포합니다 -- 백엔드 애플리케이션을 제공합니다
-2. 오리진 서버를 오리진 풀로 사용하여 **F5 XC HTTP 로드 밸런서**를 구성합니다
-3. 로드 밸런서에 **WAF, Bot Defense, API Security, CSD 정책**을 연결합니다
+2. 오리진 서버를 오리진 풀로 하여 **F5 XC HTTP 로드 밸런서**를 구성합니다
+3. 로드 밸런서에 **WAF, Bot Defense, API Security 및 CSD 정책**을 연결합니다
 4. `target_fqdn`을 F5 XC LB 도메인으로 설정하여 **트래픽 생성기**를 배포합니다
 
 ### 타겟팅 구성
@@ -66,14 +66,14 @@ graph LR
 트래픽 생성기의 `config.env`는 나머지 아키텍처와의 연결을 설정합니다:
 
 ```bash
-# F5 XC 로드 밸런서를 대상으로 함 (트래픽이 보안 정책을 통과함)
+# Target the F5 XC load balancer (traffic passes through security policies)
 TARGET_FQDN=demo.example.com
 
-# 선택사항: 오리진 서버를 직접 대상으로 함 (F5 XC 우회)
+# Optional: target the origin server directly (bypasses F5 XC)
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-`TARGET_FQDN`이 설정되면 모든 스위트 스크립트는 `https://<TARGET_FQDN>/...`으로 트래픽을 전송합니다. F5 XC 로드 밸런서가 요청을 수신하고 보안 정책을 적용한 후 허용된 트래픽을 오리진 서버로 전달합니다.
+`TARGET_FQDN`이 설정되면 모든 스위트 스크립트가 `https://<TARGET_FQDN>/...`으로 트래픽을 전송합니다. F5 XC 로드 밸런서가 요청을 수신하고 보안 정책을 적용한 후 허용된 트래픽을 오리진 서버로 전달합니다.
 
 ## CSD 데모 통합
 
@@ -87,13 +87,13 @@ TARGET_ORIGIN_IP=20.10.5.100
    - Magecart 스키머를 모방하는 인라인 스크립트 주입
    - 폼 제출을 리다이렉트하기 위한 DOM 요소 수정
    - 무단 서드파티 JavaScript 로딩
-4. F5 XC CSD가 이러한 수정을 감지하고 CSD 대시보드에 보고합니다
+4. F5 XC CSD가 이러한 수정 사항을 감지하고 CSD 대시보드에 보고합니다
 
 javascript-exploits 스위트를 사용하려면:
 
 ```bash
-# /csd-demo/ 경로에 대해 F5 XC HTTP LB에서 CSD가 활성화되어 있는지 확인
-# 그런 다음 스위트를 실행
+# Ensure CSD is enabled on the F5 XC HTTP LB for the /csd-demo/ path
+# Then run the suite
 /opt/traffic-generator/suites/runner.sh javascript-exploits
 ```
 
@@ -108,44 +108,44 @@ Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 CDN 시뮬레이터는 F5 XC 로드 밸런서 앞에 위치하여 응답을 캐싱하고 CDN과 유사한 헤더를 추가합니다. CDN을 통해 트래픽을 전달하려면:
 
 ```bash
-# TARGET_FQDN을 F5 XC 직접이 아닌 CDN 시뮬레이터의 엔드포인트로 설정
+# Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
 TARGET_FQDN=cdn.demo.example.com
 ```
 
-이는 다음을 포함하여 F5 XC가 CDN을 통해 도착하는 트래픽을 처리하는 방법을 시연하는 데 유용합니다:
+이는 CDN을 통해 도착하는 트래픽을 F5 XC가 어떻게 처리하는지 시연하는 데 유용하며, 다음을 포함합니다:
 
 - CDN 프록시 헤더 뒤의 실제 클라이언트 IP 식별
-- CDN에 의해 수정되었을 수 있는 요청에 WAF 규칙 적용
+- CDN에 의해 수정되었을 수 있는 요청에 대한 WAF 규칙 적용
 - CDN이 브라우저 핑거프린트를 수정할 때의 Bot Defense 분류
 
-## 직접 vs LB 트래픽 비교
+## 직접 연결 vs LB 트래픽 비교
 
-트래픽 생성기는 F5 XC를 통한 트래픽 전송과 오리진으로의 직접 전송을 모두 지원합니다. 이 비교는 F5 XC 보안 기능의 가치를 보여줍니다:
+트래픽 생성기는 F5 XC를 통한 트래픽 전송과 오리진으로의 직접 전송을 모두 지원합니다. 이 비교를 통해 F5 XC 보안 기능의 가치를 시연할 수 있습니다:
 
-### F5 XC를 통한 전송 (기본값)
+### F5 XC를 통한 전송 (기본)
 
 ```bash
-# 트래픽 흐름: Generator -> F5 XC LB -> Origin
+# Traffic goes: Generator -> F5 XC LB -> Origin
 TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-예상 결과: WAF가 SQL 인젝션, XSS, 커맨드 인젝션 페이로드를 차단합니다. Security Events 대시보드에 차단된 요청과 위반 상세 정보가 표시됩니다.
+예상 결과: WAF가 SQL 인젝션, XSS, 명령어 인젝션 페이로드를 차단합니다. Security Events 대시보드에 위반 세부 정보와 함께 차단된 요청이 표시됩니다.
 
-### 오리진 직접 전송 (베이스라인)
+### 오리진 직접 연결 (베이스라인)
 
 ```bash
-# 트래픽 흐름: Generator -> Origin (보안 레이어 없음)
+# Traffic goes: Generator -> Origin (no security layer)
 TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-예상 결과: 모든 페이로드가 필터링 없이 오리진 애플리케이션에 도달합니다. Juice Shop과 DVWA가 공격 페이로드를 처리합니다. 이는 F5 XC 보호 없이 어떤 일이 발생하는지 보여줍니다.
+예상 결과: 모든 페이로드가 필터링 없이 오리진 애플리케이션에 도달합니다. Juice Shop과 DVWA가 공격 페이로드를 처리합니다. 이는 F5 XC 보호 없이 어떤 일이 발생하는지를 시연합니다.
 
-### 나란히 놓고 보는 데모 흐름
+### 나란히 비교 데모 흐름
 
-설득력 있는 데모를 위해 동일한 스위트를 두 가지 방법으로 실행합니다:
+설득력 있는 데모를 위해 동일한 스위트를 양쪽 방식으로 실행합니다:
 
-1. 오리진에 직접 `web-app-attacks`를 실행 -- 공격이 성공하는 것을 보여줍니다
-2. F5 XC를 통해 `web-app-attacks`를 실행 -- 공격이 차단되는 것을 보여줍니다
+1. 오리진에 직접 `web-app-attacks`를 실행합니다 -- 공격이 성공하는 것을 보여줍니다
+2. F5 XC를 통해 `web-app-attacks`를 실행합니다 -- 공격이 차단되는 것을 보여줍니다
 3. F5 XC Security Events 대시보드를 열어 차단된 요청을 표시합니다
 4. 스위트 `meta.json` 결과를 비교합니다: 직접 실행은 더 많은 "passed"(공격 성공)를, LB 실행은 더 많은 "failed"(공격 차단)를 보여줍니다
 
@@ -154,38 +154,38 @@ TGEN_IP=$(terraform output -raw public_ip)
 ORIGIN_IP="20.10.5.100"
 LB_FQDN="demo.example.com"
 
-# 실행 1: 직접 (베이스라인)
+# Run 1: Direct (baseline)
 ssh azureuser@${TGEN_IP} "TARGET_FQDN=${ORIGIN_IP} /opt/traffic-generator/suites/runner.sh web-app-attacks"
 
-# 실행 2: F5 XC를 통한 전송
+# Run 2: Through F5 XC
 ssh azureuser@${TGEN_IP} "TARGET_FQDN=${LB_FQDN} /opt/traffic-generator/suites/runner.sh web-app-attacks"
 
-# 결과 비교
+# Compare results
 ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | head -2); do echo "=== $d ==="; cat /opt/traffic-generator/results/$d/meta.json; echo; done'
 ```
 
 ## 다중 컴포넌트 Terraform 배포
 
-전체 랩 환경을 배포할 때는 각 컴포넌트에 대해 별도의 Terraform 워크스페이스 또는 디렉토리를 사용합니다:
+전체 랩 환경을 배포할 때는 각 구성 요소에 대해 별도의 Terraform 워크스페이스 또는 디렉터리를 사용합니다:
 
 ```bash
-# 1. 오리진 서버 배포
+# 1. Deploy origin server
 cd origin-server
 terraform apply -var="subscription_id=YOUR_SUB_ID"
 ORIGIN_IP=$(terraform output -raw public_ip)
 
-# 2. F5 XC 구성 (수동 또는 별도의 Terraform을 통해)
-# 오리진 풀 생성 -> HTTP LB -> WAF/Bot/API/CSD 정책 연결
+# 2. Configure F5 XC (manual or via separate Terraform)
+# Create origin pool -> HTTP LB -> attach WAF/Bot/API/CSD policies
 # LB_FQDN=demo.example.com
 
-# 3. F5 XC LB를 대상으로 트래픽 생성기 배포
+# 3. Deploy traffic generator targeting the F5 XC LB
 cd ../traffic-generator
 terraform apply \
   -var="subscription_id=YOUR_SUB_ID" \
   -var="target_fqdn=demo.example.com" \
   -var="target_origin_ip=${ORIGIN_IP}"
 
-# 4. 트래픽 생성
+# 4. Generate traffic
 TGEN_IP=$(terraform output -raw public_ip)
 ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
 ```

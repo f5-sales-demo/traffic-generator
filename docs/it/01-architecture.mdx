@@ -2,8 +2,8 @@
 title: Architettura
 description: >-
   VM Azure Ubuntu 24.04 con oltre 50 strumenti di sicurezza preinstallati
-  organizzati in 19 suite di traffico, che prendono di mira gli HTTP load
-  balancer di F5 XC a protezione delle applicazioni origin-server per la
+  organizzati in 19 suite di traffico, che prendono di mira i bilanciatori di
+  carico HTTP di F5 XC proteggendo le applicazioni origin-server per la
   validazione di WAF, Bot Defense, API Security e CSD
 sidebar:
   order: 1
@@ -14,7 +14,7 @@ i18n:
 
 ## Scopo
 
-Questo componente fornisce una piattaforma automatizzata di generazione del traffico che produce traffico di attacco, scansioni di ricognizione, simulazione di bot e abuso delle API contro un HTTP load balancer di F5 Distributed Cloud. È l'"attaccante" in una tipica architettura demo -- la sorgente di traffico malevolo e sospetto che le funzionalità di sicurezza di F5 XC sono progettate per rilevare e bloccare.
+Questo componente fornisce una piattaforma automatizzata di generazione del traffico che produce traffico di attacco, scansioni di ricognizione, simulazione di bot e abuso delle API contro un bilanciatore di carico HTTP di F5 Distributed Cloud. È l'"attaccante" in una tipica architettura demo -- la fonte di traffico malevolo e sospetto che le funzionalità di sicurezza di F5 XC sono progettate per rilevare e bloccare.
 
 Nell'architettura demo:
 
@@ -22,7 +22,7 @@ Nell'architettura demo:
 Traffic Generator VM -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server VM
 ```
 
-Il Traffic Generator invia richieste all'FQDN pubblico dell'HTTP load balancer di F5 XC. La piattaforma F5 XC ispeziona e filtra il traffico prima di inoltrare le richieste legittime all'origin server. L'operatore esamina quindi i log degli eventi di sicurezza di F5 XC per dimostrare il rilevamento e l'applicazione delle policy.
+Il Traffic Generator invia richieste all'FQDN pubblico del bilanciatore di carico F5 XC. La piattaforma F5 XC ispeziona e filtra il traffico prima di inoltrare le richieste legittime al server di origine. L'operatore esamina quindi i log degli eventi di sicurezza di F5 XC per dimostrare il rilevamento e l'applicazione delle policy.
 
 ## Architettura
 
@@ -41,21 +41,21 @@ La VM del Traffic Generator viene eseguita su Azure con:
 - **Oltre 50 strumenti di sicurezza** installati tramite cloud-init durante il provisioning
 - **19 suite di traffico organizzate** con script numerati eseguiti in ordine
 - **runner.sh** come orchestratore per l'esecuzione delle suite con registrazione dei risultati
-- **config.env** per la configurazione del target (FQDN, IP dell'origin)
+- **config.env** per la configurazione del target (FQDN, IP di origine)
 
 ## Categorie di strumenti
 
 | Categoria | Strumenti | Scopo |
 |---|---|---|
-| Test di applicazioni web | nikto, sqlmap, nuclei, dalfox, ffuf, gobuster, feroxbuster, dirb, whatweb | Generazione di payload di attacco WAF |
+| Test delle applicazioni web | nikto, sqlmap, nuclei, dalfox, ffuf, gobuster, feroxbuster, dirb, whatweb | Generazione di payload di attacco WAF |
 | Analisi di rete | nmap, masscan, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr | Ricognizione e sondaggio della rete |
-| MITM e Proxy | mitmproxy, socat | Intercettazione e manipolazione del traffico |
+| MITM e proxy | mitmproxy, socat | Intercettazione e manipolazione del traffico |
 | Test SSL/TLS | sslscan, sslyze, testssl.sh | Scansione della configurazione TLS |
 | Automazione browser | playwright, puppeteer, puppeteer-extra-plugin-stealth | Simulazione bot con Chrome headless |
 | Sottodomini e DNS | subfinder, httpx, amass, dnsrecon, fierce, whois, dnsutils | Ricognizione ed enumerazione |
-| Test delle credenziali | hydra, medusa, ncrack | Simulazione di attacchi all'autenticazione |
-| Test di evasione WAF | gotestwaf, waf-bypass, wfuzz | Evasione con codifica multi-livello e valutazione del bypass WAF |
-| Framework di exploit | ZAP, Metasploit (solo tier completo) | Scansione completa delle vulnerabilità |
+| Test delle credenziali | hydra, medusa, ncrack | Simulazione di attacchi di autenticazione |
+| Test di evasione WAF | gotestwaf, waf-bypass, wfuzz | Evasione con codifica multilivello e valutazione del bypass WAF |
+| Framework di exploit | ZAP, Metasploit (solo livello completo) | Scansione completa delle vulnerabilità |
 
 ## Installazione a livelli
 
@@ -63,33 +63,33 @@ Il Traffic Generator supporta due livelli di installazione controllati dalla var
 
 ### Livello Standard (predefinito)
 
-Installa tutti gli strumenti elencati nel catalogo degli strumenti ad eccezione di ZAP e Metasploit. Il provisioning si completa in 15-20 minuti. Questo livello copre tutte le 19 suite di traffico ed è sufficiente per la maggior parte degli scenari demo.
+Installa tutti gli strumenti elencati nel catalogo ad eccezione di ZAP e Metasploit. Il provisioning si completa in 15-20 minuti. Questo livello copre tutte le 19 suite di traffico ed è sufficiente per la maggior parte degli scenari demo.
 
 ### Livello Completo
 
-Aggiunge OWASP ZAP e Metasploit Framework oltre al livello standard. Il provisioning richiede circa 25 minuti. Questi strumenti sono di grandi dimensioni (ZAP ~500 MiB, Metasploit ~1 GiB) e sono necessari solo per demo avanzate di scansione delle vulnerabilità.
+Aggiunge OWASP ZAP e Metasploit Framework al livello standard. Il provisioning richiede circa 25 minuti. Questi strumenti sono di grandi dimensioni (ZAP ~500 MiB, Metasploit ~1 GiB) e sono necessari solo per demo avanzate di scansione delle vulnerabilità.
 
-Consultare il calcolatore dei prezzi di Azure per i costi attuali delle VM. L'istanza predefinita Standard_F16s_v2 è un'istanza ottimizzata per il calcolo, adatta alla generazione sostenuta di traffico.
+Consultare il calcolatore dei prezzi Azure per i costi attuali delle VM. L'istanza predefinita Standard_F16s_v2 è un'istanza ottimizzata per il calcolo, adatta alla generazione sostenuta di traffico.
 
 :::tip
-Utilizzare `terraform destroy` quando il laboratorio non è in uso per evitare addebiti continui. Consultare [Smontaggio](../08-teardown/) per la procedura.
+Utilizzare `terraform destroy` quando il laboratorio non è in uso per evitare addebiti continui. Vedere [Smantellamento](../08-teardown/) per la procedura.
 :::
 
 ## Punti di integrazione
 
 Questo componente si integra con altri due componenti demo:
 
-- **Origin Server** -- Il backend target che ospita Juice Shop, DVWA, VAmPI, httpbin e whoami. Il Traffic Generator invia traffico di attacco attraverso F5 XC per raggiungere queste applicazioni. Consultare [Integrazione](../07-integrate/) per i dettagli completi dell'architettura.
+- **Origin Server** -- Il backend di destinazione che ospita Juice Shop, DVWA, VAmPI, httpbin e whoami. Il Traffic Generator invia traffico di attacco attraverso F5 XC per raggiungere queste applicazioni. Vedere [Integrazione](../07-integrate/) per i dettagli completi dell'architettura.
 
-- **Demo CSD** -- L'applicazione demo Client-Side Defense sull'origin server. La suite di traffico `javascript-exploits` genera payload di script injection in stile Magecart che F5 XC Client-Side Defense rileva. Questo valida la funzionalità CSD Phase 2.
+- **Demo CSD** -- L'applicazione demo Client-Side Defense sul server di origine. La suite di traffico `javascript-exploits` genera payload di iniezione di script in stile Magecart che F5 XC Client-Side Defense rileva. Questo valida la funzionalità CSD Fase 2.
 
 ## Progettazione modulare dei componenti
 
 Ogni componente del laboratorio è autonomo e distribuito in modo indipendente:
 
-- **Traffic Generator** (questo componente) fornisce la sorgente di attacco
-- **Origin Server** fornisce i target applicativi vulnerabili
+- **Traffic Generator** (questo componente) fornisce la sorgente degli attacchi
+- **Origin Server** fornisce le applicazioni target vulnerabili
 - **CDN Simulator** fornisce il livello di caching CDN edge (opzionale)
 - **Configurazione F5 XC** fornisce le policy WAF, Bot Defense, API Security e CSD
 
-L'operatore umano o l'assistente AI aggiunge i componenti uno alla volta. Distribuire prima l'origin server, configurare F5 XC di fronte ad esso, quindi distribuire il traffic generator puntando all'FQDN dell'HTTP load balancer di F5 XC.
+L'operatore umano o l'assistente AI aggiunge i componenti uno alla volta. Distribuire prima il server di origine, configurare F5 XC davanti ad esso, quindi distribuire il traffic generator puntando all'FQDN del bilanciatore di carico F5 XC.

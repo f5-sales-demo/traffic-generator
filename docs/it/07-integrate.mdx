@@ -2,7 +2,7 @@
 title: Integrazione
 description: >-
   Guida all'integrazione del generatore di traffico con origin-server, F5 XC
-  HTTP load balancer, demo CSD e simulatore CDN: diagrammi dell'architettura,
+  HTTP load balancer, demo CSD e simulatore CDN: diagrammi di architettura,
   configurazione del targeting, confronto traffico diretto vs LB e deployment
   multi-componente
 sidebar:
@@ -30,13 +30,13 @@ graph LR
     TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
 ```
 
-Ogni componente viene distribuito e configurato in modo indipendente tramite Terraform. Il generatore di traffico punta all'FQDN del load balancer F5 XC, non direttamente all'origin server.
+Ogni componente è distribuito e configurato indipendentemente tramite Terraform. Il generatore di traffico punta al FQDN del load balancer F5 XC, non direttamente al server di origine.
 
 ## Integrazione con l'Origin Server
 
 L'[origin server](https://f5xc-salesdemos.github.io/origin-server/) fornisce le applicazioni backend che le suite di attacco del generatore di traffico prendono di mira:
 
-| Suite di Traffico | Applicazione Origin | Percorso |
+| Suite di Traffico | Applicazione di Origine | Percorso |
 |---|---|---|
 | api-attacks | VAmPI | `/vampi/` |
 | bot-simulation | Tutte le applicazioni | Tutti i percorsi |
@@ -52,20 +52,20 @@ L'[origin server](https://f5xc-salesdemos.github.io/origin-server/) fornisce le 
 | performance-testing | Tutte le applicazioni | Tutti i percorsi |
 | reconnaissance | Tutte le applicazioni | Tutti i percorsi |
 | restaurant-exploits | Restaurant API | `/restaurant/` |
-| ssl-scanning | F5 XC LB (non direttamente l'origin) | N/D |
+| ssl-scanning | F5 XC LB (non direttamente l'origine) | N/D |
 | traffic-generation | Tutte le applicazioni | Tutti i percorsi |
 | web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
 
 ### Ordine di Deployment
 
 1. Distribuire prima l'**origin server** -- fornisce le applicazioni backend
-2. Configurare l'**F5 XC HTTP load balancer** con l'origin server come origin pool
-3. Collegare le **policy WAF, Bot Defense, API Security e CSD** al load balancer
-4. Distribuire il **generatore di traffico** con `target_fqdn` impostato sul dominio dell'F5 XC LB
+2. Configurare il **load balancer HTTP F5 XC** con l'origin server come origin pool
+3. Associare le **policy WAF, Bot Defense, API Security e CSD** al load balancer
+4. Distribuire il **generatore di traffico** con `target_fqdn` impostato sul dominio del LB F5 XC
 
 ### Configurazione del Targeting
 
-Il `config.env` del generatore di traffico lo collega al resto dell'architettura:
+Il file `config.env` del generatore di traffico lo collega al resto dell'architettura:
 
 ```bash
 # Target the F5 XC load balancer (traffic passes through security policies)
@@ -75,13 +75,13 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-Quando `TARGET_FQDN` è impostato, tutti gli script delle suite inviano traffico a `https://<TARGET_FQDN>/...`. Il load balancer F5 XC riceve le richieste, applica le policy di sicurezza e inoltra il traffico consentito all'origin server.
+Quando `TARGET_FQDN` è impostato, tutti gli script delle suite inviano traffico a `https://<TARGET_FQDN>/...`. Il load balancer F5 XC riceve le richieste, applica le policy di sicurezza e inoltra il traffico consentito al server di origine.
 
 ## Integrazione con la Demo CSD
 
-La suite `javascript-exploits` è specificamente progettata per la demo Client-Side Defense sull'origin server. Questa suite valida la funzionalità CSD Phase 2:
+La suite `javascript-exploits` è specificamente progettata per la demo Client-Side Defense sull'origin server. Questa suite valida la funzionalità CSD Fase 2:
 
-**Flusso Phase 2:**
+**Flusso Fase 2:**
 
 1. L'origin server ospita la pagina demo CSD su `/csd-demo/`
 2. F5 XC CSD inietta il proprio JavaScript di monitoraggio nella pagina
@@ -107,22 +107,22 @@ Quando il Simulatore CDN è distribuito, l'architettura aggiunge un livello di c
 Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 ```
 
-Il Simulatore CDN si posiziona davanti al load balancer F5 XC, memorizzando le risposte nella cache e aggiungendo header simili a quelli CDN. Per indirizzare il traffico attraverso il CDN:
+Il Simulatore CDN si posiziona davanti al load balancer F5 XC, effettuando il caching delle risposte e aggiungendo header tipici delle CDN. Per indirizzare il traffico attraverso la CDN:
 
 ```bash
 # Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
 TARGET_FQDN=cdn.demo.example.com
 ```
 
-Questo è utile per dimostrare come F5 XC gestisce il traffico che arriva attraverso un CDN, incluso:
+Questo è utile per dimostrare come F5 XC gestisce il traffico che arriva attraverso una CDN, incluso:
 
-- Identificare il vero IP del client dietro gli header proxy del CDN
-- Applicare regole WAF alle richieste che potrebbero essere state modificate dal CDN
-- Classificazione Bot Defense quando il CDN modifica le impronte digitali del browser
+- Identificare il vero IP del client dietro gli header proxy della CDN
+- Applicare regole WAF a richieste che potrebbero essere state modificate dalla CDN
+- Classificazione Bot Defense quando la CDN modifica le impronte digitali del browser
 
 ## Confronto Traffico Diretto vs LB
 
-Il generatore di traffico supporta l'invio di traffico sia attraverso F5 XC che direttamente all'origin. Questo confronto dimostra il valore delle funzionalità di sicurezza di F5 XC:
+Il generatore di traffico supporta l'invio di traffico sia attraverso F5 XC che direttamente all'origine. Questo confronto dimostra il valore delle funzionalità di sicurezza di F5 XC:
 
 ### Attraverso F5 XC (predefinito)
 
@@ -133,22 +133,22 @@ TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-att
 
 Risultato atteso: il WAF blocca i payload di SQL injection, XSS e command injection. La dashboard Security Events mostra le richieste bloccate con i dettagli delle violazioni.
 
-### Diretto all'Origin (baseline)
+### Diretto all'Origine (baseline)
 
 ```bash
 # Traffic goes: Generator -> Origin (no security layer)
 TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-Risultato atteso: tutti i payload raggiungono le applicazioni origin senza filtri. Juice Shop e DVWA elaborano i payload di attacco. Questo dimostra cosa succede senza la protezione di F5 XC.
+Risultato atteso: tutti i payload raggiungono le applicazioni di origine senza filtri. Juice Shop e DVWA elaborano i payload di attacco. Questo dimostra cosa accade senza la protezione F5 XC.
 
 ### Flusso Demo Affiancato
 
 Per una demo convincente, eseguire la stessa suite in entrambi i modi:
 
-1. Eseguire `web-app-attacks` direttamente contro l'origin -- mostrare che gli attacchi hanno successo
+1. Eseguire `web-app-attacks` direttamente contro l'origine -- mostrare che gli attacchi hanno successo
 2. Eseguire `web-app-attacks` attraverso F5 XC -- mostrare che gli attacchi vengono bloccati
-3. Aprire la dashboard F5 XC Security Events per visualizzare le richieste bloccate
+3. Aprire la dashboard Security Events di F5 XC per visualizzare le richieste bloccate
 4. Confrontare i risultati `meta.json` della suite: le esecuzioni dirette mostrano più "passed" (attacchi riusciti), le esecuzioni tramite LB mostrano più "failed" (attacchi bloccati)
 
 ```bash
@@ -168,7 +168,7 @@ ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | hea
 
 ## Deployment Terraform Multi-Componente
 
-Quando si distribuisce l'intero ambiente lab, utilizzare workspace o directory Terraform separati per ciascun componente:
+Quando si distribuisce l'intero ambiente lab, utilizzare workspace o directory Terraform separati per ogni componente:
 
 ```bash
 # 1. Deploy origin server

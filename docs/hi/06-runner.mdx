@@ -1,9 +1,9 @@
 ---
 title: रनर
 description: >-
-  runner.sh सुइट ऑर्केस्ट्रेटर के लिए उपयोग गाइड: निष्पादन मोड, config.env
-  कॉन्फ़िगरेशन, एनवायरनमेंट वेरिएबल ओवरराइड, ड्राई-रन मोड, परिणाम निर्देशिका
-  संरचना, meta.json प्रारूप, स्टैंडअलोन स्क्रिप्ट निष्पादन, और रिमोट SSH
+  runner.sh सूट ऑर्केस्ट्रेटर के लिए उपयोग गाइड: निष्पादन मोड, config.env
+  कॉन्फ़िगरेशन, एनवायरनमेंट वेरिएबल ओवरराइड, ड्राई-रन मोड, रिजल्ट्स डायरेक्टरी
+  संरचना, meta.json फॉर्मेट, स्टैंडअलोन स्क्रिप्ट निष्पादन, और रिमोट SSH
   इनवोकेशन
 sidebar:
   order: 6
@@ -16,7 +16,7 @@ import { Steps, Aside } from '@astrojs/starlight/components';
 
 ## अवलोकन
 
-`runner.sh` सुइट ऑर्केस्ट्रेटर है जो एक सुइट निर्देशिका में सभी क्रमांकित स्क्रिप्ट्स को क्रम में निष्पादित करता है, आउटपुट कैप्चर करता है, और परिणाम मेटाडेटा रिकॉर्ड करता है। यह VM पर `/opt/traffic-generator/suites/runner.sh` पर इंस्टॉल किया जाता है।
+`runner.sh` सूट ऑर्केस्ट्रेटर है जो एक सूट डायरेक्टरी में सभी क्रमांकित स्क्रिप्ट्स को क्रम में निष्पादित करता है, आउटपुट कैप्चर करता है, और रिजल्ट्स मेटाडेटा रिकॉर्ड करता है। यह VM पर `/opt/traffic-generator/suites/runner.sh` पर इंस्टॉल होता है।
 
 ## उपयोग
 
@@ -28,13 +28,13 @@ runner.sh <suite-name> [--dry-run]
 
 | आर्गुमेंट | आवश्यक | विवरण |
 |---|---|---|
-| `suite-name` | हाँ | सुइट निर्देशिका का नाम (उदा., `web-app-attacks`, `api-attacks`) |
-| `--dry-run` | नहीं | बिना किसी स्क्रिप्ट को चलाए यह प्रिंट करें कि क्या निष्पादित होगा |
+| `suite-name` | हाँ | सूट डायरेक्टरी का नाम (जैसे, `web-app-attacks`, `api-attacks`) |
+| `--dry-run` | नहीं | बिना कोई स्क्रिप्ट चलाए यह प्रिंट करें कि क्या निष्पादित होगा |
 
 **उदाहरण:**
 
 ```bash
-# web-app-attacks सुइट चलाएँ
+# web-app-attacks सूट चलाएँ
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 
 # api-attacks स्क्रिप्ट्स का पूर्वावलोकन करने के लिए ड्राई-रन
@@ -58,17 +58,17 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=
 ```
 
-यह फ़ाइल Terraform प्रोविजनिंग के दौरान `target_fqdn` और `target_origin_ip` वेरिएबल्स से स्वचालित रूप से लिखी जाती है। डिप्लॉयमेंट के बाद लक्ष्य बदलने के लिए, VM पर सीधे इस फ़ाइल को संपादित करें।
+यह फ़ाइल Terraform प्रोविज़निंग के दौरान `target_fqdn` और `target_origin_ip` वेरिएबल्स से स्वचालित रूप से लिखी जाती है। डिप्लॉयमेंट के बाद टारगेट बदलने के लिए, VM पर सीधे इस फ़ाइल को संपादित करें।
 
 ### एनवायरनमेंट वेरिएबल ओवरराइड
 
-`config.env` में किसी भी वेरिएबल को सुइट चलाने से पहले एक्सपोर्ट करके ओवरराइड किया जा सकता है:
+`config.env` में किसी भी वेरिएबल को सूट चलाने से पहले एक्सपोर्ट करके ओवरराइड किया जा सकता है:
 
 ```bash
-# Override target FQDN for a single run
+# एक ही रन के लिए टारगेट FQDN ओवरराइड करें
 TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 
-# Override via export
+# export के माध्यम से ओवरराइड करें
 export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
@@ -81,7 +81,7 @@ CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-a
 
 ## ड्राई-रन मोड
 
-`--dry-run` फ्लैग प्रत्येक स्क्रिप्ट को बिना चलाए प्रिंट करता है कि क्या निष्पादित होगा:
+`--dry-run` फ़्लैग प्रत्येक स्क्रिप्ट को प्रिंट करता है जो निष्पादित होगी, बिना उसे चलाए:
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
@@ -107,11 +107,11 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-डिप्लॉयमेंट के बाद सुइट संरचना सत्यापित करने के लिए या किसी नए लक्ष्य के विरुद्ध सुइट चलाने से पहले ड्राई-रन का उपयोग करें।
+डिप्लॉयमेंट के बाद सूट संरचना सत्यापित करने या नए टारगेट के खिलाफ़ सूट चलाने से पहले ड्राई-रन का उपयोग करें।
 
-## परिणाम निर्देशिका
+## रिजल्ट्स डायरेक्टरी
 
-प्रत्येक सुइट रन एक टाइमस्टैम्प्ड परिणाम निर्देशिका बनाता है:
+प्रत्येक सूट रन एक टाइमस्टैम्प्ड रिजल्ट्स डायरेक्टरी बनाता है:
 
 ```
 /opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
@@ -130,11 +130,11 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
   06-nuclei-scan.sh.log
 ```
 
-प्रत्येक स्क्रिप्ट का stdout और stderr स्क्रिप्ट के नाम पर एक `.log` फ़ाइल में कैप्चर किया जाता है।
+प्रत्येक स्क्रिप्ट का stdout और stderr एक `.log` फ़ाइल में कैप्चर होता है जिसका नाम स्क्रिप्ट के नाम पर रखा जाता है।
 
-### meta.json प्रारूप
+### meta.json फॉर्मेट
 
-`meta.json` फ़ाइल सुइट निष्पादन मेटाडेटा रिकॉर्ड करती है:
+`meta.json` फ़ाइल सूट निष्पादन मेटाडेटा रिकॉर्ड करती है:
 
 ```json
 {
@@ -151,36 +151,36 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 
 | फ़ील्ड | विवरण |
 |---|---|
-| `suite` | सुइट का नाम |
-| `target` | रन के लिए उपयोग किया गया लक्ष्य FQDN |
-| `started` | सुइट शुरू होने का UTC टाइमस्टैम्प |
-| `completed` | सुइट समाप्त होने का UTC टाइमस्टैम्प |
+| `suite` | सूट का नाम |
+| `target` | रन के लिए उपयोग किया गया टारगेट FQDN |
+| `started` | सूट शुरू होने का UTC टाइमस्टैम्प |
+| `completed` | सूट समाप्त होने का UTC टाइमस्टैम्प |
 | `status` | निष्पादन के दौरान `running`, पूर्ण होने पर `completed` |
 | `passed` | कोड 0 के साथ बाहर निकलने वाली स्क्रिप्ट्स की संख्या |
-| `failed` | गैर-शून्य कोड के साथ बाहर निकलने वाली स्क्रिप्ट्स की संख्या |
+| `failed` | नॉन-ज़ीरो कोड के साथ बाहर निकलने वाली स्क्रिप्ट्स की संख्या |
 | `skipped` | छोड़ी गई स्क्रिप्ट्स की संख्या (निष्पादन योग्य नहीं या ड्राई-रन) |
 
 <Aside type="tip">
-किसी स्क्रिप्ट से गैर-शून्य एक्जिट कोड का मतलब यह जरूरी नहीं कि सुइट विफल हो गया। कई सुरक्षा उपकरण कमजोरियाँ पाने पर गैर-शून्य से बाहर निकलते हैं, जो अटैक ट्रैफ़िक जनरेशन के दौरान अपेक्षित व्यवहार है।
+किसी स्क्रिप्ट से नॉन-ज़ीरो एग्जिट कोड का मतलब यह नहीं है कि सूट विफल हो गया। कई सुरक्षा उपकरण जब कमजोरियाँ पाते हैं तो नॉन-ज़ीरो एग्जिट करते हैं, जो अटैक ट्रैफ़िक जनरेशन के दौरान अपेक्षित व्यवहार है।
 </Aside>
 
-## व्यक्तिगत स्क्रिप्ट चलाना
+## व्यक्तिगत स्क्रिप्ट्स चलाना
 
 प्रत्येक स्क्रिप्ट को रनर के बिना स्टैंडअलोन रूप से निष्पादित किया जा सकता है:
 
 ```bash
-# Run a single script directly
+# एक स्क्रिप्ट सीधे चलाएँ
 /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
 
-# Run a specific API attack
+# एक विशिष्ट API अटैक चलाएँ
 /opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
 ```
 
-स्क्रिप्ट्स लक्ष्य FQDN को पहले पोजिशनल आर्गुमेंट के रूप में स्वीकार करती हैं। वे सीधे `config.env` नहीं पढ़तीं -- केवल रनर ऐसा करता है। स्टैंडअलोन चलाते समय, आपको FQDN स्पष्ट रूप से पास करना होगा।
+स्क्रिप्ट्स पहले पोज़िशनल आर्गुमेंट के रूप में टारगेट FQDN स्वीकार करती हैं। वे सीधे `config.env` नहीं पढ़ती -- केवल रनर ही ऐसा करता है। स्टैंडअलोन चलाते समय, आपको FQDN स्पष्ट रूप से पास करना होगा।
 
-## सभी सुइट्स को क्रम में चलाना
+## सभी सूट्स को क्रम में चलाना
 
-हर सुइट को एक के बाद एक चलाने के लिए:
+हर सूट को एक के बाद एक चलाने के लिए:
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -192,35 +192,35 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-यह सभी F5 XC सुरक्षा सुविधाओं में व्यापक ट्रैफ़िक उत्पन्न करता है। लक्ष्य के प्रतिक्रिया समय के आधार पर पूर्ण रन में 45-80 मिनट लगने की उम्मीद रखें।
+यह सभी F5 XC सुरक्षा सुविधाओं में व्यापक ट्रैफ़िक उत्पन्न करता है। टारगेट की प्रतिक्रिया समय के आधार पर पूरे रन में 45-80 मिनट लगने की उम्मीद करें।
 
 ## SSH के माध्यम से रिमोट निष्पादन
 
-SSH सत्र बनाए रखे बिना अपनी स्थानीय मशीन से सुइट्स चलाएँ:
+SSH सत्र बनाए रखे बिना अपनी स्थानीय मशीन से सूट्स चलाएँ:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
 
-# Run a single suite
+# एक सूट चलाएँ
 ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
 
-# Run a suite with target override
+# टारगेट ओवरराइड के साथ सूट चलाएँ
 ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
 
-# Run in background (disconnection-safe)
+# बैकग्राउंड में चलाएँ (डिस्कनेक्शन-सुरक्षित)
 ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
 
-# Check results later
+# बाद में रिजल्ट्स जाँचें
 ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-लंबे समय तक चलने वाले सुइट्स के लिए, SSH डिस्कनेक्शन से प्रक्रिया को समाप्त होने से रोकने के लिए `nohup` या `tmux` का उपयोग करें:
+लंबे समय तक चलने वाले सूट्स के लिए, SSH डिस्कनेक्शन से प्रक्रिया को बंद होने से रोकने के लिए `nohup` या `tmux` का उपयोग करें:
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
 
-# Reattach later to watch progress
+# प्रगति देखने के लिए बाद में फिर से जुड़ें
 ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 ```
 
@@ -230,12 +230,12 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 1. **कॉन्फ़िगरेशन लोड करें** -- रनर `config.env` (या `CONFIG_FILE` ओवरराइड) पढ़ता है, फिर एनवायरनमेंट में `TARGET_FQDN` की जाँच करता है।
 
-2. **सुइट सत्यापित करें** -- पुष्टि करता है कि नामित सुइट निर्देशिका सुइट्स निर्देशिका के अंतर्गत मौजूद है। न मिलने पर उपलब्ध सुइट्स की सूची दिखाता है।
+2. **सूट मान्य करें** -- पुष्टि करता है कि नामित सूट डायरेक्टरी सूट्स डायरेक्टरी के अंतर्गत मौजूद है। न मिलने पर उपलब्ध सूट्स की सूची दिखाता है।
 
-3. **परिणाम निर्देशिका बनाएँ** -- `/opt/traffic-generator/results/<timestamp>-<suite>/` बनाता है और `status: running` के साथ प्रारंभिक `meta.json` लिखता है।
+3. **रिजल्ट्स डायरेक्टरी बनाएँ** -- `/opt/traffic-generator/results/<timestamp>-<suite>/` बनाता है और `status: running` के साथ प्रारंभिक `meta.json` लिखता है।
 
-4. **स्क्रिप्ट्स निष्पादित करें** -- सुइट निर्देशिका में `[0-9]*` से मेल खाने वाली फ़ाइलों को नाम के अनुसार क्रमबद्ध करके इटरेट करता है। गैर-निष्पादन योग्य फ़ाइलों को छोड़ देता है। `TARGET_FQDN` को पहले आर्गुमेंट के रूप में पास करता है। आउटपुट को `<script-name>.log` में कैप्चर करता है।
+4. **स्क्रिप्ट्स निष्पादित करें** -- सूट डायरेक्टरी में `[0-9]*` से मेल खाने वाली फ़ाइलों को नाम के अनुसार क्रमबद्ध करके दोहराता है। गैर-निष्पादन योग्य फ़ाइलों को छोड़ देता है। `TARGET_FQDN` को पहले आर्गुमेंट के रूप में पास करता है। आउटपुट `<script-name>.log` में कैप्चर करता है।
 
-5. **परिणाम रिकॉर्ड करें** -- पूर्णता टाइमस्टैम्प और पास/फेल/स्किप गणना के साथ `meta.json` अपडेट करता है।
+5. **रिजल्ट्स रिकॉर्ड करें** -- पूर्णता टाइमस्टैम्प और पास/फेल/स्किप काउंट्स के साथ `meta.json` अपडेट करता है।
 
 </Steps>

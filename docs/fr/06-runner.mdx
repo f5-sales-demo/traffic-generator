@@ -1,10 +1,10 @@
 ---
 title: Runner
 description: >-
-  Guide d'utilisation de l'orchestrateur de suite runner.sh : modes d'exécution,
-  configuration config.env, surcharge de variables d'environnement, mode
-  dry-run, structure du répertoire de résultats, format meta.json, exécution
-  autonome de scripts et invocation SSH distante
+  Guide d'utilisation de l'orchestrateur de suites runner.sh : modes
+  d'exécution, configuration config.env, surcharges de variables
+  d'environnement, mode dry-run, structure du répertoire des résultats, format
+  meta.json, exécution autonome de scripts et invocation SSH distante
 sidebar:
   order: 6
 i18n:
@@ -14,9 +14,9 @@ i18n:
 
 import { Steps, Aside } from '@astrojs/starlight/components';
 
-## Vue d'ensemble
+## Aperçu
 
-`runner.sh` est l'orchestrateur de suite qui exécute tous les scripts numérotés dans un répertoire de suite dans l'ordre, capture la sortie et enregistre les métadonnées des résultats. Il est installé à `/opt/traffic-generator/suites/runner.sh` sur la VM.
+`runner.sh` est l'orchestrateur de suites qui exécute tous les scripts numérotés d'un répertoire de suite dans l'ordre, capture la sortie et enregistre les métadonnées des résultats. Il est installé à `/opt/traffic-generator/suites/runner.sh` sur la VM.
 
 ## Utilisation
 
@@ -28,7 +28,7 @@ runner.sh <suite-name> [--dry-run]
 
 | Argument | Requis | Description |
 |---|---|---|
-| `suite-name` | Oui | Nom du répertoire de suite (par ex., `web-app-attacks`, `api-attacks`) |
+| `suite-name` | Oui | Nom du répertoire de la suite (par ex., `web-app-attacks`, `api-attacks`) |
 | `--dry-run` | Non | Affiche ce qui serait exécuté sans lancer aucun script |
 
 **Exemples :**
@@ -60,9 +60,9 @@ TARGET_ORIGIN_IP=
 
 Ce fichier est écrit automatiquement lors du provisionnement Terraform à partir des variables `target_fqdn` et `target_origin_ip`. Pour changer la cible après le déploiement, modifiez ce fichier directement sur la VM.
 
-### Surcharge de variables d'environnement
+### Surcharge par variable d'environnement
 
-Toute variable dans `config.env` peut être surchargée en l'exportant avant l'exécution de la suite :
+Toute variable de `config.env` peut être surchargée en l'exportant avant de lancer la suite :
 
 ```bash
 # Override target FQDN for a single run
@@ -107,7 +107,7 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-Utilisez le dry-run pour vérifier la structure de la suite après le déploiement ou avant d'exécuter une suite contre une nouvelle cible.
+Utilisez le dry-run pour vérifier la structure de la suite après le déploiement ou avant de lancer une suite contre une nouvelle cible.
 
 ## Répertoire des résultats
 
@@ -176,11 +176,11 @@ Chaque script peut être exécuté de manière autonome sans le runner :
 /opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
 ```
 
-Les scripts acceptent le FQDN cible comme premier argument positionnel. Ils ne lisent pas `config.env` directement -- seul le runner le fait. Lors d'une exécution autonome, vous devez passer le FQDN explicitement.
+Les scripts acceptent le FQDN cible comme premier argument positionnel. Ils ne lisent pas directement `config.env` -- seul le runner le fait. Lors d'une exécution autonome, vous devez passer le FQDN explicitement.
 
 ## Exécution de toutes les suites en séquence
 
-Pour exécuter chaque suite l'une après l'autre :
+Pour exécuter toutes les suites l'une après l'autre :
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -192,11 +192,11 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-Cela génère un trafic complet couvrant toutes les fonctionnalités de sécurité F5 XC. Prévoyez que l'exécution complète prenne 45 à 80 minutes selon les temps de réponse de la cible.
+Cela génère un trafic complet couvrant toutes les fonctionnalités de sécurité F5 XC. Prévoyez 45 à 80 minutes pour l'exécution complète selon les temps de réponse de la cible.
 
 ## Exécution distante via SSH
 
-Exécutez des suites depuis votre machine locale sans maintenir une session SSH :
+Lancez des suites depuis votre machine locale sans maintenir une session SSH :
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -215,7 +215,7 @@ ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-Pour les suites à longue durée d'exécution, utilisez `nohup` ou `tmux` pour empêcher qu'une déconnexion SSH ne tue le processus :
+Pour les suites de longue durée, utilisez `nohup` ou `tmux` pour éviter qu'une déconnexion SSH ne tue le processus :
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
@@ -230,9 +230,9 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 1. **Chargement de la configuration** -- Le runner lit `config.env` (ou la surcharge `CONFIG_FILE`), puis vérifie la présence de `TARGET_FQDN` dans l'environnement.
 
-2. **Validation de la suite** -- Confirme que le répertoire de suite nommé existe dans le répertoire des suites. Affiche les suites disponibles s'il n'est pas trouvé.
+2. **Validation de la suite** -- Confirme que le répertoire de suite nommé existe sous le répertoire des suites. Liste les suites disponibles s'il n'est pas trouvé.
 
-3. **Création du répertoire de résultats** -- Crée `/opt/traffic-generator/results/<timestamp>-<suite>/` et écrit le `meta.json` initial avec `status: running`.
+3. **Création du répertoire des résultats** -- Crée `/opt/traffic-generator/results/<timestamp>-<suite>/` et écrit le `meta.json` initial avec `status: running`.
 
 4. **Exécution des scripts** -- Itère sur les fichiers correspondant à `[0-9]*` dans le répertoire de la suite, triés par nom. Ignore les fichiers non exécutables. Passe `TARGET_FQDN` comme premier argument. Capture la sortie dans `<script-name>.log`.
 

@@ -69,10 +69,10 @@ Se você também deseja remover a configuração do F5 XC que o gerador de tráf
 
 1. Exclua o balanceador de carga HTTP
 2. Exclua o pool de origem
-3. Exclua quaisquer políticas WAF, configurações de Bot Defense, políticas de API Security ou configurações de CSD criadas para testes
+3. Exclua quaisquer políticas WAF, configurações de Bot Defense, políticas de API Security ou configurações de CSD criadas para teste
 
 Esses recursos do F5 XC não geram custos no Azure, mas devem ser limpos quando o ambiente de demonstração não for mais necessário.
 
 :::tip
-Para uso recorrente de demonstração, considere automatizar o ciclo de vida completo por script: `cd terraform && terraform apply` antes de uma demonstração, execute as suítes, e então `terraform destroy` em seguida. O tier padrão é provisionado em 15-20 minutos, tornando a configuração e desmontagem no mesmo dia algo prático.
+Para uso recorrente em demonstrações, considere automatizar o ciclo de vida completo com scripts: `cd terraform && terraform apply` antes de uma demonstração, execute as suítes, depois `terraform destroy` ao final. O tier padrão é provisionado em 15-20 minutos, tornando a configuração e desmontagem no mesmo dia algo prático.
 :::

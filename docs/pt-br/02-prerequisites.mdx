@@ -1,9 +1,9 @@
 ---
 title: Pré-requisitos
 description: >-
-  Assinatura Azure com função de Colaborador, Terraform >= 1.5, par de chaves
+  Assinatura Azure com função de Contributor, Terraform >= 1.5, par de chaves
   SSH (Ed25519 recomendado), Azure CLI para consulta de subscription_id e HTTPS
-  de saída para downloads de ferramentas durante o provisionamento cloud-init
+  de saída para download de ferramentas durante o provisionamento via cloud-init
 sidebar:
   order: 2
 i18n:
@@ -15,7 +15,7 @@ i18n:
 
 ### Assinatura Azure
 
-Uma assinatura Azure ativa com função de Colaborador ou permissões equivalentes para criar:
+Uma assinatura Azure ativa com função de Contributor ou permissões equivalentes para criar:
 
 - Grupos de recursos
 - Redes virtuais e sub-redes
@@ -25,7 +25,7 @@ Uma assinatura Azure ativa com função de Colaborador ou permissões equivalent
 
 ### Azure CLI
 
-Instale e autentique o Azure CLI para obter o ID da sua assinatura:
+Instale e autentique o Azure CLI para recuperar seu ID de assinatura:
 
 ```bash
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -39,13 +39,13 @@ Copie o valor de `id` -- este é o `subscription_id` exigido pelo Terraform.
 
 ### Terraform
 
-Terraform >= 1.5 é necessário:
+Terraform >= 1.5 é obrigatório:
 
 ```bash
 terraform version
 ```
 
-Se não estiver instalado, use o repositório APT da HashiCorp:
+Se não estiver instalado, utilize o repositório APT da HashiCorp:
 
 ```bash
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -61,7 +61,7 @@ Um par de chaves SSH para acesso à VM. Ed25519 é recomendado:
 ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 ```
 
-### Acesso de Rede
+### Acesso à Rede
 
 A VM do Traffic Generator requer acesso HTTPS de saída durante o provisionamento para baixar ferramentas de:
 
@@ -71,22 +71,22 @@ A VM do Traffic Generator requer acesso HTTPS de saída durante o provisionament
 - Repositórios APT do Ubuntu (nikto, nmap, masscan, hydra, tshark e outros pacotes do sistema)
 - Repositórios Git (testssl.sh, recon-ng, spiderfoot, SecLists)
 
-Se a sua assinatura Azure aplica regras de firewall de saída ou restrições de NSG, certifique-se de que o HTTPS (porta 443) para essas fontes esteja permitido durante a janela de provisionamento inicial (15-25 minutos).
+Se sua assinatura Azure impõe regras de firewall de saída ou restrições de NSG, certifique-se de que o HTTPS (porta 443) para essas fontes esteja permitido durante a janela inicial de provisionamento (15-25 minutos).
 
 ### Componentes Pré-implantados
 
 Antes de implantar o Traffic Generator, você deve ter:
 
-1. **Origin Server** implantado e acessível (veja a [documentação do origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+1. **Origin Server** implantado e acessível (consulte a [documentação do origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
 2. **F5 XC HTTP Load Balancer** configurado com o origin server como backend
-3. Uma **política WAF** associada ao load balancer (para validação de tráfego WAF)
+3. Uma **política WAF** vinculada ao load balancer (para validação de tráfego WAF)
 
 A variável Terraform `target_fqdn` deve ser definida com o domínio público do load balancer do F5 XC.
 
 :::tip
-Use `terraform destroy` quando o laboratório não estiver em uso para evitar cobranças contínuas. Consulte [Desativação](../08-teardown/) para o procedimento.
+Utilize `terraform destroy` quando o laboratório não estiver em uso para evitar cobranças contínuas. Consulte [Destruição do Ambiente](../08-teardown/) para o procedimento.
 :::
 
 :::note
-Standard_F16s_v2 (32 GiB RAM) é o padrão porque diversas ferramentas são executadas simultaneamente durante a execução das suítes. A automação de navegador (Playwright, Puppeteer) com Chromium headless é o principal consumidor de memória. SKUs menores da série F funcionarão para suítes sem navegador, mas podem ser insuficientes ao executar simulação de bots.
+Standard_F16s_v2 (32 GiB de RAM) é o padrão porque diversas ferramentas são executadas simultaneamente durante a execução das suítes. A automação de navegador (Playwright, Puppeteer) com Chromium headless é o principal consumidor de memória. SKUs F-series menores funcionarão para suítes sem navegador, mas podem ser insuficientes ao executar simulação de bots.
 :::

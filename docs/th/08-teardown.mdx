@@ -1,8 +1,8 @@
 ---
 title: การรื้อถอน
 description: >-
-  terraform destroy เพื่อลบทรัพยากร Azure ทั้งหมด, ตรวจสอบการลบ resource group
-  ด้วย az CLI, และล้างไฟล์ state ในเครื่อง
+  terraform destroy เพื่อลบทรัพยากร Azure ทั้งหมด ตรวจสอบการลบ resource group
+  ด้วย az CLI และล้างไฟล์ state ในเครื่อง
 sidebar:
   order: 8
 i18n:
@@ -12,7 +12,7 @@ i18n:
 
 เมื่อเซสชันแล็บเสร็จสิ้น ให้ทำลายทรัพยากร Azure ทั้งหมดเพื่อหยุดการเรียกเก็บเงิน
 
-## การทำลายด้วย Terraform
+## Terraform Destroy
 
 จากไดเรกทอรี `terraform/`:
 
@@ -24,11 +24,11 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform จะถามยืนยัน พิมพ์ `yes` เพื่อดำเนินการต่อ
+Terraform จะแสดงข้อความขอยืนยัน พิมพ์ `yes` เพื่อดำเนินการต่อ
 
 ## ตรวจสอบการล้างข้อมูล
 
-ยืนยันว่าทรัพยากรทั้งหมดถูกลบแล้ว:
+ยืนยันว่าทรัพยากรทั้งหมดถูกลบออกแล้ว:
 
 ```bash
 RG_NAME=$(terraform output -raw resource_group_name)
@@ -42,15 +42,15 @@ az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
 
 ## ล้าง State ในเครื่อง
 
-ลบไฟล์ state และไฟล์แคชของ Terraform:
+ลบไฟล์ Terraform state และไฟล์แคช:
 
 ```bash
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 ```
 
-## เก็บผลลัพธ์ไว้ (ไม่บังคับ)
+## เก็บรักษาผลลัพธ์ (ไม่บังคับ)
 
-หากคุณต้องการเก็บผลลัพธ์ของชุดทดสอบทราฟฟิกก่อนทำลาย VM ให้คัดลอกมาไว้ในเครื่อง:
+หากคุณต้องการเก็บผลลัพธ์ของชุดทดสอบ traffic ก่อนทำลาย VM ให้คัดลอกมาไว้ในเครื่อง:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -63,16 +63,16 @@ LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head 
 scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
 ```
 
-## การล้าง F5 XC
+## การล้างข้อมูล F5 XC
 
-หากคุณต้องการลบการกำหนดค่า F5 XC ที่ตัวสร้างทราฟฟิกกำลังเป้าหมายอยู่ด้วย:
+หากคุณต้องการลบการตั้งค่า F5 XC ที่ traffic generator กำลังเป้าหมายอยู่ด้วย:
 
 1. ลบ HTTP load balancer
 2. ลบ origin pool
-3. ลบนโยบาย WAF, การกำหนดค่า Bot Defense, นโยบาย API Security หรือการกำหนดค่า CSD ที่สร้างขึ้นสำหรับการทดสอบ
+3. ลบนโยบาย WAF, การตั้งค่า Bot Defense, นโยบาย API Security หรือการตั้งค่า CSD ที่สร้างขึ้นสำหรับการทดสอบ
 
 ทรัพยากร F5 XC เหล่านี้ไม่มีค่าใช้จ่าย Azure แต่ควรล้างออกเมื่อไม่ต้องการสภาพแวดล้อมสาธิตอีกต่อไป
 
 :::tip
-สำหรับการใช้งานสาธิตซ้ำ ให้พิจารณาเขียนสคริปต์สำหรับวงจรชีวิตทั้งหมด: `cd terraform && terraform apply` ก่อนการสาธิต, รันชุดทดสอบ, จากนั้น `terraform destroy` หลังจากเสร็จ ระดับมาตรฐานใช้เวลาจัดเตรียม 15-20 นาที ทำให้การตั้งค่าและรื้อถอนในวันเดียวกันเป็นไปได้อย่างเหมาะสม
+สำหรับการใช้งานสาธิตซ้ำ ลองพิจารณาเขียนสคริปต์สำหรับวงจรชีวิตทั้งหมด: `cd terraform && terraform apply` ก่อนสาธิต รันชุดทดสอบ จากนั้น `terraform destroy` หลังจากเสร็จสิ้น ระดับ standard ใช้เวลาจัดเตรียมประมาณ 15-20 นาที ทำให้การตั้งค่าและรื้อถอนในวันเดียวกันเป็นไปได้จริง
 :::
