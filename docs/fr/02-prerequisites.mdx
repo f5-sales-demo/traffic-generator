@@ -46,7 +46,7 @@ Terraform >= 1.5 est requis :
 terraform version
 ```
 
-S'il n'est pas installé, utilisez le dépôt APT HashiCorp :
+S'il n'est pas installé, utilisez le dépôt APT de HashiCorp :
 
 ```bash
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -64,7 +64,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### Accès réseau
 
-La VM du générateur de trafic nécessite un accès HTTPS sortant lors du provisionnement pour télécharger les outils depuis :
+La VM du générateur de trafic nécessite un accès HTTPS sortant pendant le provisionnement pour télécharger les outils depuis :
 
 - GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
 - PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
@@ -78,16 +78,16 @@ Si votre abonnement Azure applique des règles de pare-feu sortant ou des restri
 
 Avant de déployer le générateur de trafic, vous devez disposer de :
 
-1. Un **serveur d'origine** déployé et accessible (voir la [documentation du serveur d'origine](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
-2. Un **équilibreur de charge HTTP F5 XC** configuré avec le serveur d'origine comme backend
-3. Une **politique WAF** attachée à l'équilibreur de charge (pour la validation du trafic WAF)
+1. **Serveur d'origine** déployé et accessible (voir la [documentation du serveur d'origine](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+2. **Répartiteur de charge HTTP F5 XC** configuré avec le serveur d'origine comme backend
+3. Une **politique WAF** attachée au répartiteur de charge (pour la validation du trafic WAF)
 
-La variable Terraform `target_fqdn` doit être définie sur le domaine public de l'équilibreur de charge F5 XC.
+La variable Terraform `target_fqdn` doit être définie sur le domaine public du répartiteur de charge F5 XC.
 
 :::tip
-Utilisez `terraform destroy` lorsque le laboratoire n'est pas utilisé pour éviter les frais continus. Consultez la section [Démontage](../08-teardown/) pour la procédure.
+Utilisez `terraform destroy` lorsque le lab n'est pas utilisé pour éviter des frais continus. Voir [Démontage](../08-teardown/) pour la procédure.
 :::
 
 :::note
-Standard_F16s_v2 (32 Gio de RAM) est la valeur par défaut car plusieurs outils s'exécutent simultanément lors de l'exécution des suites. L'automatisation du navigateur (Playwright, Puppeteer) avec Chromium en mode headless est le principal consommateur de mémoire. Les SKU F-series plus petits fonctionneront pour les suites sans navigateur, mais peuvent être insuffisants lors de l'exécution de la simulation de bots.
+Standard_F16s_v2 (32 Gio de RAM) est la valeur par défaut car plusieurs outils s'exécutent simultanément pendant l'exécution des suites. L'automatisation de navigateur (Playwright, Puppeteer) avec Chromium en mode headless est le principal consommateur de mémoire. Des SKU F-series plus petits fonctionneront pour les suites sans navigateur mais peuvent être limités lors de l'exécution de la simulation de bots.
 :::

@@ -10,244 +10,244 @@ i18n:
 
 import { Aside } from '@astrojs/starlight/components';
 
-每個流量測試套件都是 `/opt/traffic-generator/suites/` 下的一個目錄，包含由 `runner.sh` 依序執行的編號 shell 腳本。每個腳本接受目標 FQDN 作為第一個參數，並將輸出寫入 stdout 和結果目錄。
+每個流量測試套件都是 `/opt/traffic-generator/suites/` 下的一個目錄，包含由 `runner.sh` 依序執行的編號 shell 腳本。每個腳本接受目標 FQDN 作為第一個參數，並將輸出寫入標準輸出和結果目錄。
 
 ## api-attacks
 
-**腳本數量：** 4 | **預估持續時間：** 10-17 分鐘
+**腳本數：** 4 | **預估持續時間：** 10-17 分鐘
 
-透過 F5 XC 針對 VAmPI 進行 OWASP API 安全前十大測試。註冊測試使用者、取得認證令牌，然後測試 BOLA、暴力破解認證、過度資料暴露、功能層級授權失效、SSRF 模式、針對 REST API 端點的 SQL 注入、隱藏參數探索及端點模糊測試。目標為 VAmPI 應用程式。
+透過 F5 XC 對 VAmPI 進行 OWASP API 安全前十大測試。註冊測試使用者、取得驗證令牌，然後測試 BOLA、暴力破解認證、過度資料暴露、損壞的功能層級授權、SSRF 模式、針對 REST API 端點的 SQL 注入、隱藏參數探索及端點模糊測試。目標為 VAmPI 應用程式。
 
 **F5 XC 功能：** API 安全 / API 探索
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
-| 01 | `01-vampi-owasp-top10.sh` | curl, jq | 完整的 OWASP API 前十大測試套件。註冊測試使用者、取得認證令牌，然後測試 BOLA（存取其他使用者的資料）、暴力破解認證、過度資料暴露、功能層級授權失效、SSRF 模式及安全配置錯誤探測。 |
-| 02 | `02-sqlmap-api.sh` | sqlmap | 針對 VAmPI REST API 端點的 SQL 注入：使用者查詢、登入（POST）及註冊（POST），使用 JSON 酬載。 |
-| 03 | `03-arjun-param-discovery.sh` | arjun | 跨 Juice Shop、DVWA 及 VAmPI 端點的隱藏參數探索。發現可能接受注入酬載的未文件化查詢參數。 |
-| 04 | `04-ffuf-api-fuzz.sh` | ffuf | 兩階段模糊測試：使用常見 API 路徑字典（api、swagger、graphql、admin、.env、.git）進行端點探索，橫跨所有應用程式前綴，然後對關鍵端點進行 HTTP 方法模糊測試（GET、POST、PUT、DELETE、PATCH、OPTIONS、TRACE、PROPFIND）。 |
+| 01 | `01-vampi-owasp-top10.sh` | curl, jq | 全面的 OWASP API 前十大測試套件。註冊測試使用者、取得驗證令牌，然後測試 BOLA（存取其他使用者的資料）、暴力破解認證、過度資料暴露、損壞的功能層級授權、SSRF 模式及安全配置錯誤探測。 |
+| 02 | `02-sqlmap-api.sh` | sqlmap | 針對 VAmPI REST API 端點的 SQL 注入：使用者查詢、登入（POST）和註冊（POST），使用 JSON 負載。 |
+| 03 | `03-arjun-param-discovery.sh` | arjun | 跨 Juice Shop、DVWA 和 VAmPI 端點的隱藏參數探索。發現可能接受注入負載的未記錄查詢參數。 |
+| 04 | `04-ffuf-api-fuzz.sh` | ffuf | 兩階段模糊測試：使用常見 API 路徑字典（api、swagger、graphql、admin、.env、.git）跨所有應用程式前綴進行端點探索，然後對關鍵端點進行 HTTP 方法模糊測試（GET、POST、PUT、DELETE、PATCH、OPTIONS、TRACE、PROPFIND）。 |
 
-**預期 F5 XC 行為：** API 探索應能對映 VAmPI API 端點並識別異常請求模式。API 安全策略應標記未授權存取嘗試、JSON 主體中的注入酬載及列舉模式。F5 XC 中的 API 清單將顯示已發現的端點及請求計數。
+**預期 F5 XC 行為：** API 探索應映射 VAmPI API 端點並識別異常請求模式。API 安全策略應標記未授權存取嘗試、JSON 主體中的注入負載及列舉模式。F5 XC 中的 API 清單將顯示已發現的端點及請求計數。
 
 ## bot-simulation
 
-**腳本數量：** 4 | **預估持續時間：** 5-10 分鐘
+**腳本數：** 4 | **預估持續時間：** 5-10 分鐘
 
-透過 F5 XC 的自動化瀏覽器活動和類機器人爬取模式。包括無頭 Chrome、帶隱匿外掛的 Puppeteer、快速爬取及自動化表單互動。目標為所有應用程式。
+透過 F5 XC 進行的自動化瀏覽器活動和類機器人爬取模式。包括無頭 Chrome、帶隱匿外掛的 Puppeteer、快速爬取及自動化表單互動。目標為所有應用程式。
 
-**F5 XC 功能：** Bot 防禦
+**F5 XC 功能：** Bot Defense
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
-| 01 | `01-headless-chrome.sh` | playwright | 無頭 Chromium 瀏覽：載入目標、在應用程式路徑間導覽、擷取頁面標題和內容、截取螢幕截圖。產生基於瀏覽器的流量但不使用隱匿外掛（可被偵測為自動化）。 |
-| 02 | `02-puppeteer-stealth.sh` | puppeteer, puppeteer-extra-plugin-stealth | 使用 puppeteer-extra 及隱匿外掛進行隱匿瀏覽。嘗試透過修補 navigator 屬性、WebGL 及其他瀏覽器指紋來規避機器人偵測。 |
-| 03 | `03-rapid-crawl.sh` | curl, wget | 使用 curl 和 wget 快速連續發送高頻 HTTP 請求。模擬爬蟲行為，請求間無延遲且積極輪換 User-Agent。 |
+| 01 | `01-headless-chrome.sh` | playwright | 無頭 Chromium 瀏覽：載入目標、在應用程式路徑之間導航、擷取頁面標題和內容、截取螢幕截圖。產生基於瀏覽器的流量，不使用隱匿外掛（可被偵測為自動化）。 |
+| 02 | `02-puppeteer-stealth.sh` | puppeteer, puppeteer-extra-plugin-stealth | 使用 puppeteer-extra 搭配隱匿外掛進行隱匿瀏覽。嘗試透過修補 navigator 屬性、WebGL 及其他瀏覽器指紋來規避機器人偵測。 |
+| 03 | `03-rapid-crawl.sh` | curl, wget | 使用 curl 和 wget 快速連續發出高頻 HTTP 請求。模擬爬蟲行為，請求之間無延遲並積極輪換 User-Agent。 |
 | 04 | `04-form-interaction.sh` | playwright | 使用 Playwright 的表單互動 API 對 DVWA 登入、Juice Shop 註冊及 VAmPI API 端點進行自動化表單填寫和提交。 |
 
-**預期 F5 XC 行為：** Bot 防禦應根據瀏覽器指紋分析、請求時序和 JavaScript 挑戰結果將流量分類為自動化流量。無隱匿功能的無頭 Chrome 應被立即偵測。隱匿 Puppeteer 測試進階規避技術是否能繞過偵測。Bot 防禦儀表板將顯示機器人分類類別和緩解措施。
+**預期 F5 XC 行為：** Bot Defense 應根據瀏覽器指紋分析、請求時序和 JavaScript 挑戰結果將流量分類為自動化流量。無隱匿的無頭 Chrome 應被立即偵測到。隱匿 Puppeteer 測試進階規避技術是否能繞過偵測。Bot Defense 儀表板將顯示機器人分類類別和緩解操作。
 
 ## cdn-load-testing
 
-**腳本數量：** 18 | **預估持續時間：** 20-30 分鐘
+**腳本數：** 18 | **預估持續時間：** 20-30 分鐘
 
-CDN 快取行為和源站保護測試。包括基準吞吐量、查詢字串隔離、accept-encoding 變化、雷鳴群效應模擬、POST/PUT 繞過、快取鍵碰撞、條件式 GET、範圍請求、清除模擬、連接池耗盡、keepalive 最佳化、TLS 交握開銷、大型物件快取、多源站容錯切換、速率限制、gzip 壓縮比測試、HTTP/2 多路複用及組合式壓力測試基準。目標為 CDN 模擬器應用程式。
+CDN 快取行為和來源保護測試。包括基線吞吐量、查詢字串隔離、accept-encoding 變化、驚群效應模擬、POST/PUT 繞過、快取鍵碰撞、條件式 GET、範圍請求、清除模擬、連線池耗盡、keepalive 最佳化、TLS 握手開銷、大物件快取、多來源容錯移轉、速率限制、gzip 壓縮比測試、HTTP/2 多工及組合壓力基準測試。目標為 CDN 模擬器應用程式。
 
 **F5 XC 功能：** CDN 整合
 
 ## crapi-exploits
 
-**腳本數量：** 16 | **預估持續時間：** 15-25 分鐘
+**腳本數：** 16 | **預估持續時間：** 15-25 分鐘
 
-OWASP crAPI（Completely Ridiculous API）挑戰利用。包括註冊/認證、BOLA 車輛位置、BOLA 技師報告、OTP 暴力破解、資料暴露機制、過度資料暴露、批量賦值訂單、SSRF 優惠券驗證、NoSQL 注入、JWT 操控、IDOR 儀表板、2FA 繞過、內部 API 存取、伺服器端參數污染、使用者刪除及影片上傳 IDOR。目標為 crAPI 應用程式。
+OWASP crAPI（Completely Ridiculous API）挑戰利用。包括註冊/認證、BOLA 車輛位置、BOLA 技師報告、OTP 暴力破解、資料暴露機制、過度資料暴露、大量指派訂單、SSRF 優惠券驗證、NoSQL 注入、JWT 操作、IDOR 儀表板、2FA 繞過、內部 API 存取、伺服器端參數污染、使用者刪除及影片上傳 IDOR。目標為 crAPI 應用程式。
 
 **F5 XC 功能：** API 安全
 
 ## csd-demo-attacks
 
-**腳本數量：** 5（JavaScript）| **預估持續時間：** 3-5 分鐘
+**腳本數：** 5（JavaScript）| **預估持續時間：** 3-5 分鐘
 
-客戶端 JavaScript 注入攻擊。包括卡片竊取器注入、表單劫持器、鍵盤記錄器、加密貨幣挖礦程式及 DOM 劫持腳本。測試 Magecart 風格的客戶端供應鏈攻擊，由 F5 XC 客戶端防禦偵測和阻擋。目標為 CSD 演示應用程式。
+用戶端 JavaScript 注入攻擊。包括信用卡側錄器注入、表單劫持、鍵盤記錄器、加密貨幣挖礦程式及 DOM 劫持腳本。測試 Magecart 風格的用戶端供應鏈攻擊，F5 XC Client-Side Defense 可偵測並阻擋這些攻擊。目標為 CSD Demo 應用程式。
 
-**F5 XC 功能：** 客戶端防禦
+**F5 XC 功能：** Client-Side Defense
 
 ## demoapp-attacks
 
-**腳本數量：** 2 | **預估持續時間：** 2-3 分鐘
+**腳本數：** 2 | **預估持續時間：** 2-3 分鐘
 
-針對 F5 DemoApp 內建 WAF 測試端點（`/WAF/SQL`、`/WAF/XSS`、`/WAF/DIR`）的定向攻擊酬載。直接向設計用於展示 WAF 阻擋行為的端點發送 SQL 注入、XSS 和路徑遍歷酬載。當目標為 DemoApp 內容伺服器而非標準源站應用程式時，請使用此套件。
+針對 F5 DemoApp 內建 WAF 測試端點（`/WAF/SQL`、`/WAF/XSS`、`/WAF/DIR`）的定向攻擊負載。直接向設計用於展示 WAF 阻擋行為的端點發送 SQL 注入、XSS 和路徑遍歷負載。當目標為 DemoApp 內容伺服器而非標準來源伺服器應用程式時，請使用此套件。
 
 **F5 XC 功能：** WAF（Web 應用程式防火牆）
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
-| 01 | `01-sqli-waf-endpoint.sh` | curl, python3 | 針對 `/WAF/SQL?age=` 的 15 個 SQL 注入酬載，包括 UNION SELECT、DROP TABLE、WAITFOR DELAY、xp_cmdshell、註解繞過及布林邏輯酬載。 |
-| 02 | `02-xss-waf-endpoint.sh` | curl, python3 | 針對 `/WAF/XSS?update=` 的 18 個 XSS 酬載，包括 script 標籤、事件處理器（onerror、onload、ontoggle、onfocus）、base64 eval、style 表達式、多態酬載及 cookie 竊取。 |
+| 01 | `01-sqli-waf-endpoint.sh` | curl, python3 | 針對 `/WAF/SQL?age=` 的 15 個 SQL 注入負載，包括 UNION SELECT、DROP TABLE、WAITFOR DELAY、xp_cmdshell、註解繞過及布林邏輯負載。 |
+| 02 | `02-xss-waf-endpoint.sh` | curl, python3 | 針對 `/WAF/XSS?update=` 的 18 個 XSS 負載，包括 script 標籤、事件處理器（onerror、onload、ontoggle、onfocus）、base64 eval、style expression、polyglot 負載及 cookie 竊取。 |
 
-**預期 F5 XC 行為：** WAF 應阻擋包含 SQL 注入和 XSS 酬載的請求並返回阻擋頁面。安全事件儀表板將顯示每個被阻擋請求的違規類別和簽章匹配資訊。
+**預期 F5 XC 行為：** WAF 應阻擋包含 SQL 注入和 XSS 負載的請求並返回阻擋頁面。安全事件儀表板將顯示每個被阻擋請求的違規類別和特徵碼匹配。
 
 ## dvga-exploits
 
-**腳本數量：** 9 | **預估持續時間：** 8-12 分鐘
+**腳本數：** 9 | **預估持續時間：** 8-12 分鐘
 
-針對 Damn Vulnerable GraphQL Application 的 GraphQL 特定漏洞利用。包括批次查詢 DoS、深度遞迴、欄位重複、透過篩選器的 SQL 注入、透過 createPaste 的 XSS、基於別名的 DoS、內省濫用、授權繞過及資訊洩露。目標為 DVGA 應用程式。
+針對 Damn Vulnerable GraphQL Application 的 GraphQL 特定弱點利用。包括批次查詢 DoS、深度遞迴、欄位重複、透過過濾器的 SQL 注入、透過 createPaste 的 XSS、基於別名的 DoS、內省濫用、授權繞過及資訊洩漏。目標為 DVGA 應用程式。
 
 **F5 XC 功能：** API 安全（GraphQL）
 
 ## dvwa-exploits
 
-**腳本數量：** 14 | **預估持續時間：** 15-25 分鐘
+**腳本數：** 14 | **預估持續時間：** 15-25 分鐘
 
-針對 Damn Vulnerable Web Application 的 OWASP 前十大測試。包括暴力破解、命令注入、CSRF 密碼變更、檔案包含、檔案上傳、SQL 注入（盲注）、SQL 注入（聯合查詢）、XSS（DOM）、XSS（反射型）、XSS（儲存型）、CAPTCHA 繞過、弱對話 ID、不安全的 CORS 及開放式重導向。目標為 DVWA 應用程式。
+針對 Damn Vulnerable Web Application 的 OWASP 前十大測試。包括暴力破解、命令注入、CSRF 密碼變更、檔案包含、檔案上傳、SQL 注入（盲注）、SQL 注入（聯合查詢）、XSS（DOM）、XSS（反射型）、XSS（儲存型）、CAPTCHA 繞過、弱會話 ID、不安全的 CORS 及開放重定向。目標為 DVWA 應用程式。
 
 **F5 XC 功能：** WAF
 
 ## javascript-exploits
 
-**腳本數量：** 3 | **預估持續時間：** 3-5 分鐘
+**腳本數：** 3 | **預估持續時間：** 3-5 分鐘
 
-觸發客戶端防禦偵測的客戶端腳本注入和 DOM 操控模式。包括模擬 Magecart 風格竊取器的內聯腳本注入、透過無頭 Chromium 的 DOM 操控及第三方腳本模擬。目標為 CSD 演示應用程式。
+觸發 Client-Side Defense 偵測的用戶端腳本注入和 DOM 操作模式。包括模擬 Magecart 風格側錄器的內嵌腳本注入、透過無頭 Chromium 的 DOM 操作及第三方腳本模擬。目標為 CSD Demo 應用程式。
 
-**F5 XC 功能：** 客戶端防禦（CSD）
+**F5 XC 功能：** Client-Side Defense（CSD）
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
-| 01 | `01-inline-script-injection.sh` | curl | 發送包含內聯 JavaScript 酬載的請求，設計用於模擬 Magecart 風格的信用卡竊取器和資料外洩腳本。 |
-| 02 | `02-dom-manipulation.sh` | playwright | 使用無頭 Chromium 載入 CSD 演示頁面並注入 DOM 修改：新增 script 標籤、修改表單 action、插入隱形 iframe 以外洩表單資料。 |
-| 03 | `03-third-party-script-sim.sh` | curl, playwright | 透過注入參考外部 JavaScript 來源的請求並嘗試將未授權腳本載入頁面上下文來模擬受損的第三方腳本。 |
+| 01 | `01-inline-script-injection.sh` | curl | 發送包含內嵌 JavaScript 負載的請求，設計用於模擬 Magecart 風格的信用卡側錄器和資料竊取腳本。 |
+| 02 | `02-dom-manipulation.sh` | playwright | 使用無頭 Chromium 載入 CSD 示範頁面並注入 DOM 修改：新增 script 標籤、修改表單動作、插入竊取表單資料的隱形 iframe。 |
+| 03 | `03-third-party-script-sim.sh` | curl, playwright | 透過注入參考外部 JavaScript 來源的請求並嘗試將未授權腳本載入頁面上下文，模擬被入侵的第三方腳本。 |
 
-**預期 F5 XC 行為：** 客戶端防禦應偵測對受保護頁面的未授權腳本修改。CSD 儀表板將顯示新腳本來源、修改的 DOM 元素及資料外洩嘗試的警報。這驗證了 CSD 第二階段的功能。
+**預期 F5 XC 行為：** Client-Side Defense 應偵測對受保護頁面的未授權腳本修改。CSD 儀表板將顯示新腳本來源、已修改的 DOM 元素及資料竊取嘗試的警報。這驗證了 CSD 第二階段的功能。
 
 <Aside type="note">
-javascript-exploits 套件設計為與源站伺服器上的 CSD 演示應用程式搭配使用。在執行此套件之前，請確保源站伺服器已啟用 `/csd-demo/` 路徑。
+javascript-exploits 套件設計用於與來源伺服器上的 CSD 示範應用程式搭配使用。在執行此套件之前，請確保來源伺服器已啟用 `/csd-demo/` 路徑。
 </Aside>
 
 ## juice-shop-exploits
 
-**腳本數量：** 12 | **預估持續時間：** 10-18 分鐘
+**腳本數：** 12 | **預估持續時間：** 10-18 分鐘
 
-OWASP Juice Shop 挑戰利用。包括 SQL 注入登入繞過、SQL 注入搜尋聯合查詢、XSS DOM 反射型、XSS 儲存型 API、IDOR 購物籃存取、管理員區塊存取、偽造回饋、null byte 檔案存取、搜尋中的反射型 XSS、HTTP 標頭注入、重複註冊及登入暴力破解。目標為 Juice Shop 應用程式。
+OWASP Juice Shop 挑戰利用。包括 SQL 注入登入繞過、SQL 注入搜尋聯合查詢、XSS DOM 反射型、XSS 儲存型 API、IDOR 購物車存取、管理區段存取、偽造回饋、null byte 檔案存取、搜尋中的反射型 XSS、HTTP 標頭注入、重複註冊及登入暴力破解。目標為 Juice Shop 應用程式。
 
-**F5 XC 功能：** WAF、Bot 防禦
+**F5 XC 功能：** WAF、Bot Defense
 
 ## mitre-attack
 
-**腳本數量：** 8 | **預估持續時間：** 10-15 分鐘
+**腳本數：** 8 | **預估持續時間：** 10-15 分鐘
 
-MITRE ATT&CK 框架戰術模擬。包括偵察（外部掃描）、初始存取（憑證填充）、執行（命令注入）、憑證存取（預設密碼）、探索（目錄列舉）、橫向移動模擬、收集（資料擷取）及資料外洩模擬。每個腳本對應特定的 MITRE ATT&CK 戰術，用於結構化的威脅覆蓋報告。目標為所有應用程式。
+MITRE ATT&CK 框架戰術模擬。包括偵察（外部掃描）、初始存取（憑證填充）、執行（命令注入）、憑證存取（預設密碼）、探索（目錄列舉）、橫向移動模擬、收集（資料爬取）及資料竊取模擬。每個腳本對應一個特定的 MITRE ATT&CK 戰術，用於結構化威脅覆蓋報告。目標為所有應用程式。
 
-**F5 XC 功能：** WAF、Bot 防禦、API 安全
+**F5 XC 功能：** WAF、Bot Defense、API 安全
 
 ## owasp-scanning
 
-**腳本數量：** 10 | **預估持續時間：** 20-35 分鐘
+**腳本數：** 10 | **預估持續時間：** 20-35 分鐘
 
-使用專用漏洞掃描器的完整 OWASP 掃描套件。包括 ZAP 基準掃描、ZAP 主動掃描、Nikto 完整掃描、Nuclei 完整掃描、Nmap 漏洞掃描、SSL/TLS 審計、目錄模糊測試、子網域列舉、技術指紋識別及組合 OWASP 報告生成。目標為所有應用程式。
+使用專用弱點掃描器的全面 OWASP 掃描套件。包括 ZAP 基線掃描、ZAP 主動掃描、Nikto 完整掃描、Nuclei 完整掃描、Nmap 弱點掃描、SSL/TLS 稽核、目錄模糊測試、子域名列舉、技術指紋辨識及組合 OWASP 報告產生。目標為所有應用程式。
 
 **F5 XC 功能：** WAF、Web 應用程式掃描
 
 ## performance-testing
 
-**腳本數量：** 12 | **預估持續時間：** 15-30 分鐘
+**腳本數：** 12 | **預估持續時間：** 15-30 分鐘
 
-各種負載模式下的效能特性測試。包括並發遞增、每應用程式吞吐量、持續負載、連接流轉、混合攻擊+負載、尖峰測試、耐久測試、斷點探索、回應時間百分位數、負載下的錯誤率、資源耗盡及延遲分佈分析。目標為所有應用程式。
+各種負載模式下的效能特性測試。包括並行數遞增、每應用程式吞吐量、持續負載、連線流轉、混合攻擊+負載、峰值測試、耐久測試、斷點探索、回應時間百分位數、負載下錯誤率、資源耗盡及延遲分佈分析。目標為所有應用程式。
 
 **F5 XC 功能：** DDoS、速率限制
 
 ## reconnaissance
 
-**腳本數量：** 6 | **預估持續時間：** 8-15 分鐘
+**腳本數：** 6 | **預估持續時間：** 8-15 分鐘
 
-針對目標基礎設施的網路掃描、服務列舉及目錄暴力破解。包括 nmap 服務偵測、masscan 連接埠掃描、目錄暴力破解、子網域列舉、Web 技術指紋識別及 DNS 偵察。目標為所有應用程式。
+針對目標基礎架構的網路掃描、服務列舉及目錄暴力破解。包括 nmap 服務偵測、masscan 連接埠掃描、目錄暴力破解、子域名列舉、Web 技術指紋辨識及 DNS 偵察。目標為所有應用程式。
 
-**F5 XC 功能：** WAF / Bot 防禦
+**F5 XC 功能：** WAF / Bot Defense
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
 | 01 | `01-nmap-scan.sh` | nmap | 針對目標 HTTP/HTTPS 連接埠的服務版本偵測和預設腳本掃描。 |
-| 02 | `02-masscan-sweep.sh` | masscan | 對常見 Web 連接埠（80、443、8080、8443）進行高速連接埠掃描，並設有速率限制。 |
+| 02 | `02-masscan-sweep.sh` | masscan | 對常見 Web 連接埠（80、443、8080、8443）進行高速連接埠掃描，附帶速率限制。 |
 | 03 | `03-gobuster-dirs.sh` | gobuster | 使用 SecLists 常用字典對所有應用程式前綴進行目錄暴力破解。 |
-| 04 | `04-subfinder-enum.sh` | subfinder, httpx | 對目標網域進行被動子網域列舉，然後對發現的主機進行 HTTP 探測。 |
-| 05 | `05-whatweb-fingerprint.sh` | whatweb | 對目標及所有應用程式路徑進行 Web 技術指紋識別。 |
-| 06 | `06-dns-recon.sh` | dnsrecon, fierce, dig | DNS 記錄列舉、區域傳輸嘗試及目標網域的反向查詢。 |
+| 04 | `04-subfinder-enum.sh` | subfinder, httpx | 針對目標域名的被動子域名列舉，然後對發現的主機進行 HTTP 探測。 |
+| 05 | `05-whatweb-fingerprint.sh` | whatweb | 對目標和所有應用程式路徑進行 Web 技術指紋辨識。 |
+| 06 | `06-dns-recon.sh` | dnsrecon, fierce, dig | DNS 記錄列舉、區域傳送嘗試及目標域名的反向查詢。 |
 
-**預期 F5 XC 行為：** WAF 應偵測並記錄掃描活動。Bot 防禦可能將快速連續請求分類為自動化流量。安全事件儀表板將顯示偵察簽章和掃描工具的 User-Agent 字串。
+**預期 F5 XC 行為：** WAF 應偵測並記錄掃描活動。Bot Defense 可能將快速連續的請求分類為自動化流量。安全事件儀表板將顯示偵察特徵碼和掃描工具的 User-Agent 字串。
 
 ## restaurant-exploits
 
-**腳本數量：** 11 | **預估持續時間：** 10-18 分鐘
+**腳本數：** 11 | **預估持續時間：** 10-18 分鐘
 
-針對 Restaurant API 應用程式的 OWASP API 安全前十大 2023 測試。包括註冊/認證、BOLA 個人資料、BOLA 訂單、BOPLA 批量賦值、BFLA 權限提升、速率限制繞過、SQL 注入選單、命令注入磁碟統計、SSRF 圖片 URL、JWT 弱密鑰及敏感資料暴露。目標為 Restaurant API 應用程式。
+針對 Restaurant API 應用程式的 OWASP API 安全前十大 2023 測試。包括註冊/認證、BOLA 個人資料、BOLA 訂單、BOPLA 大量指派、BFLA 權限提升、速率限制繞過、SQL 注入菜單、命令注入磁碟統計、SSRF 圖片 URL、JWT 弱密鑰及敏感資料暴露。目標為 Restaurant API 應用程式。
 
 **F5 XC 功能：** API 安全
 
 ## ssl-scanning
 
-**腳本數量：** 3 | **預估持續時間：** 3-5 分鐘
+**腳本數：** 3 | **預估持續時間：** 3-5 分鐘
 
-F5 XC 負載平衡器 HTTPS 端點的 TLS/SSL 配置分析。列舉加密套件、協定版本、憑證詳細資訊，並檢查已知的 TLS 漏洞。目標為 F5 XC 負載平衡器端點。
+F5 XC 負載平衡器 HTTPS 端點的 TLS/SSL 配置分析。列舉密碼套件、協定版本、憑證詳細資訊，並檢查已知的 TLS 弱點。目標為 F5 XC 負載平衡器端點。
 
 **F5 XC 功能：** WAF（資訊性）
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
-| 01 | `01-sslscan.sh` | sslscan | 列舉支援的加密套件、協定版本及憑證詳細資訊。 |
-| 02 | `02-sslyze.sh` | sslyze | 完整的 TLS 分析，包括憑證驗證、加密套件排序及漏洞檢查（Heartbleed、ROBOT 等）。 |
-| 03 | `03-testssl.sh` | testssl.sh | 使用 testssl.sh 框架進行完整的 TLS 評估。測試協定支援、加密偏好、標頭分析及已知漏洞。 |
+| 01 | `01-sslscan.sh` | sslscan | 列舉支援的密碼套件、協定版本及憑證詳細資訊。 |
+| 02 | `02-sslyze.sh` | sslyze | 全面的 TLS 分析，包括憑證驗證、密碼套件排序及弱點檢查（Heartbleed、ROBOT 等）。 |
+| 03 | `03-testssl.sh` | testssl.sh | 使用 testssl.sh 框架的完整 TLS 評估。測試協定支援、密碼偏好、標頭分析及已知弱點。 |
 
-**預期 F5 XC 行為：** SSL 掃描會產生許多帶有異常加密套件提議的 TLS 交握。雖然 F5 XC 通常不會阻擋這些流量，但流量模式在存取日誌中是可見的。主要價值在於驗證 F5 XC 的 TLS 配置是否符合安全最佳實踐。
+**預期 F5 XC 行為：** SSL 掃描會產生大量使用異常密碼套件提案的 TLS 握手。雖然 F5 XC 通常不會阻擋這些請求，但流量模式在存取日誌中是可見的。主要價值在於驗證 F5 XC TLS 配置是否符合安全最佳實務。
 
 ## traffic-generation
 
-**腳本數量：** 4 | **預估持續時間：** 5-10 分鐘（可配置）
+**腳本數：** 4 | **預估持續時間：** 5-10 分鐘（可配置）
 
-用於基準量測和負載測試的大量合法 HTTP 流量。在 F5 XC 分析中建立正常流量模式，以便與攻擊套件流量進行比較。目標為所有應用程式。
+用於基線測量和負載測試的大量合法 HTTP 流量。在 F5 XC 分析中建立正常流量模式，以便與攻擊套件流量進行比較。目標為所有應用程式。
 
-**F5 XC 功能：** 全部（基準比較）
+**F5 XC 功能：** 全部（基線比較）
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
-| 01 | `01-baseline-http.sh` | curl | 使用標準瀏覽器 User-Agent 對所有應用程式路徑發送循序 HTTP GET 請求。在 F5 XC 分析中建立正常流量基準。 |
-| 02 | `02-concurrent-load.sh` | curl | 使用 curl 多個並發連接發送並行 HTTP 請求。測試負載處理能力並建立吞吐量基準。 |
-| 03 | `03-mixed-methods.sh` | curl | 對 API 端點使用混合 HTTP 方法（GET、POST、PUT、DELETE）及有效酬載。產生正常 API 流量模式以與攻擊流量進行比較。 |
-| 04 | `04-user-journey.sh` | playwright | 模擬真實的使用者旅程：瀏覽頁面、搜尋產品、填寫表單，並使用 Playwright 以標準瀏覽器設定在應用程式間導覽。 |
+| 01 | `01-baseline-http.sh` | curl | 使用標準瀏覽器 User-Agent 對所有應用程式路徑進行順序 HTTP GET 請求。在 F5 XC 分析中建立正常流量基線。 |
+| 02 | `02-concurrent-load.sh` | curl | 使用 curl 搭配多個並行連線進行平行 HTTP 請求。測試負載處理能力並建立吞吐量基線。 |
+| 03 | `03-mixed-methods.sh` | curl | 對 API 端點使用混合 HTTP 方法（GET、POST、PUT、DELETE）搭配有效負載。產生正常的 API 流量模式以與攻擊流量進行比較。 |
+| 04 | `04-user-journey.sh` | playwright | 模擬真實的使用者旅程：瀏覽頁面、搜尋產品、填寫表單，以及使用 Playwright 搭配標準瀏覽器設定在應用程式之間導航。 |
 
-**預期 F5 XC 行為：** 此套件中的所有請求都應在不受 WAF 或 Bot 防禦干預的情況下通過。使用此套件在分析儀表板中產生「乾淨」流量，然後與攻擊套件流量進行比較，以展示合法和惡意請求模式之間的差異。
+**預期 F5 XC 行為：** 此套件中的所有請求應在不受 WAF 或 Bot Defense 干預的情況下通過。使用此套件在分析儀表板中產生「乾淨」流量，然後與攻擊套件流量進行比較，以展示合法與惡意請求模式之間的差異。
 
 ## waf-encoding-evasion
 
-**腳本數量：** 7 | **預估持續時間：** 5-10 分鐘
+**腳本數：** 7 | **預估持續時間：** 5-10 分鐘
 
-多層編碼規避攻擊，設計用於測試 WAF 在檢查前是否正確正規化和解碼酬載。涵蓋單重、雙重和三重 URL 編碼；HTML 實體編碼（十進位、十六進位、命名、零填充）；Unicode/UTF-8 插入（零寬空格、BOM、全形字元、軟連字號、超長序列）；混合/巢狀多層編碼（URL 編碼的 HTML 實體、實體內的雙重 URL、三層堆疊）；null byte 注入；IIS %uXXXX 編碼；大小寫操控；分塊傳輸編碼主體拆分；Base64 參數規避；以及標頭/cookie 編碼酬載。目標為任何應用程式。
+多層編碼規避攻擊，設計用於測試 WAF 是否在檢查前正確正規化和解碼負載。涵蓋單層、雙層和三層 URL 編碼；HTML 實體編碼（十進制、十六進制、命名、零填充）；Unicode/UTF-8 插入（零寬空格、BOM、全形字元、軟連字號、過長序列）；混合/巢狀多層編碼（URL 編碼的 HTML 實體、實體內的雙重 URL、三層堆疊）；null byte 注入；IIS %uXXXX 編碼；大小寫操作；分塊傳輸編碼主體分割；Base64 參數規避；以及標頭/cookie 編碼負載。目標為任何應用程式。
 
 **F5 XC 功能：** WAF（編碼正規化深度）
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
-| 01 | `01-url-encoding.sh` | curl | 跨多個端點路徑對 SQLi、XSS 和路徑遍歷酬載進行單重、雙重和三重 URL 編碼。測試 WAF 是否遞迴解碼 URL 參數。 |
-| 02 | `02-html-entity-encoding.sh` | curl, python3 | 在 GET 參數和 POST 主體中對攻擊酬載進行十進位、十六進位、命名和零填充 HTML 實體編碼。包含透過 `&#123;&#123;7*7&#125;&#125;` 的範本注入。 |
-| 03 | `03-unicode-utf8-evasion.sh` | curl | 在 SQL 關鍵字和 XSS 標籤中插入零寬空格（U+200B）、BOM（U+FEFF）、全形字元、軟連字號和 ZWNJ。測試超長 UTF-8 序列（2 位元組和 3 位元組）。 |
-| 04 | `04-mixed-nested-encoding.sh` | curl | 多層酬載：URL 編碼的 HTML 實體、實體內的雙重 URL、三層堆疊、帶有 Unicode 跳脫的 JSON 主體（`<`），以及使用者特定的 `{{7*7}}` 範本注入模式。 |
-| 05 | `05-null-byte-iis-base64.sh` | curl | Null byte 注入（`%00`）用於副檔名繞過、IIS `%uXXXX` Unicode 編碼，以及帶有解碼旗標的 URL 參數中的 Base64 編碼酬載。 |
-| 06 | `06-case-chunked-evasion.sh` | curl | 大小寫隨機化結合編碼（`%3CsCrIpT%3E`）、分塊傳輸編碼以跨 HTTP 區塊拆分 SQL/XSS 關鍵字、Content-Length/Transfer-Encoding 衝突探測，以及替代路徑分隔符（`%5c`、`%c0%af`）。 |
-| 07 | `07-header-cookie-evasion.sh` | curl | 透過 Cookie、Referer、User-Agent、X-Forwarded-For 和 X-Original-URL 標頭注入編碼攻擊酬載。測試 WAF 是否檢查和解碼所有 HTTP 標頭欄位，而不僅是查詢參數和 POST 主體。 |
+| 01 | `01-url-encoding.sh` | curl | 跨多個端點路徑對 SQLi、XSS 和路徑遍歷負載進行單層、雙層和三層 URL 編碼。測試 WAF 是否遞迴解碼 URL 參數。 |
+| 02 | `02-html-entity-encoding.sh` | curl, python3 | 在 GET 參數和 POST 主體中對攻擊負載進行十進制、十六進制、命名及零填充 HTML 實體編碼。包括透過 `&#123;&#123;7*7&#125;&#125;` 的範本注入。 |
+| 03 | `03-unicode-utf8-evasion.sh` | curl | 在 SQL 關鍵字和 XSS 標籤中插入零寬空格（U+200B）、BOM（U+FEFF）、全形字元、軟連字號和 ZWNJ。測試過長 UTF-8 序列（2 位元組和 3 位元組）。 |
+| 04 | `04-mixed-nested-encoding.sh` | curl | 多層負載：URL 編碼的 HTML 實體、實體內的雙重 URL、三層堆疊、帶有 Unicode 跳脫的 JSON 主體（`<`），以及使用者特定的 `{{7*7}}` 範本注入模式。 |
+| 05 | `05-null-byte-iis-base64.sh` | curl | Null byte 注入（`%00`）用於副檔名繞過、IIS `%uXXXX` Unicode 編碼，以及 URL 參數中帶解碼旗標的 Base64 編碼負載。 |
+| 06 | `06-case-chunked-evasion.sh` | curl | 大小寫隨機化結合編碼（`%3CsCrIpT%3E`）、分塊傳輸編碼將 SQL/XSS 關鍵字分割到 HTTP 區塊、Content-Length/Transfer-Encoding 衝突探測，以及替代路徑分隔符（`%5c`、`%c0%af`）。 |
+| 07 | `07-header-cookie-evasion.sh` | curl | 透過 Cookie、Referer、User-Agent、X-Forwarded-For 和 X-Original-URL 標頭注入編碼攻擊負載。測試 WAF 是否檢查並解碼所有 HTTP 標頭欄位，而不僅僅是查詢參數和 POST 主體。 |
 
-**預期 F5 XC 行為：** 正確配置的 WAF 應在模式匹配前正規化所有編碼層。單重編碼酬載應被立即阻擋。雙重和三重編碼測試揭示 WAF 解碼管線的深度。Unicode 插入測試揭示在關鍵字匹配前是否移除了不可見字元。編碼變體通過而明文等效物被阻擋的結果表明 WAF 策略中存在正規化缺口。
+**預期 F5 XC 行為：** 正確配置的 WAF 應在模式比對之前正規化所有編碼層。單層編碼的負載應被立即阻擋。雙層和三層編碼測試揭示 WAF 解碼管線的深度。Unicode 插入測試揭示是否在關鍵字比對之前去除不可見字元。當編碼變體通過而純文字等效項被阻擋的結果表明 WAF 策略中存在正規化缺口。
 
 ## web-app-attacks
 
-**腳本數量：** 6 | **預估持續時間：** 12-20 分鐘
+**腳本數：** 6 | **預估持續時間：** 12-20 分鐘
 
-透過 F5 XC 針對 Juice Shop 和 DVWA 的 OWASP 前十大 Web 應用程式漏洞測試。包括 SQL 注入、XSS、命令注入、路徑遍歷、Nikto 掃描及 Nuclei 範本掃描。目標為 Juice Shop 和 DVWA 應用程式。
+透過 F5 XC 對 Juice Shop 和 DVWA 進行 OWASP 前十大 Web 應用程式弱點測試。包括 SQL 注入、XSS、命令注入、路徑遍歷、Nikto 掃描及 Nuclei 範本掃描。目標為 Juice Shop 和 DVWA 應用程式。
 
 **F5 XC 功能：** WAF（Web 應用程式防火牆）
 
-| 順序 | 腳本 | 工具 | 說明 |
+| 順序 | 腳本 | 工具 | 描述 |
 |---|---|---|---|
-| 01 | `01-sqli.sh` | sqlmap, curl | 針對 Juice Shop 搜尋 API 和 DVWA SQLi 端點的 SQL 注入酬載。執行 sqlmap 自動化掃描，然後發送 10 個直接的 curl 注入酬載。 |
-| 02 | `02-xss.sh` | dalfox, curl | 針對 Juice Shop 和 DVWA XSS 反射型/儲存型端點的跨站腳本攻擊。執行 dalfox 自動化掃描，然後發送 12 個直接的 XSS 酬載，包括 script 標籤、事件處理器和 cookie 竊取。 |
-| 03 | `03-command-injection.sh` | curl | 針對 DVWA exec 端點的作業系統命令注入酬載。發送 12 個酬載，包括管道鏈、分號、URL 編碼換行符和反向 shell 模式。 |
+| 01 | `01-sqli.sh` | sqlmap, curl | 針對 Juice Shop 搜尋 API 和 DVWA SQLi 端點的 SQL 注入負載。執行 sqlmap 自動化掃描，然後發送 10 個直接 curl 注入負載。 |
+| 02 | `02-xss.sh` | dalfox, curl | 針對 Juice Shop 和 DVWA XSS 反射型/儲存型端點的跨站腳本攻擊。執行 dalfox 自動化掃描，然後發送 12 個直接 XSS 負載，包括 script 標籤、事件處理器和 cookie 竊取。 |
+| 03 | `03-command-injection.sh` | curl | 針對 DVWA exec 端點的作業系統命令注入負載。發送 12 個負載，包括管道鏈、分號、URL 編碼換行符和反向 shell 模式。 |
 | 04 | `04-path-traversal.sh` | curl | 針對多個應用程式端點的目錄遍歷。跨 6 個端點路徑測試標準 `../` 遍歷、URL 編碼變體、雙重編碼變體、null-byte 變體和 Unicode 變體。 |
-| 05 | `05-nikto-scan.sh` | nikto | 120 秒時間限制的完整 Web 伺服器漏洞掃描。產生多樣化的 HTTP 請求以觸發 WAF 簽章匹配。 |
-| 06 | `06-nuclei-scan.sh` | nuclei | 中等、高和關鍵嚴重程度的範本漏洞掃描。速率限制為每秒 50 個請求。 |
+| 05 | `05-nikto-scan.sh` | nikto | 完整的 Web 伺服器弱點掃描，時間限制為 120 秒。產生觸發 WAF 特徵碼比對的多樣化 HTTP 請求。 |
+| 06 | `06-nuclei-scan.sh` | nuclei | 基於範本的弱點掃描，涵蓋中等、高及嚴重嚴重性等級。速率限制為每秒 50 個請求。 |
 
-**預期 F5 XC 行為：** WAF 應阻擋或標記包含 SQL 注入、XSS、命令注入和路徑遍歷酬載的請求。安全事件儀表板將顯示每個被阻擋請求的違規類別、簽章 ID 和請求詳細資訊。
+**預期 F5 XC 行為：** WAF 應阻擋或標記包含 SQL 注入、XSS、命令注入和路徑遍歷負載的請求。安全事件儀表板將顯示每個被阻擋請求的違規類別、特徵碼 ID 和請求詳細資訊。

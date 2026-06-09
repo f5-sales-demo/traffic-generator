@@ -1,14 +1,14 @@
 ---
-title: ट्रैफ़िक जनरेटर
+title: ट्रैफिक जनरेटर
 description: >-
   F5 Distributed Cloud के विरुद्ध WAF, Bot Defense, API Security, और Client-Side
-  Defense सत्यापन के लिए सुरक्षा परीक्षण उपकरणों से पूर्व-लोड Azure Ubuntu 24.04
-  VM
+  Defense सत्यापन के लिए सुरक्षा परीक्षण उपकरणों से पूर्व-लोडित Azure Ubuntu
+  24.04 VM
 template: splash
 hero:
   tagline: >-
-    व्यापक F5 XC डेमो सत्यापन के लिए 50+ सुरक्षा उपकरणों, 19 व्यवस्थित अटैक
-    सूट्स, और हेडलेस Chrome ऑटोमेशन के साथ एक ट्रैफ़िक जनरेशन VM तैनात करें।
+    व्यापक F5 XC डेमो सत्यापन के लिए 50+ सुरक्षा उपकरणों, 19 संगठित अटैक सूट्स,
+    और हेडलेस Chrome ऑटोमेशन के साथ एक ट्रैफिक जनरेशन VM तैनात करें।
   actions:
     - text: शुरू करें
       link: /traffic-generator/01-architecture/
@@ -28,53 +28,53 @@ import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
 
 ## यह क्या प्रदान करता है
 
-ट्रैफ़िक जनरेटर एक विशेष रूप से निर्मित Azure VM है जो F5 Distributed Cloud HTTP लोड बैलेंसर के विरुद्ध यथार्थवादी अटैक ट्रैफ़िक, रिकॉनेसेंस स्कैन, बॉट सिमुलेशन, और API दुरुपयोग पैटर्न उत्पन्न करता है। यह सत्यापित करता है कि WAF पॉलिसीज़, Bot Defense, API Security, और Client-Side Defense सही ढंग से कॉन्फ़िगर हैं, उन सुविधाओं द्वारा पहचाने और अवरुद्ध किए जाने के लिए डिज़ाइन किए गए सटीक ट्रैफ़िक को उत्पन्न करके।
+ट्रैफिक जनरेटर एक उद्देश्य-निर्मित Azure VM है जो F5 Distributed Cloud HTTP लोड बैलेंसर के विरुद्ध यथार्थवादी अटैक ट्रैफिक, रिकॉनसेंस स्कैन, बॉट सिमुलेशन, और API दुरुपयोग पैटर्न उत्पन्न करता है। यह सत्यापित करता है कि WAF नीतियाँ, Bot Defense, API Security, और Client-Side Defense सही ढंग से कॉन्फ़िगर हैं, उन सुविधाओं द्वारा पहचाने और ब्लॉक किए जाने के लिए डिज़ाइन किए गए सटीक ट्रैफिक को उत्पन्न करके।
 
-सभी उपकरण Terraform प्रोविज़निंग के दौरान cloud-init के माध्यम से पूर्व-स्थापित होते हैं। ट्रैफ़िक सूट्स में व्यवस्थित किया जाता है जिन्हें शामिल `runner.sh` ऑर्केस्ट्रेटर का उपयोग करके व्यक्तिगत रूप से या क्रम में चलाया जा सकता है।
+सभी उपकरण Terraform प्रोविजनिंग के दौरान cloud-init के माध्यम से पूर्व-स्थापित हैं। ट्रैफिक सूट्स में व्यवस्थित है जिन्हें शामिल `runner.sh` ऑर्केस्ट्रेटर का उपयोग करके व्यक्तिगत रूप से या क्रम में चलाया जा सकता है।
 
-## ट्रैफ़िक सूट श्रेणियाँ
+## ट्रैफिक सूट श्रेणियाँ
 
 | सूट | विवरण | सत्यापित F5 XC सुविधा |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, SQLMap API मोड, पैरामीटर डिस्कवरी, एंडपॉइंट फ़ज़िंग | API Security |
+| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, SQLMap API मोड, पैरामीटर खोज, एंडपॉइंट फ़ज़िंग | API Security |
 | [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | हेडलेस Chrome, Puppeteer स्टेल्थ, Playwright ऑटोमेशन, रैपिड क्रॉलिंग | Bot Defense |
 | [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | कैश व्यवहार, थंडरिंग हर्ड, कनेक्शन पूल, HTTP/2 मल्टीप्लेक्सिंग | CDN Integration |
 | [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, OTP ब्रूटफ़ोर्स, JWT मैनिपुलेशन, SSRF, NoSQL इंजेक्शन, IDOR | API Security |
 | [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | कार्ड स्किमर, फ़ॉर्मजैकर, कीलॉगर, क्रिप्टोमाइनर, DOM हाईजैक | Client-Side Defense |
 | [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | बैच क्वेरी DoS, डीप रिकर्शन, SQL इंजेक्शन, इंट्रोस्पेक्शन दुरुपयोग | API Security (GraphQL) |
-| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | ब्रूट फ़ोर्स, कमांड इंजेक्शन, CSRF, फ़ाइल इंक्लूज़न, SQLi, XSS | WAF |
+| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | ब्रूट फ़ोर्स, कमांड इंजेक्शन, CSRF, फ़ाइल इन्क्लूज़न, SQLi, XSS | WAF |
 | [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM मैनिपुलेशन, इनलाइन स्क्रिप्ट इंजेक्शन, Magecart-शैली स्किमिंग पेलोड | Client-Side Defense |
 | [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi लॉगिन बाईपास, XSS, IDOR, एडमिन एक्सेस, नल बाइट फ़ाइल एक्सेस | WAF, Bot Defense |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK टैक्टिक्स: रीकॉन, इनिशियल एक्सेस, क्रेडेंशियल एक्सेस, एक्सफ़िल्ट्रेशन | WAF, Bot Defense, API Security |
+| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK टैक्टिक्स: रिकॉन, इनिशियल एक्सेस, क्रेडेंशियल एक्सेस, एक्सफ़िल्ट्रेशन | WAF, Bot Defense, API Security |
 | [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, Nmap भेद्यता स्कैनिंग, संयुक्त OWASP रिपोर्ट | WAF, Web App Scanning |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | कंकरेंसी रैम्प, सस्टेन्ड लोड, स्पाइक टेस्टिंग, ब्रेकपॉइंट डिस्कवरी | DDoS, Rate Limiting |
+| [performance-testing](/traffic-generator/05-suites/#performance-testing) | कॉन्करेंसी रैम्प, सस्टेंड लोड, स्पाइक टेस्टिंग, ब्रेकपॉइंट खोज | DDoS, Rate Limiting |
 | [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, डायरेक्टरी ब्रूट-फ़ोर्सिंग | WAF / Bot Defense |
 | [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, रेट लिमिटिंग बाईपास, JWT कमज़ोर सीक्रेट | API Security |
 | [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan, sslyze, testssl.sh TLS कॉन्फ़िगरेशन विश्लेषण | WAF |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | बेसलाइन और लोड टेस्टिंग के लिए उच्च-मात्रा वैध HTTP ट्रैफ़िक | सभी |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | मल्टी-लेयर URL/HTML/Unicode एनकोडिंग, मिश्रित नेस्टेड एनकोडिंग, चंक्ड TE, हेडर इंजेक्शन | WAF |
+| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | बेसलाइन और लोड टेस्टिंग के लिए उच्च-वॉल्यूम वैध HTTP ट्रैफिक | सभी |
+| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | मल्टी-लेयर URL/HTML/Unicode एन्कोडिंग, मिक्स्ड नेस्टेड एन्कोडिंग, चंक्ड TE, हेडर इंजेक्शन | WAF |
 | [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | SQL इंजेक्शन, XSS, कमांड इंजेक्शन, पाथ ट्रैवर्सल, Nikto, Nuclei | WAF |
 | [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | F5 DemoApp WAF टेस्टिंग एंडपॉइंट्स के विरुद्ध SQLi, XSS, पाथ ट्रैवर्सल | WAF |
 
 <CardGrid>
   <LinkCard
     title="आर्किटेक्चर"
-    description="VM लेआउट, टूल श्रेणियाँ, टियर्ड इंस्टॉलेशन, और origin-server तथा F5 XC के साथ इंटीग्रेशन पॉइंट्स।"
+    description="VM लेआउट, टूल श्रेणियाँ, स्तरित इंस्टॉलेशन, और origin-server तथा F5 XC के साथ एकीकरण बिंदु।"
     href="01-architecture/"
   />
   <LinkCard
     title="तैनाती"
-    description="संपूर्ण Terraform वॉकथ्रू: क्लोन, कॉन्फ़िगर, अप्लाई करें, और सत्यापित करें कि सभी उपकरण चालू हैं।"
+    description="संपूर्ण Terraform वॉकथ्रू: क्लोन, कॉन्फ़िगर, अप्लाई, और सत्यापित करें कि सभी उपकरण कार्यशील हैं।"
     href="03-deploy/"
   />
   <LinkCard
     title="टूल कैटलॉग"
-    description="इंस्टॉल विधि, उदाहरण कमांड, और सूट मैपिंग के साथ श्रेणी अनुसार व्यवस्थित प्रत्येक स्थापित उपकरण।"
+    description="प्रत्येक स्थापित उपकरण श्रेणी के अनुसार व्यवस्थित, इंस्टॉल विधि, उदाहरण कमांड, और सूट मैपिंग के साथ।"
     href="04-tool-catalog/"
   />
   <LinkCard
     title="सूट संदर्भ"
-    description="प्रत्येक ट्रैफ़िक सूट, स्क्रिप्ट्स, उपयोग किए गए उपकरणों, और अपेक्षित F5 XC डिटेक्शन परिणामों का विस्तृत विवरण।"
+    description="प्रत्येक ट्रैफिक सूट, स्क्रिप्ट्स, उपयोग किए गए उपकरणों, और अपेक्षित F5 XC पहचान परिणामों का विस्तृत विवरण।"
     href="05-suites/"
   />
 </CardGrid>

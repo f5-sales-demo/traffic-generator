@@ -8,9 +8,9 @@ i18n:
   translator: machine
 ---
 
-當實驗課程完成後，請銷毀所有 Azure 資源以停止計費。
+當實驗課程結束後，請銷毀所有 Azure 資源以停止計費。
 
-## Terraform 銷毀
+## Terraform Destroy
 
 從 `terraform/` 目錄執行：
 
@@ -22,9 +22,9 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform 會提示確認。輸入 `yes` 以繼續。
+Terraform 會提示確認。輸入 `yes` 繼續執行。
 
-## 驗證清理結果
+## 驗證清除結果
 
 確認所有資源已被移除：
 
@@ -48,7 +48,7 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## 保留結果（選用）
 
-如果您想在銷毀虛擬機器之前保留流量套件結果，請將它們複製到本機：
+如果您想在銷毀 VM 之前保留流量套件結果，請將它們複製到本機：
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -61,16 +61,16 @@ LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head 
 scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
 ```
 
-## F5 XC 清理
+## F5 XC 清除
 
-如果您也想移除流量產生器所指向的 F5 XC 組態：
+如果您也想移除流量產生器所針對的 F5 XC 設定：
 
 1. 刪除 HTTP 負載平衡器
 2. 刪除來源池
-3. 刪除為測試建立的任何 WAF 政策、Bot Defense 組態、API Security 政策或 CSD 組態
+3. 刪除為測試所建立的任何 WAF 策略、Bot Defense 設定、API Security 策略或 CSD 設定
 
-這些 F5 XC 資源不會產生 Azure 費用，但當示範環境不再需要時應進行清理。
+這些 F5 XC 資源不會產生 Azure 費用，但當展示環境不再需要時應進行清除。
 
 :::tip
-若需重複使用示範環境，建議將完整生命週期腳本化：在示範前執行 `cd terraform && terraform apply`，執行測試套件，然後在結束後執行 `terraform destroy`。標準層級的佈建時間約為 15-20 分鐘，使當日建置與拆除切實可行。
+對於重複使用的展示場景，建議將完整生命週期腳本化：在展示前執行 `cd terraform && terraform apply`，執行測試套件，然後在結束後執行 `terraform destroy`。標準層級的佈建約需 15-20 分鐘，使得當天建置與清除在實務上是可行的。
 :::

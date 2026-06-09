@@ -1,8 +1,8 @@
 ---
-title: Desmontaje
+title: Desmantelamiento
 description: >-
   terraform destroy para eliminar todos los recursos de Azure, verificar la
-  eliminación del grupo de recursos con az CLI y limpiar los archivos de estado
+  eliminación del grupo de recursos con az CLI y limpiar archivos de estado
   locales
 sidebar:
   order: 8
@@ -11,7 +11,7 @@ i18n:
   translator: machine
 ---
 
-Cuando la sesión del laboratorio haya finalizado, destruya todos los recursos de Azure para detener la facturación.
+Cuando la sesión del laboratorio esté completa, destruya todos los recursos de Azure para detener la facturación.
 
 ## Terraform Destroy
 
@@ -51,7 +51,7 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## Preservar resultados (Opcional)
 
-Si desea conservar los resultados del conjunto de tráfico antes de destruir la VM, cópielos localmente:
+Si desea conservar los resultados de la suite de tráfico antes de destruir la VM, cópielos localmente:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -66,14 +66,14 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 
 ## Limpieza de F5 XC
 
-Si también desea eliminar la configuración de F5 XC a la que apuntaba el generador de tráfico:
+Si también desea eliminar la configuración de F5 XC a la que el generador de tráfico estaba apuntando:
 
 1. Elimine el balanceador de carga HTTP
 2. Elimine el pool de origen
 3. Elimine cualquier política WAF, configuración de Bot Defense, políticas de API Security o configuraciones de CSD creadas para las pruebas
 
-Estos recursos de F5 XC no generan costos en Azure, pero deben limpiarse cuando el entorno de demostración ya no sea necesario.
+Estos recursos de F5 XC no generan costos de Azure, pero deben limpiarse cuando el entorno de demostración ya no sea necesario.
 
 :::tip
-Para uso recurrente en demostraciones, considere automatizar el ciclo de vida completo mediante scripts: `cd terraform && terraform apply` antes de una demostración, ejecutar los conjuntos de pruebas y luego `terraform destroy` al finalizar. El nivel estándar se aprovisiona en 15-20 minutos, lo que hace práctico configurar y desmontar el mismo día.
+Para uso recurrente en demostraciones, considere crear un script para el ciclo de vida completo: `cd terraform && terraform apply` antes de una demostración, ejecute las suites y luego `terraform destroy` después. El nivel estándar se aprovisiona en 15-20 minutos, lo que hace práctico configurar y desmantelar en el mismo día.
 :::

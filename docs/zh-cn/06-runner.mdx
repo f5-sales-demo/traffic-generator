@@ -1,7 +1,7 @@
 ---
 title: 运行器
 description: >-
-  runner.sh 套件编排器使用指南：执行模式、config.env 配置、环境变量覆盖、dry-run 模式、结果目录结构、meta.json
+  runner.sh 套件编排器使用指南：执行模式、config.env 配置、环境变量覆盖、干运行模式、结果目录结构、meta.json
   格式、独立脚本执行和远程 SSH 调用
 sidebar:
   order: 6
@@ -14,7 +14,7 @@ import { Steps, Aside } from '@astrojs/starlight/components';
 
 ## 概述
 
-`runner.sh` 是套件编排器，它按顺序执行套件目录中所有编号脚本，捕获输出并记录结果元数据。它安装在虚拟机的 `/opt/traffic-generator/suites/runner.sh` 路径下。
+`runner.sh` 是套件编排器，它按顺序执行套件目录中所有编号脚本、捕获输出并记录结果元数据。它安装在虚拟机的 `/opt/traffic-generator/suites/runner.sh` 路径下。
 
 ## 用法
 
@@ -26,8 +26,8 @@ runner.sh <suite-name> [--dry-run]
 
 | 参数 | 是否必需 | 描述 |
 |---|---|---|
-| `suite-name` | 是 | 套件目录名称（例如 `web-app-attacks`、`api-attacks`） |
-| `--dry-run` | 否 | 打印将要执行的内容而不实际运行任何脚本 |
+| `suite-name` | 是 | 套件目录的名称（例如 `web-app-attacks`、`api-attacks`） |
+| `--dry-run` | 否 | 打印将要执行的内容，但不实际运行任何脚本 |
 
 **示例：**
 
@@ -35,10 +35,10 @@ runner.sh <suite-name> [--dry-run]
 # 运行 web-app-attacks 套件
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 
-# 预演以预览 api-attacks 脚本
+# 干运行以预览 api-attacks 脚本
 /opt/traffic-generator/suites/runner.sh api-attacks --dry-run
 
-# 运行 bot 模拟
+# 运行机器人模拟
 /opt/traffic-generator/suites/runner.sh bot-simulation
 ```
 
@@ -56,17 +56,17 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=
 ```
 
-此文件在 Terraform 部署期间根据 `target_fqdn` 和 `target_origin_ip` 变量自动生成。如需在部署后更改目标，请直接在虚拟机上编辑此文件。
+此文件在 Terraform 配置过程中通过 `target_fqdn` 和 `target_origin_ip` 变量自动生成。如需在部署后更改目标，请直接在虚拟机上编辑此文件。
 
 ### 环境变量覆盖
 
-`config.env` 中的任何变量都可以通过在运行套件前导出来覆盖：
+`config.env` 中的任何变量都可以通过在运行套件前导出环境变量来覆盖：
 
 ```bash
-# 为单次运行覆盖目标 FQDN
+# Override target FQDN for a single run
 TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 
-# 通过 export 覆盖
+# Override via export
 export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
@@ -77,9 +77,9 @@ export TARGET_FQDN=staging.example.com
 CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-## 预演模式
+## 干运行模式
 
-`--dry-run` 标志会打印每个将要执行的脚本而不实际运行：
+`--dry-run` 标志会打印每个将要执行的脚本，但不会实际运行：
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
@@ -105,17 +105,17 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-使用预演模式可在部署后验证套件结构，或在针对新目标运行套件之前进行检查。
+使用干运行模式可以在部署后验证套件结构，或在针对新目标运行套件之前进行预检。
 
 ## 结果目录
 
-每次套件运行会创建一个带时间戳的结果目录：
+每次套件运行都会创建一个带时间戳的结果目录：
 
 ```
 /opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
 ```
 
-**结构：**
+**目录结构：**
 
 ```
 /opt/traffic-generator/results/20260425-143000-web-app-attacks/
@@ -128,7 +128,7 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
   06-nuclei-scan.sh.log
 ```
 
-每个脚本的 stdout 和 stderr 会被捕获到以脚本命名的 `.log` 文件中。
+每个脚本的标准输出和标准错误都会被捕获到以脚本名称命名的 `.log` 文件中。
 
 ### meta.json 格式
 
@@ -151,34 +151,34 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 |---|---|
 | `suite` | 套件名称 |
 | `target` | 本次运行使用的目标 FQDN |
-| `started` | 套件开始时的 UTC 时间戳 |
-| `completed` | 套件完成时的 UTC 时间戳 |
+| `started` | 套件开始的 UTC 时间戳 |
+| `completed` | 套件完成的 UTC 时间戳 |
 | `status` | 执行期间为 `running`，完成后为 `completed` |
 | `passed` | 退出码为 0 的脚本数量 |
 | `failed` | 退出码为非零的脚本数量 |
-| `skipped` | 被跳过的脚本数量（不可执行或处于预演模式） |
+| `skipped` | 跳过的脚本数量（不可执行或干运行） |
 
 <Aside type="tip">
-脚本的非零退出码并不一定意味着套件失败。许多安全工具在发现漏洞时会以非零码退出，这在攻击流量生成过程中是预期行为。
+脚本的非零退出码并不一定意味着套件执行失败。许多安全工具在发现漏洞时会以非零退出码退出，这在攻击流量生成过程中是预期行为。
 </Aside>
 
 ## 运行单个脚本
 
-每个脚本都可以脱离运行器独立执行：
+每个脚本都可以在不使用运行器的情况下独立执行：
 
 ```bash
-# 直接运行单个脚本
+# Run a single script directly
 /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
 
-# 运行特定的 API 攻击
+# Run a specific API attack
 /opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
 ```
 
-脚本接受目标 FQDN 作为第一个位置参数。它们不会直接读取 `config.env`——只有运行器才会读取。独立运行时，您必须显式传递 FQDN。
+脚本接受目标 FQDN 作为第一个位置参数。它们不会直接读取 `config.env` —— 只有运行器才会这样做。独立运行时，您必须显式传递 FQDN。
 
 ## 按顺序运行所有套件
 
-要依次运行每个套件：
+要依次运行所有套件：
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -190,7 +190,7 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-这将生成覆盖所有 F5 XC 安全功能的综合流量。根据目标的响应时间，完整运行预计需要 45-80 分钟。
+这会针对所有 F5 XC 安全功能生成全面的流量。完整运行预计需要 45-80 分钟，具体取决于目标的响应时间。
 
 ## 通过 SSH 远程执行
 
@@ -199,26 +199,26 @@ done
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
 
-# 运行单个套件
+# Run a single suite
 ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
 
-# 使用目标覆盖运行套件
+# Run a suite with target override
 ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
 
-# 在后台运行（断开连接安全）
+# Run in background (disconnection-safe)
 ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
 
-# 稍后检查结果
+# Check results later
 ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-对于长时间运行的套件，使用 `nohup` 或 `tmux` 可以防止 SSH 断开连接导致进程被终止：
+对于长时间运行的套件，请使用 `nohup` 或 `tmux` 以防止 SSH 断开连接导致进程被终止：
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
 
-# 稍后重新连接以查看进度
+# Reattach later to watch progress
 ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 ```
 
@@ -228,12 +228,12 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 1. **加载配置** -- 运行器读取 `config.env`（或 `CONFIG_FILE` 覆盖），然后检查环境中的 `TARGET_FQDN`。
 
-2. **验证套件** -- 确认指定的套件目录存在于 suites 目录下。如果未找到，则列出可用套件。
+2. **验证套件** -- 确认指定的套件目录存在于套件目录下。如果未找到，则列出可用的套件。
 
-3. **创建结果目录** -- 创建 `/opt/traffic-generator/results/<timestamp>-<suite>/` 并写入初始 `meta.json`，状态为 `status: running`。
+3. **创建结果目录** -- 创建 `/opt/traffic-generator/results/<timestamp>-<suite>/` 并写入初始 `meta.json`，其中 `status: running`。
 
 4. **执行脚本** -- 遍历套件目录中匹配 `[0-9]*` 的文件，按名称排序。跳过不可执行的文件。将 `TARGET_FQDN` 作为第一个参数传递。将输出捕获到 `<script-name>.log`。
 
-5. **记录结果** -- 更新 `meta.json`，写入完成时间戳和通过/失败/跳过计数。
+5. **记录结果** -- 使用完成时间戳和通过/失败/跳过计数更新 `meta.json`。
 
 </Steps>

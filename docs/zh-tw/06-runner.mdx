@@ -1,8 +1,8 @@
 ---
 title: 執行器
 description: >-
-  runner.sh 套件編排器使用指南：執行模式、config.env 設定、環境變數覆寫、dry-run 模式、結果目錄結構、meta.json
-  格式、獨立腳本執行，以及遠端 SSH 呼叫
+  runner.sh 套件編排器使用指南：執行模式、config.env 設定、環境變數覆寫、模擬執行模式、結果目錄結構、meta.json
+  格式、獨立腳本執行以及遠端 SSH 呼叫
 sidebar:
   order: 6
 i18n:
@@ -12,22 +12,22 @@ i18n:
 
 import { Steps, Aside } from '@astrojs/starlight/components';
 
-## 概述
+## 概觀
 
-`runner.sh` 是套件編排器，負責依序執行套件目錄中所有編號腳本、擷取輸出並記錄結果中繼資料。它安裝在 VM 上的 `/opt/traffic-generator/suites/runner.sh` 路徑。
+`runner.sh` 是套件編排器，按順序執行套件目錄中所有編號腳本、擷取輸出並記錄結果中繼資料。它安裝在虛擬機器上的 `/opt/traffic-generator/suites/runner.sh`。
 
-## 使用方式
+## 用法
 
 ```bash
 runner.sh <suite-name> [--dry-run]
 ```
 
-**參數：**
+**引數：**
 
-| 參數 | 必填 | 說明 |
+| 引數 | 必填 | 說明 |
 |---|---|---|
 | `suite-name` | 是 | 套件目錄名稱（例如 `web-app-attacks`、`api-attacks`） |
-| `--dry-run` | 否 | 列印將執行的內容，但不實際執行任何腳本 |
+| `--dry-run` | 否 | 列印將要執行的內容，但不實際執行任何腳本 |
 
 **範例：**
 
@@ -35,7 +35,7 @@ runner.sh <suite-name> [--dry-run]
 # 執行 web-app-attacks 套件
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 
-# 以 dry-run 預覽 api-attacks 腳本
+# 模擬執行以預覽 api-attacks 腳本
 /opt/traffic-generator/suites/runner.sh api-attacks --dry-run
 
 # 執行機器人模擬
@@ -56,11 +56,11 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=
 ```
 
-此檔案在 Terraform 佈建期間會自動從 `target_fqdn` 和 `target_origin_ip` 變數寫入。若要在部署後變更目標，請直接在 VM 上編輯此檔案。
+此檔案在 Terraform 佈建期間會從 `target_fqdn` 和 `target_origin_ip` 變數自動寫入。若要在部署後變更目標，請直接在虛擬機器上編輯此檔案。
 
 ### 環境變數覆寫
 
-`config.env` 中的任何變數都可以在執行套件前透過匯出方式覆寫：
+`config.env` 中的任何變數都可以在執行套件前透過匯出來覆寫：
 
 ```bash
 # Override target FQDN for a single run
@@ -71,15 +71,15 @@ export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-設定檔路徑本身也可以覆寫：
+設定檔路徑本身也可以被覆寫：
 
 ```bash
 CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-## Dry-Run 模式
+## 模擬執行模式
 
-`--dry-run` 旗標會列印每個將執行的腳本，但不會實際執行：
+`--dry-run` 旗標會列印每個將要執行的腳本，但不實際執行：
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
@@ -105,11 +105,11 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-使用 dry-run 可在部署後驗證套件結構，或在對新目標執行套件前先行確認。
+使用模擬執行來驗證部署後的套件結構，或在對新目標執行套件之前進行預覽。
 
 ## 結果目錄
 
-每次套件執行會建立一個帶時間戳記的結果目錄：
+每次套件執行都會建立一個帶有時間戳記的結果目錄：
 
 ```
 /opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
@@ -128,11 +128,11 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
   06-nuclei-scan.sh.log
 ```
 
-每個腳本的 stdout 和 stderr 會擷取至以腳本命名的 `.log` 檔案中。
+每個腳本的標準輸出和標準錯誤會擷取到以腳本命名的 `.log` 檔案中。
 
 ### meta.json 格式
 
-`meta.json` 檔案記錄套件執行的中繼資料：
+`meta.json` 檔案記錄套件執行中繼資料：
 
 ```json
 {
@@ -150,21 +150,21 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 | 欄位 | 說明 |
 |---|---|
 | `suite` | 套件名稱 |
-| `target` | 本次執行使用的目標 FQDN |
-| `started` | 套件開始的 UTC 時間戳記 |
-| `completed` | 套件完成的 UTC 時間戳記 |
+| `target` | 此次執行所使用的目標 FQDN |
+| `started` | 套件開始時的 UTC 時間戳記 |
+| `completed` | 套件完成時的 UTC 時間戳記 |
 | `status` | 執行期間為 `running`，完成時為 `completed` |
-| `passed` | 以退出碼 0 結束的腳本數量 |
-| `failed` | 以非零退出碼結束的腳本數量 |
-| `skipped` | 被跳過的腳本數量（不可執行或 dry-run） |
+| `passed` | 以退出代碼 0 結束的腳本數量 |
+| `failed` | 以非零退出代碼結束的腳本數量 |
+| `skipped` | 被跳過的腳本數量（不可執行或模擬執行） |
 
 <Aside type="tip">
-腳本的非零退出碼不一定代表套件執行失敗。許多安全工具在發現弱點時會以非零碼退出，這在攻擊流量產生期間是預期的行為。
+腳本的非零退出代碼不一定表示套件失敗。許多安全工具在發現漏洞時會以非零代碼退出，這在攻擊流量產生過程中是預期的行為。
 </Aside>
 
-## 執行個別腳本
+## 單獨執行個別腳本
 
-每個腳本都可以不透過執行器獨立執行：
+每個腳本都可以在不透過執行器的情況下獨立執行：
 
 ```bash
 # Run a single script directly
@@ -174,11 +174,11 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 /opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
 ```
 
-腳本接受目標 FQDN 作為第一個位置參數。它們不會直接讀取 `config.env` — 只有執行器會讀取。獨立執行時，您必須明確傳入 FQDN。
+腳本接受目標 FQDN 作為第一個位置引數。它們不會直接讀取 `config.env` -- 只有執行器會這樣做。獨立執行時，您必須明確傳遞 FQDN。
 
 ## 依序執行所有套件
 
-若要依序執行所有套件：
+若要連續執行每個套件：
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -190,11 +190,11 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-這會針對所有 F5 XC 安全功能產生全面的流量。完整執行預計需要 45-80 分鐘，視目標的回應時間而定。
+這會跨所有 F5 XC 安全功能產生全面的流量。預期完整執行需要 45-80 分鐘，取決於目標的回應時間。
 
 ## 透過 SSH 遠端執行
 
-從本機執行套件，無需維持 SSH 連線：
+從您的本機執行套件，無需維持 SSH 連線：
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -213,7 +213,7 @@ ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-對於長時間執行的套件，請使用 `nohup` 或 `tmux` 來防止 SSH 斷線導致程序終止：
+對於長時間執行的套件，使用 `nohup` 或 `tmux` 以防止 SSH 斷線導致程序被終止：
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
@@ -226,14 +226,14 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 <Steps>
 
-1. **載入設定** — 執行器讀取 `config.env`（或 `CONFIG_FILE` 覆寫值），然後檢查環境中的 `TARGET_FQDN`。
+1. **載入設定** -- 執行器讀取 `config.env`（或 `CONFIG_FILE` 覆寫），然後檢查環境中的 `TARGET_FQDN`。
 
-2. **驗證套件** — 確認指定的套件目錄存在於 suites 目錄下。若找不到則列出可用的套件。
+2. **驗證套件** -- 確認指定的套件目錄存在於 suites 目錄下。如果找不到，則列出可用的套件。
 
-3. **建立結果目錄** — 建立 `/opt/traffic-generator/results/<timestamp>-<suite>/` 並寫入初始 `meta.json`，狀態為 `status: running`。
+3. **建立結果目錄** -- 建立 `/opt/traffic-generator/results/<timestamp>-<suite>/` 並寫入初始 `meta.json`，狀態為 `status: running`。
 
-4. **執行腳本** — 遍歷套件目錄中符合 `[0-9]*` 的檔案，依名稱排序。跳過不可執行的檔案。將 `TARGET_FQDN` 作為第一個參數傳入。將輸出擷取至 `<script-name>.log`。
+4. **執行腳本** -- 遍歷套件目錄中符合 `[0-9]*` 模式的檔案，依名稱排序。跳過不可執行的檔案。將 `TARGET_FQDN` 作為第一個引數傳遞。將輸出擷取至 `<script-name>.log`。
 
-5. **記錄結果** — 更新 `meta.json`，寫入完成時間戳記以及通過/失敗/跳過的計數。
+5. **記錄結果** -- 更新 `meta.json`，加入完成時間戳記和通過/失敗/跳過計數。
 
 </Steps>

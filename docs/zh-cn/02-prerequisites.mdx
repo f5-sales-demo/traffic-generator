@@ -1,5 +1,5 @@
 ---
-title: 前置条件
+title: 前提条件
 description: >-
   需要具有 Contributor 角色的 Azure 订阅、Terraform >= 1.5、SSH 密钥对（推荐 Ed25519）、用于查找
   subscription_id 的 Azure CLI，以及在 cloud-init 配置期间用于下载工具的出站 HTTPS 访问
@@ -10,11 +10,11 @@ i18n:
   translator: machine
 ---
 
-## 必备条件
+## 必需条件
 
 ### Azure 订阅
 
-一个活跃的 Azure 订阅，具有 Contributor 角色或同等权限，以便创建以下资源：
+一个活跃的 Azure 订阅，具有 Contributor 角色或同等权限，以创建以下资源：
 
 - 资源组
 - 虚拟网络和子网
@@ -24,7 +24,7 @@ i18n:
 
 ### Azure CLI
 
-安装并验证 Azure CLI 以获取您的订阅 ID：
+安装并认证 Azure CLI 以获取您的订阅 ID：
 
 ```bash
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -34,7 +34,7 @@ az login
 az account show --query '{name:name, id:id}' -o table
 ```
 
-复制 `id` 的值——这是 Terraform 所需的 `subscription_id`。
+复制 `id` 值——这是 Terraform 所需的 `subscription_id`。
 
 ### Terraform
 
@@ -62,30 +62,30 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### 网络访问
 
-流量生成器 VM 在配置期间需要出站 HTTPS 访问，以便从以下来源下载工具：
+Traffic Generator VM 在配置期间需要出站 HTTPS 访问以从以下来源下载工具：
 
 - GitHub Releases（nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass）
 - PyPI（sqlmap、scapy、impacket、arjun、pwntools、mitmproxy、sslyze、playwright）
-- npm 注册表（puppeteer、puppeteer-extra-plugin-stealth）
+- npm 仓库（puppeteer、puppeteer-extra-plugin-stealth）
 - Ubuntu APT 仓库（nikto、nmap、masscan、hydra、tshark 及其他系统包）
 - Git 仓库（testssl.sh、recon-ng、spiderfoot、SecLists）
 
-如果您的 Azure 订阅强制执行出站防火墙规则或 NSG 限制，请确保在初始配置窗口期间（15-25 分钟）允许 HTTPS（端口 443）访问这些来源。
+如果您的 Azure 订阅执行出站防火墙规则或 NSG 限制，请确保在初始配置窗口（15-25 分钟）期间允许对这些来源的 HTTPS（端口 443）访问。
 
 ### 预部署组件
 
-在部署流量生成器之前，您应该已经准备好：
+在部署 Traffic Generator 之前，您应该已经准备好：
 
-1. **源服务器** 已部署且可访问（参见 [origin-server 文档](https://f5xc-salesdemos.github.io/origin-server/03-deploy/)）
-2. **F5 XC HTTP 负载均衡器** 已配置，并将源服务器作为后端
+1. **Origin Server** 已部署且可访问（参见 [origin-server 文档](https://f5xc-salesdemos.github.io/origin-server/03-deploy/)）
+2. **F5 XC HTTP 负载均衡器** 已配置，并将 origin server 作为后端
 3. 负载均衡器上已附加 **WAF 策略**（用于 WAF 流量验证）
 
-Terraform 变量 `target_fqdn` 应设置为 F5 XC 负载均衡器的公共域名。
+`target_fqdn` Terraform 变量应设置为 F5 XC 负载均衡器的公共域名。
 
 :::tip
-实验室不使用时请执行 `terraform destroy` 以避免持续产生费用。相关步骤请参见[资源销毁](../08-teardown/)。
+实验室不使用时，请使用 `terraform destroy` 以避免持续产生费用。操作步骤请参见[资源销毁](../08-teardown/)。
 :::
 
 :::note
-默认使用 Standard_F16s_v2（32 GiB 内存），因为在套件执行期间多个工具会并发运行。浏览器自动化（Playwright、Puppeteer）配合无头 Chromium 是主要的内存消耗者。较小的 F 系列 SKU 可以用于非浏览器套件，但在运行 Bot 模拟时可能会出现内存不足的情况。
+Standard_F16s_v2（32 GiB RAM）是默认配置，因为在套件执行期间多个工具会并发运行。使用无头 Chromium 的浏览器自动化（Playwright、Puppeteer）是主要的内存消耗来源。较小的 F 系列 SKU 可用于非浏览器套件，但在运行机器人模拟时可能会比较紧张。
 :::

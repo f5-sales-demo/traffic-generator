@@ -49,9 +49,9 @@ Rimuovere lo stato di Terraform e i file memorizzati nella cache:
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 ```
 
-## Conservare i risultati (Opzionale)
+## Conservazione dei risultati (Opzionale)
 
-Se si desidera conservare i risultati della suite di traffico prima di distruggere la VM, copiarli localmente:
+Se si desidera conservare i risultati della suite di traffico prima di distruggere la VM, copiarli in locale:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -66,14 +66,14 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 
 ## Pulizia di F5 XC
 
-Se si desidera rimuovere anche la configurazione F5 XC verso cui era indirizzato il generatore di traffico:
+Se si desidera rimuovere anche la configurazione di F5 XC verso cui il generatore di traffico era indirizzato:
 
 1. Eliminare l'HTTP load balancer
 2. Eliminare l'origin pool
-3. Eliminare eventuali policy WAF, configurazioni Bot Defense, policy API Security o configurazioni CSD create per i test
+3. Eliminare eventuali policy WAF, configurazioni di Bot Defense, policy di API Security o configurazioni CSD create per i test
 
-Queste risorse F5 XC non comportano costi Azure, ma dovrebbero essere rimosse quando l'ambiente demo non è più necessario.
+Queste risorse F5 XC non comportano costi Azure, ma dovrebbero essere pulite quando l'ambiente demo non è più necessario.
 
 :::tip
-Per un utilizzo demo ricorrente, considerare di automatizzare l'intero ciclo di vita tramite script: `cd terraform && terraform apply` prima di una demo, eseguire le suite, quindi `terraform destroy` al termine. Il tier standard viene provisionato in 15-20 minuti, rendendo pratica la configurazione e lo smantellamento nello stesso giorno.
+Per un utilizzo demo ricorrente, considerare di automatizzare con script l'intero ciclo di vita: `cd terraform && terraform apply` prima di una demo, eseguire le suite, quindi `terraform destroy` al termine. Il tier standard viene provisionato in 15-20 minuti, rendendo pratico il setup e lo smantellamento in giornata.
 :::

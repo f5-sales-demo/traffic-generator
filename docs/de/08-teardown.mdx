@@ -24,7 +24,7 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform fordert zur Bestätigung auf. Geben Sie `yes` ein, um fortzufahren.
+Terraform wird zur Bestätigung auffordern. Geben Sie `yes` ein, um fortzufahren.
 
 ## Bereinigung überprüfen
 
@@ -50,7 +50,7 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## Ergebnisse sichern (Optional)
 
-Wenn Sie die Traffic-Suite-Ergebnisse vor dem Zerstören der VM behalten möchten, kopieren Sie diese lokal:
+Wenn Sie die Traffic-Suite-Ergebnisse vor der Zerstörung der VM behalten möchten, kopieren Sie diese lokal:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -65,7 +65,7 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 
 ## F5 XC-Bereinigung
 
-Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Traffic-Generator abzielte:
+Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Traffic-Generator abgezielt hat:
 
 1. Löschen Sie den HTTP Load Balancer
 2. Löschen Sie den Origin Pool
@@ -74,5 +74,5 @@ Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Traffic-Ge
 Diese F5 XC-Ressourcen verursachen keine Azure-Kosten, sollten aber bereinigt werden, wenn die Demo-Umgebung nicht mehr benötigt wird.
 
 :::tip
-Für wiederkehrende Demo-Nutzung sollten Sie den gesamten Lebenszyklus skripten: `cd terraform && terraform apply` vor einer Demo, Suites ausführen, dann `terraform destroy` danach. Der Standard-Tier wird in 15-20 Minuten bereitgestellt, was eine Einrichtung und einen Abbau am selben Tag praktikabel macht.
+Für wiederkehrende Demo-Nutzung sollten Sie den gesamten Lebenszyklus skripten: `cd terraform && terraform apply` vor einer Demo, Suites ausführen, dann `terraform destroy` danach. Der Standard-Tier wird in 15-20 Minuten bereitgestellt, was ein Setup und einen Abbau am selben Tag praktikabel macht.
 :::

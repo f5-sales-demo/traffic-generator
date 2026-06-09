@@ -1,9 +1,9 @@
 ---
-title: Werkzeugkatalog
+title: Tool-Katalog
 description: >-
-  Vollständiger Katalog von über 50 auf der Traffic-Generator-VM installierten
-  Sicherheitstools, organisiert nach Kategorie mit Installationsmethode,
-  Beispielbefehlen und Traffic-Suite-Zuordnungen
+  Vollständiger Katalog von über 50 Sicherheitstools, die auf der
+  Traffic-Generator-VM installiert sind, organisiert nach Kategorie mit
+  Installationsmethode, Beispielbefehlen und Zuordnungen zu Traffic-Suiten
 sidebar:
   order: 4
 i18n:
@@ -11,9 +11,9 @@ i18n:
   translator: machine
 ---
 
-Alle unten aufgeführten Tools sind während der Cloud-Init-Bereitstellung vorinstalliert. Nach dem Deployment ist keine manuelle Installation erforderlich.
+Alle unten aufgeführten Tools sind während der Cloud-Init-Provisionierung vorinstalliert. Nach dem Deployment ist keine manuelle Installation erforderlich.
 
-## Webanwendungstests
+## Testen von Webanwendungen
 
 | Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
@@ -35,7 +35,7 @@ Alle unten aufgeführten Tools sind während der Cloud-Init-Bereitstellung vorin
 | gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
 | waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
 
-GoTestWAF (von Wallarm) ist ein branchenübliches WAF-Bewertungs-Framework, das Payloads über mehrere Encoder (URL, Base64, JSUnicode) und Platzierungszonen (Body, Header, URL-Parameter, Cookie) multipliziert. waf-bypass (von Nemesida) sendet Payloads mit Base64-, HTML-ENTITY- und UTF-16-Kodierung über ARGS-, BODY-, COOKIE- und HEADER-Zonen.
+GoTestWAF (von Wallarm) ist ein branchenübliches WAF-Bewertungsframework, das Payloads über mehrere Encoder (URL, Base64, JSUnicode) und Platzierungszonen (Body, Header, URL-Parameter, Cookie) multipliziert. waf-bypass (von Nemesida) sendet Payloads mit Base64-, HTML-ENTITY- und UTF-16-Kodierung über ARGS-, BODY-, COOKIE- und HEADER-Zonen.
 
 ## Netzwerkanalyse
 
@@ -74,7 +74,7 @@ GoTestWAF (von Wallarm) ist ein branchenübliches WAF-Bewertungs-Framework, das 
 | puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
 | puppeteer-extra-plugin-stealth | npm | Wird als Puppeteer-Plugin für getarntes Browsing verwendet | bot-simulation |
 
-Playwright installiert sein eigenes Chromium-Binary über `playwright install chromium`. Puppeteer verwendet nach Möglichkeit dasselbe System-Chromium.
+Playwright installiert seine eigene Chromium-Binary über `playwright install chromium`. Puppeteer verwendet nach Möglichkeit dasselbe System-Chromium.
 
 ## Subdomain- und DNS-Enumeration
 
@@ -88,7 +88,7 @@ Playwright installiert sein eigenes Chromium-Binary über `playwright install ch
 | whois | apt | `whois example.com` | reconnaissance |
 | dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
 
-## Anmeldedatentests
+## Anmeldedaten-Tests
 
 | Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
@@ -119,7 +119,7 @@ Playwright installiert sein eigenes Chromium-Binary über `playwright install ch
 
 SecLists stellt Wortlisten bereit, die von mehreren Tools verwendet werden, darunter ffuf, gobuster, feroxbuster, dirb und hydra. PayloadsAllTheThings bietet kuratierte Multi-Encoding-Angriffs-Payloads, organisiert nach Angriffsklasse (XSS, SQLi, XXE) mit Hex-, Oktal-, Unicode-, HTML-Entity-, doppelter URL-Kodierung und JSFuck-Varianten.
 
-## Nur Vollversion
+## Nur im vollständigen Tier
 
 Diese Tools werden nur installiert, wenn `tool_tier = "full"`:
 
@@ -129,19 +129,19 @@ Diese Tools werden nur installiert, wenn `tool_tier = "full"`:
 | Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
 
 :::note
-ZAP und Metasploit fügen dem Speicherbedarf etwa 1,5 GiB hinzu und verlängern die Bereitstellungszeit um 5-10 Minuten. Verwenden Sie die Vollversion nur, wenn Sie diese Tools speziell für eine Demo benötigen.
+ZAP und Metasploit fügen dem Speicherbedarf ca. 1,5 GiB hinzu und verlängern die Provisionierungszeit um 5-10 Minuten. Verwenden Sie das vollständige Tier nur, wenn Sie diese Tools speziell für eine Demo benötigen.
 :::
 
 ## Referenz der Installationsmethoden
 
 | Methode | Beschreibung |
 |---|---|
-| apt | Installiert aus Ubuntu 24.04 APT-Repositories über `apt-get install` |
-| ghlatest | Neuestes Binary von GitHub Releases heruntergeladen mit `ghlatest.sh` und `install-release.sh` |
+| apt | Installiert aus den Ubuntu 24.04 APT-Repositories über `apt-get install` |
+| ghlatest | Neueste Binary von GitHub Releases heruntergeladen mittels `ghlatest.sh` und `install-release.sh` |
 | uv | Installiert als Python-Tool mit dem `uv`-Paketmanager |
-| pip | Installiert als Python-Paket mit `pip install` in das System-Python |
-| npm | Installiert als globales Node.js-Paket mit `npm install -g` |
-| go install | Aus Quellcode kompiliert mit `go install` und installiert nach `/usr/local/bin` |
+| pip | Installiert als Python-Paket mittels `pip install` in das System-Python |
+| npm | Installiert als globales Node.js-Paket mittels `npm install -g` |
+| go install | Aus Quellcode kompiliert mittels `go install` und installiert nach `/usr/local/bin` |
 | git clone | Repository geklont in das `/opt/`-Verzeichnis |
 | git clone + pip | Repository geklont und Python-Abhängigkeiten installiert |
-| installer script | Vom Anbieter bereitgestelltes Installationsskript, ausgeführt während Cloud-Init |
+| installer script | Vom Hersteller bereitgestelltes Installationsskript, das während cloud-init ausgeführt wird |

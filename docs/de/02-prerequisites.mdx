@@ -2,9 +2,8 @@
 title: Voraussetzungen
 description: >-
   Azure-Abonnement mit Contributor-Rolle, Terraform >= 1.5, SSH-Schlüsselpaar
-  (Ed25519 empfohlen), Azure CLI zur Ermittlung der subscription_id und
-  ausgehender HTTPS-Zugriff für Tool-Downloads während der
-  cloud-init-Bereitstellung
+  (Ed25519 empfohlen), Azure CLI für die subscription_id-Abfrage und ausgehender
+  HTTPS-Zugriff für Tool-Downloads während der Cloud-Init-Bereitstellung
 sidebar:
   order: 2
 i18n:
@@ -56,7 +55,7 @@ sudo apt update && sudo apt install terraform
 
 ### SSH-Schlüsselpaar
 
-Ein SSH-Schlüsselpaar für den VM-Zugang. Ed25519 wird empfohlen:
+Ein SSH-Schlüsselpaar für den VM-Zugriff. Ed25519 wird empfohlen:
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
@@ -64,7 +63,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### Netzwerkzugriff
 
-Die Traffic Generator VM benötigt während der Bereitstellung ausgehenden HTTPS-Zugriff zum Herunterladen von Tools von:
+Die Traffic-Generator-VM benötigt während der Bereitstellung ausgehenden HTTPS-Zugriff, um Tools von folgenden Quellen herunterzuladen:
 
 - GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
 - PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
@@ -72,22 +71,22 @@ Die Traffic Generator VM benötigt während der Bereitstellung ausgehenden HTTPS
 - Ubuntu APT-Repositories (nikto, nmap, masscan, hydra, tshark und andere Systempakete)
 - Git-Repositories (testssl.sh, recon-ng, spiderfoot, SecLists)
 
-Falls Ihr Azure-Abonnement ausgehende Firewall-Regeln oder NSG-Beschränkungen durchsetzt, stellen Sie sicher, dass HTTPS (Port 443) zu diesen Quellen während des initialen Bereitstellungszeitraums (15-25 Minuten) erlaubt ist.
+Wenn Ihr Azure-Abonnement ausgehende Firewall-Regeln oder NSG-Einschränkungen erzwingt, stellen Sie sicher, dass HTTPS (Port 443) zu diesen Quellen während des anfänglichen Bereitstellungsfensters (15-25 Minuten) erlaubt ist.
 
 ### Vorab bereitgestellte Komponenten
 
-Vor der Bereitstellung des Traffic Generators sollten Sie Folgendes eingerichtet haben:
+Vor der Bereitstellung des Traffic Generators sollten Sie Folgendes haben:
 
 1. **Origin Server** bereitgestellt und erreichbar (siehe [Origin-Server-Dokumentation](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
-2. **F5 XC HTTP Load Balancer** konfiguriert mit dem Origin Server als Backend
-3. Eine **WAF-Richtlinie** dem Load Balancer zugewiesen (zur Validierung des WAF-Datenverkehrs)
+2. **F5 XC HTTP Load Balancer** mit dem Origin Server als Backend konfiguriert
+3. Eine **WAF-Richtlinie**, die dem Load Balancer zugewiesen ist (zur Validierung des WAF-Datenverkehrs)
 
 Die Terraform-Variable `target_fqdn` sollte auf die öffentliche Domain des F5 XC Load Balancers gesetzt werden.
 
 :::tip
-Verwenden Sie `terraform destroy`, wenn das Lab nicht in Benutzung ist, um laufende Kosten zu vermeiden. Siehe [Abbau](../08-teardown/) für das Vorgehen.
+Verwenden Sie `terraform destroy`, wenn das Lab nicht in Benutzung ist, um laufende Kosten zu vermeiden. Siehe [Abbau](../08-teardown/) für die Vorgehensweise.
 :::
 
 :::note
-Standard_F16s_v2 (32 GiB RAM) ist der Standard, da mehrere Tools während der Suite-Ausführung gleichzeitig laufen. Browser-Automatisierung (Playwright, Puppeteer) mit headless Chromium ist der Hauptspeicherverbraucher. Kleinere F-Serie-SKUs funktionieren für Nicht-Browser-Suites, können aber bei der Bot-Simulation knapp werden.
+Standard_F16s_v2 (32 GiB RAM) ist der Standard, da mehrere Tools während der Suite-Ausführung gleichzeitig laufen. Browser-Automatisierung (Playwright, Puppeteer) mit Headless-Chromium ist der primäre Speicherverbraucher. Kleinere F-Series-SKUs funktionieren für Nicht-Browser-Suites, können aber bei der Ausführung von Bot-Simulationen knapp werden.
 :::

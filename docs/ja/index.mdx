@@ -10,7 +10,7 @@ hero:
     50以上のセキュリティツール、19の体系化された攻撃スイート、ヘッドレスChrome自動化を備えたトラフィック生成VMをデプロイし、F5
     XCデモの包括的な検証を実現します。
   actions:
-    - text: はじめに
+    - text: はじめる
       link: /traffic-generator/01-architecture/
       icon: right-arrow
       variant: primary
@@ -28,28 +28,28 @@ import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
 
 ## 本ツールが提供するもの
 
-トラフィックジェネレーターは、F5 Distributed Cloud HTTPロードバランサーに対してリアルな攻撃トラフィック、偵察スキャン、ボットシミュレーション、およびAPI悪用パターンを生成するために構築された専用のAzure VMです。WAFポリシー、Bot Defense、APIセキュリティ、およびClient-Side Defenseが正しく設定されていることを、それらの機能が検出・ブロックするように設計されたトラフィックを正確に生成することで検証します。
+トラフィックジェネレーターは、F5 Distributed Cloud HTTPロードバランサーに対してリアルな攻撃トラフィック、偵察スキャン、ボットシミュレーション、API悪用パターンを生成する専用のAzure VMです。WAFポリシー、Bot Defense、API Security、Client-Side Defenseが正しく設定されていることを、それらの機能が検出・ブロックするよう設計されたトラフィックを正確に生成することで検証します。
 
-すべてのツールは、Terraformプロビジョニング時にcloud-initを介して事前インストールされます。トラフィックはスイートごとに整理されており、付属の `runner.sh` オーケストレーターを使用して個別または順番に実行できます。
+すべてのツールはTerraformプロビジョニング時にcloud-initを通じてプリインストールされます。トラフィックはスイートとして整理されており、付属の`runner.sh`オーケストレーターを使用して個別または順次実行できます。
 
-## トラフィックスイートのカテゴリ
+## トラフィックスイートカテゴリ
 
 | スイート | 説明 | 検証対象のF5 XC機能 |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10、SQLMap APIモード、パラメータ検出、エンドポイントファジング | APIセキュリティ |
+| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10、SQLMap APIモード、パラメータ探索、エンドポイントファジング | API Security |
 | [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | ヘッドレスChrome、Puppeteerステルス、Playwright自動化、高速クローリング | Bot Defense |
-| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | キャッシュ動作、サンダリングハード、コネクションプール、HTTP/2マルチプレキシング | CDN統合 |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA、OTPブルートフォース、JWT操作、SSRF、NoSQLインジェクション、IDOR | APIセキュリティ |
+| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | キャッシュ動作、サンダリングハード、コネクションプール、HTTP/2多重化 | CDN統合 |
+| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA、OTPブルートフォース、JWT操作、SSRF、NoSQLインジェクション、IDOR | API Security |
 | [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | カードスキマー、フォームジャッカー、キーロガー、クリプトマイナー、DOMハイジャック | Client-Side Defense |
-| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | バッチクエリDoS、深い再帰、SQLインジェクション、イントロスペクション悪用 | APIセキュリティ (GraphQL) |
+| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | バッチクエリDoS、深い再帰、SQLインジェクション、イントロスペクション悪用 | API Security (GraphQL) |
 | [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | ブルートフォース、コマンドインジェクション、CSRF、ファイルインクルージョン、SQLi、XSS | WAF |
 | [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM操作、インラインスクリプトインジェクション、Magecartスタイルのスキミングペイロード | Client-Side Defense |
 | [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLiログインバイパス、XSS、IDOR、管理者アクセス、ヌルバイトファイルアクセス | WAF、Bot Defense |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK戦術：偵察、初期アクセス、認証情報アクセス、データ窃取 | WAF、Bot Defense、APIセキュリティ |
+| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK戦術：偵察、初期アクセス、認証情報アクセス、データ持ち出し | WAF、Bot Defense、API Security |
 | [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP、Nikto、Nuclei、Nmap脆弱性スキャン、統合OWASPレポート | WAF、Webアプリスキャン |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | 同時接続数ランプ、持続負荷、スパイクテスト、ブレークポイント検出 | DDoS、レート制限 |
+| [performance-testing](/traffic-generator/05-suites/#performance-testing) | 同時接続数ランプアップ、持続負荷、スパイクテスト、限界点探索 | DDoS、レート制限 |
 | [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap、Masscan、Gobuster、Subfinder、ディレクトリブルートフォース | WAF / Bot Defense |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA、BOPLA、BFLA、レート制限バイパス、JWT弱い秘密鍵 | APIセキュリティ |
+| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA、BOPLA、BFLA、レート制限バイパス、JWT弱シークレット | API Security |
 | [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan、sslyze、testssl.sh TLS設定分析 | WAF |
 | [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | ベースラインおよび負荷テスト用の大量の正規HTTPトラフィック | すべて |
 | [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | 多層URL/HTML/Unicodeエンコーディング、混合ネストエンコーディング、チャンクTE、ヘッダーインジェクション | WAF |
@@ -59,22 +59,22 @@ import LinkCard from '@f5xc-salesdemos/docs-theme/components/LinkCard.astro';
 <CardGrid>
   <LinkCard
     title="アーキテクチャ"
-    description="VMレイアウト、ツールカテゴリ、階層型インストール、およびオリジンサーバーとF5 XCとの統合ポイント。"
+    description="VMレイアウト、ツールカテゴリ、階層型インストール、およびorigin-serverとF5 XCとの統合ポイント。"
     href="01-architecture/"
   />
   <LinkCard
     title="デプロイ"
-    description="完全なTerraformウォークスルー：クローン、設定、適用、およびすべてのツールの動作確認。"
+    description="完全なTerraformウォークスルー：クローン、設定、適用、およびすべてのツールが動作していることの確認。"
     href="03-deploy/"
   />
   <LinkCard
     title="ツールカタログ"
-    description="カテゴリ別に整理されたすべてのインストール済みツール。インストール方法、コマンド例、スイートマッピングを含みます。"
+    description="インストール方法、コマンド例、スイートマッピングとともにカテゴリ別に整理されたすべてのインストール済みツール。"
     href="04-tool-catalog/"
   />
   <LinkCard
     title="スイートリファレンス"
-    description="各トラフィックスイートの詳細な説明、スクリプト、使用ツール、および期待されるF5 XC検出結果。"
+    description="各トラフィックスイートの詳細説明、スクリプト、使用ツール、および期待されるF5 XC検出結果。"
     href="05-suites/"
   />
 </CardGrid>
