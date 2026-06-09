@@ -13,7 +13,7 @@ i18n:
 
 ## 完整架構
 
-流量產生器是多層展示環境中的一個元件。當所有元件都部署完成後的完整架構如下：
+流量產生器是多層展示環境中的一個元件。當所有元件都部署完成時的完整架構：
 
 ```
 Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
@@ -29,13 +29,13 @@ graph LR
     TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
 ```
 
-每個元件都透過 Terraform 獨立部署和設定。流量產生器以 F5 XC 負載平衡器的 FQDN 為目標，而非直接指向來源伺服器。
+每個元件透過 Terraform 獨立部署和設定。流量產生器以 F5 XC 負載平衡器的 FQDN 為目標，而非直接指向源站伺服器。
 
-## 來源伺服器整合
+## 源站伺服器整合
 
-[來源伺服器](https://f5xc-salesdemos.github.io/origin-server/) 提供流量產生器攻擊套件所針對的後端應用程式：
+[源站伺服器](https://f5xc-salesdemos.github.io/origin-server/)提供流量產生器攻擊套件所針對的後端應用程式：
 
-| 流量套件 | 來源應用程式 | 路徑 |
+| 流量套件 | 源站應用程式 | 路徑 |
 |---|---|---|
 | api-attacks | VAmPI | `/vampi/` |
 | bot-simulation | 所有應用程式 | 所有路徑 |
@@ -51,14 +51,14 @@ graph LR
 | performance-testing | 所有應用程式 | 所有路徑 |
 | reconnaissance | 所有應用程式 | 所有路徑 |
 | restaurant-exploits | Restaurant API | `/restaurant/` |
-| ssl-scanning | F5 XC LB（非直接指向來源） | N/A |
+| ssl-scanning | F5 XC LB（非直接指向源站） | N/A |
 | traffic-generation | 所有應用程式 | 所有路徑 |
 | web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
 
 ### 部署順序
 
-1. 首先部署**來源伺服器** -- 它提供後端應用程式
-2. 設定 **F5 XC HTTP 負載平衡器**，將來源伺服器作為來源池
+1. 首先部署**源站伺服器** -- 它提供後端應用程式
+2. 設定 **F5 XC HTTP 負載平衡器**，將源站伺服器作為源站池
 3. 將 **WAF、Bot Defense、API Security 和 CSD 策略**附加到負載平衡器
 4. 部署**流量產生器**，將 `target_fqdn` 設定為 F5 XC LB 網域
 
@@ -74,21 +74,21 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-當設定了 `TARGET_FQDN` 時，所有套件腳本會將流量發送至 `https://<TARGET_FQDN>/...`。F5 XC 負載平衡器接收請求、套用安全策略，並將允許的流量轉發至來源伺服器。
+當設定了 `TARGET_FQDN` 時，所有套件腳本會將流量發送到 `https://<TARGET_FQDN>/...`。F5 XC 負載平衡器接收請求、套用安全策略，並將允許的流量轉發到源站伺服器。
 
 ## CSD 展示整合
 
-`javascript-exploits` 套件專門為來源伺服器上的 Client-Side Defense 展示而設計。此套件驗證 CSD Phase 2 功能：
+`javascript-exploits` 套件專為源站伺服器上的用戶端防禦展示而設計。此套件驗證 CSD Phase 2 功能：
 
 **Phase 2 流程：**
 
-1. 來源伺服器在 `/csd-demo/` 託管 CSD 展示頁面
-2. F5 XC CSD 將其監控 JavaScript 注入頁面中
+1. 源站伺服器在 `/csd-demo/` 託管 CSD 展示頁面
+2. F5 XC CSD 將其監控 JavaScript 注入頁面
 3. 流量產生器的 javascript-exploits 套件嘗試：
-   - 注入模擬 Magecart 竊取器的內聯腳本
+   - 注入模擬 Magecart 竊取器的內嵌腳本
    - 修改 DOM 元素以重新導向表單提交
-   - 載入未經授權的第三方 JavaScript
-4. F5 XC CSD 偵測到這些修改並在 CSD 儀表板中回報
+   - 載入未授權的第三方 JavaScript
+4. F5 XC CSD 偵測到這些修改並在 CSD 儀表板中報告
 
 使用 javascript-exploits 套件：
 
@@ -100,28 +100,28 @@ TARGET_ORIGIN_IP=20.10.5.100
 
 ## CDN 模擬器整合
 
-當部署 CDN 模擬器時，架構會增加一個快取層：
+當部署 CDN 模擬器時，架構會新增一個快取層：
 
 ```
 Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 ```
 
-CDN 模擬器位於 F5 XC 負載平衡器前方，負責快取回應並添加類似 CDN 的標頭。若要將流量導向通過 CDN：
+CDN 模擬器位於 F5 XC 負載平衡器前方，快取回應並新增類似 CDN 的標頭。要將流量導向通過 CDN：
 
 ```bash
 # Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
 TARGET_FQDN=cdn.demo.example.com
 ```
 
-這對於展示 F5 XC 如何處理透過 CDN 抵達的流量非常有用，包括：
+這對於展示 F5 XC 如何處理通過 CDN 到達的流量非常有用，包括：
 
 - 識別 CDN 代理標頭背後的真實用戶端 IP
 - 對可能已被 CDN 修改的請求套用 WAF 規則
 - 當 CDN 修改瀏覽器指紋時的 Bot Defense 分類
 
-## 直接流量與負載平衡器流量比較
+## 直接連線與負載平衡器流量比較
 
-流量產生器支援同時透過 F5 XC 和直接發送流量至來源伺服器。此比較展示了 F5 XC 安全功能的價值：
+流量產生器支援同時透過 F5 XC 和直接向源站發送流量。此比較展示了 F5 XC 安全功能的價值：
 
 ### 透過 F5 XC（預設）
 
@@ -130,25 +130,25 @@ TARGET_FQDN=cdn.demo.example.com
 TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-預期結果：WAF 封鎖 SQL injection、XSS 和 command injection 酬載。安全事件儀表板顯示被封鎖的請求及違規詳情。
+預期結果：WAF 阻擋 SQL 注入、XSS 和命令注入有效負載。安全事件儀表板顯示被阻擋的請求及違規詳細資訊。
 
-### 直接至來源（基準線）
+### 直接連線至源站（基準線）
 
 ```bash
 # Traffic goes: Generator -> Origin (no security layer)
 TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-預期結果：所有酬載未經過濾即到達來源應用程式。Juice Shop 和 DVWA 處理攻擊酬載。這展示了沒有 F5 XC 保護時會發生的情況。
+預期結果：所有有效負載未經過濾直接到達源站應用程式。Juice Shop 和 DVWA 處理攻擊有效負載。這展示了在沒有 F5 XC 保護下會發生什麼情況。
 
-### 並排展示流程
+### 並列展示流程
 
 為了進行有說服力的展示，以兩種方式執行相同的套件：
 
-1. 直接對來源執行 `web-app-attacks` -- 展示攻擊成功
-2. 透過 F5 XC 執行 `web-app-attacks` -- 展示攻擊被封鎖
-3. 開啟 F5 XC 安全事件儀表板以顯示被封鎖的請求
-4. 比較套件 `meta.json` 結果：直接執行顯示更多 "passed"（攻擊成功），LB 執行顯示更多 "failed"（攻擊被封鎖）
+1. 直接對源站執行 `web-app-attacks` -- 展示攻擊成功
+2. 透過 F5 XC 執行 `web-app-attacks` -- 展示攻擊被阻擋
+3. 開啟 F5 XC 安全事件儀表板以顯示被阻擋的請求
+4. 比較套件的 `meta.json` 結果：直接連線顯示更多「passed」（攻擊成功），負載平衡器連線顯示更多「failed」（攻擊被阻擋）
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -167,7 +167,7 @@ ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | hea
 
 ## 多元件 Terraform 部署
 
-部署完整實驗環境時，請為每個元件使用獨立的 Terraform 工作區或目錄：
+部署完整的實驗室環境時，請為每個元件使用獨立的 Terraform 工作區或目錄：
 
 ```bash
 # 1. Deploy origin server

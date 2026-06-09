@@ -1,8 +1,8 @@
 ---
-title: Teardown
+title: 정리
 description: >-
-  terraform destroy to remove all Azure resources, verify resource group
-  deletion with az CLI, and clean local state files
+  terraform destroy로 모든 Azure 리소스를 제거하고, az CLI로 리소스 그룹 삭제를 확인하며, 로컬 상태 파일을
+  정리합니다
 sidebar:
   order: 8
 i18n:
@@ -10,7 +10,7 @@ i18n:
   translator: machine
 ---
 
-랩 세션이 완료되면 모든 Azure 리소스를 삭제하여 과금을 중지하세요.
+실습 세션이 완료되면 과금을 중지하기 위해 모든 Azure 리소스를 삭제합니다.
 
 ## Terraform Destroy
 
@@ -24,7 +24,7 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform이 확인을 요청합니다. `yes`를 입력하여 진행하세요.
+Terraform이 확인을 요청합니다. `yes`를 입력하여 진행합니다.
 
 ## 정리 확인
 
@@ -42,7 +42,7 @@ az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
 
 ## 로컬 상태 정리
 
-Terraform 상태 파일 및 캐시 파일을 제거합니다:
+Terraform 상태 및 캐시 파일을 제거합니다:
 
 ```bash
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
@@ -50,7 +50,7 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## 결과 보존 (선택 사항)
 
-VM을 삭제하기 전에 트래픽 스위트 결과를 보존하려면 로컬로 복사하세요:
+VM을 삭제하기 전에 트래픽 스위트 결과를 보존하려면 로컬로 복사합니다:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -65,14 +65,14 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 
 ## F5 XC 정리
 
-트래픽 생성기가 대상으로 사용했던 F5 XC 구성도 제거하려면 다음을 수행하세요:
+트래픽 생성기가 대상으로 했던 F5 XC 구성도 제거하려면:
 
-1. HTTP 로드 밸런서 삭제
-2. 오리진 풀 삭제
-3. 테스트를 위해 생성한 WAF 정책, Bot Defense 구성, API Security 정책 또는 CSD 구성 삭제
+1. HTTP 로드 밸런서를 삭제합니다
+2. 오리진 풀을 삭제합니다
+3. 테스트를 위해 생성한 WAF 정책, Bot Defense 구성, API Security 정책 또는 CSD 구성을 삭제합니다
 
-이러한 F5 XC 리소스는 Azure 비용이 발생하지 않지만, 데모 환경이 더 이상 필요하지 않을 때 정리해야 합니다.
+이러한 F5 XC 리소스는 Azure 비용이 발생하지 않지만 데모 환경이 더 이상 필요하지 않을 때 정리해야 합니다.
 
 :::tip
-반복적인 데모 사용의 경우, 전체 수명 주기를 스크립트로 자동화하는 것을 고려하세요: 데모 전에 `cd terraform && terraform apply`를 실행하고, 스위트를 실행한 후, `terraform destroy`로 정리합니다. 스탠다드 티어는 15-20분 내에 프로비저닝되므로, 당일 설정 및 정리가 실용적입니다.
+반복적인 데모 사용의 경우, 전체 라이프사이클을 스크립트화하는 것을 고려하세요: 데모 전에 `cd terraform && terraform apply`를 실행하고, 스위트를 실행한 후 `terraform destroy`를 수행합니다. 표준 티어는 15-20분 내에 프로비저닝되므로 당일 설정 및 정리가 실용적입니다.
 :::

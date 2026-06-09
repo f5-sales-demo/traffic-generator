@@ -1,9 +1,8 @@
 ---
 title: 統合
 description: >-
-  Integration guide for the traffic generator with origin-server, F5 XC HTTP
-  load balancer, CSD demo, and CDN simulator: architecture diagrams, targeting
-  configuration, direct vs LB traffic comparison, and multi-component deployment
+  トラフィックジェネレーターとオリジンサーバー、F5 XC HTTP ロードバランサー、CSD デモ、CDN
+  シミュレーターの統合ガイド：アーキテクチャ図、ターゲット設定、直接接続と LB 経由トラフィックの比較、マルチコンポーネントデプロイメント
 sidebar:
   order: 7
 i18n:
@@ -11,9 +10,9 @@ i18n:
   translator: machine
 ---
 
-## 完全なアーキテクチャ
+## 全体アーキテクチャ
 
-トラフィックジェネレーターは、多層デモ環境における1つのコンポーネントです。すべてのコンポーネントがデプロイされた場合の完全なアーキテクチャは以下の通りです：
+トラフィックジェネレーターは、多層デモ環境の1つのコンポーネントです。すべてのコンポーネントがデプロイされた場合の完全なアーキテクチャは以下の通りです：
 
 ```
 Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
@@ -29,17 +28,17 @@ graph LR
     TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
 ```
 
-各コンポーネントは独立してデプロイされ、Terraform経由で設定されます。トラフィックジェネレーターはオリジンサーバーではなく、F5 XCロードバランサーのFQDNをターゲットとします。
+各コンポーネントは独立してデプロイされ、Terraform を介して設定されます。トラフィックジェネレーターはオリジンサーバーに直接ではなく、F5 XC ロードバランサーの FQDN をターゲットにします。
 
-## オリジンサーバーとの統合
+## オリジンサーバー統合
 
-[オリジンサーバー](https://f5xc-salesdemos.github.io/origin-server/)は、トラフィックジェネレーターの攻撃スイートがターゲットとするバックエンドアプリケーションを提供します：
+[オリジンサーバー](https://f5xc-salesdemos.github.io/origin-server/) は、トラフィックジェネレーターの攻撃スイートがターゲットとするバックエンドアプリケーションを提供します：
 
 | トラフィックスイート | オリジンアプリケーション | パス |
 |---|---|---|
 | api-attacks | VAmPI | `/vampi/` |
 | bot-simulation | すべてのアプリケーション | すべてのパス |
-| cdn-load-testing | CDN Simulator | CDNエンドポイント |
+| cdn-load-testing | CDN Simulator | CDN エンドポイント |
 | crapi-exploits | crAPI | `/crapi/` |
 | csd-demo-attacks | CSD Demo | `/csd-demo/` |
 | dvga-exploits | DVGA | `/dvga/` |
@@ -51,20 +50,20 @@ graph LR
 | performance-testing | すべてのアプリケーション | すべてのパス |
 | reconnaissance | すべてのアプリケーション | すべてのパス |
 | restaurant-exploits | Restaurant API | `/restaurant/` |
-| ssl-scanning | F5 XC LB（オリジンへの直接アクセスではない） | N/A |
+| ssl-scanning | F5 XC LB（オリジンへの直接接続ではない） | N/A |
 | traffic-generation | すべてのアプリケーション | すべてのパス |
 | web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
 
 ### デプロイ順序
 
-1. 最初に**オリジンサーバー**をデプロイします -- バックエンドアプリケーションを提供します
-2. オリジンサーバーをオリジンプールとして**F5 XC HTTPロードバランサー**を設定します
-3. ロードバランサーに**WAF、Bot Defense、API Security、CSDポリシー**をアタッチします
-4. `target_fqdn`をF5 XC LBドメインに設定して**トラフィックジェネレーター**をデプロイします
+1. まず**オリジンサーバー**をデプロイします -- バックエンドアプリケーションを提供します
+2. オリジンサーバーをオリジンプールとして **F5 XC HTTP ロードバランサー**を設定します
+3. ロードバランサーに **WAF、Bot Defense、API Security、および CSD ポリシー**をアタッチします
+4. `target_fqdn` を F5 XC LB ドメインに設定して**トラフィックジェネレーター**をデプロイします
 
-### ターゲティング設定
+### ターゲット設定
 
-トラフィックジェネレーターの`config.env`は、アーキテクチャの他のコンポーネントとの接続を定義します：
+トラフィックジェネレーターの `config.env` は、アーキテクチャの他のコンポーネントとの接続を定義します：
 
 ```bash
 # Target the F5 XC load balancer (traffic passes through security policies)
@@ -74,23 +73,23 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-`TARGET_FQDN`が設定されている場合、すべてのスイートスクリプトは`https://<TARGET_FQDN>/...`にトラフィックを送信します。F5 XCロードバランサーはリクエストを受信し、セキュリティポリシーを適用した後、許可されたトラフィックをオリジンサーバーに転送します。
+`TARGET_FQDN` が設定されている場合、すべてのスイートスクリプトは `https://<TARGET_FQDN>/...` にトラフィックを送信します。F5 XC ロードバランサーがリクエストを受信し、セキュリティポリシーを適用して、許可されたトラフィックをオリジンサーバーに転送します。
 
-## CSDデモとの統合
+## CSD デモ統合
 
-`javascript-exploits`スイートは、オリジンサーバー上のClient-Side Defenseデモ向けに特別に設計されています。このスイートはCSDフェーズ2の機能を検証します：
+`javascript-exploits` スイートは、オリジンサーバー上の Client-Side Defense デモ向けに特別に設計されています。このスイートは CSD フェーズ 2 の機能を検証します：
 
-**フェーズ2のフロー：**
+**フェーズ 2 のフロー：**
 
-1. オリジンサーバーが`/csd-demo/`でCSDデモページをホストします
-2. F5 XC CSDがそのモニタリングJavaScriptをページに挿入します
-3. トラフィックジェネレーターのjavascript-exploitsスイートが以下を試みます：
-   - Magecartスキマーを模倣するインラインスクリプトの挿入
-   - フォーム送信をリダイレクトするためのDOM要素の変更
-   - 未承認のサードパーティJavaScriptの読み込み
-4. F5 XC CSDがこれらの変更を検出し、CSDダッシュボードに報告します
+1. オリジンサーバーが `/csd-demo/` で CSD デモページをホストします
+2. F5 XC CSD がページに監視用 JavaScript を注入します
+3. トラフィックジェネレーターの javascript-exploits スイートが以下を試みます：
+   - Magecart スキマーを模倣したインラインスクリプトの注入
+   - フォーム送信をリダイレクトするための DOM 要素の変更
+   - 未承認のサードパーティ JavaScript の読み込み
+4. F5 XC CSD がこれらの変更を検出し、CSD ダッシュボードに報告します
 
-javascript-exploitsスイートを使用するには：
+javascript-exploits スイートを使用するには：
 
 ```bash
 # Ensure CSD is enabled on the F5 XC HTTP LB for the /csd-demo/ path
@@ -98,57 +97,57 @@ javascript-exploitsスイートを使用するには：
 /opt/traffic-generator/suites/runner.sh javascript-exploits
 ```
 
-## CDNシミュレーターとの統合
+## CDN シミュレーター統合
 
-CDNシミュレーターがデプロイされている場合、アーキテクチャにキャッシュレイヤーが追加されます：
+CDN シミュレーターがデプロイされている場合、アーキテクチャにキャッシングレイヤーが追加されます：
 
 ```
 Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 ```
 
-CDNシミュレーターはF5 XCロードバランサーの前段に配置され、レスポンスをキャッシュしてCDNライクなヘッダーを追加します。CDN経由でトラフィックを送信するには：
+CDN シミュレーターは F5 XC ロードバランサーの前段に配置され、レスポンスをキャッシュして CDN のようなヘッダーを追加します。CDN 経由でトラフィックを送信するには：
 
 ```bash
 # Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
 TARGET_FQDN=cdn.demo.example.com
 ```
 
-これは、CDN経由で到着するトラフィックをF5 XCがどのように処理するかをデモンストレーションする際に有用です。以下が含まれます：
+これは、CDN を経由して到着するトラフィックを F5 XC がどのように処理するかをデモンストレーションするのに役立ちます。以下が含まれます：
 
-- CDNプロキシヘッダーの背後にある真のクライアントIPの識別
-- CDNによって変更された可能性のあるリクエストへのWAFルールの適用
-- CDNがブラウザフィンガープリントを変更した場合のBot Defense分類
+- CDN プロキシヘッダーの背後にある真のクライアント IP の識別
+- CDN によって変更された可能性があるリクエストへの WAF ルールの適用
+- CDN がブラウザフィンガープリントを変更した場合の Bot Defense の分類
 
-## 直接アクセスとLB経由トラフィックの比較
+## 直接接続と LB 経由トラフィックの比較
 
-トラフィックジェネレーターは、F5 XC経由とオリジンへの直接アクセスの両方でトラフィック送信をサポートしています。この比較により、F5 XCセキュリティ機能の価値を実証できます：
+トラフィックジェネレーターは、F5 XC 経由とオリジンへの直接接続の両方でトラフィックを送信することをサポートしています。この比較により、F5 XC セキュリティ機能の価値をデモンストレーションできます：
 
-### F5 XC経由（デフォルト）
+### F5 XC 経由（デフォルト）
 
 ```bash
 # Traffic goes: Generator -> F5 XC LB -> Origin
 TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-期待される結果：WAFがSQLインジェクション、XSS、コマンドインジェクションのペイロードをブロックします。Security Eventsダッシュボードにブロックされたリクエストと違反の詳細が表示されます。
+期待される結果：WAF が SQL インジェクション、XSS、コマンドインジェクションのペイロードをブロックします。Security Events ダッシュボードに、違反の詳細とともにブロックされたリクエストが表示されます。
 
-### オリジンへの直接アクセス（ベースライン）
+### オリジンへの直接接続（ベースライン）
 
 ```bash
 # Traffic goes: Generator -> Origin (no security layer)
 TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-期待される結果：すべてのペイロードがフィルタリングされずにオリジンアプリケーションに到達します。Juice ShopとDVWAが攻撃ペイロードを処理します。これは、F5 XCの保護がない場合に何が起こるかを実証します。
+期待される結果：すべてのペイロードがフィルタリングされずにオリジンアプリケーションに到達します。Juice Shop と DVWA が攻撃ペイロードを処理します。これは F5 XC の保護がない場合に何が起こるかをデモンストレーションします。
 
 ### サイドバイサイドデモフロー
 
 説得力のあるデモのために、同じスイートを両方の方法で実行します：
 
-1. オリジンに対して直接`web-app-attacks`を実行 -- 攻撃が成功することを示します
-2. F5 XC経由で`web-app-attacks`を実行 -- 攻撃がブロックされることを示します
-3. F5 XC Security Eventsダッシュボードを開いて、ブロックされたリクエストを表示します
-4. スイートの`meta.json`結果を比較：直接実行では「passed」（攻撃成功）が多く表示され、LB経由の実行では「failed」（攻撃ブロック）が多く表示されます
+1. オリジンに対して直接 `web-app-attacks` を実行します -- 攻撃が成功することを示します
+2. F5 XC 経由で `web-app-attacks` を実行します -- 攻撃がブロックされることを示します
+3. F5 XC Security Events ダッシュボードを開き、ブロックされたリクエストを表示します
+4. スイートの `meta.json` 結果を比較します：直接実行では "passed"（攻撃成功）が多く、LB 経由の実行では "failed"（攻撃ブロック）が多くなります
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -165,9 +164,9 @@ ssh azureuser@${TGEN_IP} "TARGET_FQDN=${LB_FQDN} /opt/traffic-generator/suites/r
 ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | head -2); do echo "=== $d ==="; cat /opt/traffic-generator/results/$d/meta.json; echo; done'
 ```
 
-## マルチコンポーネントTerraformデプロイ
+## マルチコンポーネント Terraform デプロイメント
 
-完全なラボ環境をデプロイする場合は、各コンポーネントに対して個別のTerraformワークスペースまたはディレクトリを使用してください：
+フルラボ環境をデプロイする場合、各コンポーネントに対して別々の Terraform ワークスペースまたはディレクトリを使用します：
 
 ```bash
 # 1. Deploy origin server

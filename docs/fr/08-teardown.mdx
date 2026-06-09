@@ -1,8 +1,9 @@
 ---
-title: Teardown
+title: Démontage
 description: >-
-  terraform destroy to remove all Azure resources, verify resource group
-  deletion with az CLI, and clean local state files
+  terraform destroy pour supprimer toutes les ressources Azure, vérifier la
+  suppression du groupe de ressources avec az CLI, et nettoyer les fichiers
+  d'état locaux
 sidebar:
   order: 8
 i18n:
@@ -10,7 +11,7 @@ i18n:
   translator: machine
 ---
 
-Lorsque la session de lab est terminée, détruisez toutes les ressources Azure pour arrêter la facturation.
+Lorsque la session de laboratoire est terminée, détruisez toutes les ressources Azure pour arrêter la facturation.
 
 ## Terraform Destroy
 
@@ -67,12 +68,12 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 
 Si vous souhaitez également supprimer la configuration F5 XC que le générateur de trafic ciblait :
 
-1. Supprimez le load balancer HTTP
+1. Supprimez le répartiteur de charge HTTP
 2. Supprimez le pool d'origine
-3. Supprimez toutes les politiques WAF, configurations Bot Defense, politiques API Security ou configurations CSD créées pour les tests
+3. Supprimez toutes les politiques WAF, les configurations Bot Defense, les politiques de sécurité API ou les configurations CSD créées pour les tests
 
-Ces ressources F5 XC n'engendrent pas de coûts Azure mais doivent être nettoyées lorsque l'environnement de démonstration n'est plus nécessaire.
+Ces ressources F5 XC n'entraînent pas de coûts Azure mais doivent être nettoyées lorsque l'environnement de démonstration n'est plus nécessaire.
 
 :::tip
-Pour une utilisation récurrente en démonstration, envisagez de scripter le cycle de vie complet : `cd terraform && terraform apply` avant une démo, exécutez les suites, puis `terraform destroy` ensuite. Le tier standard se provisionne en 15-20 minutes, rendant la mise en place et le démontage le jour même tout à fait pratiques.
+Pour une utilisation récurrente en démonstration, envisagez de scripter le cycle de vie complet : `cd terraform && terraform apply` avant une démonstration, exécutez les suites, puis `terraform destroy` ensuite. Le tier standard se provisionne en 15 à 20 minutes, rendant la mise en place et le démontage le jour même tout à fait pratiques.
 :::

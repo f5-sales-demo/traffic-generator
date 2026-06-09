@@ -1,9 +1,10 @@
 ---
 title: Prerequisiti
 description: >-
-  Azure subscription with Contributor role, Terraform >= 1.5, SSH key pair
-  (Ed25519 recommended), Azure CLI for subscription_id lookup, and outbound
-  HTTPS for tool downloads during cloud-init provisioning
+  Sottoscrizione Azure con ruolo Contributor, Terraform >= 1.5, coppia di chiavi
+  SSH (Ed25519 consigliato), Azure CLI per la ricerca del subscription_id e
+  HTTPS in uscita per il download degli strumenti durante il provisioning
+  cloud-init
 sidebar:
   order: 2
 i18n:
@@ -11,7 +12,7 @@ i18n:
   translator: machine
 ---
 
-## Obbligatori
+## Requisiti
 
 ### Sottoscrizione Azure
 
@@ -21,11 +22,11 @@ Una sottoscrizione Azure attiva con ruolo Contributor o permessi equivalenti per
 - Reti virtuali e subnet
 - Gruppi di sicurezza di rete
 - Indirizzi IP pubblici
-- Macchine virtuali (Standard_F16s_v2 predefinita)
+- Macchine virtuali (Standard_F16s_v2 predefinito)
 
 ### Azure CLI
 
-Installare e autenticarsi con Azure CLI per recuperare l'ID della sottoscrizione:
+Installare e autenticare Azure CLI per recuperare il proprio ID di sottoscrizione:
 
 ```bash
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -55,7 +56,7 @@ sudo apt update && sudo apt install terraform
 
 ### Coppia di chiavi SSH
 
-Una coppia di chiavi SSH per l'accesso alla VM. Ed25519 è raccomandato:
+Una coppia di chiavi SSH per l'accesso alla VM. Ed25519 è consigliato:
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
@@ -63,19 +64,19 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### Accesso di rete
 
-La VM del Traffic Generator richiede accesso HTTPS in uscita durante il provisioning per scaricare strumenti da:
+La VM del Traffic Generator richiede accesso HTTPS in uscita durante il provisioning per scaricare gli strumenti da:
 
 - GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
 - PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
 - Registro npm (puppeteer, puppeteer-extra-plugin-stealth)
-- Repository APT Ubuntu (nikto, nmap, masscan, hydra, tshark e altri pacchetti di sistema)
+- Repository APT di Ubuntu (nikto, nmap, masscan, hydra, tshark e altri pacchetti di sistema)
 - Repository Git (testssl.sh, recon-ng, spiderfoot, SecLists)
 
-Se la sottoscrizione Azure applica regole firewall in uscita o restrizioni NSG, assicurarsi che HTTPS (porta 443) verso queste fonti sia consentito durante la finestra iniziale di provisioning (15-25 minuti).
+Se la propria sottoscrizione Azure applica regole firewall in uscita o restrizioni NSG, assicurarsi che HTTPS (porta 443) verso queste origini sia consentito durante la finestra di provisioning iniziale (15-25 minuti).
 
 ### Componenti pre-distribuiti
 
-Prima di distribuire il Traffic Generator, è necessario disporre di:
+Prima di distribuire il Traffic Generator, è necessario avere:
 
 1. **Origin Server** distribuito e raggiungibile (vedere la [documentazione origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
 2. **F5 XC HTTP Load Balancer** configurato con l'origin server come backend
@@ -84,9 +85,9 @@ Prima di distribuire il Traffic Generator, è necessario disporre di:
 La variabile Terraform `target_fqdn` deve essere impostata sul dominio pubblico del load balancer F5 XC.
 
 :::tip
-Utilizzare `terraform destroy` quando il laboratorio non è in uso per evitare costi continuativi. Vedere [Dismissione](../08-teardown/) per la procedura.
+Utilizzare `terraform destroy` quando il laboratorio non è in uso per evitare costi ricorrenti. Vedere [Smantellamento](../08-teardown/) per la procedura.
 :::
 
 :::note
-Standard_F16s_v2 (32 GiB RAM) è l'impostazione predefinita perché diversi strumenti vengono eseguiti contemporaneamente durante l'esecuzione delle suite. L'automazione del browser (Playwright, Puppeteer) con Chromium headless è il principale consumatore di memoria. SKU F-series più piccoli funzioneranno per le suite senza browser, ma potrebbero risultare limitati durante l'esecuzione della bot-simulation.
+Standard_F16s_v2 (32 GiB RAM) è il valore predefinito perché diversi strumenti vengono eseguiti contemporaneamente durante l'esecuzione della suite. L'automazione del browser (Playwright, Puppeteer) con Chromium headless è il principale consumatore di memoria. SKU F-series più piccoli funzioneranno per le suite senza browser, ma potrebbero essere limitati durante l'esecuzione della simulazione bot.
 :::

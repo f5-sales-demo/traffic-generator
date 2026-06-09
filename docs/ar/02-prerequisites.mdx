@@ -1,9 +1,9 @@
 ---
 title: المتطلبات الأساسية
 description: >-
-  Azure subscription with Contributor role, Terraform >= 1.5, SSH key pair
-  (Ed25519 recommended), Azure CLI for subscription_id lookup, and outbound
-  HTTPS for tool downloads during cloud-init provisioning
+  اشتراك Azure بدور المساهم، Terraform >= 1.5، زوج مفاتيح SSH (يُوصى بـ
+  Ed25519)، Azure CLI للبحث عن subscription_id، واتصال HTTPS صادر لتنزيل الأدوات
+  أثناء التهيئة بـ cloud-init
 sidebar:
   order: 2
 i18n:
@@ -11,11 +11,11 @@ i18n:
   translator: machine
 ---
 
-## المتطلبات
+## المتطلبات الإلزامية
 
 ### اشتراك Azure
 
-اشتراك Azure نشط مع دور المساهم (Contributor) أو أذونات مكافئة لإنشاء:
+اشتراك Azure نشط بدور المساهم (Contributor) أو أذونات مكافئة لإنشاء:
 
 - مجموعات الموارد
 - الشبكات الافتراضية والشبكات الفرعية
@@ -35,7 +35,7 @@ az login
 az account show --query '{name:name, id:id}' -o table
 ```
 
-انسخ قيمة `id` -- هذا هو `subscription_id` المطلوب من قبل Terraform.
+انسخ قيمة `id` -- هذه هي قيمة `subscription_id` المطلوبة بواسطة Terraform.
 
 ### Terraform
 
@@ -63,22 +63,22 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### الوصول إلى الشبكة
 
-يتطلب جهاز مولّد حركة المرور الافتراضي وصولاً صادرًا عبر HTTPS أثناء التزويد لتنزيل الأدوات من:
+يتطلب جهاز Traffic Generator الافتراضي وصولًا صادرًا عبر HTTPS أثناء التهيئة لتنزيل الأدوات من:
 
-- إصدارات GitHub ‏(nuclei، dalfox، ffuf، gobuster، feroxbuster، subfinder، httpx، amass)
-- PyPI ‏(sqlmap، scapy، impacket، arjun، pwntools، mitmproxy، sslyze، playwright)
-- سجل npm ‏(puppeteer، puppeteer-extra-plugin-stealth)
-- مستودعات Ubuntu APT ‏(nikto، nmap، masscan، hydra، tshark، وحزم النظام الأخرى)
-- مستودعات Git ‏(testssl.sh، recon-ng، spiderfoot، SecLists)
+- إصدارات GitHub (nuclei، dalfox، ffuf، gobuster، feroxbuster، subfinder، httpx، amass)
+- PyPI (sqlmap، scapy، impacket، arjun، pwntools، mitmproxy، sslyze، playwright)
+- سجل npm (puppeteer، puppeteer-extra-plugin-stealth)
+- مستودعات Ubuntu APT (nikto، nmap، masscan، hydra، tshark، وحزم نظام أخرى)
+- مستودعات Git (testssl.sh، recon-ng، spiderfoot، SecLists)
 
-إذا كان اشتراك Azure الخاص بك يفرض قواعد جدار حماية صادرة أو قيود NSG، فتأكد من السماح بـ HTTPS (المنفذ 443) إلى هذه المصادر أثناء نافذة التزويد الأولية (15-25 دقيقة).
+إذا كان اشتراك Azure الخاص بك يفرض قواعد جدار حماية للاتصالات الصادرة أو قيود NSG، فتأكد من السماح بـ HTTPS (المنفذ 443) إلى هذه المصادر خلال فترة التهيئة الأولية (15-25 دقيقة).
 
 ### المكونات المنشورة مسبقًا
 
-قبل نشر مولّد حركة المرور، يجب أن يكون لديك:
+قبل نشر Traffic Generator، يجب أن يكون لديك:
 
-1. **خادم الأصل** منشورًا وقابلاً للوصول (راجع [وثائق خادم الأصل](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
-2. **موازن حمل HTTP من F5 XC** مُهيّأ مع خادم الأصل كخلفية
+1. **خادم الأصل** منشورًا وقابلًا للوصول (راجع [وثائق خادم الأصل](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+2. **موازن حمل HTTP في F5 XC** مُهيّأ مع خادم الأصل كخلفية
 3. **سياسة WAF** مرفقة بموازن الحمل (للتحقق من صحة حركة مرور WAF)
 
 يجب تعيين متغير Terraform المسمى `target_fqdn` إلى النطاق العام لموازن حمل F5 XC.
@@ -88,5 +88,5 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 :::
 
 :::note
-Standard_F16s_v2 (32 جيجابايت ذاكرة وصول عشوائي) هو الإعداد الافتراضي لأن العديد من الأدوات تعمل بشكل متزامن أثناء تنفيذ مجموعة الاختبارات. أتمتة المتصفح (Playwright، Puppeteer) مع Chromium بدون واجهة رسومية هي المستهلك الرئيسي للذاكرة. ستعمل وحدات SKU الأصغر من سلسلة F مع مجموعات الاختبارات التي لا تستخدم المتصفح، ولكنها قد تكون محدودة عند تشغيل محاكاة الروبوتات.
+Standard_F16s_v2 (ذاكرة عشوائية 32 جيجابايت) هو الخيار الافتراضي لأن عدة أدوات تعمل بشكل متزامن أثناء تنفيذ المجموعة. أتمتة المتصفح (Playwright، Puppeteer) مع Chromium بدون واجهة رسومية هي المستهلك الرئيسي للذاكرة. ستعمل وحدات SKU الأصغر من سلسلة F مع المجموعات التي لا تستخدم المتصفح، لكنها قد تكون محدودة عند تشغيل محاكاة البوتات.
 :::

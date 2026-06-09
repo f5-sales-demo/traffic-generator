@@ -1,8 +1,8 @@
 ---
-title: Teardown
+title: Abbau
 description: >-
-  terraform destroy to remove all Azure resources, verify resource group
-  deletion with az CLI, and clean local state files
+  terraform destroy zum Entfernen aller Azure-Ressourcen, Überprüfung der
+  Ressourcengruppenlöschung mit az CLI und Bereinigung lokaler State-Dateien
 sidebar:
   order: 8
 i18n:
@@ -63,9 +63,9 @@ LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head 
 scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
 ```
 
-## F5 XC Bereinigung
+## F5 XC-Bereinigung
 
-Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Traffic-Generator abgezielt hat:
+Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Traffic-Generator abzielte:
 
 1. Löschen Sie den HTTP Load Balancer
 2. Löschen Sie den Origin Pool
@@ -74,5 +74,5 @@ Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Traffic-Ge
 Diese F5 XC-Ressourcen verursachen keine Azure-Kosten, sollten aber bereinigt werden, wenn die Demo-Umgebung nicht mehr benötigt wird.
 
 :::tip
-Für wiederkehrende Demo-Nutzung sollten Sie den gesamten Lebenszyklus skripten: `cd terraform && terraform apply` vor einer Demo, Suites ausführen, dann anschließend `terraform destroy`. Der Standard-Tier wird in 15-20 Minuten bereitgestellt, was ein Setup und Teardown am selben Tag praktikabel macht.
+Für wiederkehrende Demo-Nutzung sollten Sie den gesamten Lebenszyklus skripten: `cd terraform && terraform apply` vor einer Demo, Suites ausführen, dann `terraform destroy` danach. Der Standard-Tier wird in 15-20 Minuten bereitgestellt, was eine Einrichtung und einen Abbau am selben Tag praktikabel macht.
 :::

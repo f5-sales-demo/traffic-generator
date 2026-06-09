@@ -1,10 +1,10 @@
 ---
-title: Deploy
+title: डिप्लॉय
 description: >-
-  Terraform IaC deployment of the traffic generator Azure VM — F-series
-  compute-optimized VM with Ubuntu 24.04, kernel tuning, 50+ security tools, and
-  19 traffic suites provisioned via cloud-init. All configuration files are in
-  the terraform/ directory.
+  ट्रैफ़िक जनरेटर Azure VM का Terraform IaC डिप्लॉयमेंट — F-series
+  कम्प्यूट-ऑप्टिमाइज़्ड VM जिसमें Ubuntu 24.04, कर्नेल ट्यूनिंग, 50+ सुरक्षा
+  उपकरण, और 19 ट्रैफ़िक सुइट cloud-init के माध्यम से प्रोविज़न किए गए हैं। सभी
+  कॉन्फ़िगरेशन फ़ाइलें terraform/ डायरेक्टरी में हैं।
 sidebar:
   order: 3
 i18n:
@@ -12,7 +12,7 @@ i18n:
   translator: machine
 ---
 
-सभी Terraform फ़ाइलें [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) डायरेक्टरी में हैं। रिपॉजिटरी क्लोन करें और सीधे डिप्लॉय करें:
+सभी Terraform फ़ाइलें [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) डायरेक्टरी में हैं। रिपॉज़िटरी क्लोन करें और सीधे डिप्लॉय करें:
 
 ```bash
 git clone https://github.com/f5xc-salesdemos/traffic-generator.git
@@ -25,26 +25,26 @@ cp terraform.tfvars.example terraform.tfvars
 
 ### Terraform फ़ाइल संरचना
 
-terraform डायरेक्टरी में Demo Resource Standard का पालन करने वाली 9 फ़ाइलें हैं:
+terraform डायरेक्टरी में Demo Resource Standard का पालन करते हुए 9 फ़ाइलें हैं:
 
-- `versions.tf` -- Terraform और प्रोवाइडर संस्करण बाधाएँ (azurerm ~> 4.0, azuread ~> 3.0)
+- `versions.tf` -- Terraform और प्रोवाइडर वर्शन कंस्ट्रेंट्स (azurerm ~> 4.0, azuread ~> 3.0)
 - `providers.tf` -- Azure RM और Azure AD प्रोवाइडर कॉन्फ़िगरेशन
-- `data.tf` -- डिप्लॉयर ऑटो-रिज़ॉल्यूशन के लिए Azure AD डेटा सोर्स
-- `locals.tf` -- डिप्लॉयर रिज़ॉल्यूशन, Azure Cloud Adoption Framework रिसोर्स नामकरण, मानक टैग
+- `data.tf` -- डिप्लॉयर ऑटो-रिज़ॉल्यूशन के लिए Azure AD डेटा सोर्सेज़
+- `locals.tf` -- डिप्लॉयर रिज़ॉल्यूशन, Azure Cloud Adoption Framework रिसोर्स नेमिंग, स्टैंडर्ड टैग्स
 - `main.tf` -- रिसोर्स ग्रुप (नाम `rg-traffic-generator-{environment}-{deployer}`)
-- `variables.tf` -- सभी इनपुट वेरिएबल (2 आवश्यक, 9 वैकल्पिक) Azure AD के माध्यम से डिप्लॉयर ऑटो-रिज़ॉल्यूशन के साथ
+- `variables.tf` -- सभी इनपुट वेरिएबल्स (2 आवश्यक, 9 वैकल्पिक) Azure AD के माध्यम से डिप्लॉयर ऑटो-रिज़ॉल्यूशन के साथ
 - `network.tf` -- VNet (10.201.0.0/16), सबनेट, पब्लिक IP, NSG (पोर्ट 22 SSH), NIC
 - `vm.tf` -- templatefile() के माध्यम से cloud-init के साथ Ubuntu 24.04 VM
-- `outputs.tf` -- 17 आउटपुट: सभी डेमो रिसोर्स द्वारा साझा किए गए 15 मानक आउटपुट (deployer, public_ip, private_ip, ssh_command, resource_group_name, vm_name, nsg_name, vnet_name, subnet_id, component, environment, resource_group_id, vm_id, nsg_id, location) और 2 कंपोनेंट-विशिष्ट आउटपुट (target_fqdn, status_check)
+- `outputs.tf` -- 17 आउटपुट: सभी डेमो रिसोर्सेज़ द्वारा साझा किए जाने वाले 15 स्टैंडर्ड आउटपुट (deployer, public_ip, private_ip, ssh_command, resource_group_name, vm_name, nsg_name, vnet_name, subnet_id, component, environment, resource_group_id, vm_id, nsg_id, location) और 2 कंपोनेंट-विशिष्ट आउटपुट (target_fqdn, status_check)
 
-### प्रोवाइडर और वेरिएबल
+### प्रोवाइडर और वेरिएबल्स
 
 `main.tf` Azure प्रोवाइडर को कॉन्फ़िगर करता है:
 
 ```hcl file=./_data/main.tf
 ```
 
-`variables.tf` सभी कॉन्फ़िगर करने योग्य पैरामीटर परिभाषित करता है। `vm_size` का डिफ़ॉल्ट `Standard_F16s_v2` (16 vCPU कंप्यूट-ऑप्टिमाइज़्ड) है -- स्केलिंग मार्गदर्शन के लिए [VM साइज़िंग](#vm-साइज़िंग) देखें:
+`variables.tf` सभी कॉन्फ़िगर करने योग्य पैरामीटर्स को परिभाषित करता है। `vm_size` का डिफ़ॉल्ट `Standard_F16s_v2` (16 vCPU कम्प्यूट-ऑप्टिमाइज़्ड) है -- स्केलिंग गाइडेंस के लिए [VM साइज़िंग](#vm-साइज़िंग) देखें:
 
 ```hcl file=./_data/variables.tf
 ```
@@ -58,48 +58,48 @@ terraform डायरेक्टरी में Demo Resource Standard का
 
 ### Cloud-Init के साथ वर्चुअल मशीन
 
-`vm.tf` Ubuntu 24.04 VM बनाता है और टार्गेट तथा टूलिंग वेरिएबल के साथ cloud-init टेम्पलेट पास करता है:
+`vm.tf` Ubuntu 24.04 VM बनाता है और टार्गेट तथा टूलिंग वेरिएबल्स के साथ cloud-init टेम्पलेट पास करता है:
 
 ```hcl file=./_data/vm.tf
 ```
 
 ### Cloud-Init प्रोविज़निंग
 
-`cloud-init.yaml` प्रोडक्शन-मान्य कॉन्फ़िगरेशन है जो 48+ घंटों के निरंतर लोड टेस्टिंग के तहत सत्यापित है, जिसमें 4 राउंड ऑरिजिन टॉर्चर टेस्टिंग शामिल है। यह रिट्राई लॉजिक, `/var/log/cloud-init-progress.log` में प्रगति लॉगिंग, 9 प्रोविज़निंग चरणों, और सशर्त स्टेटस रिपोर्टिंग (`status.json` में ready/degraded) के साथ एक हेल्पर लाइब्रेरी का उपयोग करता है। यह प्रोविज़न करता है:
+`cloud-init.yaml` प्रोडक्शन-वैलिडेटेड कॉन्फ़िगरेशन है जो 48+ घंटों की निरंतर लोड टेस्टिंग के तहत सत्यापित है, जिसमें ऑरिजिन टॉर्चर टेस्टिंग के 4 राउंड शामिल हैं। यह रिट्राई लॉजिक, `/var/log/cloud-init-progress.log` में प्रोग्रेस लॉगिंग, 9 प्रोविज़निंग फ़ेज़, और कंडीशनल स्टेटस रिपोर्टिंग (`status.json` में ready/degraded) के साथ एक हेल्पर लाइब्रेरी का उपयोग करता है। यह प्रोविज़न करता है:
 
-- **कर्नेल ट्यूनिंग** -- `somaxconn=131072`, `tcp_max_tw_buckets=4000000`, `tcp_fin_timeout=5`, 64 MiB सॉकेट बफ़र, `file-max=4194304`
-- **NIC ऑप्टिमाइज़ेशन** -- सभी कोर में RPS/RFS, ethtool के माध्यम से अधिकतम रिंग बफ़र, THP=always
+- **कर्नेल ट्यूनिंग** -- `somaxconn=131072`, `tcp_max_tw_buckets=4000000`, `tcp_fin_timeout=5`, 64 MiB सॉकेट बफ़र्स, `file-max=4194304`
+- **NIC ऑप्टिमाइज़ेशन** -- सभी कोर्स पर RPS/RFS, ethtool के माध्यम से मैक्सिमाइज़्ड रिंग बफ़र्स, THP=always
 - **APT पैकेज** -- nikto, nmap, masscan, sqlmap, hydra, medusa, ncrack, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr, sslscan, socat, dirb, whatweb, wrk, hey, vegeta, ethtool
-- **GitHub रिलीज़** -- nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass
+- **GitHub रिलीज़ेज़** -- nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass
 - **Python पैकेज** -- mitmproxy, sslyze, dnsrecon, fierce, theHarvester, playwright, scapy, impacket, arjun
 - **Node.js 20.x** -- बॉट सिमुलेशन के लिए स्टेल्थ प्लगइन के साथ Puppeteer
 - **ब्राउज़र ऑटोमेशन** -- हेडलेस ब्राउज़र टेस्टिंग के लिए Playwright Chromium
-- **Git क्लोन** -- testssl.sh, recon-ng, spiderfoot, SecLists, waf-bypass, PayloadsAllTheThings
-- **सूट डिप्लॉयमेंट** -- इस रिपॉजिटरी से `/opt/traffic-generator/suites/` में क्लोन किए गए 19 ट्रैफ़िक सूट
+- **Git क्लोन्स** -- testssl.sh, recon-ng, spiderfoot, SecLists, waf-bypass, PayloadsAllTheThings
+- **सुइट डिप्लॉयमेंट** -- इस रिपॉज़िटरी से `/opt/traffic-generator/suites/` में क्लोन किए गए 19 ट्रैफ़िक सुइट
 - **कॉन्फ़िग फ़ाइल** -- `TARGET_FQDN`, `TARGET_ORIGIN_IP`, और `CRAPI_PORT` के साथ `config.env`
 
-cloud-init Terraform टेम्पलेट वेरिएबल का उपयोग करता है: `${target_fqdn}`, `${target_origin_ip}`, और `${tool_tier}`। `$NPROC` जैसे शेल वेरिएबल Terraform templatefile में `$$NPROC` के रूप में एस्केप किए जाते हैं।
+cloud-init Terraform टेम्पलेट वेरिएबल्स का उपयोग करता है: `${target_fqdn}`, `${target_origin_ip}`, और `${tool_tier}`। `$NPROC` जैसे शेल वेरिएबल्स को Terraform templatefile में `$$NPROC` के रूप में एस्केप किया गया है।
 
 ```yaml file=./_data/cloud-init.yaml
 ```
 
 ### आउटपुट
 
-`outputs.tf` 17 आउटपुट एक्सपोज़ करता है जिसमें पब्लिक/प्राइवेट IP, SSH कमांड, रिसोर्स आइडेंटिफ़ायर, और कंपोनेंट-विशिष्ट मान (target_fqdn, status_check) शामिल हैं:
+`outputs.tf` 17 आउटपुट एक्सपोज़ करता है जिसमें पब्लिक/प्राइवेट IP, SSH कमांड, रिसोर्स आइडेंटिफ़ायर्स, और कंपोनेंट-विशिष्ट वैल्यूज़ (target_fqdn, status_check) शामिल हैं:
 
 ```hcl file=./_data/outputs.tf
 ```
 
-### उदाहरण वेरिएबल फ़ाइल
+### उदाहरण वेरिएबल्स फ़ाइल
 
-`terraform.tfvars.example` को `terraform.tfvars` में कॉपी करें और अपने मान भरें। `.gitignore` क्रेडेंशियल कमिट होने से रोकने के लिए `terraform.tfvars` को बाहर रखता है:
+`terraform.tfvars.example` को `terraform.tfvars` में कॉपी करें और अपने वैल्यूज़ भरें। `.gitignore` क्रेडेंशियल्स कमिट होने से रोकने के लिए `terraform.tfvars` को एक्सक्लूड करता है:
 
 ```hcl file=./_data/terraform.tfvars.example
 ```
 
-`subscription_id` को अपने Azure सब्सक्रिप्शन ID (`az account show --query id -o tsv` से) और `target_fqdn` को अपने F5 XC लोड बैलेंसर डोमेन से बदलें।
+`subscription_id` को अपनी Azure सब्सक्रिप्शन ID (जो `az account show --query id -o tsv` से प्राप्त होती है) से और `target_fqdn` को अपने F5 XC लोड बैलेंसर डोमेन से बदलें।
 
-## डिप्लॉय करें
+## डिप्लॉय
 
 ```bash
 terraform init
@@ -113,23 +113,23 @@ terraform apply
 
 ## VM साइज़िंग
 
-इस CPU-बाउंड ट्रैफ़िक जनरेशन वर्कलोड के लिए F-series कंप्यूट-ऑप्टिमाइज़्ड VM की अनुशंसा की जाती है। cloud-init कर्नेल ट्यूनिंग और टूल कंकरेंसी vCPU काउंट के साथ स्वचालित रूप से स्केल होती है।
+इस CPU-बाउंड ट्रैफ़िक जनरेशन वर्कलोड के लिए F-series कम्प्यूट-ऑप्टिमाइज़्ड VMs की सिफ़ारिश की जाती है। cloud-init कर्नेल ट्यूनिंग और टूल कंकरेंसी vCPU काउंट के साथ स्वचालित रूप से स्केल होती है।
 
-| VM SKU | vCPU | RAM | नेटवर्क | उपयोग का मामला |
+| VM SKU | vCPU | RAM | नेटवर्क | उपयोग केस |
 |---|---|---|---|---|
 | Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | हल्का लैब/डेमो |
-| Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | मानक डेमो |
+| Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | स्टैंडर्ड डेमो |
 | Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | लोड टेस्टिंग (डिफ़ॉल्ट) |
-| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | भारी बेंचमार्किंग |
-| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM-भारी वर्कलोड |
+| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | हैवी बेंचमार्किंग |
+| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM-हैवी वर्कलोड |
 
 :::tip
-CDN F16s_v2 और F32s_v2 टार्गेट के विरुद्ध A/B/C/D बेंचमार्क टेस्टिंग द्वारा F16s_v2 को इष्टतम मूल्य-प्रदर्शन विकल्प के रूप में मान्य किया गया था। पूर्ण परिणामों के लिए [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) देखें।
+F16s_v2 को CDN F16s_v2 और F32s_v2 टार्गेट्स के विरुद्ध A/B/C/D बेंचमार्क टेस्टिंग द्वारा इष्टतम प्राइस-परफ़ॉर्मेंस विकल्प के रूप में सत्यापित किया गया है। पूर्ण परिणामों के लिए [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) देखें।
 :::
 
-## डिप्लॉय के बाद सत्यापन
+## डिप्लॉय-पश्चात सत्यापन
 
-Cloud-init प्रोविज़निंग में **स्टैंडर्ड टियर के लिए 15-20 मिनट** और **फुल टियर के लिए लगभग 25 मिनट** लगते हैं। VM तुरंत SSH के माध्यम से एक्सेसिबल है, लेकिन cloud-init पूरा होने तक टूल्स अभी भी इंस्टॉल हो रहे होते हैं।
+Cloud-init प्रोविज़निंग में **स्टैंडर्ड टियर के लिए 15-20 मिनट** और **फ़ुल टियर के लिए लगभग 25 मिनट** लगते हैं। VM तुरंत SSH के माध्यम से एक्सेसिबल है, लेकिन cloud-init पूरा होने तक टूल्स अभी भी इंस्टॉल हो रहे होते हैं।
 
 ### Cloud-Init की प्रतीक्षा करें
 
@@ -141,7 +141,7 @@ ssh azureuser@$(terraform output -raw public_ip)
 cloud-init status --wait
 ```
 
-पूर्ण होने पर अपेक्षित आउटपुट:
+पूरा होने पर अपेक्षित आउटपुट:
 
 ```
 status: done
@@ -149,7 +149,7 @@ status: done
 
 ### स्टेटस फ़ाइल जाँचें
 
-cloud-init स्क्रिप्ट पूर्ण होने पर एक स्टेटस फ़ाइल लिखती है:
+Cloud-init स्क्रिप्ट पूरा होने पर एक स्टेटस फ़ाइल लिखती है:
 
 ```bash
 cat /opt/traffic-generator/status.json
@@ -183,9 +183,9 @@ for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
 done
 ```
 
-### सूट रनर सत्यापित करें
+### सुइट रनर सत्यापित करें
 
-पुष्टि करें कि रनर और सूट इंस्टॉल हैं:
+पुष्टि करें कि रनर और सुइट इंस्टॉल हैं:
 
 ```bash
 ls /opt/traffic-generator/suites/runner.sh
@@ -198,10 +198,10 @@ ls /opt/traffic-generator/suites/*/
 
 | आउटपुट | विवरण | उदाहरण |
 |---|---|---|
-| `deployer` | रिज़ॉल्व किया गया डिप्लॉयर आइडेंटिफ़ायर | `jsmith` |
-| `public_ip` | ट्रैफ़िक जनरेटर VM का पब्लिक IP पता | `20.12.78.200` |
-| `private_ip` | VM का प्राइवेट IP पता | `10.201.0.4` |
-| `ssh_command` | VM से कनेक्ट करने का SSH कमांड | `ssh azureuser@20.12.78.200` |
+| `deployer` | रिज़ॉल्व्ड डिप्लॉयर आइडेंटिफ़ायर | `jsmith` |
+| `public_ip` | ट्रैफ़िक जनरेटर VM का पब्लिक IP एड्रेस | `20.12.78.200` |
+| `private_ip` | VM का प्राइवेट IP एड्रेस | `10.201.0.4` |
+| `ssh_command` | VM से कनेक्ट करने के लिए SSH कमांड | `ssh azureuser@20.12.78.200` |
 | `resource_group_name` | रिसोर्स ग्रुप का नाम | `rg-traffic-generator-dev-jsmith` |
 | `resource_group_id` | रिसोर्स ग्रुप Azure रिसोर्स ID | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith` |
 | `vm_name` | वर्चुअल मशीन का नाम | `vm-traffic-generator-dev-jsmith` |
@@ -213,7 +213,7 @@ ls /opt/traffic-generator/suites/*/
 | `component` | कंपोनेंट आइडेंटिफ़ायर | `traffic-generator` |
 | `environment` | डिप्लॉयमेंट एनवायरनमेंट | `dev` |
 | `location` | Azure रीजन | `eastus2` |
-| `target_fqdn` | ट्रैफ़िक सूट के लिए कॉन्फ़िगर किया गया टार्गेट FQDN | `demo.example.com` |
+| `target_fqdn` | ट्रैफ़िक सुइट्स के लिए कॉन्फ़िगर किया गया टार्गेट FQDN | `demo.example.com` |
 | `status_check` | प्रोविज़निंग स्टेटस जाँचने का कमांड | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
 
 कोई भी आउटपुट प्राप्त करें:
@@ -223,7 +223,7 @@ terraform output -raw public_ip
 terraform output -raw ssh_command
 ```
 
-## अपस्ट्रीम कंपोनेंट से वायरिंग
+## अपस्ट्रीम कंपोनेंट्स से वायरिंग
 
 ट्रैफ़िक जनरेटर एक F5 XC HTTP लोड बैलेंसर को टार्गेट करता है जो ऑरिजिन सर्वर के सामने होता है। पहले ऑरिजिन सर्वर डिप्लॉय करें, F5 XC कॉन्फ़िगर करें, फिर `target_fqdn` को लोड बैलेंसर के FQDN पर सेट करें:
 
@@ -239,6 +239,6 @@ EOF
 | आवश्यक वेरिएबल | स्रोत | विवरण |
 |---|---|---|
 | `target_fqdn` | F5 XC कंसोल | ऑरिजिन सर्वर की सुरक्षा करने वाले HTTP लोड बैलेंसर का FQDN |
-| `target_origin_ip` | ऑरिजिन सर्वर `public_ip` आउटपुट | बायपास टेस्टिंग के लिए डायरेक्ट ऑरिजिन IP (वैकल्पिक) |
+| `target_origin_ip` | ऑरिजिन सर्वर `public_ip` आउटपुट | बाईपास टेस्टिंग के लिए डायरेक्ट ऑरिजिन IP (वैकल्पिक) |
 
-संपूर्ण टूल संदर्भ के लिए [Tool Catalog](../04-tool-catalog/) या ट्रैफ़िक जनरेट करना शुरू करने के लिए [Suites](../05-suites/) पर आगे बढ़ें।
+पूर्ण टूल संदर्भ के लिए [टूल कैटलॉग](../04-tool-catalog/) या ट्रैफ़िक जनरेट करना शुरू करने के लिए [सुइट्स](../05-suites/) पर आगे बढ़ें।

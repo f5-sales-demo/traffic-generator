@@ -1,9 +1,10 @@
 ---
-title: Prerrequisitos
+title: Requisitos previos
 description: >-
-  Azure subscription with Contributor role, Terraform >= 1.5, SSH key pair
-  (Ed25519 recommended), Azure CLI for subscription_id lookup, and outbound
-  HTTPS for tool downloads during cloud-init provisioning
+  Suscripción de Azure con rol Contributor, Terraform >= 1.5, par de claves SSH
+  (se recomienda Ed25519), Azure CLI para la búsqueda de subscription_id y HTTPS
+  saliente para la descarga de herramientas durante el aprovisionamiento con
+  cloud-init
 sidebar:
   order: 2
 i18n:
@@ -11,11 +12,11 @@ i18n:
   translator: machine
 ---
 
-## Requeridos
+## Obligatorios
 
 ### Suscripción de Azure
 
-Una suscripción activa de Azure con rol de Contributor o permisos equivalentes para crear:
+Una suscripción activa de Azure con rol Contributor o permisos equivalentes para crear:
 
 - Grupos de recursos
 - Redes virtuales y subredes
@@ -45,7 +46,7 @@ Se requiere Terraform >= 1.5:
 terraform version
 ```
 
-Si no está instalado, use el repositorio APT de HashiCorp:
+Si no está instalado, utilice el repositorio APT de HashiCorp:
 
 ```bash
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -55,7 +56,7 @@ sudo apt update && sudo apt install terraform
 
 ### Par de claves SSH
 
-Un par de claves SSH para acceder a la VM. Se recomienda Ed25519:
+Un par de claves SSH para el acceso a la VM. Se recomienda Ed25519:
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
@@ -71,22 +72,22 @@ La VM del Generador de Tráfico requiere acceso HTTPS saliente durante el aprovi
 - Repositorios APT de Ubuntu (nikto, nmap, masscan, hydra, tshark y otros paquetes del sistema)
 - Repositorios Git (testssl.sh, recon-ng, spiderfoot, SecLists)
 
-Si su suscripción de Azure aplica reglas de firewall saliente o restricciones de NSG, asegúrese de que HTTPS (puerto 443) hacia estas fuentes esté permitido durante la ventana de aprovisionamiento inicial (15-25 minutos).
+Si su suscripción de Azure aplica reglas de firewall saliente o restricciones de NSG, asegúrese de que el tráfico HTTPS (puerto 443) hacia estas fuentes esté permitido durante la ventana de aprovisionamiento inicial (15-25 minutos).
 
-### Componentes pre-desplegados
+### Componentes previamente desplegados
 
 Antes de desplegar el Generador de Tráfico, debe tener:
 
-1. **Origin Server** desplegado y accesible (consulte la [documentación de origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
-2. **F5 XC HTTP Load Balancer** configurado con el origin server como backend
-3. Una **política WAF** adjunta al load balancer (para la validación del tráfico WAF)
+1. **Servidor de origen** desplegado y accesible (consulte la [documentación del servidor de origen](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+2. **Balanceador de carga HTTP de F5 XC** configurado con el servidor de origen como backend
+3. Una **política WAF** adjunta al balanceador de carga (para la validación del tráfico WAF)
 
-La variable de Terraform `target_fqdn` debe configurarse con el dominio público del load balancer de F5 XC.
+La variable de Terraform `target_fqdn` debe establecerse con el dominio público del balanceador de carga de F5 XC.
 
 :::tip
-Use `terraform destroy` cuando el laboratorio no esté en uso para evitar cargos continuos. Consulte [Desmantelamiento](../08-teardown/) para el procedimiento.
+Utilice `terraform destroy` cuando el laboratorio no esté en uso para evitar cargos continuos. Consulte [Desmontaje](../08-teardown/) para conocer el procedimiento.
 :::
 
 :::note
-Standard_F16s_v2 (32 GiB RAM) es el valor por defecto porque varias herramientas se ejecutan concurrentemente durante la ejecución de suites. La automatización de navegadores (Playwright, Puppeteer) con Chromium en modo headless es el principal consumidor de memoria. Los SKUs más pequeños de la serie F funcionarán para suites sin navegador, pero pueden quedarse justos al ejecutar simulación de bots.
+Standard_F16s_v2 (32 GiB de RAM) es el valor predeterminado porque varias herramientas se ejecutan simultáneamente durante la ejecución de las suites. La automatización de navegadores (Playwright, Puppeteer) con Chromium en modo headless es el principal consumidor de memoria. SKUs F-series más pequeños funcionarán para suites sin navegador, pero pueden resultar ajustados al ejecutar simulación de bots.
 :::

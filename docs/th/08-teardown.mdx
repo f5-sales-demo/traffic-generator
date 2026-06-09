@@ -1,8 +1,8 @@
 ---
-title: Teardown
+title: การรื้อถอน
 description: >-
-  terraform destroy to remove all Azure resources, verify resource group
-  deletion with az CLI, and clean local state files
+  terraform destroy เพื่อลบทรัพยากร Azure ทั้งหมด, ตรวจสอบการลบ resource group
+  ด้วย az CLI, และล้างไฟล์ state ในเครื่อง
 sidebar:
   order: 8
 i18n:
@@ -12,7 +12,7 @@ i18n:
 
 เมื่อเซสชันแล็บเสร็จสิ้น ให้ทำลายทรัพยากร Azure ทั้งหมดเพื่อหยุดการเรียกเก็บเงิน
 
-## Terraform Destroy
+## การทำลายด้วย Terraform
 
 จากไดเรกทอรี `terraform/`:
 
@@ -24,11 +24,11 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform จะขอการยืนยัน พิมพ์ `yes` เพื่อดำเนินการต่อ
+Terraform จะถามยืนยัน พิมพ์ `yes` เพื่อดำเนินการต่อ
 
 ## ตรวจสอบการล้างข้อมูล
 
-ยืนยันว่าทรัพยากรทั้งหมดถูกลบออกแล้ว:
+ยืนยันว่าทรัพยากรทั้งหมดถูกลบแล้ว:
 
 ```bash
 RG_NAME=$(terraform output -raw resource_group_name)
@@ -42,7 +42,7 @@ az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
 
 ## ล้าง State ในเครื่อง
 
-ลบไฟล์ Terraform state และไฟล์แคช:
+ลบไฟล์ state และไฟล์แคชของ Terraform:
 
 ```bash
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
@@ -50,7 +50,7 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## เก็บผลลัพธ์ไว้ (ไม่บังคับ)
 
-หากคุณต้องการเก็บผลลัพธ์ของชุดทดสอบ traffic ไว้ก่อนที่จะทำลาย VM ให้คัดลอกมาไว้ในเครื่อง:
+หากคุณต้องการเก็บผลลัพธ์ของชุดทดสอบทราฟฟิกก่อนทำลาย VM ให้คัดลอกมาไว้ในเครื่อง:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -63,9 +63,9 @@ LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head 
 scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
 ```
 
-## ล้างข้อมูล F5 XC
+## การล้าง F5 XC
 
-หากคุณต้องการลบการกำหนดค่า F5 XC ที่ตัวสร้าง traffic กำลังเล็งเป้าหมายอยู่ด้วย:
+หากคุณต้องการลบการกำหนดค่า F5 XC ที่ตัวสร้างทราฟฟิกกำลังเป้าหมายอยู่ด้วย:
 
 1. ลบ HTTP load balancer
 2. ลบ origin pool
@@ -74,5 +74,5 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 ทรัพยากร F5 XC เหล่านี้ไม่มีค่าใช้จ่าย Azure แต่ควรล้างออกเมื่อไม่ต้องการสภาพแวดล้อมสาธิตอีกต่อไป
 
 :::tip
-สำหรับการใช้งานสาธิตที่ทำซ้ำ ให้พิจารณาเขียนสคริปต์สำหรับวงจรชีวิตแบบเต็ม: `cd terraform && terraform apply` ก่อนการสาธิต รันชุดทดสอบ จากนั้น `terraform destroy` หลังเสร็จสิ้น ระดับมาตรฐานใช้เวลาจัดเตรียม 15-20 นาที ทำให้การตั้งค่าและทำลายในวันเดียวกันเป็นไปได้จริง
+สำหรับการใช้งานสาธิตซ้ำ ให้พิจารณาเขียนสคริปต์สำหรับวงจรชีวิตทั้งหมด: `cd terraform && terraform apply` ก่อนการสาธิต, รันชุดทดสอบ, จากนั้น `terraform destroy` หลังจากเสร็จ ระดับมาตรฐานใช้เวลาจัดเตรียม 15-20 นาที ทำให้การตั้งค่าและรื้อถอนในวันเดียวกันเป็นไปได้อย่างเหมาะสม
 :::

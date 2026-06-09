@@ -29,7 +29,7 @@ runner.sh <suite-name> [--dry-run]
 | Argumento | Requerido | Descripción |
 |---|---|---|
 | `suite-name` | Sí | Nombre del directorio de la suite (p. ej., `web-app-attacks`, `api-attacks`) |
-| `--dry-run` | No | Muestra lo que se ejecutaría sin ejecutar ningún script |
+| `--dry-run` | No | Imprime lo que se ejecutaría sin ejecutar ningún script |
 
 **Ejemplos:**
 
@@ -58,7 +58,7 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=
 ```
 
-Este archivo se escribe automáticamente durante el aprovisionamiento de Terraform a partir de las variables `target_fqdn` y `target_origin_ip`. Para cambiar el destino después del despliegue, edite este archivo directamente en la VM.
+Este archivo se escribe automáticamente durante el aprovisionamiento de Terraform a partir de las variables `target_fqdn` y `target_origin_ip`. Para cambiar el objetivo después del despliegue, edite este archivo directamente en la VM.
 
 ### Sobreescritura de variables de entorno
 
@@ -81,7 +81,7 @@ CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-a
 
 ## Modo Dry-Run
 
-La bandera `--dry-run` muestra cada script que se ejecutaría sin ejecutarlo realmente:
+La bandera `--dry-run` imprime cada script que se ejecutaría sin ejecutarlo:
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
@@ -107,7 +107,7 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-Use dry-run para verificar la estructura de la suite después del despliegue o antes de ejecutar una suite contra un nuevo destino.
+Use dry-run para verificar la estructura de la suite después del despliegue o antes de ejecutar una suite contra un nuevo objetivo.
 
 ## Directorio de resultados
 
@@ -130,7 +130,7 @@ Cada ejecución de suite crea un directorio de resultados con marca de tiempo:
   06-nuclei-scan.sh.log
 ```
 
-La salida stdout y stderr de cada script se captura en un archivo `.log` con el nombre del script.
+La salida estándar (stdout) y la salida de error (stderr) de cada script se capturan en un archivo `.log` con el nombre del script.
 
 ### Formato de meta.json
 
@@ -152,16 +152,16 @@ El archivo `meta.json` registra los metadatos de ejecución de la suite:
 | Campo | Descripción |
 |---|---|
 | `suite` | Nombre de la suite |
-| `target` | FQDN del destino utilizado para la ejecución |
+| `target` | FQDN del objetivo utilizado para la ejecución |
 | `started` | Marca de tiempo UTC de inicio de la suite |
 | `completed` | Marca de tiempo UTC de finalización de la suite |
 | `status` | `running` durante la ejecución, `completed` cuando finaliza |
-| `passed` | Número de scripts que terminaron con código de salida 0 |
-| `failed` | Número de scripts que terminaron con código de salida distinto de cero |
-| `skipped` | Número de scripts omitidos (no ejecutables o en dry-run) |
+| `passed` | Número de scripts que finalizaron con código de salida 0 |
+| `failed` | Número de scripts que finalizaron con código de salida distinto de cero |
+| `skipped` | Número de scripts omitidos (no ejecutables o dry-run) |
 
 <Aside type="tip">
-Un código de salida distinto de cero de un script no significa necesariamente que la suite haya fallado. Muchas herramientas de seguridad terminan con código distinto de cero cuando encuentran vulnerabilidades, lo cual es el comportamiento esperado durante la generación de tráfico de ataque.
+Un código de salida distinto de cero de un script no necesariamente significa que la suite falló. Muchas herramientas de seguridad finalizan con código distinto de cero cuando encuentran vulnerabilidades, lo cual es el comportamiento esperado durante la generación de tráfico de ataque.
 </Aside>
 
 ## Ejecución de scripts individuales
@@ -176,11 +176,11 @@ Cada script puede ejecutarse de forma independiente sin el runner:
 /opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
 ```
 
-Los scripts aceptan el FQDN del destino como primer argumento posicional. No leen `config.env` directamente -- solo el runner lo hace. Al ejecutarlos de forma independiente, debe pasar el FQDN explícitamente.
+Los scripts aceptan el FQDN del objetivo como primer argumento posicional. No leen `config.env` directamente -- solo el runner lo hace. Al ejecutarlos de forma independiente, debe pasar el FQDN explícitamente.
 
 ## Ejecución de todas las suites en secuencia
 
-Para ejecutar todas las suites consecutivamente:
+Para ejecutar todas las suites una tras otra:
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -192,7 +192,7 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-Esto genera tráfico exhaustivo que abarca todas las funcionalidades de seguridad de F5 XC. Espere que la ejecución completa tome entre 45 y 80 minutos dependiendo de los tiempos de respuesta del destino.
+Esto genera tráfico integral a través de todas las funcionalidades de seguridad de F5 XC. Se espera que la ejecución completa tarde entre 45 y 80 minutos dependiendo de los tiempos de respuesta del objetivo.
 
 ## Ejecución remota vía SSH
 
@@ -215,7 +215,7 @@ ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-Para suites de larga duración, use `nohup` o `tmux` para evitar que una desconexión SSH termine el proceso:
+Para suites de larga duración, use `nohup` o `tmux` para evitar que la desconexión SSH termine el proceso:
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'

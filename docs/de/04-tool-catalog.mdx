@@ -1,9 +1,9 @@
 ---
 title: Werkzeugkatalog
 description: >-
-  Vollständiger Katalog von über 50 Sicherheitswerkzeugen, die auf der
-  Traffic-Generator-VM installiert sind, organisiert nach Kategorie mit
-  Installationsmethode, Beispielbefehlen und Zuordnungen zu Traffic-Suiten
+  Vollständiger Katalog von über 50 auf der Traffic-Generator-VM installierten
+  Sicherheitstools, organisiert nach Kategorie mit Installationsmethode,
+  Beispielbefehlen und Traffic-Suite-Zuordnungen
 sidebar:
   order: 4
 i18n:
@@ -11,11 +11,11 @@ i18n:
   translator: machine
 ---
 
-Alle unten aufgeführten Werkzeuge werden während der Cloud-Init-Bereitstellung vorinstalliert. Nach dem Deployment ist keine manuelle Installation erforderlich.
+Alle unten aufgeführten Tools sind während der Cloud-Init-Bereitstellung vorinstalliert. Nach dem Deployment ist keine manuelle Installation erforderlich.
 
-## Testen von Webanwendungen
+## Webanwendungstests
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | nikto | apt | `nikto -h https://TARGET -maxtime 120s` | web-app-attacks |
 | sqlmap | apt | `sqlmap --batch -u "https://TARGET/dvwa/vulnerabilities/sqli/?id=1"` | web-app-attacks, api-attacks |
@@ -30,16 +30,16 @@ Alle unten aufgeführten Werkzeuge werden während der Cloud-Init-Bereitstellung
 
 ## WAF-Umgehungstests
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
 | waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
 
-GoTestWAF (von Wallarm) ist ein branchenübliches WAF-Bewertungsframework, das Payloads über mehrere Encoder (URL, Base64, JSUnicode) und Platzierungszonen (Body, Header, URL-Parameter, Cookie) multipliziert. waf-bypass (von Nemesida) sendet Payloads mit Base64-, HTML-ENTITY- und UTF-16-Kodierung über ARGS-, BODY-, COOKIE- und HEADER-Zonen.
+GoTestWAF (von Wallarm) ist ein branchenübliches WAF-Bewertungs-Framework, das Payloads über mehrere Encoder (URL, Base64, JSUnicode) und Platzierungszonen (Body, Header, URL-Parameter, Cookie) multipliziert. waf-bypass (von Nemesida) sendet Payloads mit Base64-, HTML-ENTITY- und UTF-16-Kodierung über ARGS-, BODY-, COOKIE- und HEADER-Zonen.
 
 ## Netzwerkanalyse
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | nmap | apt | `nmap -sV -sC -p 80,443 TARGET_IP` | reconnaissance |
 | masscan | apt | `masscan TARGET_IP -p 1-1000 --rate=1000` | reconnaissance |
@@ -53,7 +53,7 @@ GoTestWAF (von Wallarm) ist ein branchenübliches WAF-Bewertungsframework, das P
 
 ## SSL/TLS-Tests
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | sslscan | apt | `sslscan TARGET:443` | ssl-scanning |
 | sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
@@ -61,24 +61,24 @@ GoTestWAF (von Wallarm) ist ein branchenübliches WAF-Bewertungsframework, das P
 
 ## MITM und Proxy
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | mitmproxy | uv | `mitmproxy --mode reverse:https://TARGET -p 8080` | -- |
 | socat | apt | `socat TCP-LISTEN:8080,fork TCP:TARGET:443` | -- |
 
 ## Browser-Automatisierung
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
 | puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
-| puppeteer-extra-plugin-stealth | npm | Wird als Puppeteer-Plugin für verdecktes Browsing verwendet | bot-simulation |
+| puppeteer-extra-plugin-stealth | npm | Wird als Puppeteer-Plugin für getarntes Browsing verwendet | bot-simulation |
 
 Playwright installiert sein eigenes Chromium-Binary über `playwright install chromium`. Puppeteer verwendet nach Möglichkeit dasselbe System-Chromium.
 
 ## Subdomain- und DNS-Enumeration
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | subfinder | ghlatest | `subfinder -d example.com -silent` | reconnaissance |
 | httpx | ghlatest | `echo TARGET | httpx -status-code -title` | reconnaissance |
@@ -88,9 +88,9 @@ Playwright installiert sein eigenes Chromium-Binary über `playwright install ch
 | whois | apt | `whois example.com` | reconnaissance |
 | dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
 
-## Anmeldedaten-Tests
+## Anmeldedatentests
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | hydra | apt | `hydra -l admin -P /opt/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt TARGET https-post-form "/dvwa/login.php:..."` | web-app-attacks |
 | medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
@@ -98,7 +98,7 @@ Playwright installiert sein eigenes Chromium-Binary über `playwright install ch
 
 ## Python-Sicherheitsbibliotheken
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | scapy | pip | `python3 -c "from scapy.all import *; sr1(IP(dst='TARGET')/TCP(dport=443,flags='S'))"` | reconnaissance |
 | impacket | pip | `python3 -m impacket.smbclient TARGET` | reconnaissance |
@@ -109,7 +109,7 @@ Playwright installiert sein eigenes Chromium-Binary über `playwright install ch
 
 ## OSINT und Aufklärung
 
-| Werkzeug | Installationsmethode | Speicherort | Verwendet von Suite |
+| Tool | Installationsmethode | Speicherort | Verwendet von Suite |
 |---|---|---|---|
 | recon-ng | git clone | `/opt/recon-ng/` | reconnaissance |
 | spiderfoot | git clone | `/opt/spiderfoot/` | reconnaissance |
@@ -117,31 +117,31 @@ Playwright installiert sein eigenes Chromium-Binary über `playwright install ch
 | PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
 | waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
 
-SecLists stellt Wortlisten bereit, die von mehreren Werkzeugen verwendet werden, darunter ffuf, gobuster, feroxbuster, dirb und hydra. PayloadsAllTheThings bietet kuratierte Multi-Encoding-Angriffs-Payloads, organisiert nach Angriffsklasse (XSS, SQLi, XXE) mit Hex-, Oktal-, Unicode-, HTML-Entity-, doppelter URL-Kodierung und JSFuck-Varianten.
+SecLists stellt Wortlisten bereit, die von mehreren Tools verwendet werden, darunter ffuf, gobuster, feroxbuster, dirb und hydra. PayloadsAllTheThings bietet kuratierte Multi-Encoding-Angriffs-Payloads, organisiert nach Angriffsklasse (XSS, SQLi, XXE) mit Hex-, Oktal-, Unicode-, HTML-Entity-, doppelter URL-Kodierung und JSFuck-Varianten.
 
-## Nur im Full-Tier
+## Nur Vollversion
 
-Diese Werkzeuge werden nur installiert, wenn `tool_tier = "full"`:
+Diese Tools werden nur installiert, wenn `tool_tier = "full"`:
 
-| Werkzeug | Installationsmethode | Beispielbefehl | Verwendet von Suite |
+| Tool | Installationsmethode | Beispielbefehl | Verwendet von Suite |
 |---|---|---|---|
 | ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
 | Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
 
 :::note
-ZAP und Metasploit fügen dem Speicherbedarf ungefähr 1,5 GiB hinzu und verlängern die Bereitstellungszeit um 5-10 Minuten. Verwenden Sie das Full-Tier nur, wenn Sie diese Werkzeuge speziell für eine Demo benötigen.
+ZAP und Metasploit fügen dem Speicherbedarf etwa 1,5 GiB hinzu und verlängern die Bereitstellungszeit um 5-10 Minuten. Verwenden Sie die Vollversion nur, wenn Sie diese Tools speziell für eine Demo benötigen.
 :::
 
 ## Referenz der Installationsmethoden
 
 | Methode | Beschreibung |
 |---|---|
-| apt | Installiert aus den Ubuntu 24.04 APT-Repositories über `apt-get install` |
-| ghlatest | Neuestes Binary von GitHub Releases heruntergeladen mittels `ghlatest.sh` und `install-release.sh` |
-| uv | Installiert als Python-Werkzeug mit dem Paketmanager `uv` |
+| apt | Installiert aus Ubuntu 24.04 APT-Repositories über `apt-get install` |
+| ghlatest | Neuestes Binary von GitHub Releases heruntergeladen mit `ghlatest.sh` und `install-release.sh` |
+| uv | Installiert als Python-Tool mit dem `uv`-Paketmanager |
 | pip | Installiert als Python-Paket mit `pip install` in das System-Python |
 | npm | Installiert als globales Node.js-Paket mit `npm install -g` |
-| go install | Aus dem Quellcode kompiliert mit `go install` und installiert nach `/usr/local/bin` |
-| git clone | Repository geklont in das Verzeichnis `/opt/` |
+| go install | Aus Quellcode kompiliert mit `go install` und installiert nach `/usr/local/bin` |
+| git clone | Repository geklont in das `/opt/`-Verzeichnis |
 | git clone + pip | Repository geklont und Python-Abhängigkeiten installiert |
-| installer script | Vom Hersteller bereitgestelltes Installationsskript, das während Cloud-Init ausgeführt wird |
+| installer script | Vom Anbieter bereitgestelltes Installationsskript, ausgeführt während Cloud-Init |

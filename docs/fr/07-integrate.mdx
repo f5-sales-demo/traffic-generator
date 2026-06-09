@@ -29,7 +29,7 @@ graph LR
     TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
 ```
 
-Chaque composant est déployé et configuré indépendamment via Terraform. Le générateur de trafic cible le FQDN du répartiteur de charge F5 XC, et non directement le serveur d'origine.
+Chaque composant est déployé et configuré indépendamment via Terraform. Le générateur de trafic cible le FQDN du répartiteur de charge F5 XC, et non le serveur d'origine directement.
 
 ## Intégration du serveur d'origine
 
@@ -51,13 +51,13 @@ Le [serveur d'origine](https://f5xc-salesdemos.github.io/origin-server/) fournit
 | performance-testing | Toutes les applications | Tous les chemins |
 | reconnaissance | Toutes les applications | Tous les chemins |
 | restaurant-exploits | Restaurant API | `/restaurant/` |
-| ssl-scanning | F5 XC LB (pas directement l'origine) | N/A |
+| ssl-scanning | F5 XC LB (pas l'origine directement) | N/A |
 | traffic-generation | Toutes les applications | Tous les chemins |
 | web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
 
 ### Ordre de déploiement
 
-1. Déployez le **serveur d'origine** en premier — il fournit les applications backend
+1. Déployez le **serveur d'origine** en premier -- il fournit les applications backend
 2. Configurez le **répartiteur de charge HTTP F5 XC** avec le serveur d'origine comme pool d'origine
 3. Attachez les **politiques WAF, Bot Defense, API Security et CSD** au répartiteur de charge
 4. Déployez le **générateur de trafic** avec `target_fqdn` défini sur le domaine du LB F5 XC
@@ -80,14 +80,14 @@ Lorsque `TARGET_FQDN` est défini, tous les scripts de suite envoient le trafic 
 
 La suite `javascript-exploits` est spécifiquement conçue pour la démonstration Client-Side Defense sur le serveur d'origine. Cette suite valide la fonctionnalité CSD Phase 2 :
 
-**Flux de la Phase 2 :**
+**Flux Phase 2 :**
 
 1. Le serveur d'origine héberge la page de démo CSD à `/csd-demo/`
 2. F5 XC CSD injecte son JavaScript de surveillance dans la page
-3. La suite javascript-exploits du générateur de trafic tente :
-   - D'injecter des scripts en ligne imitant les skimmers Magecart
-   - De modifier les éléments DOM pour rediriger les soumissions de formulaires
-   - De charger du JavaScript tiers non autorisé
+3. La suite javascript-exploits du générateur de trafic tente de :
+   - Injecter des scripts inline qui imitent les skimmers Magecart
+   - Modifier les éléments DOM pour rediriger les soumissions de formulaires
+   - Charger du JavaScript tiers non autorisé
 4. F5 XC CSD détecte ces modifications et les signale dans le tableau de bord CSD
 
 Pour utiliser la suite javascript-exploits :
@@ -115,13 +115,13 @@ TARGET_FQDN=cdn.demo.example.com
 
 Ceci est utile pour démontrer comment F5 XC gère le trafic qui arrive via un CDN, notamment :
 
-- L'identification de la véritable adresse IP du client derrière les en-têtes proxy du CDN
+- L'identification de la véritable IP client derrière les en-têtes proxy du CDN
 - L'application des règles WAF aux requêtes qui peuvent avoir été modifiées par le CDN
-- La classification Bot Defense lorsque le CDN modifie les empreintes numériques du navigateur
+- La classification Bot Defense lorsque le CDN modifie les empreintes de navigateur
 
 ## Comparaison trafic direct vs via le LB
 
-Le générateur de trafic prend en charge l'envoi de trafic à la fois via F5 XC et directement vers l'origine. Cette comparaison démontre la valeur des fonctionnalités de sécurité de F5 XC :
+Le générateur de trafic prend en charge l'envoi de trafic à la fois via F5 XC et directement vers l'origine. Cette comparaison démontre la valeur des fonctionnalités de sécurité F5 XC :
 
 ### Via F5 XC (par défaut)
 
@@ -132,7 +132,7 @@ TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-att
 
 Résultat attendu : le WAF bloque les charges utiles d'injection SQL, XSS et d'injection de commandes. Le tableau de bord Security Events affiche les requêtes bloquées avec les détails des violations.
 
-### Directement vers l'origine (référence)
+### Directement vers l'origine (ligne de base)
 
 ```bash
 # Traffic goes: Generator -> Origin (no security layer)
@@ -145,8 +145,8 @@ Résultat attendu : toutes les charges utiles atteignent les applications d'orig
 
 Pour une démonstration convaincante, exécutez la même suite des deux manières :
 
-1. Exécutez `web-app-attacks` directement contre l'origine — montrez que les attaques réussissent
-2. Exécutez `web-app-attacks` via F5 XC — montrez que les attaques sont bloquées
+1. Exécutez `web-app-attacks` directement contre l'origine -- montrez que les attaques réussissent
+2. Exécutez `web-app-attacks` via F5 XC -- montrez que les attaques sont bloquées
 3. Ouvrez le tableau de bord F5 XC Security Events pour afficher les requêtes bloquées
 4. Comparez les résultats `meta.json` de la suite : les exécutions directes montrent plus de « passed » (attaques réussies), les exécutions via le LB montrent plus de « failed » (attaques bloquées)
 
@@ -167,7 +167,7 @@ ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | hea
 
 ## Déploiement Terraform multi-composants
 
-Lors du déploiement de l'environnement de laboratoire complet, utilisez des espaces de travail ou des répertoires Terraform séparés pour chaque composant :
+Lors du déploiement de l'environnement de laboratoire complet, utilisez des espaces de travail ou répertoires Terraform distincts pour chaque composant :
 
 ```bash
 # 1. Deploy origin server

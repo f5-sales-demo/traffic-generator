@@ -1,10 +1,10 @@
 ---
-title: Deploy
+title: Déploiement
 description: >-
-  Terraform IaC deployment of the traffic generator Azure VM — F-series
-  compute-optimized VM with Ubuntu 24.04, kernel tuning, 50+ security tools, and
-  19 traffic suites provisioned via cloud-init. All configuration files are in
-  the terraform/ directory.
+  Déploiement Terraform IaC de la VM Azure du générateur de trafic — VM de série
+  F optimisée pour le calcul avec Ubuntu 24.04, optimisation du noyau, plus de
+  50 outils de sécurité et 19 suites de trafic provisionnées via cloud-init.
+  Tous les fichiers de configuration se trouvent dans le répertoire terraform/.
 sidebar:
   order: 3
 i18n:
@@ -25,26 +25,26 @@ cp terraform.tfvars.example terraform.tfvars
 
 ### Structure des fichiers Terraform
 
-Le répertoire terraform contient 9 fichiers conformes au Demo Resource Standard :
+Le répertoire terraform contient 9 fichiers suivant le standard des ressources de démonstration :
 
-- `versions.tf` -- Contraintes de version Terraform et des providers (azurerm ~> 4.0, azuread ~> 3.0)
-- `providers.tf` -- Configuration des providers Azure RM et Azure AD
+- `versions.tf` -- Contraintes de version Terraform et des fournisseurs (azurerm ~> 4.0, azuread ~> 3.0)
+- `providers.tf` -- Configuration des fournisseurs Azure RM et Azure AD
 - `data.tf` -- Sources de données Azure AD pour la résolution automatique du déployeur
-- `locals.tf` -- Résolution du déployeur, nommage des ressources selon l'Azure Cloud Adoption Framework, tags standards
+- `locals.tf` -- Résolution du déployeur, nommage des ressources selon le Azure Cloud Adoption Framework, tags standards
 - `main.tf` -- Groupe de ressources (nommé `rg-traffic-generator-{environment}-{deployer}`)
 - `variables.tf` -- Toutes les variables d'entrée (2 requises, 9 optionnelles) avec résolution automatique du déployeur via Azure AD
 - `network.tf` -- VNet (10.201.0.0/16), sous-réseau, IP publique, NSG (port 22 SSH), NIC
 - `vm.tf` -- VM Ubuntu 24.04 avec cloud-init via templatefile()
-- `outputs.tf` -- 17 sorties : 15 sorties standards partagées par toutes les ressources de démonstration (deployer, public_ip, private_ip, ssh_command, resource_group_name, vm_name, nsg_name, vnet_name, subnet_id, component, environment, resource_group_id, vm_id, nsg_id, location) plus 2 sorties spécifiques au composant (target_fqdn, status_check)
+- `outputs.tf` -- 17 sorties : 15 sorties standard partagées par toutes les ressources de démonstration (deployer, public_ip, private_ip, ssh_command, resource_group_name, vm_name, nsg_name, vnet_name, subnet_id, component, environment, resource_group_id, vm_id, nsg_id, location) plus 2 sorties spécifiques au composant (target_fqdn, status_check)
 
-### Provider et variables
+### Fournisseur et variables
 
-`main.tf` configure le provider Azure :
+`main.tf` configure le fournisseur Azure :
 
 ```hcl file=./_data/main.tf
 ```
 
-`variables.tf` définit tous les paramètres configurables. La valeur par défaut de `vm_size` est `Standard_F16s_v2` (16 vCPU optimisé pour le calcul) -- voir [Dimensionnement des VM](#dimensionnement-des-vm) pour les recommandations de mise à l'échelle :
+`variables.tf` définit tous les paramètres configurables. La valeur par défaut de `vm_size` est `Standard_F16s_v2` (16 vCPU optimisées pour le calcul) -- voir [Dimensionnement des VM](#dimensionnement-des-vm) pour les recommandations de mise à l'échelle :
 
 ```hcl file=./_data/variables.tf
 ```
@@ -58,27 +58,27 @@ Le répertoire terraform contient 9 fichiers conformes au Demo Resource Standard
 
 ### Machine virtuelle avec Cloud-Init
 
-`vm.tf` crée la VM Ubuntu 24.04 et transmet le template cloud-init avec les variables de cible et d'outillage :
+`vm.tf` crée la VM Ubuntu 24.04 et transmet le modèle cloud-init avec les variables de cible et d'outillage :
 
 ```hcl file=./_data/vm.tf
 ```
 
 ### Provisionnement Cloud-Init
 
-`cloud-init.yaml` est la configuration validée en production, vérifiée au cours de plus de 48 heures de tests de charge continus incluant 4 cycles de tests de torture de l'origine. Elle utilise une bibliothèque d'aide avec logique de tentatives multiples, journalisation de la progression dans `/var/log/cloud-init-progress.log`, 9 phases de provisionnement et rapport d'état conditionnel (ready/degraded dans `status.json`). Elle provisionne :
+`cloud-init.yaml` est la configuration validée en production, vérifiée lors de plus de 48 heures de tests de charge continus incluant 4 séries de tests de torture de l'origine. Elle utilise une bibliothèque utilitaire avec logique de réessai, journalisation de la progression dans `/var/log/cloud-init-progress.log`, 9 phases de provisionnement et rapport de statut conditionnel (ready/degraded dans `status.json`). Elle provisionne :
 
 - **Optimisation du noyau** -- `somaxconn=131072`, `tcp_max_tw_buckets=4000000`, `tcp_fin_timeout=5`, tampons de socket de 64 Mio, `file-max=4194304`
-- **Optimisation NIC** -- RPS/RFS sur tous les cœurs, tampons annulaires maximisés via ethtool, THP=always
+- **Optimisation de la NIC** -- RPS/RFS sur tous les cœurs, tampons annulaires maximisés via ethtool, THP=always
 - **Paquets APT** -- nikto, nmap, masscan, sqlmap, hydra, medusa, ncrack, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr, sslscan, socat, dirb, whatweb, wrk, hey, vegeta, ethtool
 - **GitHub Releases** -- nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass
 - **Paquets Python** -- mitmproxy, sslyze, dnsrecon, fierce, theHarvester, playwright, scapy, impacket, arjun
 - **Node.js 20.x** -- Puppeteer avec plugin stealth pour la simulation de bots
-- **Automatisation navigateur** -- Playwright Chromium pour les tests en navigateur headless
+- **Automatisation du navigateur** -- Playwright Chromium pour les tests de navigateur headless
 - **Clones Git** -- testssl.sh, recon-ng, spiderfoot, SecLists, waf-bypass, PayloadsAllTheThings
 - **Déploiement des suites** -- 19 suites de trafic clonées depuis ce dépôt vers `/opt/traffic-generator/suites/`
 - **Fichier de configuration** -- `config.env` avec `TARGET_FQDN`, `TARGET_ORIGIN_IP` et `CRAPI_PORT`
 
-Le cloud-init utilise des variables de template Terraform : `${target_fqdn}`, `${target_origin_ip}` et `${tool_tier}`. Les variables shell comme `$NPROC` sont échappées en `$$NPROC` dans le templatefile Terraform.
+Le cloud-init utilise des variables de modèle Terraform : `${target_fqdn}`, `${target_origin_ip}` et `${tool_tier}`. Les variables shell comme `$NPROC` sont échappées en `$$NPROC` dans le templatefile de Terraform.
 
 ```yaml file=./_data/cloud-init.yaml
 ```
@@ -92,14 +92,14 @@ Le cloud-init utilise des variables de template Terraform : `${target_fqdn}`, `$
 
 ### Exemple de fichier de variables
 
-Copiez `terraform.tfvars.example` vers `terraform.tfvars` et renseignez vos valeurs. Le `.gitignore` exclut `terraform.tfvars` pour éviter de commettre des identifiants :
+Copiez `terraform.tfvars.example` vers `terraform.tfvars` et renseignez vos valeurs. Le fichier `.gitignore` exclut `terraform.tfvars` pour empêcher la validation d'identifiants :
 
 ```hcl file=./_data/terraform.tfvars.example
 ```
 
 Remplacez `subscription_id` par votre ID d'abonnement Azure (obtenu via `az account show --query id -o tsv`) et `target_fqdn` par le domaine de votre répartiteur de charge F5 XC.
 
-## Déploiement
+## Déployer
 
 ```bash
 terraform init
@@ -115,13 +115,13 @@ Terraform affiche l'IP publique, la commande SSH et le FQDN cible après un dép
 
 Les VM de série F optimisées pour le calcul sont recommandées pour cette charge de travail de génération de trafic intensive en CPU. L'optimisation du noyau par cloud-init et la concurrence des outils s'adaptent automatiquement au nombre de vCPU.
 
-| SKU VM | vCPU | RAM | Réseau | Cas d'utilisation |
+| SKU de la VM | vCPU | RAM | Réseau | Cas d'utilisation |
 |---|---|---|---|---|
-| Standard_F4s_v2 | 4 | 8 Gio | 10 Gbps | Lab/démonstration légère |
-| Standard_F8s_v2 | 8 | 16 Gio | 12,5 Gbps | Démonstrations standards |
+| Standard_F4s_v2 | 4 | 8 Gio | 10 Gbps | Laboratoire/démonstration légère |
+| Standard_F8s_v2 | 8 | 16 Gio | 12,5 Gbps | Démonstrations standard |
 | Standard_F16s_v2 | 16 | 32 Gio | 12,5 Gbps | Tests de charge (par défaut) |
 | Standard_F32s_v2 | 32 | 64 Gio | 16 Gbps | Benchmarking intensif |
-| Standard_D16s_v3 | 16 | 64 Gio | 12,5 Gbps | Charges nécessitant beaucoup de RAM |
+| Standard_D16s_v3 | 16 | 64 Gio | 12,5 Gbps | Charges de travail gourmandes en RAM |
 
 :::tip
 Le F16s_v2 a été validé comme l'option optimale en termes de rapport prix-performance par des tests de benchmark A/B/C/D contre des cibles CDN F16s_v2 et F32s_v2. Voir [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) pour les résultats complets.
@@ -129,9 +129,9 @@ Le F16s_v2 a été validé comme l'option optimale en termes de rapport prix-per
 
 ## Vérification post-déploiement
 
-Le provisionnement cloud-init prend **15 à 20 minutes pour le tier standard** et **environ 25 minutes pour le tier complet**. La VM est accessible via SSH immédiatement, mais les outils continuent d'être installés jusqu'à la fin du cloud-init.
+Le provisionnement cloud-init prend **15 à 20 minutes pour le niveau standard** et **environ 25 minutes pour le niveau complet**. La VM est accessible via SSH immédiatement, mais les outils sont encore en cours d'installation jusqu'à la fin de cloud-init.
 
-### Attendre la fin du Cloud-Init
+### Attendre la fin de Cloud-Init
 
 Connectez-vous à la VM en SSH et attendez la fin du provisionnement :
 
@@ -183,9 +183,9 @@ for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
 done
 ```
 
-### Vérifier le lanceur de suites
+### Vérifier l'exécuteur de suites
 
-Confirmez que le lanceur et les suites sont installés :
+Confirmez que l'exécuteur et les suites sont installés :
 
 ```bash
 ls /opt/traffic-generator/suites/runner.sh
@@ -214,7 +214,7 @@ ls /opt/traffic-generator/suites/*/
 | `environment` | Environnement de déploiement | `dev` |
 | `location` | Région Azure | `eastus2` |
 | `target_fqdn` | FQDN cible configuré pour les suites de trafic | `demo.example.com` |
-| `status_check` | Commande pour vérifier l'état du provisionnement | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
+| `status_check` | Commande pour vérifier le statut du provisionnement | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
 
 Récupérer n'importe quelle sortie :
 
@@ -223,9 +223,9 @@ terraform output -raw public_ip
 terraform output -raw ssh_command
 ```
 
-## Connexion depuis les composants en amont
+## Interconnexion avec les composants amont
 
-Le générateur de trafic cible un répartiteur de charge HTTP F5 XC qui se place devant le serveur d'origine. Déployez d'abord le serveur d'origine, configurez F5 XC, puis définissez `target_fqdn` avec le FQDN du répartiteur de charge :
+Le générateur de trafic cible un répartiteur de charge HTTP F5 XC qui protège le serveur d'origine. Déployez d'abord le serveur d'origine, configurez F5 XC, puis définissez `target_fqdn` avec le FQDN du répartiteur de charge :
 
 ```bash
 # After deploying origin-server and creating an F5 XC HTTP load balancer:
@@ -241,4 +241,4 @@ EOF
 | `target_fqdn` | Console F5 XC | FQDN du répartiteur de charge HTTP protégeant le serveur d'origine |
 | `target_origin_ip` | Sortie `public_ip` du serveur d'origine | IP directe de l'origine pour les tests de contournement (optionnel) |
 
-Poursuivez vers le [Catalogue d'outils](../04-tool-catalog/) pour la référence complète des outils ou les [Suites](../05-suites/) pour commencer à générer du trafic.
+Poursuivez avec le [Catalogue d'outils](../04-tool-catalog/) pour la référence complète des outils ou les [Suites](../05-suites/) pour commencer à générer du trafic.

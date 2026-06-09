@@ -1,8 +1,8 @@
 ---
 title: Suítes de Tráfego
 description: >-
-  Referência detalhada para todas as 19 suítes de tráfego com scripts,
-  ferramentas, durações e mapeamentos de recursos do F5 XC
+  Referência detalhada de todas as 19 suítes de tráfego com scripts,
+  ferramentas, durações e mapeamentos de funcionalidades do F5 XC
 sidebar:
   order: 5
 i18n:
@@ -12,22 +12,22 @@ i18n:
 
 import { Aside } from '@astrojs/starlight/components';
 
-Cada suíte de tráfego é um diretório sob `/opt/traffic-generator/suites/` contendo scripts shell numerados executados em ordem pelo `runner.sh`. Cada script aceita o FQDN alvo como seu primeiro argumento e grava a saída tanto no stdout quanto no diretório de resultados.
+Cada suíte de tráfego é um diretório em `/opt/traffic-generator/suites/` contendo scripts shell numerados executados em ordem pelo `runner.sh`. Cada script aceita o FQDN de destino como primeiro argumento e grava a saída tanto no stdout quanto no diretório de resultados.
 
 ## api-attacks
 
 **Scripts:** 4 | **Duração Estimada:** 10-17 minutos
 
-Testes do OWASP API Security Top 10 contra o VAmPI através do F5 XC. Registra um usuário de teste, obtém um token de autenticação e então testa BOLA, autenticação por força bruta, exposição excessiva de dados, autorização quebrada no nível de função, padrões SSRF, injeção SQL contra endpoints de API REST, descoberta de parâmetros ocultos e fuzzing de endpoints. Tem como alvo a aplicação VAmPI.
+Testes OWASP API Security Top 10 contra o VAmPI através do F5 XC. Registra um usuário de teste, obtém um token de autenticação, e então testa BOLA, autenticação por força bruta, exposição excessiva de dados, autorização quebrada em nível de função, padrões SSRF, injeção SQL contra endpoints da API REST, descoberta de parâmetros ocultos e fuzzing de endpoints. Tem como alvo a aplicação VAmPI.
 
-**Recurso F5 XC:** API Security / API Discovery
+**Funcionalidade F5 XC:** API Security / API Discovery
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
-| 01 | `01-vampi-owasp-top10.sh` | curl, jq | Suíte de testes abrangente do OWASP API Top 10. Registra um usuário de teste, obtém um token de autenticação e então testa BOLA (acesso a dados de outros usuários), autenticação por força bruta, exposição excessiva de dados, autorização quebrada no nível de função, padrões SSRF e sondagem de configuração incorreta de segurança. |
-| 02 | `02-sqlmap-api.sh` | sqlmap | Injeção SQL contra endpoints de API REST do VAmPI: consulta de usuário, login (POST) e registro (POST) com payloads JSON. |
+| 01 | `01-vampi-owasp-top10.sh` | curl, jq | Suíte abrangente de testes OWASP API Top 10. Registra um usuário de teste, obtém um token de autenticação, e então testa BOLA (acesso a dados de outros usuários), autenticação por força bruta, exposição excessiva de dados, autorização quebrada em nível de função, padrões SSRF e sondagem de configurações incorretas de segurança. |
+| 02 | `02-sqlmap-api.sh` | sqlmap | Injeção SQL contra endpoints da API REST do VAmPI: consulta de usuário, login (POST) e registro (POST) com payloads JSON. |
 | 03 | `03-arjun-param-discovery.sh` | arjun | Descoberta de parâmetros ocultos em endpoints do Juice Shop, DVWA e VAmPI. Descobre parâmetros de consulta não documentados que podem aceitar payloads de injeção. |
-| 04 | `04-ffuf-api-fuzz.sh` | ffuf | Fuzzing em duas fases: descoberta de endpoints usando uma wordlist de caminhos de API comuns (api, swagger, graphql, admin, .env, .git) em todos os prefixos de aplicação, seguida de fuzzing de métodos HTTP (GET, POST, PUT, DELETE, PATCH, OPTIONS, TRACE, PROPFIND) contra endpoints-chave. |
+| 04 | `04-ffuf-api-fuzz.sh` | ffuf | Fuzzing em duas fases: descoberta de endpoints usando uma wordlist de caminhos comuns de API (api, swagger, graphql, admin, .env, .git) em todos os prefixos de aplicação, seguida de fuzzing de métodos HTTP (GET, POST, PUT, DELETE, PATCH, OPTIONS, TRACE, PROPFIND) contra endpoints-chave. |
 
 **Comportamento Esperado do F5 XC:** O API Discovery deve mapear os endpoints da API do VAmPI e identificar padrões de requisição incomuns. As políticas de API Security devem sinalizar tentativas de acesso não autorizado, payloads de injeção em corpos JSON e padrões de enumeração. O Inventário de APIs no F5 XC mostrará os endpoints descobertos com contagens de requisições.
 
@@ -37,131 +37,131 @@ Testes do OWASP API Security Top 10 contra o VAmPI através do F5 XC. Registra u
 
 Atividade automatizada de navegador e padrões de crawling semelhantes a bots através do F5 XC. Inclui Chrome headless, Puppeteer com plugin stealth, crawling rápido e interação automatizada com formulários. Tem como alvo todas as aplicações.
 
-**Recurso F5 XC:** Bot Defense
+**Funcionalidade F5 XC:** Bot Defense
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
 | 01 | `01-headless-chrome.sh` | playwright | Navegação com Chromium headless: carrega o alvo, navega entre caminhos de aplicação, extrai títulos e conteúdo de páginas, captura screenshots. Gera tráfego baseado em navegador sem plugins stealth (detectável como automação). |
-| 02 | `02-puppeteer-stealth.sh` | puppeteer, puppeteer-extra-plugin-stealth | Navegação stealth usando puppeteer-extra com o plugin stealth. Tenta evadir a detecção de bots através da modificação de propriedades do navigator, WebGL e outros fingerprints do navegador. |
+| 02 | `02-puppeteer-stealth.sh` | puppeteer, puppeteer-extra-plugin-stealth | Navegação stealth usando puppeteer-extra com o plugin stealth. Tenta evadir detecção de bots modificando propriedades do navigator, WebGL e outras impressões digitais do navegador. |
 | 03 | `03-rapid-crawl.sh` | curl, wget | Requisições HTTP de alta frequência usando curl e wget em rápida sucessão. Simula comportamento de scraper sem atraso entre requisições e rotação agressiva de User-Agent. |
-| 04 | `04-form-interaction.sh` | playwright | Preenchimento e envio automatizado de formulários contra login do DVWA, registro do Juice Shop e endpoints da API do VAmPI usando as APIs de interação de formulários do Playwright. |
+| 04 | `04-form-interaction.sh` | playwright | Preenchimento e envio automatizado de formulários contra o login do DVWA, registro do Juice Shop e endpoints da API do VAmPI usando as APIs de interação com formulários do Playwright. |
 
-**Comportamento Esperado do F5 XC:** O Bot Defense deve classificar o tráfego como automatizado com base na análise de fingerprint do navegador, temporização de requisições e resultados de desafios JavaScript. O Chrome headless sem stealth deve ser detectado imediatamente. Os testes com Puppeteer stealth verificam se técnicas avançadas de evasão contornam a detecção. O painel do Bot Defense mostrará categorias de classificação de bots e ações de mitigação.
+**Comportamento Esperado do F5 XC:** O Bot Defense deve classificar o tráfego como automatizado com base na análise de impressão digital do navegador, temporização de requisições e resultados de desafios JavaScript. O Chrome headless sem stealth deve ser detectado imediatamente. Os testes com Puppeteer Stealth verificam se técnicas avançadas de evasão conseguem burlar a detecção. O painel do Bot Defense mostrará categorias de classificação de bots e ações de mitigação.
 
 ## cdn-load-testing
 
 **Scripts:** 18 | **Duração Estimada:** 20-30 minutos
 
-Teste de comportamento de cache CDN e proteção de origem. Inclui throughput de referência, isolamento de query string, variação de accept-encoding, simulação de thundering herd, bypass POST/PUT, colisão de chave de cache, GET condicional, requisição range, simulação de purge, esgotamento de pool de conexões, otimização de keepalive, overhead de handshake TLS, cache de objetos grandes, failover multi-origem, limitação de taxa, teste de proporção gzip, multiplexação HTTP/2 e benchmark kraken combinado. Tem como alvo a aplicação CDN Simulator.
+Testes de comportamento de cache CDN e proteção de origem. Inclui throughput de linha de base, isolamento de query string, variação de accept-encoding, simulação de thundering herd, bypass POST/PUT, colisão de chave de cache, GET condicional, requisição de range, simulação de purge, exaustão de pool de conexões, otimização de keepalive, overhead de handshake TLS, cache de objetos grandes, failover multi-origem, limitação de taxa, teste de proporção gzip, multiplexação HTTP/2 e benchmark combinado kraken. Tem como alvo a aplicação CDN Simulator.
 
-**Recurso F5 XC:** CDN Integration
+**Funcionalidade F5 XC:** Integração CDN
 
 ## crapi-exploits
 
 **Scripts:** 16 | **Duração Estimada:** 15-25 minutos
 
-Exploração de desafios do OWASP crAPI (Completely Ridiculous API). Inclui registro/autenticação, BOLA localização de veículo, BOLA relatórios de mecânico, bruteforce de OTP, exposição de dados de mecânicos, exposição excessiva de dados, mass assignment em pedidos, validação de cupom SSRF, injeção NoSQL, manipulação JWT, IDOR no dashboard, bypass de 2FA, acesso à API interna, poluição de parâmetros do lado do servidor, exclusão de usuário e IDOR de upload de vídeo. Tem como alvo a aplicação crAPI.
+Exploração de desafios do OWASP crAPI (Completely Ridiculous API). Inclui registro/autenticação, BOLA localização de veículos, BOLA relatórios de mecânicos, bruteforce de OTP, exposição de dados de mecânicos, exposição excessiva de dados, atribuição em massa de pedidos, validação de cupons SSRF, injeção NoSQL, manipulação JWT, IDOR no dashboard, bypass de 2FA, acesso a API interna, poluição de parâmetros do lado do servidor, exclusão de usuários e IDOR em upload de vídeo. Tem como alvo a aplicação crAPI.
 
-**Recurso F5 XC:** API Security
+**Funcionalidade F5 XC:** API Security
 
 ## csd-demo-attacks
 
 **Scripts:** 5 (JavaScript) | **Duração Estimada:** 3-5 minutos
 
-Ataques de injeção de JavaScript do lado do cliente. Inclui injeção de card skimmer, formjacker, keylogger, cryptominer e sequestro de DOM. Testa ataques de cadeia de suprimentos do lado do cliente no estilo Magecart que o F5 XC Client-Side Defense detecta e bloqueia. Tem como alvo a aplicação CSD Demo.
+Ataques de injeção de JavaScript do lado do cliente. Inclui injeção de card skimmer, formjacker, keylogger, cryptominer e scripts de sequestro de DOM. Testa ataques de cadeia de suprimentos do lado do cliente no estilo Magecart que o F5 XC Client-Side Defense detecta e bloqueia. Tem como alvo a aplicação CSD Demo.
 
-**Recurso F5 XC:** Client-Side Defense
+**Funcionalidade F5 XC:** Client-Side Defense
 
 ## demoapp-attacks
 
 **Scripts:** 2 | **Duração Estimada:** 2-3 minutos
 
-Payloads de ataque direcionados contra os endpoints de teste de WAF integrados do F5 DemoApp (`/WAF/SQL`, `/WAF/XSS`, `/WAF/DIR`). Envia payloads de injeção SQL, XSS e path traversal diretamente nos endpoints projetados para demonstrar o comportamento de bloqueio do WAF. Use esta suíte ao direcionar o servidor de conteúdo DemoApp em vez das aplicações de servidor de origem padrão.
+Payloads de ataque direcionados contra os endpoints integrados de teste WAF do F5 DemoApp (`/WAF/SQL`, `/WAF/XSS`, `/WAF/DIR`). Envia payloads de injeção SQL, XSS e traversal de caminhos diretamente nos endpoints projetados para demonstrar o comportamento de bloqueio do WAF. Use esta suíte ao direcionar o servidor de conteúdo DemoApp em vez das aplicações padrão do servidor de origem.
 
-**Recurso F5 XC:** WAF (Web Application Firewall)
+**Funcionalidade F5 XC:** WAF (Web Application Firewall)
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
 | 01 | `01-sqli-waf-endpoint.sh` | curl, python3 | 15 payloads de injeção SQL contra `/WAF/SQL?age=` incluindo UNION SELECT, DROP TABLE, WAITFOR DELAY, xp_cmdshell, bypass baseado em comentários e payloads de lógica booleana. |
-| 02 | `02-xss-waf-endpoint.sh` | curl, python3 | 18 payloads XSS contra `/WAF/XSS?update=` incluindo tags script, handlers de evento (onerror, onload, ontoggle, onfocus), eval base64, expressão style, payloads polyglot e exfiltração de cookies. |
+| 02 | `02-xss-waf-endpoint.sh` | curl, python3 | 18 payloads XSS contra `/WAF/XSS?update=` incluindo tags script, manipuladores de eventos (onerror, onload, ontoggle, onfocus), eval em base64, expressão de estilo, payloads políglotas e exfiltração de cookies. |
 
-**Comportamento Esperado do F5 XC:** O WAF deve bloquear requisições contendo payloads de injeção SQL e XSS e retornar uma página de bloqueio. O painel de Eventos de Segurança mostrará categorias de violação e correspondências de assinatura para cada requisição bloqueada.
+**Comportamento Esperado do F5 XC:** O WAF deve bloquear requisições contendo payloads de injeção SQL e XSS e retornar uma página de bloqueio. O painel de Eventos de Segurança mostrará categorias de violação e correspondências de assinaturas para cada requisição bloqueada.
 
 ## dvga-exploits
 
 **Scripts:** 9 | **Duração Estimada:** 8-12 minutos
 
-Exploração de vulnerabilidades específicas de GraphQL contra a Damn Vulnerable GraphQL Application. Inclui DoS por consulta em lote, recursão profunda, duplicação de campos, injeção SQL via filtro, XSS via createPaste, DoS baseado em alias, abuso de introspection, bypass de autorização e divulgação de informações. Tem como alvo a aplicação DVGA.
+Exploração de vulnerabilidades específicas de GraphQL contra a Damn Vulnerable GraphQL Application. Inclui DoS por consulta em lote, recursão profunda, duplicação de campos, injeção SQL via filtro, XSS via createPaste, DoS baseado em alias, abuso de introspecção, bypass de autorização e divulgação de informações. Tem como alvo a aplicação DVGA.
 
-**Recurso F5 XC:** API Security (GraphQL)
+**Funcionalidade F5 XC:** API Security (GraphQL)
 
 ## dvwa-exploits
 
 **Scripts:** 14 | **Duração Estimada:** 15-25 minutos
 
-Testes do OWASP Top 10 contra a Damn Vulnerable Web Application. Inclui força bruta, injeção de comando, alteração de senha CSRF, inclusão de arquivo, upload de arquivo, injeção SQL (blind), injeção SQL (union), XSS (DOM), XSS (refletido), XSS (armazenado), bypass de CAPTCHA, IDs de sessão fracos, CORS inseguro e redirecionamento aberto. Tem como alvo a aplicação DVWA.
+Testes OWASP Top 10 contra a Damn Vulnerable Web Application. Inclui força bruta, injeção de comandos, alteração de senha CSRF, inclusão de arquivos, upload de arquivos, injeção SQL (blind), injeção SQL (union), XSS (DOM), XSS (refletido), XSS (armazenado), bypass de CAPTCHA, IDs de sessão fracos, CORS inseguro e redirecionamento aberto. Tem como alvo a aplicação DVWA.
 
-**Recurso F5 XC:** WAF
+**Funcionalidade F5 XC:** WAF
 
 ## javascript-exploits
 
 **Scripts:** 3 | **Duração Estimada:** 3-5 minutos
 
-Padrões de injeção de script do lado do cliente e manipulação de DOM que acionam a detecção do Client-Side Defense. Inclui injeção de script inline imitando skimmers no estilo Magecart, manipulação de DOM via Chromium headless e simulação de scripts de terceiros. Tem como alvo a aplicação CSD Demo.
+Padrões de injeção de scripts do lado do cliente e manipulação de DOM que acionam a detecção do Client-Side Defense. Inclui injeção de scripts inline imitando skimmers no estilo Magecart, manipulação de DOM via Chromium headless e simulação de scripts de terceiros. Tem como alvo a aplicação CSD Demo.
 
-**Recurso F5 XC:** Client-Side Defense (CSD)
+**Funcionalidade F5 XC:** Client-Side Defense (CSD)
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
 | 01 | `01-inline-script-injection.sh` | curl | Envia requisições contendo payloads JavaScript inline projetados para imitar skimmers de cartão de crédito no estilo Magecart e scripts de exfiltração de dados. |
-| 02 | `02-dom-manipulation.sh` | playwright | Usa Chromium headless para carregar a página de demonstração CSD e injetar modificações no DOM: adicionando tags script, modificando ações de formulário e inserindo iframes invisíveis que exfiltram dados de formulário. |
-| 03 | `03-third-party-script-sim.sh` | curl, playwright | Simula scripts de terceiros comprometidos injetando requisições que referenciam fontes externas de JavaScript e tentando carregar scripts não autorizados no contexto da página. |
+| 02 | `02-dom-manipulation.sh` | playwright | Usa Chromium headless para carregar a página de demo CSD e injetar modificações no DOM: adicionar tags script, modificar ações de formulários e inserir iframes invisíveis que exfiltram dados de formulários. |
+| 03 | `03-third-party-script-sim.sh` | curl, playwright | Simula scripts de terceiros comprometidos injetando requisições que referenciam fontes JavaScript externas e tentando carregar scripts não autorizados no contexto da página. |
 
-**Comportamento Esperado do F5 XC:** O Client-Side Defense deve detectar modificações de scripts não autorizadas na página protegida. O painel CSD mostrará alertas para novas fontes de scripts, elementos DOM modificados e tentativas de exfiltração de dados. Isso valida a funcionalidade da Fase 2 do CSD.
+**Comportamento Esperado do F5 XC:** O Client-Side Defense deve detectar modificações não autorizadas de scripts na página protegida. O painel do CSD mostrará alertas para novas fontes de scripts, elementos DOM modificados e tentativas de exfiltração de dados. Isso valida a funcionalidade da Fase 2 do CSD.
 
 <Aside type="note">
-A suíte javascript-exploits foi projetada para funcionar junto com a aplicação de demonstração CSD no servidor de origem. Certifique-se de que o servidor de origem tenha o caminho `/csd-demo/` habilitado antes de executar esta suíte.
+A suíte javascript-exploits foi projetada para funcionar em conjunto com a aplicação de demo CSD no servidor de origem. Certifique-se de que o servidor de origem tenha o caminho `/csd-demo/` habilitado antes de executar esta suíte.
 </Aside>
 
 ## juice-shop-exploits
 
 **Scripts:** 12 | **Duração Estimada:** 10-18 minutos
 
-Exploração de desafios do OWASP Juice Shop. Inclui bypass de login por injeção SQL, injeção SQL union na busca, XSS DOM refletido, XSS armazenado via API, acesso IDOR ao carrinho, acesso à seção administrativa, feedback forjado, acesso a arquivo via null byte, XSS refletido na busca, injeção de cabeçalho HTTP, registro repetitivo e força bruta de login. Tem como alvo a aplicação Juice Shop.
+Exploração de desafios do OWASP Juice Shop. Inclui bypass de login por injeção SQL, injeção SQL union em busca, XSS DOM refletido, XSS armazenado via API, acesso IDOR a cestas, acesso à seção de administração, feedback forjado, acesso a arquivos via null byte, XSS refletido em busca, injeção de cabeçalho HTTP, registro repetitivo e força bruta de login. Tem como alvo a aplicação Juice Shop.
 
-**Recurso F5 XC:** WAF, Bot Defense
+**Funcionalidade F5 XC:** WAF, Bot Defense
 
 ## mitre-attack
 
 **Scripts:** 8 | **Duração Estimada:** 10-15 minutos
 
-Simulação de táticas do framework MITRE ATT&CK. Inclui reconhecimento (varredura externa), acesso inicial (credential stuffing), execução (injeção de comando), acesso a credenciais (senhas padrão), descoberta (enumeração de diretórios), simulação de movimento lateral, coleta (scraping de dados) e simulação de exfiltração. Mapeia cada script para uma tática específica do MITRE ATT&CK para relatórios de cobertura de ameaças estruturados. Tem como alvo todas as aplicações.
+Simulação de táticas do framework MITRE ATT&CK. Inclui reconhecimento (varredura externa), acesso inicial (credential stuffing), execução (injeção de comandos), acesso a credenciais (senhas padrão), descoberta (enumeração de diretórios), simulação de movimento lateral, coleta (scraping de dados) e simulação de exfiltração. Mapeia cada script para uma tática específica do MITRE ATT&CK para relatórios estruturados de cobertura de ameaças. Tem como alvo todas as aplicações.
 
-**Recurso F5 XC:** WAF, Bot Defense, API Security
+**Funcionalidade F5 XC:** WAF, Bot Defense, API Security
 
 ## owasp-scanning
 
 **Scripts:** 10 | **Duração Estimada:** 20-35 minutos
 
-Suíte abrangente de varredura OWASP usando scanners de vulnerabilidade dedicados. Inclui varredura baseline do ZAP, varredura ativa do ZAP, varredura completa do Nikto, varredura completa do Nuclei, varredura de vulnerabilidade do Nmap, auditoria SSL/TLS, fuzzing de diretórios, enumeração de subdomínios, fingerprinting de tecnologia e geração de relatório OWASP combinado. Tem como alvo todas as aplicações.
+Suíte abrangente de varredura OWASP usando scanners de vulnerabilidade dedicados. Inclui varredura de linha de base ZAP, varredura ativa ZAP, varredura completa Nikto, varredura completa Nuclei, varredura de vulnerabilidades Nmap, auditoria SSL/TLS, fuzzing de diretórios, enumeração de subdomínios, fingerprinting de tecnologia e geração de relatório OWASP combinado. Tem como alvo todas as aplicações.
 
-**Recurso F5 XC:** WAF, Web App Scanning
+**Funcionalidade F5 XC:** WAF, Web App Scanning
 
 ## performance-testing
 
 **Scripts:** 12 | **Duração Estimada:** 15-30 minutos
 
-Teste de características de desempenho sob vários padrões de carga. Inclui rampa de concorrência, throughput por aplicação, carga sustentada, churn de conexão, carga mista ataque+carga, teste de pico, teste de endurance, descoberta de ponto de ruptura, percentis de tempo de resposta, taxa de erro sob carga, esgotamento de recursos e análise de distribuição de latência. Tem como alvo todas as aplicações.
+Testes de características de desempenho sob diversos padrões de carga. Inclui rampa de concorrência, throughput por aplicação, carga sustentada, rotatividade de conexões, ataque misto+carga, teste de pico, teste de resistência, descoberta de ponto de ruptura, percentis de tempo de resposta, taxa de erro sob carga, exaustão de recursos e análise de distribuição de latência. Tem como alvo todas as aplicações.
 
-**Recurso F5 XC:** DDoS, Rate Limiting
+**Funcionalidade F5 XC:** DDoS, Limitação de Taxa
 
 ## reconnaissance
 
 **Scripts:** 6 | **Duração Estimada:** 8-15 minutos
 
-Varredura de rede, enumeração de serviços e força bruta de diretórios contra a infraestrutura alvo. Inclui detecção de serviços via nmap, varreduras de portas com masscan, força bruta de diretórios, enumeração de subdomínios, fingerprinting de tecnologia web e reconhecimento DNS. Tem como alvo todas as aplicações.
+Varredura de rede, enumeração de serviços e força bruta de diretórios contra a infraestrutura alvo. Inclui detecção de serviços nmap, varredura de portas masscan, força bruta de diretórios, enumeração de subdomínios, fingerprinting de tecnologia web e reconhecimento DNS. Tem como alvo todas as aplicações.
 
-**Recurso F5 XC:** WAF / Bot Defense
+**Funcionalidade F5 XC:** WAF / Bot Defense
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
@@ -169,7 +169,7 @@ Varredura de rede, enumeração de serviços e força bruta de diretórios contr
 | 02 | `02-masscan-sweep.sh` | masscan | Varredura de portas em alta velocidade das portas web comuns (80, 443, 8080, 8443) com limitação de taxa. |
 | 03 | `03-gobuster-dirs.sh` | gobuster | Força bruta de diretórios usando wordlist comum do SecLists contra todos os prefixos de aplicação. |
 | 04 | `04-subfinder-enum.sh` | subfinder, httpx | Enumeração passiva de subdomínios para o domínio alvo, seguida de sondagem HTTP dos hosts descobertos. |
-| 05 | `05-whatweb-fingerprint.sh` | whatweb | Fingerprinting de tecnologia web do alvo e todos os caminhos de aplicação. |
+| 05 | `05-whatweb-fingerprint.sh` | whatweb | Fingerprinting de tecnologia web do alvo e de todos os caminhos de aplicação. |
 | 06 | `06-dns-recon.sh` | dnsrecon, fierce, dig | Enumeração de registros DNS, tentativas de transferência de zona e consultas reversas para o domínio alvo. |
 
 **Comportamento Esperado do F5 XC:** O WAF deve detectar e registrar atividade de varredura. O Bot Defense pode classificar requisições sequenciais rápidas como automatizadas. O painel de Eventos de Segurança mostrará assinaturas de reconhecimento e strings de User-Agent de ferramentas de varredura.
@@ -178,78 +178,78 @@ Varredura de rede, enumeração de serviços e força bruta de diretórios contr
 
 **Scripts:** 11 | **Duração Estimada:** 10-18 minutos
 
-Testes do OWASP API Security Top 10 2023 contra a aplicação Restaurant API. Inclui registro/autenticação, BOLA perfil, BOLA pedidos, BOPLA mass assignment, BFLA escalação de privilégios, bypass de limitação de taxa, injeção SQL no menu, injeção de comando em estatísticas de disco, SSRF na URL de imagem, JWT com segredo fraco e exposição de dados sensíveis. Tem como alvo a aplicação Restaurant API.
+Testes OWASP API Security Top 10 2023 contra a aplicação Restaurant API. Inclui registro/autenticação, BOLA em perfil, BOLA em pedidos, atribuição em massa BOPLA, escalonamento de privilégios BFLA, bypass de limitação de taxa, injeção SQL no menu, injeção de comandos em estatísticas de disco, SSRF em URL de imagem, segredo fraco JWT e exposição de dados sensíveis. Tem como alvo a aplicação Restaurant API.
 
-**Recurso F5 XC:** API Security
+**Funcionalidade F5 XC:** API Security
 
 ## ssl-scanning
 
 **Scripts:** 3 | **Duração Estimada:** 3-5 minutos
 
-Análise de configuração TLS/SSL do endpoint HTTPS do load balancer F5 XC. Enumera cipher suites, versões de protocolo, detalhes de certificado e verifica vulnerabilidades TLS conhecidas. Tem como alvo o endpoint do load balancer F5 XC.
+Análise de configuração TLS/SSL do endpoint HTTPS do balanceador de carga F5 XC. Enumera suítes de cifras, versões de protocolo, detalhes do certificado e verifica vulnerabilidades TLS conhecidas. Tem como alvo o endpoint do balanceador de carga F5 XC.
 
-**Recurso F5 XC:** WAF (informacional)
+**Funcionalidade F5 XC:** WAF (informativo)
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
-| 01 | `01-sslscan.sh` | sslscan | Enumera cipher suites suportadas, versões de protocolo e detalhes de certificado. |
-| 02 | `02-sslyze.sh` | sslyze | Análise TLS abrangente incluindo validação de certificado, ordenação de cipher suites e verificações de vulnerabilidade (Heartbleed, ROBOT, etc.). |
-| 03 | `03-testssl.sh` | testssl.sh | Avaliação TLS completa usando o framework testssl.sh. Testa suporte a protocolos, preferências de cipher, análise de cabeçalhos e vulnerabilidades conhecidas. |
+| 01 | `01-sslscan.sh` | sslscan | Enumera suítes de cifras suportadas, versões de protocolo e detalhes do certificado. |
+| 02 | `02-sslyze.sh` | sslyze | Análise TLS abrangente incluindo validação de certificado, ordenação de suítes de cifras e verificações de vulnerabilidades (Heartbleed, ROBOT, etc.). |
+| 03 | `03-testssl.sh` | testssl.sh | Avaliação TLS completa usando o framework testssl.sh. Testa suporte a protocolos, preferências de cifras, análise de cabeçalhos e vulnerabilidades conhecidas. |
 
-**Comportamento Esperado do F5 XC:** A varredura SSL gera muitos handshakes TLS com propostas de cipher suites incomuns. Embora o F5 XC normalmente não bloqueie essas requisições, o padrão de tráfego é visível nos logs de acesso. O valor principal é verificar se a configuração TLS do F5 XC atende às melhores práticas de segurança.
+**Comportamento Esperado do F5 XC:** A varredura SSL gera muitos handshakes TLS com propostas incomuns de suítes de cifras. Embora o F5 XC normalmente não bloqueie essas requisições, o padrão de tráfego é visível nos logs de acesso. O valor principal é verificar se a configuração TLS do F5 XC atende às melhores práticas de segurança.
 
 ## traffic-generation
 
 **Scripts:** 4 | **Duração Estimada:** 5-10 minutos (configurável)
 
-Tráfego HTTP legítimo de alto volume para medição de referência e teste de carga. Estabelece padrões de tráfego normal nas análises do F5 XC para comparação com o tráfego das suítes de ataque. Tem como alvo todas as aplicações.
+Tráfego HTTP legítimo de alto volume para medição de linha de base e teste de carga. Estabelece padrões normais de tráfego na análise do F5 XC para comparação com o tráfego das suítes de ataque. Tem como alvo todas as aplicações.
 
-**Recurso F5 XC:** Todos (comparação de referência)
+**Funcionalidade F5 XC:** Todas (comparação de linha de base)
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
-| 01 | `01-baseline-http.sh` | curl | Requisições HTTP GET sequenciais para todos os caminhos de aplicação com User-Agent de navegador padrão. Estabelece uma referência de tráfego normal nas análises do F5 XC. |
-| 02 | `02-concurrent-load.sh` | curl | Requisições HTTP paralelas usando curl com múltiplas conexões simultâneas. Testa o tratamento de carga e estabelece referências de throughput. |
-| 03 | `03-mixed-methods.sh` | curl | Métodos HTTP mistos (GET, POST, PUT, DELETE) contra endpoints de API com payloads válidos. Gera padrões de tráfego de API normal para comparação com tráfego de ataque. |
-| 04 | `04-user-journey.sh` | playwright | Simula uma jornada de usuário realista: navegando páginas, pesquisando produtos, preenchendo formulários e navegando entre aplicações usando Playwright com configurações de navegador padrão. |
+| 01 | `01-baseline-http.sh` | curl | Requisições HTTP GET sequenciais para todos os caminhos de aplicação com User-Agent padrão de navegador. Estabelece uma linha de base de tráfego normal na análise do F5 XC. |
+| 02 | `02-concurrent-load.sh` | curl | Requisições HTTP paralelas usando curl com múltiplas conexões simultâneas. Testa o tratamento de carga e estabelece linhas de base de throughput. |
+| 03 | `03-mixed-methods.sh` | curl | Métodos HTTP mistos (GET, POST, PUT, DELETE) contra endpoints de API com payloads válidos. Gera padrões normais de tráfego de API para comparação com tráfego de ataque. |
+| 04 | `04-user-journey.sh` | playwright | Simula uma jornada realista de usuário: navegando em páginas, buscando produtos, preenchendo formulários e navegando entre aplicações usando Playwright com configurações padrão de navegador. |
 
-**Comportamento Esperado do F5 XC:** Todas as requisições nesta suíte devem passar sem intervenção do WAF ou Bot Defense. Use esta suíte para gerar tráfego "limpo" no painel de análises e então compare com o tráfego das suítes de ataque para demonstrar a diferença entre padrões de requisição legítimos e maliciosos.
+**Comportamento Esperado do F5 XC:** Todas as requisições nesta suíte devem passar sem intervenção do WAF ou Bot Defense. Use esta suíte para gerar tráfego "limpo" no painel de análise, e então compare com o tráfego das suítes de ataque para demonstrar a diferença entre padrões de requisições legítimas e maliciosas.
 
 ## waf-encoding-evasion
 
 **Scripts:** 7 | **Duração Estimada:** 5-10 minutos
 
-Ataques de evasão com codificação multicamadas projetados para testar se um WAF normaliza e decodifica corretamente os payloads antes da inspeção. Cobre codificação URL simples, dupla e tripla; codificação de entidades HTML (decimal, hex, nomeada, com zeros à esquerda); inserção de Unicode/UTF-8 (espaço de largura zero, BOM, caracteres fullwidth, hífen suave, sequências overlong); codificação mista/aninhada multicamadas (entidades HTML codificadas em URL, URL dupla dentro de entidades, pilhas de 3 camadas); injeção de null byte; codificação IIS %uXXXX; manipulação de caixa; divisão de corpo via codificação de transferência chunked; evasão de parâmetros Base64; e payloads codificados em cabeçalhos/cookies. Tem como alvo qualquer aplicação.
+Ataques de evasão por codificação multicamada projetados para testar se um WAF normaliza e decodifica adequadamente os payloads antes da inspeção. Cobre codificação URL simples, dupla e tripla; codificação de entidades HTML (decimal, hexadecimal, nomeada, com preenchimento de zeros); inserção Unicode/UTF-8 (espaço de largura zero, BOM, caracteres fullwidth, hífen suave, sequências overlength); codificação multicamada mista/aninhada (entidades HTML codificadas em URL, URL dupla dentro de entidades, pilhas de 3 camadas); injeção de null byte; codificação IIS %uXXXX; manipulação de maiúsculas/minúsculas; divisão do corpo por codificação de transferência em chunks; evasão por parâmetro Base64; e payloads codificados em cabeçalhos/cookies. Tem como alvo qualquer aplicação.
 
-**Recurso F5 XC:** WAF (profundidade de normalização de codificação)
+**Funcionalidade F5 XC:** WAF (profundidade de normalização de codificação)
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
-| 01 | `01-url-encoding.sh` | curl | Codificação URL simples, dupla e tripla de payloads SQLi, XSS e path traversal em múltiplos caminhos de endpoint. Testa se o WAF decodifica parâmetros de URL recursivamente. |
-| 02 | `02-html-entity-encoding.sh` | curl, python3 | Codificação de entidades HTML decimal, hex, nomeada e com zeros à esquerda de payloads de ataque em parâmetros GET e corpos POST. Inclui injeção de template via `&#123;&#123;7*7&#125;&#125;`. |
-| 03 | `03-unicode-utf8-evasion.sh` | curl | Inserção de espaço de largura zero (U+200B), BOM (U+FEFF), caractere fullwidth, hífen suave e ZWNJ em palavras-chave SQL e tags XSS. Testa sequências UTF-8 overlong (2 bytes e 3 bytes). |
-| 04 | `04-mixed-nested-encoding.sh` | curl | Payloads multicamadas: entidades HTML codificadas em URL, URL dupla dentro de entidades, pilhas de tripla camada, corpo JSON com escapes Unicode (`<`) e o padrão de injeção de template específico `{{7*7}}` do usuário. |
-| 05 | `05-null-byte-iis-base64.sh` | curl | Injeção de null byte (`%00`) para bypass de extensão, codificação Unicode IIS `%uXXXX` e payloads codificados em Base64 em parâmetros de URL com flags de decodificação. |
-| 06 | `06-case-chunked-evasion.sh` | curl | Randomização de caixa combinada com codificação (`%3CsCrIpT%3E`), codificação de transferência chunked para dividir palavras-chave SQL/XSS entre chunks HTTP, sondas de conflito Content-Length/Transfer-Encoding e separadores de caminho alternativos (`%5c`, `%c0%af`). |
+| 01 | `01-url-encoding.sh` | curl | Codificação URL simples, dupla e tripla de payloads SQLi, XSS e traversal de caminhos em múltiplos caminhos de endpoint. Testa se o WAF decodifica parâmetros de URL recursivamente. |
+| 02 | `02-html-entity-encoding.sh` | curl, python3 | Codificação de entidades HTML decimal, hexadecimal, nomeada e com preenchimento de zeros de payloads de ataque em parâmetros GET e corpos POST. Inclui injeção de template via `&#123;&#123;7*7&#125;&#125;`. |
+| 03 | `03-unicode-utf8-evasion.sh` | curl | Inserção de espaço de largura zero (U+200B), BOM (U+FEFF), caractere fullwidth, hífen suave e ZWNJ em palavras-chave SQL e tags XSS. Testa sequências UTF-8 overlength (2 bytes e 3 bytes). |
+| 04 | `04-mixed-nested-encoding.sh` | curl | Payloads multicamada: entidades HTML codificadas em URL, URL dupla dentro de entidades, pilhas de tripla camada, corpo JSON com escapes Unicode (`<`), e o padrão específico de injeção de template `{{7*7}}` do usuário. |
+| 05 | `05-null-byte-iis-base64.sh` | curl | Injeção de null byte (`%00`) para bypass de extensão, codificação Unicode IIS `%uXXXX`, e payloads codificados em Base64 em parâmetros de URL com flags de decodificação. |
+| 06 | `06-case-chunked-evasion.sh` | curl | Randomização de maiúsculas/minúsculas combinada com codificação (`%3CsCrIpT%3E`), codificação de transferência em chunks para dividir palavras-chave SQL/XSS entre chunks HTTP, sondagens de conflito Content-Length/Transfer-Encoding, e separadores de caminho alternativos (`%5c`, `%c0%af`). |
 | 07 | `07-header-cookie-evasion.sh` | curl | Payloads de ataque codificados injetados via cabeçalhos Cookie, Referer, User-Agent, X-Forwarded-For e X-Original-URL. Testa se o WAF inspeciona e decodifica todos os campos de cabeçalho HTTP, não apenas parâmetros de consulta e corpos POST. |
 
-**Comportamento Esperado do F5 XC:** Um WAF configurado corretamente deve normalizar todas as camadas de codificação antes da correspondência de padrões. Payloads com codificação simples devem ser bloqueados imediatamente. Testes com codificação dupla e tripla revelam a profundidade do pipeline de decodificação do WAF. Testes de inserção Unicode revelam se caracteres invisíveis são removidos antes da correspondência de palavras-chave. Resultados onde variantes codificadas passam enquanto equivalentes em texto simples são bloqueados indicam lacunas de normalização na política do WAF.
+**Comportamento Esperado do F5 XC:** Um WAF configurado adequadamente deve normalizar todas as camadas de codificação antes da correspondência de padrões. Payloads com codificação simples devem ser bloqueados imediatamente. Testes de codificação dupla e tripla revelam a profundidade do pipeline de decodificação do WAF. Testes de inserção Unicode revelam se caracteres invisíveis são removidos antes da correspondência de palavras-chave. Resultados em que variantes codificadas passam enquanto equivalentes em texto puro são bloqueados indicam lacunas de normalização na política do WAF.
 
 ## web-app-attacks
 
 **Scripts:** 6 | **Duração Estimada:** 12-20 minutos
 
-Testes de vulnerabilidade de aplicações web do OWASP Top 10 contra Juice Shop e DVWA através do F5 XC. Inclui injeção SQL, XSS, injeção de comando, path traversal, varredura Nikto e varredura baseada em templates Nuclei. Tem como alvo as aplicações Juice Shop e DVWA.
+Testes de vulnerabilidade de aplicações web OWASP Top 10 contra Juice Shop e DVWA através do F5 XC. Inclui injeção SQL, XSS, injeção de comandos, traversal de caminhos, varredura Nikto e varredura baseada em templates Nuclei. Tem como alvo as aplicações Juice Shop e DVWA.
 
-**Recurso F5 XC:** WAF (Web Application Firewall)
+**Funcionalidade F5 XC:** WAF (Web Application Firewall)
 
 | Ordem | Script | Ferramentas | Descrição |
 |---|---|---|---|
-| 01 | `01-sqli.sh` | sqlmap, curl | Payloads de injeção SQL contra a API de busca do Juice Shop e o endpoint SQLi do DVWA. Executa varreduras automatizadas do sqlmap e então envia 10 payloads de injeção diretos via curl. |
-| 02 | `02-xss.sh` | dalfox, curl | Cross-site scripting contra endpoints XSS refletido/armazenado do Juice Shop e DVWA. Executa varreduras automatizadas do dalfox e então envia 12 payloads XSS diretos incluindo tags script, handlers de evento e exfiltração de cookies. |
-| 03 | `03-command-injection.sh` | curl | Payloads de injeção de comando do SO contra o endpoint exec do DVWA. Envia 12 payloads incluindo encadeamento com pipe, ponto e vírgula, quebras de linha codificadas em URL e padrões de reverse shell. |
-| 04 | `04-path-traversal.sh` | curl | Directory traversal contra múltiplos endpoints de aplicação. Testa travessias padrão `../`, variantes codificadas em URL, variantes com codificação dupla, variantes com null byte e variantes Unicode em 6 caminhos de endpoint. |
-| 05 | `05-nikto-scan.sh` | nikto | Varredura completa de vulnerabilidades do servidor web com limite de tempo de 120 segundos. Gera requisições HTTP diversas que acionam a correspondência de assinaturas do WAF. |
+| 01 | `01-sqli.sh` | sqlmap, curl | Payloads de injeção SQL contra a API de busca do Juice Shop e o endpoint SQLi do DVWA. Executa varreduras automatizadas do sqlmap e depois envia 10 payloads diretos de injeção via curl. |
+| 02 | `02-xss.sh` | dalfox, curl | Cross-site scripting contra endpoints XSS refletido/armazenado do Juice Shop e DVWA. Executa varreduras automatizadas do dalfox e depois envia 12 payloads XSS diretos incluindo tags script, manipuladores de eventos e exfiltração de cookies. |
+| 03 | `03-command-injection.sh` | curl | Payloads de injeção de comandos do SO contra o endpoint exec do DVWA. Envia 12 payloads incluindo encadeamento com pipe, ponto e vírgula, quebras de linha codificadas em URL e padrões de reverse shell. |
+| 04 | `04-path-traversal.sh` | curl | Traversal de diretórios contra múltiplos endpoints de aplicação. Testa traversals padrão `../`, variantes codificadas em URL, variantes com codificação dupla, variantes com null byte e variantes Unicode em 6 caminhos de endpoint. |
+| 05 | `05-nikto-scan.sh` | nikto | Varredura completa de vulnerabilidades do servidor web com limite de tempo de 120 segundos. Gera requisições HTTP diversas que acionam correspondência de assinaturas do WAF. |
 | 06 | `06-nuclei-scan.sh` | nuclei | Varredura de vulnerabilidades baseada em templates nos níveis de severidade médio, alto e crítico. Limitada a 50 requisições/segundo. |
 
-**Comportamento Esperado do F5 XC:** O WAF deve bloquear ou sinalizar requisições contendo payloads de injeção SQL, XSS, injeção de comando e path traversal. O painel de Eventos de Segurança mostrará categorias de violação, IDs de assinatura e detalhes de requisição para cada requisição bloqueada.
+**Comportamento Esperado do F5 XC:** O WAF deve bloquear ou sinalizar requisições contendo payloads de injeção SQL, XSS, injeção de comandos e traversal de caminhos. O painel de Eventos de Segurança mostrará categorias de violação, IDs de assinatura e detalhes da requisição para cada requisição bloqueada.

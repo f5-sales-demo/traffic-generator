@@ -51,7 +51,7 @@ GoTestWAF (de Wallarm) es un framework estándar de la industria para evaluació
 | iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
 | mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
 
-## Pruebas SSL/TLS
+## Pruebas de SSL/TLS
 
 | Herramienta | Método de Instalación | Comando de Ejemplo | Utilizada por Suite |
 |---|---|---|---|
@@ -117,7 +117,7 @@ Playwright instala su propio binario de Chromium mediante `playwright install ch
 | PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
 | waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
 
-SecLists proporciona listas de palabras utilizadas por múltiples herramientas incluyendo ffuf, gobuster, feroxbuster, dirb e hydra. PayloadsAllTheThings proporciona payloads de ataque curados con múltiples codificaciones, organizados por clase de ataque (XSS, SQLi, XXE) con variantes en hexadecimal, octal, Unicode, entidades HTML, doble codificación URL y JSFuck.
+SecLists proporciona listas de palabras utilizadas por múltiples herramientas, incluyendo ffuf, gobuster, feroxbuster, dirb e hydra. PayloadsAllTheThings proporciona payloads de ataque curados con múltiples codificaciones, organizados por clase de ataque (XSS, SQLi, XXE) con variantes en hex, octal, Unicode, entidad HTML, doble codificación URL y JSFuck.
 
 ## Solo Nivel Completo
 
@@ -129,7 +129,7 @@ Estas herramientas solo se instalan cuando `tool_tier = "full"`:
 | Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
 
 :::note
-ZAP y Metasploit añaden aproximadamente 1,5 GiB de espacio en disco y entre 5 y 10 minutos al tiempo de aprovisionamiento. Utilice el nivel completo únicamente si necesita específicamente estas herramientas para una demostración.
+ZAP y Metasploit añaden aproximadamente 1,5 GiB al espacio en disco y entre 5 y 10 minutos al tiempo de aprovisionamiento. Utilice el nivel completo solo si necesita específicamente estas herramientas para una demostración.
 :::
 
 ## Referencia de Métodos de Instalación
@@ -138,8 +138,8 @@ ZAP y Metasploit añaden aproximadamente 1,5 GiB de espacio en disco y entre 5 y
 |---|---|
 | apt | Instalado desde los repositorios APT de Ubuntu 24.04 mediante `apt-get install` |
 | ghlatest | Último binario descargado desde GitHub Releases usando `ghlatest.sh` e `install-release.sh` |
-| uv | Instalado como herramienta Python usando el gestor de paquetes `uv` |
-| pip | Instalado como paquete Python usando `pip install` en el Python del sistema |
+| uv | Instalado como herramienta de Python usando el gestor de paquetes `uv` |
+| pip | Instalado como paquete de Python usando `pip install` en el Python del sistema |
 | npm | Instalado como paquete global de Node.js usando `npm install -g` |
 | go install | Compilado desde el código fuente usando `go install` e instalado en `/usr/local/bin` |
 | git clone | Repositorio clonado en el directorio `/opt/` |
