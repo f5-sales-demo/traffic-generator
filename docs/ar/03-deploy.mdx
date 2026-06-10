@@ -41,26 +41,26 @@ cp terraform.tfvars.example terraform.tfvars
 
 يقوم `main.tf` بتكوين موفر Azure:
 
-```hcl file=../../terraform/main.tf
+```hcl file=../_data/main.tf
 ```
 
 يحدد `variables.tf` جميع المعلمات القابلة للتكوين. القيمة الافتراضية لـ `vm_size` هي `Standard_F16s_v2` (16 وحدة معالجة مركزية افتراضية محسّنة للحوسبة) -- راجع [تحديد حجم الجهاز الافتراضي](#تحديد-حجم-الجهاز-الافتراضي) لإرشادات التوسع:
 
-```hcl file=../../terraform/variables.tf
+```hcl file=../_data/variables.tf
 ```
 
 ### البنية التحتية للشبكة
 
 ينشئ `network.tf` الشبكة الافتراضية والشبكة الفرعية وعنوان IP العام ومجموعة أمان الشبكة (المنفذ 22 SSH) وواجهة الشبكة:
 
-```hcl file=../../terraform/network.tf
+```hcl file=../_data/network.tf
 ```
 
 ### الجهاز الافتراضي مع Cloud-Init
 
 ينشئ `vm.tf` جهاز Ubuntu 24.04 الافتراضي ويمرر قالب cloud-init مع متغيرات الهدف والأدوات:
 
-```hcl file=../../terraform/vm.tf
+```hcl file=../_data/vm.tf
 ```
 
 ### توفير Cloud-Init
@@ -80,21 +80,21 @@ cp terraform.tfvars.example terraform.tfvars
 
 يستخدم cloud-init متغيرات قوالب Terraform: `${target_fqdn}` و`${target_origin_ip}` و`${tool_tier}`. يتم تهريب متغيرات Shell مثل `$NPROC` كـ `$$NPROC` في templatefile الخاص بـ Terraform.
 
-```yaml file=../../terraform/cloud-init.yaml
+```yaml file=../_data/cloud-init.yaml
 ```
 
 ### المخرجات
 
 يكشف `outputs.tf` عن 17 مخرجاً بما في ذلك عنوان IP العام/الخاص، وأمر SSH، ومعرفات الموارد، والقيم الخاصة بالمكون (target_fqdn, status_check):
 
-```hcl file=../../terraform/outputs.tf
+```hcl file=../_data/outputs.tf
 ```
 
 ### مثال على ملف المتغيرات
 
 انسخ `terraform.tfvars.example` إلى `terraform.tfvars` وأدخل قيمك. يستثني `.gitignore` ملف `terraform.tfvars` لمنع إرسال بيانات الاعتماد:
 
-```hcl file=../../terraform/terraform.tfvars.example
+```hcl file=../_data/terraform.tfvars.example
 ```
 
 استبدل `subscription_id` بمعرف اشتراك Azure الخاص بك (من `az account show --query id -o tsv`) و`target_fqdn` بنطاق موازن الحمل F5 XC الخاص بك.

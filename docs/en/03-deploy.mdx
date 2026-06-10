@@ -34,26 +34,26 @@ The terraform directory contains 9 files following the Demo Resource Standard:
 
 `main.tf` configures the Azure provider:
 
-```hcl file=../../terraform/main.tf
+```hcl file=../_data/main.tf
 ```
 
 `variables.tf` defines all configurable parameters. The `vm_size` default is `Standard_F16s_v2` (16 vCPU compute-optimized) -- see [VM Sizing](#vm-sizing) for scaling guidance:
 
-```hcl file=../../terraform/variables.tf
+```hcl file=../_data/variables.tf
 ```
 
 ### Network Infrastructure
 
 `network.tf` creates the VNet, subnet, public IP, NSG (port 22 SSH), and NIC:
 
-```hcl file=../../terraform/network.tf
+```hcl file=../_data/network.tf
 ```
 
 ### Virtual Machine with Cloud-Init
 
 `vm.tf` creates the Ubuntu 24.04 VM and passes the cloud-init template with target and tooling variables:
 
-```hcl file=../../terraform/vm.tf
+```hcl file=../_data/vm.tf
 ```
 
 ### Cloud-Init Provisioning
@@ -73,21 +73,21 @@ The terraform directory contains 9 files following the Demo Resource Standard:
 
 The cloud-init uses Terraform template variables: `${target_fqdn}`, `${target_origin_ip}`, and `${tool_tier}`. Shell variables like `$NPROC` are escaped as `$$NPROC` in the Terraform templatefile.
 
-```yaml file=../../terraform/cloud-init.yaml
+```yaml file=../_data/cloud-init.yaml
 ```
 
 ### Outputs
 
 `outputs.tf` exposes 17 outputs including public/private IP, SSH command, resource identifiers, and component-specific values (target_fqdn, status_check):
 
-```hcl file=../../terraform/outputs.tf
+```hcl file=../_data/outputs.tf
 ```
 
 ### Example Variables File
 
 Copy `terraform.tfvars.example` to `terraform.tfvars` and fill in your values. The `.gitignore` excludes `terraform.tfvars` to prevent committing credentials:
 
-```hcl file=../../terraform/terraform.tfvars.example
+```hcl file=../_data/terraform.tfvars.example
 ```
 
 Replace `subscription_id` with your Azure subscription ID (from `az account show --query id -o tsv`) and `target_fqdn` with your F5 XC load balancer domain.

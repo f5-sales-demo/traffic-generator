@@ -42,26 +42,26 @@ Le répertoire terraform contient 9 fichiers suivant le standard des ressources 
 
 `main.tf` configure le fournisseur Azure :
 
-```hcl file=../../terraform/main.tf
+```hcl file=../_data/main.tf
 ```
 
 `variables.tf` définit tous les paramètres configurables. La valeur par défaut de `vm_size` est `Standard_F16s_v2` (16 vCPU optimisé pour le calcul) -- voir [Dimensionnement de la VM](#dimensionnement-de-la-vm) pour les recommandations de mise à l'échelle :
 
-```hcl file=../../terraform/variables.tf
+```hcl file=../_data/variables.tf
 ```
 
 ### Infrastructure réseau
 
 `network.tf` crée le VNet, le sous-réseau, l'IP publique, le NSG (port 22 SSH) et la NIC :
 
-```hcl file=../../terraform/network.tf
+```hcl file=../_data/network.tf
 ```
 
 ### Machine virtuelle avec Cloud-Init
 
 `vm.tf` crée la VM Ubuntu 24.04 et transmet le modèle cloud-init avec les variables de cible et d'outillage :
 
-```hcl file=../../terraform/vm.tf
+```hcl file=../_data/vm.tf
 ```
 
 ### Provisionnement Cloud-Init
@@ -81,21 +81,21 @@ Le répertoire terraform contient 9 fichiers suivant le standard des ressources 
 
 Le cloud-init utilise des variables de modèle Terraform : `${target_fqdn}`, `${target_origin_ip}` et `${tool_tier}`. Les variables shell comme `$NPROC` sont échappées en `$$NPROC` dans le templatefile Terraform.
 
-```yaml file=../../terraform/cloud-init.yaml
+```yaml file=../_data/cloud-init.yaml
 ```
 
 ### Sorties
 
 `outputs.tf` expose 17 sorties incluant l'IP publique/privée, la commande SSH, les identifiants de ressources et les valeurs spécifiques au composant (target_fqdn, status_check) :
 
-```hcl file=../../terraform/outputs.tf
+```hcl file=../_data/outputs.tf
 ```
 
 ### Exemple de fichier de variables
 
 Copiez `terraform.tfvars.example` vers `terraform.tfvars` et renseignez vos valeurs. Le `.gitignore` exclut `terraform.tfvars` pour éviter de commiter des identifiants :
 
-```hcl file=../../terraform/terraform.tfvars.example
+```hcl file=../_data/terraform.tfvars.example
 ```
 
 Remplacez `subscription_id` par votre ID d'abonnement Azure (obtenu via `az account show --query id -o tsv`) et `target_fqdn` par le domaine de votre répartiteur de charge F5 XC.
