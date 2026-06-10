@@ -41,26 +41,26 @@ O diretório terraform contém 9 arquivos seguindo o Padrão de Recursos de Demo
 
 `main.tf` configura o provedor Azure:
 
-```hcl file=./_data/main.tf
+```hcl file=../../terraform/main.tf
 ```
 
 `variables.tf` define todos os parâmetros configuráveis. O padrão de `vm_size` é `Standard_F16s_v2` (16 vCPU otimizado para computação) -- consulte [Dimensionamento da VM](#dimensionamento-da-vm) para orientações de escalabilidade:
 
-```hcl file=./_data/variables.tf
+```hcl file=../../terraform/variables.tf
 ```
 
 ### Infraestrutura de Rede
 
 `network.tf` cria a VNet, sub-rede, IP público, NSG (porta 22 SSH) e NIC:
 
-```hcl file=./_data/network.tf
+```hcl file=../../terraform/network.tf
 ```
 
 ### Máquina Virtual com Cloud-Init
 
 `vm.tf` cria a VM Ubuntu 24.04 e passa o template cloud-init com variáveis de destino e ferramentas:
 
-```hcl file=./_data/vm.tf
+```hcl file=../../terraform/vm.tf
 ```
 
 ### Provisionamento Cloud-Init
@@ -80,21 +80,21 @@ O diretório terraform contém 9 arquivos seguindo o Padrão de Recursos de Demo
 
 O cloud-init utiliza variáveis de template do Terraform: `${target_fqdn}`, `${target_origin_ip}` e `${tool_tier}`. Variáveis shell como `$NPROC` são escapadas como `$$NPROC` no templatefile do Terraform.
 
-```yaml file=./_data/cloud-init.yaml
+```yaml file=../../terraform/cloud-init.yaml
 ```
 
 ### Saídas
 
 `outputs.tf` expõe 17 saídas incluindo IP público/privado, comando SSH, identificadores de recursos e valores específicos do componente (target_fqdn, status_check):
 
-```hcl file=./_data/outputs.tf
+```hcl file=../../terraform/outputs.tf
 ```
 
 ### Exemplo de Arquivo de Variáveis
 
 Copie `terraform.tfvars.example` para `terraform.tfvars` e preencha seus valores. O `.gitignore` exclui `terraform.tfvars` para evitar o commit de credenciais:
 
-```hcl file=./_data/terraform.tfvars.example
+```hcl file=../../terraform/terraform.tfvars.example
 ```
 
 Substitua `subscription_id` pelo seu ID de assinatura Azure (obtido com `az account show --query id -o tsv`) e `target_fqdn` pelo domínio do seu balanceador de carga F5 XC.

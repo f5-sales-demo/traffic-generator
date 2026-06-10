@@ -41,26 +41,26 @@ cp terraform.tfvars.example terraform.tfvars
 
 `main.tf` กำหนดค่า Azure provider:
 
-```hcl file=./_data/main.tf
+```hcl file=../../terraform/main.tf
 ```
 
 `variables.tf` กำหนดพารามิเตอร์ที่ปรับแต่งได้ทั้งหมด ค่าเริ่มต้นของ `vm_size` คือ `Standard_F16s_v2` (16 vCPU ปรับแต่งสำหรับการประมวลผล) -- ดู [การเลือกขนาด VM](#การเลือกขนาด-vm) สำหรับคำแนะนำในการปรับขนาด:
 
-```hcl file=./_data/variables.tf
+```hcl file=../../terraform/variables.tf
 ```
 
 ### โครงสร้างพื้นฐานเครือข่าย
 
 `network.tf` สร้าง VNet, ซับเน็ต, public IP, NSG (พอร์ต 22 SSH), และ NIC:
 
-```hcl file=./_data/network.tf
+```hcl file=../../terraform/network.tf
 ```
 
 ### เครื่องเสมือนพร้อม Cloud-Init
 
 `vm.tf` สร้าง VM Ubuntu 24.04 และส่งต่อเทมเพลต cloud-init พร้อมตัวแปรเป้าหมายและเครื่องมือ:
 
-```hcl file=./_data/vm.tf
+```hcl file=../../terraform/vm.tf
 ```
 
 ### การจัดเตรียม Cloud-Init
@@ -80,21 +80,21 @@ cp terraform.tfvars.example terraform.tfvars
 
 Cloud-init ใช้ตัวแปรเทมเพลต Terraform: `${target_fqdn}`, `${target_origin_ip}`, และ `${tool_tier}` ตัวแปร Shell เช่น `$NPROC` จะถูก escape เป็น `$$NPROC` ใน Terraform templatefile
 
-```yaml file=./_data/cloud-init.yaml
+```yaml file=../../terraform/cloud-init.yaml
 ```
 
 ### เอาต์พุต
 
 `outputs.tf` แสดงเอาต์พุต 17 รายการ รวมถึง public/private IP, คำสั่ง SSH, ตัวระบุทรัพยากร, และค่าเฉพาะคอมโพเนนต์ (target_fqdn, status_check):
 
-```hcl file=./_data/outputs.tf
+```hcl file=../../terraform/outputs.tf
 ```
 
 ### ตัวอย่างไฟล์ตัวแปร
 
 คัดลอก `terraform.tfvars.example` ไปเป็น `terraform.tfvars` และกรอกค่าของคุณ `.gitignore` จะยกเว้น `terraform.tfvars` เพื่อป้องกันการ commit ข้อมูลประจำตัว:
 
-```hcl file=./_data/terraform.tfvars.example
+```hcl file=../../terraform/terraform.tfvars.example
 ```
 
 แทนที่ `subscription_id` ด้วย Azure subscription ID ของคุณ (จาก `az account show --query id -o tsv`) และ `target_fqdn` ด้วยโดเมน F5 XC load balancer ของคุณ

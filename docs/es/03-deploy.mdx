@@ -42,26 +42,26 @@ El directorio terraform contiene 9 archivos siguiendo el Estándar de Recursos d
 
 `main.tf` configura el proveedor de Azure:
 
-```hcl file=./_data/main.tf
+```hcl file=../../terraform/main.tf
 ```
 
 `variables.tf` define todos los parámetros configurables. El valor predeterminado de `vm_size` es `Standard_F16s_v2` (16 vCPU optimizado para cómputo) -- consulte [Dimensionamiento de VM](#dimensionamiento-de-vm) para orientación sobre escalado:
 
-```hcl file=./_data/variables.tf
+```hcl file=../../terraform/variables.tf
 ```
 
 ### Infraestructura de red
 
 `network.tf` crea la VNet, subred, IP pública, NSG (puerto 22 SSH) y NIC:
 
-```hcl file=./_data/network.tf
+```hcl file=../../terraform/network.tf
 ```
 
 ### Máquina virtual con Cloud-Init
 
 `vm.tf` crea la VM Ubuntu 24.04 y pasa la plantilla cloud-init con las variables de destino y herramientas:
 
-```hcl file=./_data/vm.tf
+```hcl file=../../terraform/vm.tf
 ```
 
 ### Aprovisionamiento con Cloud-Init
@@ -81,21 +81,21 @@ El directorio terraform contiene 9 archivos siguiendo el Estándar de Recursos d
 
 El cloud-init utiliza variables de plantilla de Terraform: `${target_fqdn}`, `${target_origin_ip}` y `${tool_tier}`. Las variables de shell como `$NPROC` se escapan como `$$NPROC` en el templatefile de Terraform.
 
-```yaml file=./_data/cloud-init.yaml
+```yaml file=../../terraform/cloud-init.yaml
 ```
 
 ### Salidas
 
 `outputs.tf` expone 17 salidas incluyendo IP pública/privada, comando SSH, identificadores de recursos y valores específicos del componente (target_fqdn, status_check):
 
-```hcl file=./_data/outputs.tf
+```hcl file=../../terraform/outputs.tf
 ```
 
 ### Archivo de variables de ejemplo
 
 Copie `terraform.tfvars.example` a `terraform.tfvars` y complete sus valores. El `.gitignore` excluye `terraform.tfvars` para evitar confirmar credenciales:
 
-```hcl file=./_data/terraform.tfvars.example
+```hcl file=../../terraform/terraform.tfvars.example
 ```
 
 Reemplace `subscription_id` con su ID de suscripción de Azure (obtenido con `az account show --query id -o tsv`) y `target_fqdn` con el dominio de su balanceador de carga F5 XC.
