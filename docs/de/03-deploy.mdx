@@ -41,26 +41,26 @@ Das Terraform-Verzeichnis enthält 9 Dateien gemäß dem Demo Resource Standard:
 
 `main.tf` konfiguriert den Azure Provider:
 
-```hcl file=../../terraform/main.tf
+```hcl file=../_data/main.tf
 ```
 
 `variables.tf` definiert alle konfigurierbaren Parameter. Der Standardwert für `vm_size` ist `Standard_F16s_v2` (16 vCPU rechenoptimiert) -- siehe [VM-Dimensionierung](#vm-dimensionierung) für Skalierungshinweise:
 
-```hcl file=../../terraform/variables.tf
+```hcl file=../_data/variables.tf
 ```
 
 ### Netzwerkinfrastruktur
 
 `network.tf` erstellt das VNet, Subnetz, die öffentliche IP, NSG (Port 22 SSH) und NIC:
 
-```hcl file=../../terraform/network.tf
+```hcl file=../_data/network.tf
 ```
 
 ### Virtuelle Maschine mit Cloud-Init
 
 `vm.tf` erstellt die Ubuntu 24.04 VM und übergibt das cloud-init Template mit Ziel- und Tool-Variablen:
 
-```hcl file=../../terraform/vm.tf
+```hcl file=../_data/vm.tf
 ```
 
 ### Cloud-Init-Provisionierung
@@ -80,21 +80,21 @@ Das Terraform-Verzeichnis enthält 9 Dateien gemäß dem Demo Resource Standard:
 
 Das cloud-init verwendet Terraform-Templatevariablen: `${target_fqdn}`, `${target_origin_ip}` und `${tool_tier}`. Shell-Variablen wie `$NPROC` werden in der Terraform templatefile als `$$NPROC` escaped.
 
-```yaml file=../../terraform/cloud-init.yaml
+```yaml file=../_data/cloud-init.yaml
 ```
 
 ### Ausgaben
 
 `outputs.tf` stellt 17 Ausgaben bereit, darunter öffentliche/private IP, SSH-Befehl, Ressourcen-Identifikatoren und komponentenspezifische Werte (target_fqdn, status_check):
 
-```hcl file=../../terraform/outputs.tf
+```hcl file=../_data/outputs.tf
 ```
 
 ### Beispiel-Variablendatei
 
 Kopieren Sie `terraform.tfvars.example` nach `terraform.tfvars` und tragen Sie Ihre Werte ein. Die `.gitignore` schließt `terraform.tfvars` aus, um das versehentliche Committen von Anmeldedaten zu verhindern:
 
-```hcl file=../../terraform/terraform.tfvars.example
+```hcl file=../_data/terraform.tfvars.example
 ```
 
 Ersetzen Sie `subscription_id` durch Ihre Azure-Abonnement-ID (aus `az account show --query id -o tsv`) und `target_fqdn` durch Ihre F5 XC Load-Balancer-Domain.

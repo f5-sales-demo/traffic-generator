@@ -39,26 +39,26 @@ terraform 目录包含 9 个文件，遵循演示资源标准：
 
 `main.tf` 配置 Azure provider：
 
-```hcl file=../../terraform/main.tf
+```hcl file=../_data/main.tf
 ```
 
 `variables.tf` 定义所有可配置参数。`vm_size` 默认值为 `Standard_F16s_v2`（16 vCPU 计算优化）-- 参见 [VM 规格选择](#vm-规格选择) 了解扩展指南：
 
-```hcl file=../../terraform/variables.tf
+```hcl file=../_data/variables.tf
 ```
 
 ### 网络基础设施
 
 `network.tf` 创建 VNet、子网、公共 IP、NSG（端口 22 SSH）和 NIC：
 
-```hcl file=../../terraform/network.tf
+```hcl file=../_data/network.tf
 ```
 
 ### 带 Cloud-Init 的虚拟机
 
 `vm.tf` 创建 Ubuntu 24.04 VM，并传递包含目标和工具变量的 cloud-init 模板：
 
-```hcl file=../../terraform/vm.tf
+```hcl file=../_data/vm.tf
 ```
 
 ### Cloud-Init 配置
@@ -78,21 +78,21 @@ terraform 目录包含 9 个文件，遵循演示资源标准：
 
 cloud-init 使用 Terraform 模板变量：`${target_fqdn}`、`${target_origin_ip}` 和 `${tool_tier}`。Shell 变量如 `$NPROC` 在 Terraform templatefile 中转义为 `$$NPROC`。
 
-```yaml file=../../terraform/cloud-init.yaml
+```yaml file=../_data/cloud-init.yaml
 ```
 
 ### 输出
 
 `outputs.tf` 暴露 17 个输出，包括公共/私有 IP、SSH 命令、资源标识符和组件特定值（target_fqdn、status_check）：
 
-```hcl file=../../terraform/outputs.tf
+```hcl file=../_data/outputs.tf
 ```
 
 ### 变量文件示例
 
 将 `terraform.tfvars.example` 复制为 `terraform.tfvars` 并填入您的值。`.gitignore` 已排除 `terraform.tfvars` 以防止提交凭据：
 
-```hcl file=../../terraform/terraform.tfvars.example
+```hcl file=../_data/terraform.tfvars.example
 ```
 
 将 `subscription_id` 替换为您的 Azure 订阅 ID（通过 `az account show --query id -o tsv` 获取），将 `target_fqdn` 替换为您的 F5 XC 负载均衡器域名。
