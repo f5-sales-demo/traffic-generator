@@ -41,26 +41,26 @@ terraform डायरेक्टरी में Demo Resource Standard का
 
 `main.tf` Azure प्रोवाइडर को कॉन्फ़िगर करता है:
 
-```hcl file=./_data/main.tf
+```hcl file=../../terraform/main.tf
 ```
 
 `variables.tf` सभी कॉन्फ़िगर करने योग्य पैरामीटर्स को परिभाषित करता है। `vm_size` का डिफ़ॉल्ट `Standard_F16s_v2` (16 vCPU कम्प्यूट-ऑप्टिमाइज़्ड) है -- स्केलिंग मार्गदर्शन के लिए [VM साइज़िंग](#vm-साइज़िंग) देखें:
 
-```hcl file=./_data/variables.tf
+```hcl file=../../terraform/variables.tf
 ```
 
 ### नेटवर्क इन्फ्रास्ट्रक्चर
 
 `network.tf` VNet, सबनेट, पब्लिक IP, NSG (पोर्ट 22 SSH), और NIC बनाता है:
 
-```hcl file=./_data/network.tf
+```hcl file=../../terraform/network.tf
 ```
 
 ### Cloud-Init के साथ वर्चुअल मशीन
 
 `vm.tf` Ubuntu 24.04 VM बनाता है और टारगेट तथा टूलिंग वेरिएबल्स के साथ cloud-init टेम्पलेट पास करता है:
 
-```hcl file=./_data/vm.tf
+```hcl file=../../terraform/vm.tf
 ```
 
 ### Cloud-Init प्रोविज़निंग
@@ -80,21 +80,21 @@ terraform डायरेक्टरी में Demo Resource Standard का
 
 cloud-init Terraform टेम्पलेट वेरिएबल्स का उपयोग करता है: `${target_fqdn}`, `${target_origin_ip}`, और `${tool_tier}`। `$NPROC` जैसे शेल वेरिएबल्स को Terraform templatefile में `$$NPROC` के रूप में एस्केप किया जाता है।
 
-```yaml file=./_data/cloud-init.yaml
+```yaml file=../../terraform/cloud-init.yaml
 ```
 
 ### आउटपुट
 
 `outputs.tf` public/private IP, SSH कमांड, रिसोर्स आइडेंटिफ़ायर्स, और कंपोनेंट-विशिष्ट वैल्यूज़ (target_fqdn, status_check) सहित 17 आउटपुट एक्सपोज़ करता है:
 
-```hcl file=./_data/outputs.tf
+```hcl file=../../terraform/outputs.tf
 ```
 
 ### उदाहरण वेरिएबल्स फ़ाइल
 
 `terraform.tfvars.example` को `terraform.tfvars` में कॉपी करें और अपनी वैल्यूज़ भरें। `.gitignore` क्रेडेंशियल्स कमिट होने से रोकने के लिए `terraform.tfvars` को बाहर रखता है:
 
-```hcl file=./_data/terraform.tfvars.example
+```hcl file=../../terraform/terraform.tfvars.example
 ```
 
 `subscription_id` को अपनी Azure सब्सक्रिप्शन ID (जो `az account show --query id -o tsv` से मिलती है) से बदलें और `target_fqdn` को अपने F5 XC लोड बैलेंसर डोमेन से बदलें।

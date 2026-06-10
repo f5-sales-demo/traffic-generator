@@ -41,26 +41,26 @@ La directory terraform contiene 9 file conformi al Demo Resource Standard:
 
 `main.tf` configura il provider Azure:
 
-```hcl file=./_data/main.tf
+```hcl file=../../terraform/main.tf
 ```
 
 `variables.tf` definisce tutti i parametri configurabili. Il valore predefinito di `vm_size` è `Standard_F16s_v2` (16 vCPU compute-optimized) -- consultate [Dimensionamento VM](#dimensionamento-vm) per indicazioni sulla scalabilità:
 
-```hcl file=./_data/variables.tf
+```hcl file=../../terraform/variables.tf
 ```
 
 ### Infrastruttura di rete
 
 `network.tf` crea la VNet, la subnet, l'IP pubblico, l'NSG (porta 22 SSH) e la NIC:
 
-```hcl file=./_data/network.tf
+```hcl file=../../terraform/network.tf
 ```
 
 ### Macchina virtuale con Cloud-Init
 
 `vm.tf` crea la VM Ubuntu 24.04 e passa il template cloud-init con le variabili target e degli strumenti:
 
-```hcl file=./_data/vm.tf
+```hcl file=../../terraform/vm.tf
 ```
 
 ### Provisioning Cloud-Init
@@ -80,21 +80,21 @@ La directory terraform contiene 9 file conformi al Demo Resource Standard:
 
 Il cloud-init utilizza variabili template Terraform: `${target_fqdn}`, `${target_origin_ip}` e `${tool_tier}`. Le variabili shell come `$NPROC` sono escapate come `$$NPROC` nel templatefile Terraform.
 
-```yaml file=./_data/cloud-init.yaml
+```yaml file=../../terraform/cloud-init.yaml
 ```
 
 ### Output
 
 `outputs.tf` espone 17 output tra cui IP pubblico/privato, comando SSH, identificatori delle risorse e valori specifici del componente (target_fqdn, status_check):
 
-```hcl file=./_data/outputs.tf
+```hcl file=../../terraform/outputs.tf
 ```
 
 ### File di esempio per le variabili
 
 Copiate `terraform.tfvars.example` in `terraform.tfvars` e inserite i vostri valori. Il `.gitignore` esclude `terraform.tfvars` per evitare il commit delle credenziali:
 
-```hcl file=./_data/terraform.tfvars.example
+```hcl file=../../terraform/terraform.tfvars.example
 ```
 
 Sostituite `subscription_id` con il vostro ID sottoscrizione Azure (ottenibile con `az account show --query id -o tsv`) e `target_fqdn` con il dominio del vostro load balancer F5 XC.

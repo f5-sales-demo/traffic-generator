@@ -40,26 +40,26 @@ terraform 디렉토리에는 데모 리소스 표준을 따르는 9개의 파일
 
 `main.tf`는 Azure 프로바이더를 구성합니다:
 
-```hcl file=./_data/main.tf
+```hcl file=../../terraform/main.tf
 ```
 
 `variables.tf`는 모든 구성 가능한 매개변수를 정의합니다. `vm_size` 기본값은 `Standard_F16s_v2` (16 vCPU 컴퓨팅 최적화)입니다 -- 확장 가이드는 [VM 사이징](#vm-사이징)을 참조하세요:
 
-```hcl file=./_data/variables.tf
+```hcl file=../../terraform/variables.tf
 ```
 
 ### 네트워크 인프라
 
 `network.tf`는 VNet, 서브넷, 공용 IP, NSG (포트 22 SSH), NIC를 생성합니다:
 
-```hcl file=./_data/network.tf
+```hcl file=../../terraform/network.tf
 ```
 
 ### Cloud-Init을 포함한 가상 머신
 
 `vm.tf`는 Ubuntu 24.04 VM을 생성하고 대상 및 도구 변수와 함께 cloud-init 템플릿을 전달합니다:
 
-```hcl file=./_data/vm.tf
+```hcl file=../../terraform/vm.tf
 ```
 
 ### Cloud-Init 프로비저닝
@@ -79,21 +79,21 @@ terraform 디렉토리에는 데모 리소스 표준을 따르는 9개의 파일
 
 cloud-init은 Terraform 템플릿 변수 `${target_fqdn}`, `${target_origin_ip}`, `${tool_tier}`를 사용합니다. `$NPROC`과 같은 셸 변수는 Terraform templatefile에서 `$$NPROC`으로 이스케이프됩니다.
 
-```yaml file=./_data/cloud-init.yaml
+```yaml file=../../terraform/cloud-init.yaml
 ```
 
 ### 출력
 
 `outputs.tf`는 공용/사설 IP, SSH 명령어, 리소스 식별자, 컴포넌트별 값 (target_fqdn, status_check)을 포함한 17개 출력을 노출합니다:
 
-```hcl file=./_data/outputs.tf
+```hcl file=../../terraform/outputs.tf
 ```
 
 ### 예제 변수 파일
 
 `terraform.tfvars.example`을 `terraform.tfvars`로 복사하고 값을 입력하세요. `.gitignore`는 자격 증명 커밋을 방지하기 위해 `terraform.tfvars`를 제외합니다:
 
-```hcl file=./_data/terraform.tfvars.example
+```hcl file=../../terraform/terraform.tfvars.example
 ```
 
 `subscription_id`를 Azure 구독 ID (`az account show --query id -o tsv`로 확인)로 교체하고 `target_fqdn`을 F5 XC 로드 밸런서 도메인으로 설정하세요.
