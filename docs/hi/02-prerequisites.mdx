@@ -1,8 +1,8 @@
 ---
 title: पूर्वापेक्षाएँ
 description: >-
-  Azure सदस्यता Contributor भूमिका के साथ, Terraform >= 1.5, SSH कुंजी युग्म
-  (Ed25519 अनुशंसित), subscription_id खोजने के लिए Azure CLI, और cloud-init
+  Azure सब्सक्रिप्शन Contributor रोल के साथ, Terraform >= 1.5, SSH की-पेयर
+  (Ed25519 अनुशंसित), subscription_id लुकअप के लिए Azure CLI, और cloud-init
   प्रोविज़निंग के दौरान टूल डाउनलोड के लिए आउटबाउंड HTTPS
 sidebar:
   order: 2
@@ -13,19 +13,19 @@ i18n:
 
 ## आवश्यक
 
-### Azure सदस्यता
+### Azure सब्सक्रिप्शन
 
-निम्नलिखित बनाने के लिए Contributor भूमिका या समकक्ष अनुमतियों के साथ एक सक्रिय Azure सदस्यता:
+एक सक्रिय Azure सब्सक्रिप्शन जिसमें Contributor रोल या समकक्ष अनुमतियाँ हों, निम्नलिखित बनाने के लिए:
 
 - रिसोर्स ग्रुप
 - वर्चुअल नेटवर्क और सबनेट
-- नेटवर्क सुरक्षा समूह
+- नेटवर्क सुरक्षा ग्रुप
 - पब्लिक IP पते
 - वर्चुअल मशीनें (डिफ़ॉल्ट Standard_F16s_v2)
 
 ### Azure CLI
 
-अपनी सदस्यता ID प्राप्त करने के लिए Azure CLI इंस्टॉल करें और प्रमाणित करें:
+अपना सब्सक्रिप्शन ID प्राप्त करने के लिए Azure CLI इंस्टॉल करें और प्रमाणीकरण करें:
 
 ```bash
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -35,7 +35,7 @@ az login
 az account show --query '{name:name, id:id}' -o table
 ```
 
-`id` मान कॉपी करें -- यह Terraform द्वारा आवश्यक `subscription_id` है।
+`id` मान कॉपी करें -- यही वह `subscription_id` है जो Terraform द्वारा आवश्यक है।
 
 ### Terraform
 
@@ -53,9 +53,9 @@ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://
 sudo apt update && sudo apt install terraform
 ```
 
-### SSH कुंजी युग्म
+### SSH की-पेयर
 
-VM एक्सेस के लिए एक SSH कुंजी युग्म। Ed25519 अनुशंसित है:
+VM एक्सेस के लिए एक SSH की-पेयर। Ed25519 अनुशंसित है:
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
@@ -63,30 +63,30 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### नेटवर्क एक्सेस
 
-ट्रैफ़िक जेनरेटर VM को प्रोविज़निंग के दौरान निम्नलिखित स्रोतों से टूल डाउनलोड करने के लिए आउटबाउंड HTTPS एक्सेस की आवश्यकता है:
+ट्रैफ़िक जनरेटर VM को प्रोविज़निंग के दौरान निम्न स्रोतों से उपकरण डाउनलोड करने के लिए आउटबाउंड HTTPS एक्सेस आवश्यक है:
 
 - GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
 - PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
-- npm रजिस्ट्री (puppeteer, puppeteer-extra-plugin-stealth)
-- Ubuntu APT रिपॉज़िटरीज़ (nikto, nmap, masscan, hydra, tshark, और अन्य सिस्टम पैकेज)
-- Git रिपॉज़िटरीज़ (testssl.sh, recon-ng, spiderfoot, SecLists)
+- npm registry (puppeteer, puppeteer-extra-plugin-stealth)
+- Ubuntu APT रिपॉज़िटरी (nikto, nmap, masscan, hydra, tshark, और अन्य सिस्टम पैकेज)
+- Git रिपॉज़िटरी (testssl.sh, recon-ng, spiderfoot, SecLists)
 
-यदि आपकी Azure सदस्यता आउटबाउंड फ़ायरवॉल नियम या NSG प्रतिबंध लागू करती है, तो सुनिश्चित करें कि प्रारंभिक प्रोविज़निंग अवधि (15-25 मिनट) के दौरान इन स्रोतों तक HTTPS (पोर्ट 443) की अनुमति है।
+यदि आपका Azure सब्सक्रिप्शन आउटबाउंड फ़ायरवॉल नियम या NSG प्रतिबंध लागू करता है, तो सुनिश्चित करें कि प्रारंभिक प्रोविज़निंग विंडो (15-25 मिनट) के दौरान इन स्रोतों के लिए HTTPS (पोर्ट 443) की अनुमति दी गई हो।
 
 ### पूर्व-तैनात घटक
 
-ट्रैफ़िक जेनरेटर तैनात करने से पहले, आपके पास होना चाहिए:
+ट्रैफ़िक जनरेटर तैनात करने से पहले, आपके पास होना चाहिए:
 
-1. **ओरिजिन सर्वर** तैनात और पहुँच योग्य हो (देखें [origin-server डॉक्स](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
-2. **F5 XC HTTP लोड बैलेंसर** ओरिजिन सर्वर को बैकएंड के रूप में कॉन्फ़िगर किया गया हो
-3. लोड बैलेंसर से जुड़ी एक **WAF पॉलिसी** (WAF ट्रैफ़िक सत्यापन के लिए)
+1. **ऑरिजिन सर्वर** तैनात और पहुँच योग्य ([origin-server docs](https://f5xc-salesdemos.github.io/origin-server/03-deploy/) देखें)
+2. **F5 XC HTTP लोड बैलेंसर** ऑरिजिन सर्वर को बैकएंड के रूप में कॉन्फ़िगर किया गया हो
+3. लोड बैलेंसर से जुड़ी एक **WAF नीति** (WAF ट्रैफ़िक सत्यापन के लिए)
 
-`target_fqdn` Terraform वेरिएबल F5 XC लोड बैलेंसर के पब्लिक डोमेन पर सेट होना चाहिए।
+`target_fqdn` Terraform वेरिएबल को F5 XC लोड बैलेंसर के पब्लिक डोमेन पर सेट किया जाना चाहिए।
 
 :::tip
-जब लैब उपयोग में न हो तो चल रहे शुल्कों से बचने के लिए `terraform destroy` का उपयोग करें। प्रक्रिया के लिए [विघटन](../08-teardown/) देखें।
+चल रहे शुल्कों से बचने के लिए जब लैब उपयोग में न हो तो `terraform destroy` का उपयोग करें। प्रक्रिया के लिए [Teardown](../08-teardown/) देखें।
 :::
 
 :::note
-Standard_F16s_v2 (32 GiB RAM) डिफ़ॉल्ट है क्योंकि सुइट निष्पादन के दौरान कई टूल एक साथ चलते हैं। हेडलेस Chromium के साथ ब्राउज़र ऑटोमेशन (Playwright, Puppeteer) प्राथमिक मेमोरी उपभोक्ता है। छोटे F-सीरीज़ SKU गैर-ब्राउज़र सुइट्स के लिए काम करेंगे लेकिन बॉट-सिमुलेशन चलाते समय तंग हो सकते हैं।
+Standard_F16s_v2 (32 GiB RAM) डिफ़ॉल्ट है क्योंकि suite निष्पादन के दौरान कई उपकरण एक साथ चलते हैं। हेडलेस Chromium के साथ ब्राउज़र स्वचालन (Playwright, Puppeteer) मुख्य मेमोरी उपभोक्ता है। छोटे F-series SKU गैर-ब्राउज़र suites के लिए काम करेंगे लेकिन bot-simulation चलाते समय सीमित हो सकते हैं।
 :::

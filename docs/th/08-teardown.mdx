@@ -10,7 +10,7 @@ i18n:
   translator: machine
 ---
 
-เมื่อเซสชันแล็บเสร็จสิ้น ให้ทำลายทรัพยากร Azure ทั้งหมดเพื่อหยุดการเรียกเก็บเงิน
+เมื่อเซสชันแล็บเสร็จสมบูรณ์ ให้ทำลายทรัพยากร Azure ทั้งหมดเพื่อหยุดการเรียกเก็บเงิน
 
 ## Terraform Destroy
 
@@ -24,7 +24,7 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform จะแสดงข้อความขอยืนยัน พิมพ์ `yes` เพื่อดำเนินการต่อ
+Terraform จะขอการยืนยัน พิมพ์ `yes` เพื่อดำเนินการต่อ
 
 ## ตรวจสอบการล้างข้อมูล
 
@@ -40,9 +40,9 @@ az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
 az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
 ```
 
-## ล้าง State ในเครื่อง
+## ล้างไฟล์ State ในเครื่อง
 
-ลบไฟล์ Terraform state และไฟล์แคช:
+ลบไฟล์ state และไฟล์แคชของ Terraform:
 
 ```bash
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
@@ -50,7 +50,7 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## เก็บรักษาผลลัพธ์ (ไม่บังคับ)
 
-หากคุณต้องการเก็บผลลัพธ์ของชุดทดสอบ traffic ก่อนทำลาย VM ให้คัดลอกมาไว้ในเครื่อง:
+หากต้องการเก็บผลลัพธ์ของชุดทราฟฟิกก่อนทำลาย VM ให้คัดลอกมายังเครื่องในเครื่อง:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -65,14 +65,14 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 
 ## การล้างข้อมูล F5 XC
 
-หากคุณต้องการลบการตั้งค่า F5 XC ที่ traffic generator กำลังเป้าหมายอยู่ด้วย:
+หากต้องการลบการกำหนดค่า F5 XC ที่ตัวสร้างทราฟฟิกกำลังกำหนดเป้าหมายอยู่ด้วย:
 
 1. ลบ HTTP load balancer
 2. ลบ origin pool
-3. ลบนโยบาย WAF, การตั้งค่า Bot Defense, นโยบาย API Security หรือการตั้งค่า CSD ที่สร้างขึ้นสำหรับการทดสอบ
+3. ลบนโยบาย WAF, การกำหนดค่า Bot Defense, นโยบาย ความปลอดภัย API, หรือการกำหนดค่า CSD ที่สร้างขึ้นสำหรับการทดสอบ
 
-ทรัพยากร F5 XC เหล่านี้ไม่มีค่าใช้จ่าย Azure แต่ควรล้างออกเมื่อไม่ต้องการสภาพแวดล้อมสาธิตอีกต่อไป
+ทรัพยากร F5 XC เหล่านี้ไม่มีค่าใช้จ่าย Azure แต่ควรล้างข้อมูลเมื่อสภาพแวดล้อมสาธิตไม่จำเป็นต้องใช้งานอีกต่อไป
 
 :::tip
-สำหรับการใช้งานสาธิตซ้ำ ลองพิจารณาเขียนสคริปต์สำหรับวงจรชีวิตทั้งหมด: `cd terraform && terraform apply` ก่อนสาธิต รันชุดทดสอบ จากนั้น `terraform destroy` หลังจากเสร็จสิ้น ระดับ standard ใช้เวลาจัดเตรียมประมาณ 15-20 นาที ทำให้การตั้งค่าและรื้อถอนในวันเดียวกันเป็นไปได้จริง
+สำหรับการใช้งานสาธิตที่เกิดขึ้นซ้ำ ควรพิจารณาเขียนสคริปต์สำหรับวงจรชีวิตแบบครบวงจร: `cd terraform && terraform apply` ก่อนการสาธิต รันชุดการทดสอบ จากนั้น `terraform destroy` ในภายหลัง แพลตฟอร์ม standard tier ใช้เวลาจัดเตรียม 15-20 นาที ทำให้การตั้งค่าและรื้อถอนในวันเดียวกันเป็นเรื่องที่ทำได้จริง
 :::

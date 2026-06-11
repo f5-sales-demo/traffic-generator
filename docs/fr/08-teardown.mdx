@@ -13,7 +13,7 @@ i18n:
 
 Lorsque la session de laboratoire est terminée, détruisez toutes les ressources Azure pour arrêter la facturation.
 
-## Terraform Destroy
+## Destruction Terraform
 
 Depuis le répertoire `terraform/` :
 
@@ -25,7 +25,7 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform demandera une confirmation. Tapez `yes` pour continuer.
+Terraform demandera une confirmation. Saisissez `yes` pour continuer.
 
 ## Vérifier le nettoyage
 
@@ -43,15 +43,15 @@ az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
 
 ## Nettoyer l'état local
 
-Supprimez l'état Terraform et les fichiers en cache :
+Supprimez l'état Terraform et les fichiers mis en cache :
 
 ```bash
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 ```
 
-## Conserver les résultats (Optionnel)
+## Conserver les résultats (optionnel)
 
-Si vous souhaitez conserver les résultats de la suite de trafic avant de détruire la VM, copiez-les localement :
+Si vous souhaitez conserver les résultats de la suite de trafic avant de détruire la machine virtuelle, copiez-les localement :
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -68,12 +68,12 @@ scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-r
 
 Si vous souhaitez également supprimer la configuration F5 XC que le générateur de trafic ciblait :
 
-1. Supprimez le répartiteur de charge HTTP
+1. Supprimez l'équilibreur de charge HTTP
 2. Supprimez le pool d'origine
-3. Supprimez toutes les politiques WAF, configurations Bot Defense, politiques API Security ou configurations CSD créées pour les tests
+3. Supprimez toutes les politiques WAF, configurations de Défense Bot, politiques de Sécurité des API ou configurations CSD créées pour les tests
 
-Ces ressources F5 XC n'engendrent pas de coûts Azure mais doivent être nettoyées lorsque l'environnement de démonstration n'est plus nécessaire.
+Ces ressources F5 XC n'engendrent pas de coûts Azure, mais doivent être nettoyées lorsque l'environnement de démonstration n'est plus nécessaire.
 
 :::tip
-Pour une utilisation récurrente en démonstration, envisagez de scripter le cycle de vie complet : `cd terraform && terraform apply` avant une démo, exécutez les suites, puis `terraform destroy` ensuite. Le tier standard se provisionne en 15-20 minutes, ce qui rend la mise en place et le démontage le jour même tout à fait réalisables.
+Pour une utilisation récurrente en démonstration, envisagez de scripter le cycle de vie complet : `cd terraform && terraform apply` avant une démonstration, exécutez les suites, puis `terraform destroy` ensuite. Le niveau standard est provisionné en 15 à 20 minutes, ce qui rend la mise en place et le démontage le même jour tout à fait pratique.
 :::

@@ -1,18 +1,18 @@
 ---
-title: การติดตั้ง
+title: ปรับใช้งาน
 description: >-
-  การติดตั้ง Terraform IaC ของ Azure VM สำหรับ traffic generator — VM ชนิด
-  F-series ที่ปรับแต่งสำหรับการประมวลผล พร้อม Ubuntu 24.04, การปรับแต่ง kernel,
-  เครื่องมือด้านความปลอดภัยกว่า 50 รายการ, และชุดทราฟฟิก 19 ชุดที่จัดเตรียมผ่าน
+  การปรับใช้งาน Terraform IaC ของ Azure VM สำหรับตัวสร้างทราฟฟิก — F-series
+  compute-optimized VM พร้อม Ubuntu 24.04, การปรับแต่ง kernel,
+  เครื่องมือความปลอดภัย 50+ รายการ และชุดทราฟฟิก 19 ชุด ที่จัดเตรียมผ่าน
   cloud-init ไฟล์การกำหนดค่าทั้งหมดอยู่ในไดเรกทอรี terraform/
 sidebar:
   order: 3
 i18n:
-  sourceHash: bc522cf1cb30
+  sourceHash: 9cfd4eb9e98a
   translator: machine
 ---
 
-ไฟล์ Terraform ทั้งหมดอยู่ในไดเรกทอรี [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) โคลนรีพอซิทอรีและทำการติดตั้งโดยตรง:
+ไฟล์ Terraform ทั้งหมดอยู่ในไดเรกทอรี [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) โคลน repository และปรับใช้งานโดยตรง:
 
 ```bash
 git clone https://github.com/f5xc-salesdemos/traffic-generator.git
@@ -27,15 +27,15 @@ cp terraform.tfvars.example terraform.tfvars
 
 ไดเรกทอรี terraform ประกอบด้วย 9 ไฟล์ตามมาตรฐาน Demo Resource Standard:
 
-- `versions.tf` -- ข้อจำกัดเวอร์ชันของ Terraform และ provider (azurerm ~> 4.0, azuread ~> 3.0)
-- `providers.tf` -- การกำหนดค่า Azure RM และ Azure AD provider
-- `data.tf` -- แหล่งข้อมูล Azure AD สำหรับการตรวจหาผู้ติดตั้งอัตโนมัติ
-- `locals.tf` -- การตรวจหาผู้ติดตั้ง, การตั้งชื่อทรัพยากรตาม Azure Cloud Adoption Framework, แท็กมาตรฐาน
-- `main.tf` -- กลุ่มทรัพยากร (ตั้งชื่อเป็น `rg-traffic-generator-{environment}-{deployer}`)
-- `variables.tf` -- ตัวแปรอินพุตทั้งหมด (จำเป็น 2 ตัว, เลือกได้ 9 ตัว) พร้อมการตรวจหาผู้ติดตั้งอัตโนมัติผ่าน Azure AD
-- `network.tf` -- VNet (10.201.0.0/16), ซับเน็ต, public IP, NSG (พอร์ต 22 SSH), NIC
-- `vm.tf` -- VM Ubuntu 24.04 พร้อม cloud-init ผ่าน templatefile()
-- `outputs.tf` -- เอาต์พุต 17 รายการ: 15 เอาต์พุตมาตรฐานที่ใช้ร่วมกันโดยทรัพยากรสาธิตทั้งหมด (deployer, public_ip, private_ip, ssh_command, resource_group_name, vm_name, nsg_name, vnet_name, subnet_id, component, environment, resource_group_id, vm_id, nsg_id, location) บวกกับ 2 เอาต์พุตเฉพาะคอมโพเนนต์ (target_fqdn, status_check)
+- `versions.tf` -- ข้อจำกัดเวอร์ชัน Terraform และ provider (azurerm ~> 4.0, azuread ~> 3.0)
+- `providers.tf` -- การกำหนดค่า provider สำหรับ Azure RM และ Azure AD
+- `data.tf` -- แหล่งข้อมูล Azure AD สำหรับการแก้ไข deployer อัตโนมัติ
+- `locals.tf` -- การแก้ไข deployer, การตั้งชื่อทรัพยากรตาม Azure Cloud Adoption Framework, แท็กมาตรฐาน
+- `main.tf` -- Resource group (ตั้งชื่อเป็น `rg-traffic-generator-{environment}-{deployer}`)
+- `variables.tf` -- ตัวแปรนำเข้าทั้งหมด (2 ที่จำเป็น, 9 ที่เป็นตัวเลือก) พร้อมการแก้ไข deployer อัตโนมัติผ่าน Azure AD
+- `network.tf` -- VNet (10.201.0.0/16), subnet, public IP, NSG (พอร์ต 22 SSH), NIC
+- `vm.tf` -- Ubuntu 24.04 VM พร้อม cloud-init ผ่าน templatefile()
+- `outputs.tf` -- 17 outputs: 15 outputs มาตรฐานที่ใช้ร่วมกันโดยทรัพยากรสาธิตทั้งหมด (deployer, public_ip, private_ip, ssh_command, resource_group_name, vm_name, nsg_name, vnet_name, subnet_id, component, environment, resource_group_id, vm_id, nsg_id, location) บวก 2 outputs เฉพาะส่วนประกอบ (target_fqdn, status_check)
 
 ### Provider และตัวแปร
 
@@ -44,62 +44,62 @@ cp terraform.tfvars.example terraform.tfvars
 ```hcl file=../_data/main.tf
 ```
 
-`variables.tf` กำหนดพารามิเตอร์ที่ปรับแต่งได้ทั้งหมด ค่าเริ่มต้นของ `vm_size` คือ `Standard_F16s_v2` (16 vCPU ปรับแต่งสำหรับการประมวลผล) -- ดู [การเลือกขนาด VM](#การเลือกขนาด-vm) สำหรับคำแนะนำในการปรับขนาด:
+`variables.tf` กำหนดพารามิเตอร์ที่กำหนดค่าได้ทั้งหมด ค่าเริ่มต้นของ `vm_size` คือ `Standard_F16s_v2` (16 vCPU compute-optimized) -- ดู [การกำหนดขนาด VM](#vm-sizing) สำหรับคำแนะนำการปรับขนาด:
 
 ```hcl file=../_data/variables.tf
 ```
 
 ### โครงสร้างพื้นฐานเครือข่าย
 
-`network.tf` สร้าง VNet, ซับเน็ต, public IP, NSG (พอร์ต 22 SSH), และ NIC:
+`network.tf` สร้าง VNet, subnet, public IP, NSG (พอร์ต 22 SSH) และ NIC:
 
 ```hcl file=../_data/network.tf
 ```
 
-### เครื่องเสมือนพร้อม Cloud-Init
+### Virtual Machine พร้อม Cloud-Init
 
-`vm.tf` สร้าง VM Ubuntu 24.04 และส่งต่อเทมเพลต cloud-init พร้อมตัวแปรเป้าหมายและเครื่องมือ:
+`vm.tf` สร้าง Ubuntu 24.04 VM และส่งต่อ cloud-init template พร้อมตัวแปร target และ tooling:
 
 ```hcl file=../_data/vm.tf
 ```
 
-### การจัดเตรียม Cloud-Init
+### การจัดเตรียมด้วย Cloud-Init
 
-`cloud-init.yaml` เป็นการกำหนดค่าที่ผ่านการตรวจสอบแล้วในสภาพแวดล้อมจริง โดยได้รับการยืนยันภายใต้การทดสอบโหลดต่อเนื่องกว่า 48 ชั่วโมง รวมถึงการทดสอบ origin torture 4 รอบ ใช้ไลบรารีตัวช่วยพร้อมตรรกะการลองใหม่, การบันทึกความคืบหน้าไปยัง `/var/log/cloud-init-progress.log`, 9 ขั้นตอนการจัดเตรียม, และการรายงานสถานะแบบมีเงื่อนไข (ready/degraded ใน `status.json`) โดยจัดเตรียม:
+`cloud-init.yaml` คือการกำหนดค่าที่ผ่านการตรวจสอบในการใช้งานจริง ซึ่งได้รับการยืนยันภายใต้การทดสอบโหลดอย่างต่อเนื่องมากกว่า 48 ชั่วโมง รวมถึงการทดสอบ origin torture 4 รอบ ใช้ไลบรารีช่วยเหลือพร้อมตรรกะการลองใหม่, การบันทึกความคืบหน้าไปยัง `/var/log/cloud-init-progress.log`, 9 ขั้นตอนการจัดเตรียม และการรายงานสถานะแบบมีเงื่อนไข (ready/degraded ใน `status.json`) โดยจัดเตรียม:
 
-- **การปรับแต่ง Kernel** -- `somaxconn=131072`, `tcp_max_tw_buckets=4000000`, `tcp_fin_timeout=5`, บัฟเฟอร์ซ็อกเก็ต 64 MiB, `file-max=4194304`
-- **การปรับแต่ง NIC** -- RPS/RFS ข้ามทุกคอร์, เพิ่มบัฟเฟอร์ริงสูงสุดผ่าน ethtool, THP=always
+- **การปรับแต่ง Kernel** -- `somaxconn=131072`, `tcp_max_tw_buckets=4000000`, `tcp_fin_timeout=5`, socket buffers ขนาด 64 MiB, `file-max=4194304`
+- **การปรับแต่ง NIC** -- RPS/RFS ทั่วทุก core, ring buffers สูงสุดผ่าน ethtool, THP=always
 - **แพ็กเกจ APT** -- nikto, nmap, masscan, sqlmap, hydra, medusa, ncrack, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr, sslscan, socat, dirb, whatweb, wrk, hey, vegeta, ethtool
 - **GitHub Releases** -- nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass
 - **แพ็กเกจ Python** -- mitmproxy, sslyze, dnsrecon, fierce, theHarvester, playwright, scapy, impacket, arjun
-- **Node.js 20.x** -- Puppeteer พร้อมปลั๊กอิน stealth สำหรับการจำลองบอท
-- **การทำงานอัตโนมัติของเบราว์เซอร์** -- Playwright Chromium สำหรับการทดสอบเบราว์เซอร์แบบ headless
+- **Node.js 20.x** -- Puppeteer พร้อม stealth plugin สำหรับการจำลอง bot
+- **การทำงานอัตโนมัติของเบราว์เซอร์** -- Playwright Chromium สำหรับการทดสอบ headless browser
 - **Git clones** -- testssl.sh, recon-ng, spiderfoot, SecLists, waf-bypass, PayloadsAllTheThings
-- **การติดตั้งชุด Suite** -- 19 ชุดทราฟฟิกโคลนจากรีพอซิทอรีนี้ไปยัง `/opt/traffic-generator/suites/`
-- **ไฟล์การกำหนดค่า** -- `config.env` พร้อม `TARGET_FQDN`, `TARGET_ORIGIN_IP`, และ `CRAPI_PORT`
+- **การปรับใช้งาน Suite** -- ชุดทราฟฟิก 19 ชุด โคลนจาก repository นี้ไปยัง `/opt/traffic-generator/suites/`
+- **ไฟล์กำหนดค่า** -- `config.env` พร้อม `TARGET_FQDN`, `TARGET_ORIGIN_IP` และ `CRAPI_PORT`
 
-Cloud-init ใช้ตัวแปรเทมเพลต Terraform: `${target_fqdn}`, `${target_origin_ip}`, และ `${tool_tier}` ตัวแปร Shell เช่น `$NPROC` จะถูก escape เป็น `$$NPROC` ใน Terraform templatefile
+cloud-init ใช้ตัวแปร Terraform template: `${target_fqdn}`, `${target_origin_ip}` และ `${tool_tier}` ตัวแปร Shell เช่น `$NPROC` ถูก escape เป็น `$$NPROC` ใน Terraform templatefile
 
 ```yaml file=../_data/cloud-init.yaml
 ```
 
-### เอาต์พุต
+### Outputs
 
-`outputs.tf` แสดงเอาต์พุต 17 รายการ รวมถึง public/private IP, คำสั่ง SSH, ตัวระบุทรัพยากร, และค่าเฉพาะคอมโพเนนต์ (target_fqdn, status_check):
+`outputs.tf` แสดง 17 outputs รวมถึง public/private IP, คำสั่ง SSH, ตัวระบุทรัพยากร และค่าเฉพาะส่วนประกอบ (target_fqdn, status_check):
 
 ```hcl file=../_data/outputs.tf
 ```
 
 ### ตัวอย่างไฟล์ตัวแปร
 
-คัดลอก `terraform.tfvars.example` ไปเป็น `terraform.tfvars` และกรอกค่าของคุณ `.gitignore` จะยกเว้น `terraform.tfvars` เพื่อป้องกันการ commit ข้อมูลประจำตัว:
+คัดลอก `terraform.tfvars.example` ไปยัง `terraform.tfvars` และกรอกค่าของคุณ ไฟล์ `.gitignore` ยกเว้น `terraform.tfvars` เพื่อป้องกันการ commit credentials:
 
 ```hcl file=../_data/terraform.tfvars.example
 ```
 
 แทนที่ `subscription_id` ด้วย Azure subscription ID ของคุณ (จาก `az account show --query id -o tsv`) และ `target_fqdn` ด้วยโดเมน F5 XC load balancer ของคุณ
 
-## การติดตั้ง
+## ปรับใช้งาน
 
 ```bash
 terraform init
@@ -109,31 +109,31 @@ terraform plan
 terraform apply
 ```
 
-Terraform จะแสดง public IP, คำสั่ง SSH, และ target FQDN หลังจากการติดตั้งสำเร็จ
+Terraform แสดงผล public IP, คำสั่ง SSH และ target FQDN หลังจากการปรับใช้งานสำเร็จ
 
-## การเลือกขนาด VM
+## การกำหนดขนาด VM
 
-VM ชนิด F-series ที่ปรับแต่งสำหรับการประมวลผลเป็นตัวเลือกที่แนะนำสำหรับภาระงานการสร้างทราฟฟิกที่ใช้ CPU เป็นหลัก การปรับแต่ง kernel ของ cloud-init และความพร้อมกันของเครื่องมือจะปรับขนาดอัตโนมัติตามจำนวน vCPU
+แนะนำให้ใช้ F-series compute-optimized VMs สำหรับ workload การสร้างทราฟฟิกที่ใช้ CPU เป็นหลัก การปรับแต่ง kernel ของ cloud-init และการทำงานพร้อมกันของเครื่องมือจะปรับขนาดโดยอัตโนมัติตามจำนวน vCPU
 
-| SKU ของ VM | vCPU | RAM | เครือข่าย | กรณีการใช้งาน |
+| VM SKU | vCPU | RAM | เครือข่าย | กรณีการใช้งาน |
 |---|---|---|---|---|
-| Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | แล็บ/สาธิตขนาดเบา |
-| Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | การสาธิตมาตรฐาน |
+| Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | Lab/demo ขนาดเล็ก |
+| Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | Demo มาตรฐาน |
 | Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | การทดสอบโหลด (ค่าเริ่มต้น) |
-| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | การเปรียบเทียบประสิทธิภาพขนาดหนัก |
-| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | ภาระงานที่ใช้ RAM สูง |
+| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | การทดสอบประสิทธิภาพสูง |
+| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | Workload ที่ต้องการ RAM มาก |
 
 :::tip
-F16s_v2 ได้รับการยืนยันว่าเป็นตัวเลือกที่คุ้มค่าที่สุดจากการทดสอบเปรียบเทียบ A/B/C/D กับเป้าหมาย CDN F16s_v2 และ F32s_v2 ดู [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) สำหรับผลลัพธ์ทั้งหมด
+F16s_v2 ได้รับการตรวจสอบว่าเป็นตัวเลือกที่มีอัตราส่วนราคาต่อประสิทธิภาพดีที่สุดจากการทดสอบ benchmark A/B/C/D กับเป้าหมาย CDN F16s_v2 และ F32s_v2 ดูผลลัพธ์เต็มรูปแบบได้ที่ [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks)
 :::
 
-## การตรวจสอบหลังการติดตั้ง
+## การตรวจสอบหลังปรับใช้งาน
 
-การจัดเตรียม Cloud-init ใช้เวลา **15-20 นาทีสำหรับระดับมาตรฐาน** และ **ประมาณ 25 นาทีสำหรับระดับเต็ม** VM สามารถเข้าถึงได้ผ่าน SSH ทันที แต่เครื่องมือยังคงกำลังติดตั้งจนกว่า cloud-init จะเสร็จสมบูรณ์
+การจัดเตรียมด้วย cloud-init ใช้เวลา **15-20 นาทีสำหรับ standard tier** และ **ประมาณ 25 นาทีสำหรับ full tier** VM สามารถเข้าถึงผ่าน SSH ได้ทันที แต่เครื่องมือยังคงถูกติดตั้งอยู่จนกว่า cloud-init จะเสร็จสมบูรณ์
 
-### รอให้ Cloud-Init เสร็จสิ้น
+### รอ Cloud-Init
 
-SSH เข้าสู่ VM และรอให้การจัดเตรียมเสร็จสิ้น:
+SSH เข้าสู่ VM และรอให้การจัดเตรียมเสร็จสมบูรณ์:
 
 ```bash
 ssh azureuser@$(terraform output -raw public_ip)
@@ -141,7 +141,7 @@ ssh azureuser@$(terraform output -raw public_ip)
 cloud-init status --wait
 ```
 
-เอาต์พุตที่คาดหวังเมื่อเสร็จสมบูรณ์:
+ผลลัพธ์ที่คาดหวังเมื่อเสร็จสมบูรณ์:
 
 ```
 status: done
@@ -149,13 +149,13 @@ status: done
 
 ### ตรวจสอบไฟล์สถานะ
 
-สคริปต์ cloud-init จะเขียนไฟล์สถานะเมื่อเสร็จสมบูรณ์:
+สคริปต์ cloud-init เขียนไฟล์สถานะเมื่อเสร็จสมบูรณ์:
 
 ```bash
 cat /opt/traffic-generator/status.json
 ```
 
-เอาต์พุตที่คาดหวัง:
+ผลลัพธ์ที่คาดหวัง:
 
 ```json
 {
@@ -169,7 +169,7 @@ cat /opt/traffic-generator/status.json
 
 ### ตรวจสอบเครื่องมือสำคัญ
 
-เรียกใช้ลูปตรวจสอบเพื่อยืนยันว่าเครื่องมือสำคัญแต่ละตัวพร้อมใช้งานบน PATH:
+รัน verification loop เพื่อยืนยันว่าเครื่องมือสำคัญแต่ละรายการพร้อมใช้งานบน PATH:
 
 ```bash
 for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
@@ -185,7 +185,7 @@ done
 
 ### ตรวจสอบ Suite Runner
 
-ยืนยันว่า runner และชุด suite ได้รับการติดตั้งแล้ว:
+ยืนยันว่า runner และ suites ถูกติดตั้งแล้ว:
 
 ```bash
 ls /opt/traffic-generator/suites/runner.sh
@@ -194,38 +194,38 @@ ls /opt/traffic-generator/suites/*/
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
 ```
 
-## เอาต์พุตของ Terraform
+## Terraform Outputs
 
-| เอาต์พุต | คำอธิบาย | ตัวอย่าง |
+| Output | คำอธิบาย | ตัวอย่าง |
 |---|---|---|
-| `deployer` | ตัวระบุผู้ติดตั้งที่ตรวจหาแล้ว | `jsmith` |
-| `public_ip` | IP สาธารณะของ VM traffic generator | `20.12.78.200` |
-| `private_ip` | IP ส่วนตัวของ VM | `10.201.0.4` |
-| `ssh_command` | คำสั่ง SSH สำหรับเชื่อมต่อไปยัง VM | `ssh azureuser@20.12.78.200` |
-| `resource_group_name` | ชื่อกลุ่มทรัพยากร | `rg-traffic-generator-dev-jsmith` |
-| `resource_group_id` | Azure resource ID ของกลุ่มทรัพยากร | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith` |
-| `vm_name` | ชื่อเครื่องเสมือน | `vm-traffic-generator-dev-jsmith` |
-| `vm_id` | Azure resource ID ของเครื่องเสมือน | `/subscriptions/.../virtualMachines/vm-traffic-generator-dev-jsmith` |
-| `nsg_name` | ชื่อกลุ่มความปลอดภัยเครือข่าย | `nsg-traffic-generator-dev-jsmith` |
-| `nsg_id` | Azure resource ID ของกลุ่มความปลอดภัยเครือข่าย | `/subscriptions/.../networkSecurityGroups/nsg-traffic-generator-dev-jsmith` |
-| `vnet_name` | ชื่อเครือข่ายเสมือน | `vnet-traffic-generator-dev-jsmith` |
-| `subnet_id` | Azure resource ID ของซับเน็ต | `/subscriptions/.../subnets/snet-traffic-generator-dev-jsmith` |
-| `component` | ตัวระบุคอมโพเนนต์ | `traffic-generator` |
-| `environment` | สภาพแวดล้อมการติดตั้ง | `dev` |
-| `location` | ภูมิภาค Azure | `eastus2` |
+| `deployer` | ตัวระบุ deployer ที่แก้ไขแล้ว | `jsmith` |
+| `public_ip` | ที่อยู่ IP สาธารณะของ VM ตัวสร้างทราฟฟิก | `20.12.78.200` |
+| `private_ip` | ที่อยู่ IP ส่วนตัวของ VM | `10.201.0.4` |
+| `ssh_command` | คำสั่ง SSH เพื่อเชื่อมต่อกับ VM | `ssh azureuser@20.12.78.200` |
+| `resource_group_name` | ชื่อ resource group | `rg-traffic-generator-dev-jsmith` |
+| `resource_group_id` | Azure resource ID ของ resource group | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith` |
+| `vm_name` | ชื่อ virtual machine | `vm-traffic-generator-dev-jsmith` |
+| `vm_id` | Azure resource ID ของ virtual machine | `/subscriptions/.../virtualMachines/vm-traffic-generator-dev-jsmith` |
+| `nsg_name` | ชื่อ network security group | `nsg-traffic-generator-dev-jsmith` |
+| `nsg_id` | Azure resource ID ของ network security group | `/subscriptions/.../networkSecurityGroups/nsg-traffic-generator-dev-jsmith` |
+| `vnet_name` | ชื่อ virtual network | `vnet-traffic-generator-dev-jsmith` |
+| `subnet_id` | Azure resource ID ของ subnet | `/subscriptions/.../subnets/snet-traffic-generator-dev-jsmith` |
+| `component` | ตัวระบุส่วนประกอบ | `traffic-generator` |
+| `environment` | สภาพแวดล้อมการปรับใช้งาน | `dev` |
+| `location` | Azure region | `eastus2` |
 | `target_fqdn` | FQDN เป้าหมายที่กำหนดค่าสำหรับชุดทราฟฟิก | `demo.example.com` |
 | `status_check` | คำสั่งตรวจสอบสถานะการจัดเตรียม | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
 
-เรียกดูเอาต์พุตใดก็ได้:
+ดึงค่า output ใดก็ได้:
 
 ```bash
 terraform output -raw public_ip
 terraform output -raw ssh_command
 ```
 
-## การเชื่อมต่อจากคอมโพเนนต์ต้นทาง
+## การเชื่อมต่อจากส่วนประกอบต้นน้ำ
 
-Traffic generator มุ่งเป้าไปที่ F5 XC HTTP load balancer ที่อยู่หน้า origin server ติดตั้ง origin server ก่อน กำหนดค่า F5 XC จากนั้นตั้ง `target_fqdn` เป็น FQDN ของ load balancer:
+ตัวสร้างทราฟฟิกกำหนดเป้าหมายที่ F5 XC HTTP load balancer ที่อยู่หน้าเซิร์ฟเวอร์ต้นทาง ปรับใช้งานเซิร์ฟเวอร์ต้นทางก่อน จากนั้นกำหนดค่า F5 XC แล้วตั้งค่า `target_fqdn` เป็น FQDN ของ load balancer:
 
 ```bash
 # After deploying origin-server and creating an F5 XC HTTP load balancer:
@@ -238,7 +238,7 @@ EOF
 
 | ตัวแปรที่จำเป็น | แหล่งที่มา | คำอธิบาย |
 |---|---|---|
-| `target_fqdn` | คอนโซล F5 XC | FQDN ของ HTTP load balancer ที่ป้องกัน origin server |
-| `target_origin_ip` | เอาต์พุต `public_ip` ของ origin server | IP ตรงของ origin สำหรับการทดสอบ bypass (ไม่บังคับ) |
+| `target_fqdn` | F5 XC คอนโซล | FQDN ของ HTTP load balancer ที่ปกป้องเซิร์ฟเวอร์ต้นทาง |
+| `target_origin_ip` | output `public_ip` ของเซิร์ฟเวอร์ต้นทาง | IP ต้นทางโดยตรงสำหรับการทดสอบ bypass (ตัวเลือก) |
 
-ดำเนินการต่อที่ [แคตตาล็อกเครื่องมือ](../04-tool-catalog/) สำหรับข้อมูลอ้างอิงเครื่องมือทั้งหมด หรือ [ชุด Suite](../05-suites/) เพื่อเริ่มสร้างทราฟฟิก
+ดำเนินการต่อไปยัง [Tool Catalog](../04-tool-catalog/) สำหรับข้อมูลอ้างอิงเครื่องมือฉบับสมบูรณ์ หรือ [Suites](../05-suites/) เพื่อเริ่มสร้างทราฟฟิก

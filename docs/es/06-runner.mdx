@@ -2,9 +2,9 @@
 title: Runner
 description: >-
   Guía de uso del orquestador de suites runner.sh: modos de ejecución,
-  configuración de config.env, sobreescritura de variables de entorno, modo
+  configuración de config.env, anulaciones de variables de entorno, modo
   dry-run, estructura del directorio de resultados, formato meta.json, ejecución
-  independiente de scripts e invocación remota por SSH
+  de scripts independientes e invocación remota por SSH
 sidebar:
   order: 6
 i18n:
@@ -16,7 +16,7 @@ import { Steps, Aside } from '@astrojs/starlight/components';
 
 ## Descripción general
 
-`runner.sh` es el orquestador de suites que ejecuta todos los scripts numerados en un directorio de suite en orden, captura la salida y registra los metadatos de los resultados. Se instala en `/opt/traffic-generator/suites/runner.sh` en la VM.
+`runner.sh` es el orquestador de suites que ejecuta todos los scripts numerados de un directorio de suite en orden, captura la salida y registra los metadatos de los resultados. Se instala en `/opt/traffic-generator/suites/runner.sh` en la VM.
 
 ## Uso
 
@@ -29,7 +29,7 @@ runner.sh <suite-name> [--dry-run]
 | Argumento | Requerido | Descripción |
 |---|---|---|
 | `suite-name` | Sí | Nombre del directorio de la suite (p. ej., `web-app-attacks`, `api-attacks`) |
-| `--dry-run` | No | Imprime lo que se ejecutaría sin ejecutar ningún script |
+| `--dry-run` | No | Muestra lo que se ejecutaría sin ejecutar ningún script |
 
 **Ejemplos:**
 
@@ -58,11 +58,11 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=
 ```
 
-Este archivo se escribe automáticamente durante el aprovisionamiento de Terraform a partir de las variables `target_fqdn` y `target_origin_ip`. Para cambiar el objetivo después del despliegue, edite este archivo directamente en la VM.
+Este archivo se escribe automáticamente durante el aprovisionamiento de Terraform a partir de las variables `target_fqdn` y `target_origin_ip`. Para cambiar el destino después del despliegue, edite este archivo directamente en la VM.
 
-### Sobreescritura de variables de entorno
+### Anulación mediante variables de entorno
 
-Cualquier variable en `config.env` puede ser sobreescrita exportándola antes de ejecutar la suite:
+Cualquier variable en `config.env` puede anularse exportándola antes de ejecutar la suite:
 
 ```bash
 # Override target FQDN for a single run
@@ -73,7 +73,7 @@ export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-La ruta del archivo de configuración también puede ser sobreescrita:
+La ruta al archivo de configuración también puede anularse:
 
 ```bash
 CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
@@ -81,7 +81,7 @@ CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-a
 
 ## Modo Dry-Run
 
-La bandera `--dry-run` imprime cada script que se ejecutaría sin ejecutarlo realmente:
+El indicador `--dry-run` muestra cada script que se ejecutaría sin ejecutarlo:
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
@@ -107,7 +107,7 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-Use dry-run para verificar la estructura de la suite después del despliegue o antes de ejecutar una suite contra un nuevo objetivo.
+Utilice el modo dry-run para verificar la estructura de la suite tras el despliegue o antes de ejecutarla contra un nuevo destino.
 
 ## Directorio de resultados
 
@@ -130,9 +130,9 @@ Cada ejecución de suite crea un directorio de resultados con marca de tiempo:
   06-nuclei-scan.sh.log
 ```
 
-La salida stdout y stderr de cada script se captura en un archivo `.log` nombrado según el script.
+La salida estándar y los errores de cada script se capturan en un archivo `.log` con el nombre del script.
 
-### Formato meta.json
+### Formato de meta.json
 
 El archivo `meta.json` registra los metadatos de ejecución de la suite:
 
@@ -152,16 +152,16 @@ El archivo `meta.json` registra los metadatos de ejecución de la suite:
 | Campo | Descripción |
 |---|---|
 | `suite` | Nombre de la suite |
-| `target` | FQDN del objetivo utilizado para la ejecución |
-| `started` | Marca de tiempo UTC cuando la suite comenzó |
-| `completed` | Marca de tiempo UTC cuando la suite finalizó |
-| `status` | `running` durante la ejecución, `completed` cuando termina |
-| `passed` | Número de scripts que finalizaron con código de salida 0 |
-| `failed` | Número de scripts que finalizaron con código de salida distinto de cero |
-| `skipped` | Número de scripts omitidos (no ejecutables o dry-run) |
+| `target` | FQDN de destino utilizado en la ejecución |
+| `started` | Marca de tiempo UTC cuando inició la suite |
+| `completed` | Marca de tiempo UTC cuando finalizó la suite |
+| `status` | `running` durante la ejecución, `completed` al terminar |
+| `passed` | Número de scripts que finalizaron con código 0 |
+| `failed` | Número de scripts que finalizaron con código distinto de cero |
+| `skipped` | Número de scripts omitidos (no ejecutables o en modo dry-run) |
 
 <Aside type="tip">
-Un código de salida distinto de cero de un script no necesariamente significa que la suite falló. Muchas herramientas de seguridad finalizan con código distinto de cero cuando encuentran vulnerabilidades, lo cual es el comportamiento esperado durante la generación de tráfico de ataque.
+Un código de salida distinto de cero en un script no significa necesariamente que la suite haya fallado. Muchas herramientas de seguridad salen con código distinto de cero cuando detectan vulnerabilidades, lo cual es el comportamiento esperado durante la generación de tráfico de ataque.
 </Aside>
 
 ## Ejecución de scripts individuales
@@ -176,7 +176,7 @@ Cada script puede ejecutarse de forma independiente sin el runner:
 /opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
 ```
 
-Los scripts aceptan el FQDN del objetivo como primer argumento posicional. No leen `config.env` directamente -- solo el runner lo hace. Al ejecutar de forma independiente, debe pasar el FQDN explícitamente.
+Los scripts aceptan el FQDN de destino como primer argumento posicional. No leen `config.env` directamente; solo el runner lo hace. Al ejecutar de forma independiente, debe pasar el FQDN explícitamente.
 
 ## Ejecución de todas las suites en secuencia
 
@@ -192,11 +192,11 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-Esto genera tráfico integral a través de todas las funcionalidades de seguridad de F5 XC. Se espera que la ejecución completa tarde entre 45 y 80 minutos dependiendo de los tiempos de respuesta del objetivo.
+Esto genera tráfico exhaustivo a través de todas las funcionalidades de seguridad de F5 XC. Se espera que la ejecución completa tome entre 45 y 80 minutos según los tiempos de respuesta del destino.
 
-## Ejecución remota vía SSH
+## Ejecución remota mediante SSH
 
-Ejecute suites desde su máquina local sin mantener una sesión SSH:
+Ejecute suites desde su máquina local sin mantener una sesión SSH activa:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -215,7 +215,7 @@ ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-Para suites de larga duración, use `nohup` o `tmux` para evitar que la desconexión SSH termine el proceso:
+Para suites de larga duración, utilice `nohup` o `tmux` para evitar que la desconexión SSH interrumpa el proceso:
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
@@ -228,14 +228,14 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 <Steps>
 
-1. **Cargar configuración** -- El runner lee `config.env` (o la sobreescritura de `CONFIG_FILE`), luego verifica `TARGET_FQDN` en el entorno.
+1. **Cargar configuración** — El runner lee `config.env` (o la anulación `CONFIG_FILE`), luego verifica `TARGET_FQDN` en el entorno.
 
-2. **Validar suite** -- Confirma que el directorio de la suite nombrada existe bajo el directorio de suites. Lista las suites disponibles si no se encuentra.
+2. **Validar la suite** — Confirma que el directorio de suite indicado existe bajo el directorio de suites. Lista las suites disponibles si no se encuentra.
 
-3. **Crear directorio de resultados** -- Crea `/opt/traffic-generator/results/<timestamp>-<suite>/` y escribe el `meta.json` inicial con `status: running`.
+3. **Crear el directorio de resultados** — Crea `/opt/traffic-generator/results/<timestamp>-<suite>/` y escribe el `meta.json` inicial con `status: running`.
 
-4. **Ejecutar scripts** -- Itera a través de los archivos que coinciden con `[0-9]*` en el directorio de la suite, ordenados por nombre. Omite archivos no ejecutables. Pasa `TARGET_FQDN` como primer argumento. Captura la salida en `<script-name>.log`.
+4. **Ejecutar los scripts** — Itera sobre los archivos que coinciden con `[0-9]*` en el directorio de la suite, ordenados por nombre. Omite los archivos no ejecutables. Pasa `TARGET_FQDN` como primer argumento. Captura la salida en `<script-name>.log`.
 
-5. **Registrar resultados** -- Actualiza `meta.json` con la marca de tiempo de finalización y los conteos de aprobados/fallidos/omitidos.
+5. **Registrar los resultados** — Actualiza `meta.json` con la marca de tiempo de finalización y los conteos de scripts aprobados, fallidos y omitidos.
 
 </Steps>

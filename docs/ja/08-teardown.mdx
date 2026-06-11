@@ -1,8 +1,8 @@
 ---
-title: クリーンアップ
+title: 撤去
 description: >-
-  terraform destroy で全ての Azure リソースを削除し、az CLI
-  でリソースグループの削除を確認し、ローカルの状態ファイルをクリーンアップする
+  terraform destroy を使用してすべての Azure リソースを削除し、az CLI
+  でリソースグループの削除を確認し、ローカルの状態ファイルをクリーンアップします
 sidebar:
   order: 8
 i18n:
@@ -10,7 +10,7 @@ i18n:
   translator: machine
 ---
 
-ラボセッションが完了したら、課金を停止するために全ての Azure リソースを削除します。
+ラボセッションが完了したら、課金を停止するためにすべての Azure リソースを破棄してください。
 
 ## Terraform Destroy
 
@@ -24,11 +24,11 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform が確認を求めます。`yes` と入力して続行します。
+Terraform は確認を求めるプロンプトを表示します。続行するには `yes` と入力してください。
 
 ## クリーンアップの確認
 
-全てのリソースが削除されたことを確認します：
+すべてのリソースが削除されたことを確認します：
 
 ```bash
 RG_NAME=$(terraform output -raw resource_group_name)
@@ -42,7 +42,7 @@ az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
 
 ## ローカル状態のクリーンアップ
 
-Terraform の状態ファイルとキャッシュファイルを削除します：
+Terraform の状態ファイルおよびキャッシュファイルを削除します：
 
 ```bash
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
@@ -50,29 +50,29 @@ rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 
 ## 結果の保存（オプション）
 
-VM を削除する前にトラフィックスイートの結果を保持したい場合は、ローカルにコピーします：
+VM を破棄する前にトラフィックスイートの結果を保持したい場合は、ローカルにコピーします：
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
 
-# 全ての結果をローカルマシンにコピー
+# Copy all results to local machine
 scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
 
-# または最新の実行結果のみコピー
+# Or copy just the latest run
 LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
 scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
 ```
 
 ## F5 XC のクリーンアップ
 
-トラフィックジェネレーターがターゲットとしていた F5 XC の設定も削除したい場合：
+トラフィックジェネレーターがターゲットとしていた F5 XC 設定も削除したい場合は、以下の手順を実施してください：
 
 1. HTTP ロードバランサーを削除する
 2. オリジンプールを削除する
-3. テスト用に作成した WAF ポリシー、Bot Defense 設定、API Security ポリシー、または CSD 設定を削除する
+3. テスト用に作成した WAF ポリシー、Bot 高度防御設定、API セキュリティポリシー、または CSD 設定を削除する
 
-これらの F5 XC リソースは Azure の費用は発生しませんが、デモ環境が不要になった場合はクリーンアップする必要があります。
+これらの F5 XC リソースは Azure のコストは発生しませんが、デモ環境が不要になった際にはクリーンアップする必要があります。
 
 :::tip
-定期的なデモ利用の場合は、ライフサイクル全体をスクリプト化することを検討してください：デモ前に `cd terraform && terraform apply` を実行し、スイートを実行してから、終了後に `terraform destroy` を実行します。スタンダードティアは 15〜20 分でプロビジョニングされるため、当日のセットアップとクリーンアップが実用的です。
+定期的なデモ用途には、ライフサイクル全体をスクリプト化することを検討してください：デモ前に `cd terraform && terraform apply` を実行し、スイートを実行した後に `terraform destroy` を実行します。標準ティアは 15〜20 分でプロビジョニングが完了するため、当日のセットアップと撤去が現実的です。
 :::

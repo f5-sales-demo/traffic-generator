@@ -1,18 +1,18 @@
 ---
 title: النشر
 description: >-
-  نشر البنية التحتية كرمز (IaC) بواسطة Terraform لجهاز Azure الافتراضي لتوليد
-  حركة المرور — جهاز افتراضي من فئة F-series محسّن للحوسبة بنظام Ubuntu 24.04،
-  مع ضبط النواة، وأكثر من 50 أداة أمنية، و19 مجموعة حركة مرور يتم توفيرها عبر
-  cloud-init. جميع ملفات التكوين موجودة في مجلد terraform/.
+  نشر البنية التحتية كرمز (IaC) باستخدام Terraform لجهاز Azure VM الخاص بمولد
+  حركة المرور — جهاز VM من الفئة F محسّن للحوسبة مع Ubuntu 24.04، وضبط النواة،
+  وأكثر من 50 أداة أمان، و19 مجموعة حركة مرور يتم توفيرها عبر cloud-init. جميع
+  ملفات التهيئة موجودة في مجلد terraform/.
 sidebar:
   order: 3
 i18n:
-  sourceHash: bc522cf1cb30
+  sourceHash: 9cfd4eb9e98a
   translator: machine
 ---
 
-جميع ملفات Terraform موجودة في مجلد [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform). قم باستنساخ المستودع والنشر مباشرة:
+جميع ملفات Terraform موجودة في مجلد [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform). استنسخ المستودع وانشر مباشرةً:
 
 ```bash
 git clone https://github.com/f5xc-salesdemos/traffic-generator.git
@@ -21,83 +21,83 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your Azure subscription ID and target FQDN
 ```
 
-## تكوين Terraform
+## تهيئة Terraform
 
 ### هيكل ملفات Terraform
 
-يحتوي مجلد terraform على 9 ملفات تتبع معيار موارد العروض التوضيحية:
+يحتوي مجلد terraform على 9 ملفات تتبع معيار موارد العرض التوضيحي:
 
-- `versions.tf` -- قيود إصدارات Terraform والموفرين (azurerm ~> 4.0, azuread ~> 3.0)
-- `providers.tf` -- تكوين موفر Azure RM وAzure AD
-- `data.tf` -- مصادر بيانات Azure AD للحل التلقائي للناشر
-- `locals.tf` -- حل الناشر، تسمية الموارد وفق إطار اعتماد السحابة من Azure، العلامات القياسية
+- `versions.tf` -- قيود إصدار Terraform والمزود (azurerm ~> 4.0, azuread ~> 3.0)
+- `providers.tf` -- تهيئة مزود Azure RM و Azure AD
+- `data.tf` -- مصادر بيانات Azure AD للتحليل التلقائي للمنشئ
+- `locals.tf` -- تحليل المنشئ، وتسمية الموارد وفق إطار اعتماد Azure Cloud، والعلامات القياسية
 - `main.tf` -- مجموعة الموارد (المسماة `rg-traffic-generator-{environment}-{deployer}`)
-- `variables.tf` -- جميع متغيرات الإدخال (2 مطلوبة، 9 اختيارية) مع الحل التلقائي للناشر عبر Azure AD
-- `network.tf` -- الشبكة الافتراضية (10.201.0.0/16)، الشبكة الفرعية، عنوان IP العام، مجموعة أمان الشبكة (المنفذ 22 SSH)، واجهة الشبكة
-- `vm.tf` -- جهاز افتراضي Ubuntu 24.04 مع cloud-init عبر templatefile()
-- `outputs.tf` -- 17 مخرجاً: 15 مخرجاً قياسياً مشتركاً بين جميع موارد العروض التوضيحية (deployer, public_ip, private_ip, ssh_command, resource_group_name, vm_name, nsg_name, vnet_name, subnet_id, component, environment, resource_group_id, vm_id, nsg_id, location) بالإضافة إلى مخرجين خاصين بالمكون (target_fqdn, status_check)
+- `variables.tf` -- جميع متغيرات الإدخال (2 مطلوبة، 9 اختيارية) مع التحليل التلقائي للمنشئ عبر Azure AD
+- `network.tf` -- VNet (10.201.0.0/16)، الشبكة الفرعية، عنوان IP العام، NSG (المنفذ 22 SSH)، NIC
+- `vm.tf` -- Ubuntu 24.04 VM مع cloud-init عبر templatefile()
+- `outputs.tf` -- 17 مخرجاً: 15 مخرجاً قياسياً تشاركها جميع موارد العرض التوضيحي (deployer, public_ip, private_ip, ssh_command, resource_group_name, vm_name, nsg_name, vnet_name, subnet_id, component, environment, resource_group_id, vm_id, nsg_id, location) إضافةً إلى مخرجَين خاصَّين بالمكون (target_fqdn, status_check)
 
-### الموفر والمتغيرات
+### المزود والمتغيرات
 
-يقوم `main.tf` بتكوين موفر Azure:
+يُهيّئ `main.tf` مزود Azure:
 
 ```hcl file=../_data/main.tf
 ```
 
-يحدد `variables.tf` جميع المعلمات القابلة للتكوين. القيمة الافتراضية لـ `vm_size` هي `Standard_F16s_v2` (16 وحدة معالجة مركزية افتراضية محسّنة للحوسبة) -- راجع [تحديد حجم الجهاز الافتراضي](#تحديد-حجم-الجهاز-الافتراضي) لإرشادات التوسع:
+يُعرّف `variables.tf` جميع المعاملات القابلة للتهيئة. القيمة الافتراضية لـ `vm_size` هي `Standard_F16s_v2` (16 vCPU محسّن للحوسبة) -- راجع [تحديد حجم VM](#vm-sizing) للاطلاع على إرشادات التوسع:
 
 ```hcl file=../_data/variables.tf
 ```
 
-### البنية التحتية للشبكة
+### البنية التحتية للشبكات
 
-ينشئ `network.tf` الشبكة الافتراضية والشبكة الفرعية وعنوان IP العام ومجموعة أمان الشبكة (المنفذ 22 SSH) وواجهة الشبكة:
+يُنشئ `network.tf` الـ VNet والشبكة الفرعية وعنوان IP العام وNSG (المنفذ 22 SSH) وNIC:
 
 ```hcl file=../_data/network.tf
 ```
 
 ### الجهاز الافتراضي مع Cloud-Init
 
-ينشئ `vm.tf` جهاز Ubuntu 24.04 الافتراضي ويمرر قالب cloud-init مع متغيرات الهدف والأدوات:
+يُنشئ `vm.tf` جهاز Ubuntu 24.04 VM ويمرر قالب cloud-init مع متغيرات الهدف والأدوات:
 
 ```hcl file=../_data/vm.tf
 ```
 
 ### توفير Cloud-Init
 
-`cloud-init.yaml` هو التكوين المُتحقق منه في بيئة الإنتاج والذي تم التحقق من صحته خلال أكثر من 48 ساعة من اختبار الحمل المستمر بما في ذلك 4 جولات من اختبار إجهاد الخادم الأصلي. يستخدم مكتبة مساعدة مع منطق إعادة المحاولة، وتسجيل التقدم في `/var/log/cloud-init-progress.log`، و9 مراحل توفير، والإبلاغ الشرطي عن الحالة (ready/degraded في `status.json`). يقوم بتوفير:
+`cloud-init.yaml` هو التهيئة المُتحقق منها في بيئة الإنتاج، والتي تم التحقق منها خلال أكثر من 48 ساعة من اختبار التحميل المستمر بما فيه 4 جولات من اختبار الإجهاد على خادم المصدر. يستخدم مكتبة مساعدة مع منطق إعادة المحاولة، وتسجيل التقدم في `/var/log/cloud-init-progress.log`، و9 مراحل توفير، وتقارير الحالة الشرطية (جاهز/متدهور في `status.json`). يوفّر:
 
-- **ضبط النواة** -- `somaxconn=131072`، `tcp_max_tw_buckets=4000000`، `tcp_fin_timeout=5`، مخازن مؤقتة للمقابس بحجم 64 ميبي بايت، `file-max=4194304`
-- **تحسين واجهة الشبكة** -- RPS/RFS عبر جميع الأنوية، تعظيم المخازن الحلقية عبر ethtool، THP=always
+- **ضبط النواة** -- `somaxconn=131072`، `tcp_max_tw_buckets=4000000`، `tcp_fin_timeout=5`، مخازن مؤقتة للمقبس بحجم 64 MiB، `file-max=4194304`
+- **تحسين NIC** -- RPS/RFS عبر جميع الأنوية، وتعظيم مخازن الحلقة عبر ethtool، وTHP=always
 - **حزم APT** -- nikto, nmap, masscan, sqlmap, hydra, medusa, ncrack, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr, sslscan, socat, dirb, whatweb, wrk, hey, vegeta, ethtool
 - **إصدارات GitHub** -- nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass
 - **حزم Python** -- mitmproxy, sslyze, dnsrecon, fierce, theHarvester, playwright, scapy, impacket, arjun
-- **Node.js 20.x** -- Puppeteer مع إضافة التخفي لمحاكاة الروبوتات
-- **أتمتة المتصفح** -- Playwright Chromium لاختبار المتصفح بدون واجهة رسومية
+- **Node.js 20.x** -- Puppeteer مع إضافة التخفي لمحاكاة البوتات
+- **أتمتة المتصفح** -- Playwright Chromium للاختبار بالمتصفح غير المرئي
 - **استنساخ Git** -- testssl.sh, recon-ng, spiderfoot, SecLists, waf-bypass, PayloadsAllTheThings
 - **نشر المجموعات** -- 19 مجموعة حركة مرور مستنسخة من هذا المستودع إلى `/opt/traffic-generator/suites/`
-- **ملف التكوين** -- `config.env` يحتوي على `TARGET_FQDN` و`TARGET_ORIGIN_IP` و`CRAPI_PORT`
+- **ملف التهيئة** -- `config.env` مع `TARGET_FQDN` و`TARGET_ORIGIN_IP` و`CRAPI_PORT`
 
-يستخدم cloud-init متغيرات قوالب Terraform: `${target_fqdn}` و`${target_origin_ip}` و`${tool_tier}`. يتم تهريب متغيرات Shell مثل `$NPROC` كـ `$$NPROC` في templatefile الخاص بـ Terraform.
+يستخدم cloud-init متغيرات قالب Terraform: `${target_fqdn}` و`${target_origin_ip}` و`${tool_tier}`. يتم تهريب متغيرات Shell مثل `$NPROC` كـ `$$NPROC` في templatefile الخاص بـ Terraform.
 
 ```yaml file=../_data/cloud-init.yaml
 ```
 
 ### المخرجات
 
-يكشف `outputs.tf` عن 17 مخرجاً بما في ذلك عنوان IP العام/الخاص، وأمر SSH، ومعرفات الموارد، والقيم الخاصة بالمكون (target_fqdn, status_check):
+يكشف `outputs.tf` عن 17 مخرجاً تشمل عناوين IP العامة والخاصة، وأمر SSH، ومعرّفات الموارد، والقيم الخاصة بالمكون (target_fqdn, status_check):
 
 ```hcl file=../_data/outputs.tf
 ```
 
 ### مثال على ملف المتغيرات
 
-انسخ `terraform.tfvars.example` إلى `terraform.tfvars` وأدخل قيمك. يستثني `.gitignore` ملف `terraform.tfvars` لمنع إرسال بيانات الاعتماد:
+انسخ `terraform.tfvars.example` إلى `terraform.tfvars` وأدخل قيمك. يستثني `.gitignore` الملف `terraform.tfvars` لمنع حفظ بيانات الاعتماد:
 
 ```hcl file=../_data/terraform.tfvars.example
 ```
 
-استبدل `subscription_id` بمعرف اشتراك Azure الخاص بك (من `az account show --query id -o tsv`) و`target_fqdn` بنطاق موازن الحمل F5 XC الخاص بك.
+استبدل `subscription_id` بمعرف اشتراك Azure الخاص بك (من `az account show --query id -o tsv`) و`target_fqdn` بنطاق موازن التحميل الخاص بك في F5 XC.
 
 ## النشر
 
@@ -109,31 +109,31 @@ terraform plan
 terraform apply
 ```
 
-يعرض Terraform عنوان IP العام وأمر SSH والنطاق المستهدف (FQDN) بعد النشر الناجح.
+تُخرج Terraform عنوان IP العام وأمر SSH والـ FQDN المستهدف بعد النشر الناجح.
 
-## تحديد حجم الجهاز الافتراضي
+## تحديد حجم VM
 
-يُوصى بالأجهزة الافتراضية من الفئة F المحسّنة للحوسبة لهذا النوع من أحمال العمل المعتمدة على وحدة المعالجة المركزية لتوليد حركة المرور. يتم تعديل ضبط نواة cloud-init وتزامن الأدوات تلقائياً مع عدد وحدات المعالجة المركزية الافتراضية.
+يُوصى باستخدام أجهزة VM من الفئة F المحسّنة للحوسبة لأحمال عمل توليد حركة المرور المقيّدة بالمعالج. يتوسع ضبط نواة cloud-init وتزامن الأدوات تلقائياً مع عدد vCPU.
 
-| وحدة SKU للجهاز الافتراضي | وحدة المعالجة المركزية الافتراضية | الذاكرة | الشبكة | حالة الاستخدام |
+| VM SKU | vCPU | RAM | الشبكة | حالة الاستخدام |
 |---|---|---|---|---|
-| Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | مختبر/عرض توضيحي خفيف |
-| Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | عروض توضيحية قياسية |
-| Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | اختبار الحمل (افتراضي) |
-| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | قياس أداء مكثف |
-| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | أحمال عمل تتطلب ذاكرة كبيرة |
+| Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | مختبر/عرض خفيف |
+| Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | عروض قياسية |
+| Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | اختبار التحميل (افتراضي) |
+| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | قياس الأداء المكثف |
+| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | أحمال عمل كثيفة الذاكرة العشوائية |
 
 :::tip
-تم التحقق من أن F16s_v2 هو الخيار الأمثل من حيث نسبة السعر إلى الأداء من خلال اختبار مقارنة A/B/C/D ضد أهداف CDN F16s_v2 وF32s_v2. راجع [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) للاطلاع على النتائج الكاملة.
+تم التحقق من F16s_v2 باعتباره الخيار الأمثل من حيث الأداء مقابل السعر من خلال اختبارات قياس الأداء A/B/C/D مقابل أهداف CDN F16s_v2 وF32s_v2. راجع [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) للاطلاع على النتائج الكاملة.
 :::
 
 ## التحقق بعد النشر
 
-يستغرق توفير cloud-init **من 15 إلى 20 دقيقة للمستوى القياسي** و**حوالي 25 دقيقة للمستوى الكامل**. يمكن الوصول إلى الجهاز الافتراضي عبر SSH فوراً، لكن الأدوات لا تزال قيد التثبيت حتى اكتمال cloud-init.
+يستغرق توفير cloud-init **من 15 إلى 20 دقيقة للمستوى القياسي** و**ما يقارب 25 دقيقة للمستوى الكامل**. يمكن الوصول إلى VM عبر SSH فوراً، لكن الأدوات لا تزال قيد التثبيت حتى اكتمال cloud-init.
 
-### انتظار اكتمال Cloud-Init
+### انتظر cloud-init
 
-اتصل بالجهاز الافتراضي عبر SSH وانتظر انتهاء التوفير:
+اتصل بـ VM عبر SSH وانتظر اكتمال التوفير:
 
 ```bash
 ssh azureuser@$(terraform output -raw public_ip)
@@ -147,9 +147,9 @@ cloud-init status --wait
 status: done
 ```
 
-### التحقق من ملف الحالة
+### افحص ملف الحالة
 
-يكتب سكربت cloud-init ملف حالة عند الاكتمال:
+تكتب سكربت cloud-init ملف حالة عند الاكتمال:
 
 ```bash
 cat /opt/traffic-generator/status.json
@@ -167,9 +167,9 @@ cat /opt/traffic-generator/status.json
 }
 ```
 
-### التحقق من الأدوات الحيوية
+### تحقق من الأدوات الحيوية
 
-قم بتشغيل حلقة تحقق للتأكد من توفر كل أداة حيوية في المسار:
+شغّل حلقة تحقق لتأكيد توفر كل أداة حيوية في PATH:
 
 ```bash
 for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
@@ -183,9 +183,9 @@ for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
 done
 ```
 
-### التحقق من مُشغِّل المجموعات
+### تحقق من مشغّل المجموعة
 
-تأكد من تثبيت المُشغِّل والمجموعات:
+تأكد من تثبيت المشغّل والمجموعات:
 
 ```bash
 ls /opt/traffic-generator/suites/runner.sh
@@ -198,10 +198,10 @@ ls /opt/traffic-generator/suites/*/
 
 | المخرج | الوصف | مثال |
 |---|---|---|
-| `deployer` | معرف الناشر المُحدد | `jsmith` |
-| `public_ip` | عنوان IP العام لجهاز توليد حركة المرور الافتراضي | `20.12.78.200` |
-| `private_ip` | عنوان IP الخاص للجهاز الافتراضي | `10.201.0.4` |
-| `ssh_command` | أمر SSH للاتصال بالجهاز الافتراضي | `ssh azureuser@20.12.78.200` |
+| `deployer` | معرّف المنشئ المحلول | `jsmith` |
+| `public_ip` | عنوان IP العام لـ VM الخاص بمولد حركة المرور | `20.12.78.200` |
+| `private_ip` | عنوان IP الخاص بـ VM | `10.201.0.4` |
+| `ssh_command` | أمر SSH للاتصال بـ VM | `ssh azureuser@20.12.78.200` |
 | `resource_group_name` | اسم مجموعة الموارد | `rg-traffic-generator-dev-jsmith` |
 | `resource_group_id` | معرف مورد Azure لمجموعة الموارد | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith` |
 | `vm_name` | اسم الجهاز الافتراضي | `vm-traffic-generator-dev-jsmith` |
@@ -210,22 +210,22 @@ ls /opt/traffic-generator/suites/*/
 | `nsg_id` | معرف مورد Azure لمجموعة أمان الشبكة | `/subscriptions/.../networkSecurityGroups/nsg-traffic-generator-dev-jsmith` |
 | `vnet_name` | اسم الشبكة الافتراضية | `vnet-traffic-generator-dev-jsmith` |
 | `subnet_id` | معرف مورد Azure للشبكة الفرعية | `/subscriptions/.../subnets/snet-traffic-generator-dev-jsmith` |
-| `component` | معرف المكون | `traffic-generator` |
+| `component` | معرّف المكون | `traffic-generator` |
 | `environment` | بيئة النشر | `dev` |
 | `location` | منطقة Azure | `eastus2` |
-| `target_fqdn` | النطاق المستهدف (FQDN) المُكوَّن لمجموعات حركة المرور | `demo.example.com` |
+| `target_fqdn` | الـ FQDN المستهدف المُهيَّأ لمجموعات حركة المرور | `demo.example.com` |
 | `status_check` | أمر التحقق من حالة التوفير | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
 
-لاسترجاع أي مخرج:
+استرجع أي مخرج:
 
 ```bash
 terraform output -raw public_ip
 terraform output -raw ssh_command
 ```
 
-## الربط من المكونات الأعلى
+## الربط مع المكونات الأولية
 
-يستهدف مولّد حركة المرور موازن حمل HTTP من F5 XC الذي يقع أمام الخادم الأصلي. انشر الخادم الأصلي أولاً، ثم قم بتكوين F5 XC، ثم عيّن `target_fqdn` إلى النطاق (FQDN) الخاص بموازن الحمل:
+يستهدف مولد حركة المرور موازن تحميل HTTP الخاص بـ F5 XC الذي يقف أمام خادم المصدر. انشر خادم المصدر أولاً، وهيّئ F5 XC، ثم اضبط `target_fqdn` على الـ FQDN الخاص بموازن التحميل:
 
 ```bash
 # After deploying origin-server and creating an F5 XC HTTP load balancer:
@@ -238,7 +238,7 @@ EOF
 
 | المتغير المطلوب | المصدر | الوصف |
 |---|---|---|
-| `target_fqdn` | وحدة تحكم F5 XC | النطاق (FQDN) لموازن حمل HTTP الذي يحمي الخادم الأصلي |
-| `target_origin_ip` | مخرج `public_ip` للخادم الأصلي | عنوان IP المباشر للخادم الأصلي لاختبار التجاوز (اختياري) |
+| `target_fqdn` | وحدة تحكم F5 XC | الـ FQDN لموازن تحميل HTTP الذي يحمي خادم المصدر |
+| `target_origin_ip` | مخرج `public_ip` لخادم المصدر | عنوان IP المصدر المباشر لاختبار الالتفاف (اختياري) |
 
 تابع إلى [كتالوج الأدوات](../04-tool-catalog/) للاطلاع على المرجع الكامل للأدوات أو [المجموعات](../05-suites/) لبدء توليد حركة المرور.

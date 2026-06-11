@@ -2,9 +2,9 @@
 title: Prérequis
 description: >-
   Abonnement Azure avec le rôle Contributeur, Terraform >= 1.5, paire de clés
-  SSH (Ed25519 recommandé), Azure CLI pour la recherche du subscription_id, et
-  HTTPS sortant pour le téléchargement des outils lors du provisionnement
-  cloud-init
+  SSH (Ed25519 recommandée), Azure CLI pour la récupération du subscription_id,
+  et accès HTTPS sortant pour les téléchargements d'outils lors du
+  provisionnement cloud-init
 sidebar:
   order: 2
 i18n:
@@ -16,17 +16,17 @@ i18n:
 
 ### Abonnement Azure
 
-Un abonnement Azure actif avec le rôle Contributeur ou des permissions équivalentes pour créer :
+Un abonnement Azure actif avec le rôle Contributeur ou des autorisations équivalentes pour créer :
 
 - Des groupes de ressources
-- Des réseaux virtuels et sous-réseaux
+- Des réseaux virtuels et des sous-réseaux
 - Des groupes de sécurité réseau
 - Des adresses IP publiques
 - Des machines virtuelles (Standard_F16s_v2 par défaut)
 
 ### Azure CLI
 
-Installez et authentifiez Azure CLI pour récupérer votre ID d'abonnement :
+Installez et authentifiez l'Azure CLI pour récupérer votre identifiant d'abonnement :
 
 ```bash
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -36,7 +36,7 @@ az login
 az account show --query '{name:name, id:id}' -o table
 ```
 
-Copiez la valeur `id` -- il s'agit du `subscription_id` requis par Terraform.
+Copiez la valeur `id` — il s'agit du `subscription_id` requis par Terraform.
 
 ### Terraform
 
@@ -46,7 +46,7 @@ Terraform >= 1.5 est requis :
 terraform version
 ```
 
-S'il n'est pas installé, utilisez le dépôt APT de HashiCorp :
+S'il n'est pas installé, utilisez le dépôt APT HashiCorp :
 
 ```bash
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -56,7 +56,7 @@ sudo apt update && sudo apt install terraform
 
 ### Paire de clés SSH
 
-Une paire de clés SSH pour l'accès à la VM. Ed25519 est recommandé :
+Une paire de clés SSH pour l'accès aux machines virtuelles. Ed25519 est recommandée :
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
@@ -64,30 +64,30 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### Accès réseau
 
-La VM du générateur de trafic nécessite un accès HTTPS sortant pendant le provisionnement pour télécharger les outils depuis :
+La machine virtuelle du Générateur de trafic nécessite un accès HTTPS sortant lors du provisionnement pour télécharger des outils depuis :
 
 - GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
 - PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
-- Registre npm (puppeteer, puppeteer-extra-plugin-stealth)
-- Dépôts APT Ubuntu (nikto, nmap, masscan, hydra, tshark et autres paquets système)
-- Dépôts Git (testssl.sh, recon-ng, spiderfoot, SecLists)
+- Le registre npm (puppeteer, puppeteer-extra-plugin-stealth)
+- Les dépôts APT Ubuntu (nikto, nmap, masscan, hydra, tshark, et d'autres paquets système)
+- Des dépôts Git (testssl.sh, recon-ng, spiderfoot, SecLists)
 
-Si votre abonnement Azure applique des règles de pare-feu sortant ou des restrictions NSG, assurez-vous que le HTTPS (port 443) vers ces sources est autorisé pendant la fenêtre de provisionnement initial (15-25 minutes).
+Si votre abonnement Azure applique des règles de pare-feu sortant ou des restrictions NSG, assurez-vous que le trafic HTTPS (port 443) vers ces sources est autorisé pendant la fenêtre de provisionnement initiale (15 à 25 minutes).
 
 ### Composants pré-déployés
 
-Avant de déployer le générateur de trafic, vous devez disposer de :
+Avant de déployer le Générateur de trafic, vous devez disposer des éléments suivants :
 
-1. **Serveur d'origine** déployé et accessible (voir la [documentation du serveur d'origine](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
-2. **Répartiteur de charge HTTP F5 XC** configuré avec le serveur d'origine comme backend
-3. Une **politique WAF** attachée au répartiteur de charge (pour la validation du trafic WAF)
+1. Le **Serveur d'origine** déployé et accessible (voir la [documentation origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+2. Un **équilibreur de charge HTTP F5 XC** configuré avec le serveur d'origine comme backend
+3. Une **politique WAF** attachée à l'équilibreur de charge (pour la validation du trafic WAF)
 
-La variable Terraform `target_fqdn` doit être définie sur le domaine public du répartiteur de charge F5 XC.
+La variable Terraform `target_fqdn` doit être définie sur le domaine public de l'équilibreur de charge F5 XC.
 
 :::tip
-Utilisez `terraform destroy` lorsque le lab n'est pas utilisé pour éviter des frais continus. Voir [Démontage](../08-teardown/) pour la procédure.
+Utilisez `terraform destroy` lorsque le lab n'est pas utilisé afin d'éviter des frais continus. Consultez la section [Teardown](../08-teardown/) pour la procédure.
 :::
 
 :::note
-Standard_F16s_v2 (32 Gio de RAM) est la valeur par défaut car plusieurs outils s'exécutent simultanément pendant l'exécution des suites. L'automatisation de navigateur (Playwright, Puppeteer) avec Chromium en mode headless est le principal consommateur de mémoire. Des SKU F-series plus petits fonctionneront pour les suites sans navigateur mais peuvent être limités lors de l'exécution de la simulation de bots.
+Standard_F16s_v2 (32 Gio de RAM) est la valeur par défaut car plusieurs outils s'exécutent simultanément lors de l'exécution de la suite. L'automatisation du navigateur (Playwright, Puppeteer) avec Chromium en mode headless est le principal consommateur de mémoire. Des SKU F-series plus petits fonctionneront pour les suites sans navigateur, mais peuvent être limités lors de l'exécution de la simulation de bots.
 :::

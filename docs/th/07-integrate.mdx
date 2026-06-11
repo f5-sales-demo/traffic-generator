@@ -1,9 +1,9 @@
 ---
 title: การผสานรวม
 description: >-
-  Integration guide for the traffic generator with origin-server, F5 XC HTTP
-  load balancer, CSD demo, and CDN simulator: architecture diagrams, targeting
-  configuration, direct vs LB traffic comparison, and multi-component deployment
+  คู่มือการผสานรวมตัวสร้างทราฟฟิกกับเซิร์ฟเวอร์ต้นทาง, F5 XC HTTP load balancer,
+  CSD demo และตัวจำลอง CDN: แผนภาพสถาปัตยกรรม, การกำหนดค่าเป้าหมาย,
+  การเปรียบเทียบทราฟฟิกแบบตรงกับผ่าน LB และการปรับใช้หลายส่วนประกอบ
 sidebar:
   order: 7
 i18n:
@@ -11,9 +11,9 @@ i18n:
   translator: machine
 ---
 
-## สถาปัตยกรรมแบบเต็ม
+## สถาปัตยกรรมแบบสมบูรณ์
 
-ตัวสร้างทราฟฟิกเป็นหนึ่งในส่วนประกอบของสภาพแวดล้อมสาธิตแบบหลายชั้น สถาปัตยกรรมที่สมบูรณ์เมื่อมีการปรับใช้ส่วนประกอบทั้งหมด:
+ตัวสร้างทราฟฟิกเป็นหนึ่งใน ส่วนประกอบในสภาพแวดล้อมสาธิตแบบหลายชั้น สถาปัตยกรรมที่สมบูรณ์เมื่อปรับใช้ส่วนประกอบทั้งหมด:
 
 ```
 Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
@@ -29,38 +29,38 @@ graph LR
     TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
 ```
 
-แต่ละส่วนประกอบจะถูกปรับใช้และกำหนดค่าอย่างอิสระผ่าน Terraform ตัวสร้างทราฟฟิกกำหนดเป้าหมายไปที่ FQDN ของ F5 XC load balancer ไม่ใช่ไปที่ origin server โดยตรง
+ส่วนประกอบแต่ละรายการได้รับการปรับใช้และกำหนดค่าอย่างอิสระผ่าน Terraform ตัวสร้างทราฟฟิกกำหนดเป้าหมายไปที่ FQDN ของ F5 XC load balancer ไม่ใช่เซิร์ฟเวอร์ต้นทางโดยตรง
 
-## การผสานรวม Origin Server
+## การผสานรวมกับเซิร์ฟเวอร์ต้นทาง
 
-[origin server](https://f5xc-salesdemos.github.io/origin-server/) จัดเตรียมแอปพลิเคชันแบ็กเอนด์ที่ชุดการโจมตีของตัวสร้างทราฟฟิกกำหนดเป้าหมาย:
+[เซิร์ฟเวอร์ต้นทาง](https://f5xc-salesdemos.github.io/origin-server/) ให้แอปพลิเคชันแบ็กเอนด์ที่ชุดการโจมตีของตัวสร้างทราฟฟิกกำหนดเป้าหมาย:
 
-| ชุดทราฟฟิก | แอปพลิเคชัน Origin | เส้นทาง |
+| ชุดทราฟฟิก | แอปพลิเคชันต้นทาง | พาธ |
 |---|---|---|
 | api-attacks | VAmPI | `/vampi/` |
-| bot-simulation | แอปพลิเคชันทั้งหมด | เส้นทางทั้งหมด |
-| cdn-load-testing | CDN Simulator | CDN endpoint |
+| bot-simulation | แอปพลิเคชันทั้งหมด | ทุกพาธ |
+| cdn-load-testing | ตัวจำลอง CDN | CDN endpoint |
 | crapi-exploits | crAPI | `/crapi/` |
 | csd-demo-attacks | CSD Demo | `/csd-demo/` |
 | dvga-exploits | DVGA | `/dvga/` |
 | dvwa-exploits | DVWA | `/dvwa/` |
 | javascript-exploits | CSD Demo | `/csd-demo/` |
 | juice-shop-exploits | Juice Shop | `/juice-shop/` |
-| mitre-attack | แอปพลิเคชันทั้งหมด | เส้นทางทั้งหมด |
-| owasp-scanning | แอปพลิเคชันทั้งหมด | เส้นทางทั้งหมด |
-| performance-testing | แอปพลิเคชันทั้งหมด | เส้นทางทั้งหมด |
-| reconnaissance | แอปพลิเคชันทั้งหมด | เส้นทางทั้งหมด |
+| mitre-attack | แอปพลิเคชันทั้งหมด | ทุกพาธ |
+| owasp-scanning | แอปพลิเคชันทั้งหมด | ทุกพาธ |
+| performance-testing | แอปพลิเคชันทั้งหมด | ทุกพาธ |
+| reconnaissance | แอปพลิเคชันทั้งหมด | ทุกพาธ |
 | restaurant-exploits | Restaurant API | `/restaurant/` |
-| ssl-scanning | F5 XC LB (ไม่ใช่ origin โดยตรง) | N/A |
-| traffic-generation | แอปพลิเคชันทั้งหมด | เส้นทางทั้งหมด |
+| ssl-scanning | F5 XC LB (ไม่ใช่ต้นทางโดยตรง) | N/A |
+| traffic-generation | แอปพลิเคชันทั้งหมด | ทุกพาธ |
 | web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
 
 ### ลำดับการปรับใช้
 
-1. ปรับใช้ **origin server** ก่อน -- มันจัดเตรียมแอปพลิเคชันแบ็กเอนด์
-2. กำหนดค่า **F5 XC HTTP load balancer** โดยใช้ origin server เป็น origin pool
-3. แนบ **นโยบาย WAF, Bot Defense, API Security และ CSD** เข้ากับ load balancer
-4. ปรับใช้ **ตัวสร้างทราฟฟิก** โดยตั้งค่า `target_fqdn` เป็นโดเมน F5 XC LB
+1. ปรับใช้ **เซิร์ฟเวอร์ต้นทาง** ก่อน -- ซึ่งจะให้แอปพลิเคชันแบ็กเอนด์
+2. กำหนดค่า **F5 XC HTTP load balancer** โดยใช้เซิร์ฟเวอร์ต้นทางเป็น origin pool
+3. แนบ **นโยบาย WAF, Bot Defense, ความปลอดภัย API และ CSD** เข้ากับ load balancer
+4. ปรับใช้ **ตัวสร้างทราฟฟิก** โดยตั้งค่า `target_fqdn` ให้เป็นโดเมนของ F5 XC LB
 
 ### การกำหนดค่าเป้าหมาย
 
@@ -74,23 +74,23 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-เมื่อตั้งค่า `TARGET_FQDN` แล้ว สคริปต์ชุดทั้งหมดจะส่งทราฟฟิกไปที่ `https://<TARGET_FQDN>/...` F5 XC load balancer รับคำร้องขอ ใช้นโยบายความปลอดภัย และส่งต่อทราฟฟิกที่อนุญาตไปยัง origin server
+เมื่อตั้งค่า `TARGET_FQDN` แล้ว สคริปต์ชุดทั้งหมดจะส่งทราฟฟิกไปยัง `https://<TARGET_FQDN>/...` F5 XC load balancer จะรับคำขอ ใช้นโยบายความปลอดภัย และส่งต่อทราฟฟิกที่ได้รับอนุญาตไปยังเซิร์ฟเวอร์ต้นทาง
 
-## การผสานรวม CSD Demo
+## การผสานรวมกับ CSD Demo
 
-ชุด `javascript-exploits` ได้รับการออกแบบมาโดยเฉพาะสำหรับการสาธิต Client-Side Defense บน origin server ชุดนี้ตรวจสอบความถูกต้องของฟังก์ชันการทำงาน CSD Phase 2:
+ชุด `javascript-exploits` ได้รับการออกแบบมาโดยเฉพาะสำหรับการสาธิต การป้องกันฝั่งไคลเอนต์ บนเซิร์ฟเวอร์ต้นทาง ชุดนี้ตรวจสอบการทำงานของ CSD Phase 2:
 
 **ขั้นตอน Phase 2:**
 
-1. Origin server โฮสต์หน้า CSD demo ที่ `/csd-demo/`
-2. F5 XC CSD ฉีด JavaScript สำหรับการตรวจสอบเข้าไปในหน้า
+1. เซิร์ฟเวอร์ต้นทางโฮสต์หน้า CSD demo ที่ `/csd-demo/`
+2. F5 XC CSD แทรก JavaScript สำหรับการตรวจสอบลงในหน้า
 3. ชุด javascript-exploits ของตัวสร้างทราฟฟิกพยายาม:
-   - ฉีดสคริปต์แบบอินไลน์ที่เลียนแบบ Magecart skimmers
-   - แก้ไของค์ประกอบ DOM เพื่อเปลี่ยนเส้นทางการส่งฟอร์ม
-   - โหลด JavaScript ของบุคคลที่สามที่ไม่ได้รับอนุญาต
-4. F5 XC CSD ตรวจจับการแก้ไขเหล่านี้และรายงานในแดชบอร์ด CSD
+   - แทรกสคริปต์แบบ inline ที่เลียนแบบ Magecart skimmers
+   - แก้ไของค์ประกอบ DOM เพื่อเปลี่ยนเส้นทางการส่งแบบฟอร์ม
+   - โหลด JavaScript จากบุคคลที่สามที่ไม่ได้รับอนุญาต
+4. F5 XC CSD ตรวจพบการแก้ไขเหล่านี้และรายงานในแดชบอร์ด CSD
 
-วิธีใช้ชุด javascript-exploits:
+เพื่อใช้ชุด javascript-exploits:
 
 ```bash
 # Ensure CSD is enabled on the F5 XC HTTP LB for the /csd-demo/ path
@@ -98,30 +98,30 @@ TARGET_ORIGIN_IP=20.10.5.100
 /opt/traffic-generator/suites/runner.sh javascript-exploits
 ```
 
-## การผสานรวม CDN Simulator
+## การผสานรวมกับตัวจำลอง CDN
 
-เมื่อมีการปรับใช้ CDN Simulator สถาปัตยกรรมจะเพิ่มชั้นแคช:
+เมื่อปรับใช้ตัวจำลอง CDN สถาปัตยกรรมจะเพิ่มชั้นการแคช:
 
 ```
 Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 ```
 
-CDN Simulator อยู่ด้านหน้าของ F5 XC load balancer ทำหน้าที่แคชการตอบกลับและเพิ่มเฮดเดอร์ที่คล้ายกับ CDN หากต้องการกำหนดเป้าหมายทราฟฟิกผ่าน CDN:
+ตัวจำลอง CDN อยู่ด้านหน้าของ F5 XC load balancer โดยแคชการตอบสนองและเพิ่มส่วนหัวที่คล้ายกับ CDN เพื่อส่งทราฟฟิกผ่าน CDN:
 
 ```bash
 # Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
 TARGET_FQDN=cdn.demo.example.com
 ```
 
-สิ่งนี้มีประโยชน์สำหรับการสาธิตวิธีที่ F5 XC จัดการทราฟฟิกที่มาผ่าน CDN รวมถึง:
+สิ่งนี้มีประโยชน์ในการสาธิตวิธีที่ F5 XC จัดการทราฟฟิกที่มาผ่าน CDN รวมถึง:
 
-- การระบุ IP จริงของไคลเอนต์เบื้องหลังเฮดเดอร์พร็อกซีของ CDN
-- การใช้กฎ WAF กับคำร้องขอที่อาจถูกแก้ไขโดย CDN
-- การจำแนกประเภท Bot Defense เมื่อ CDN แก้ไขลายนิ้วมือของเบราว์เซอร์
+- การระบุ IP ของไคลเอนต์จริงที่อยู่หลังส่วนหัวพร็อกซีของ CDN
+- การใช้กฎ ไฟร์วอลล์แอปเว็บ (WAF) กับคำขอที่อาจถูกแก้ไขโดย CDN
+- การจำแนกประเภท Bot Defense เมื่อ CDN แก้ไข browser fingerprints
 
 ## การเปรียบเทียบทราฟฟิกแบบตรงกับผ่าน LB
 
-ตัวสร้างทราฟฟิกรองรับการส่งทราฟฟิกทั้งผ่าน F5 XC และส่งตรงไปยัง origin การเปรียบเทียบนี้แสดงให้เห็นคุณค่าของฟีเจอร์ความปลอดภัยของ F5 XC:
+ตัวสร้างทราฟฟิกรองรับการส่งทราฟฟิกทั้งผ่าน F5 XC และตรงไปยังต้นทาง การเปรียบเทียบนี้แสดงให้เห็นถึงคุณค่าของฟีเจอร์ความปลอดภัยของ F5 XC:
 
 ### ผ่าน F5 XC (ค่าเริ่มต้น)
 
@@ -130,25 +130,25 @@ TARGET_FQDN=cdn.demo.example.com
 TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-ผลลัพธ์ที่คาดหวัง: WAF บล็อก SQL injection, XSS และ command injection payloads แดชบอร์ด Security Events แสดงคำร้องขอที่ถูกบล็อกพร้อมรายละเอียดการละเมิด
+ผลที่คาดหวัง: WAF บล็อก SQL injection, XSS และ payload การแทรกคำสั่ง แดชบอร์ด Security Events แสดงคำขอที่ถูกบล็อกพร้อมรายละเอียดการละเมิด
 
-### ส่งตรงไปยัง Origin (เส้นฐาน)
+### ตรงไปยังต้นทาง (baseline)
 
 ```bash
 # Traffic goes: Generator -> Origin (no security layer)
 TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-ผลลัพธ์ที่คาดหวัง: payloads ทั้งหมดเข้าถึงแอปพลิเคชัน origin โดยไม่มีการกรอง Juice Shop และ DVWA ประมวลผล attack payloads นี่แสดงให้เห็นว่าจะเกิดอะไรขึ้นหากไม่มีการป้องกันจาก F5 XC
+ผลที่คาดหวัง: payload ทั้งหมดไปถึงแอปพลิเคชันต้นทางโดยไม่ผ่านการกรอง Juice Shop และ DVWA ประมวลผล payload การโจมตี สิ่งนี้แสดงให้เห็นว่าจะเกิดอะไรขึ้นหากไม่มีการป้องกันของ F5 XC
 
-### ขั้นตอนการสาธิตแบบเคียงข้างกัน
+### ขั้นตอนการสาธิตแบบเปรียบเทียบคู่ขนาน
 
-สำหรับการสาธิตที่น่าสนใจ ให้รันชุดเดียวกันทั้งสองวิธี:
+สำหรับการสาธิตที่น่าประทับใจ ให้รันชุดเดียวกันทั้งสองวิธี:
 
-1. รัน `web-app-attacks` ส่งตรงไปยัง origin -- แสดงให้เห็นว่าการโจมตีสำเร็จ
-2. รัน `web-app-attacks` ผ่าน F5 XC -- แสดงให้เห็นว่าการโจมตีถูกบล็อก
-3. เปิดแดชบอร์ด F5 XC Security Events เพื่อแสดงคำร้องขอที่ถูกบล็อก
-4. เปรียบเทียบผลลัพธ์ `meta.json` ของชุด: การรันแบบตรงแสดง "passed" มากกว่า (การโจมตีสำเร็จ) การรันผ่าน LB แสดง "failed" มากกว่า (การโจมตีถูกบล็อก)
+1. รัน `web-app-attacks` โดยตรงกับต้นทาง -- แสดงว่าการโจมตีสำเร็จ
+2. รัน `web-app-attacks` ผ่าน F5 XC -- แสดงว่าการโจมตีถูกบล็อก
+3. เปิดแดชบอร์ด F5 XC Security Events เพื่อแสดงคำขอที่ถูกบล็อก
+4. เปรียบเทียบผลลัพธ์ `meta.json` ของชุด: การรันแบบตรงแสดง "passed" มากกว่า (การโจมตีสำเร็จ), การรันผ่าน LB แสดง "failed" มากกว่า (การโจมตีถูกบล็อก)
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -167,7 +167,7 @@ ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | hea
 
 ## การปรับใช้ Terraform แบบหลายส่วนประกอบ
 
-เมื่อปรับใช้สภาพแวดล้อมแล็บเต็มรูปแบบ ให้ใช้ workspace หรือไดเรกทอรี Terraform แยกต่างหากสำหรับแต่ละส่วนประกอบ:
+เมื่อปรับใช้สภาพแวดล้อม lab แบบสมบูรณ์ ให้ใช้ Terraform workspace หรือไดเรกทอรีแยกกันสำหรับแต่ละส่วนประกอบ:
 
 ```bash
 # 1. Deploy origin server

@@ -1,8 +1,8 @@
 ---
-title: ชุดการจราจร (Traffic Suites)
+title: ชุดทราฟฟิก
 description: >-
-  เอกสารอ้างอิงโดยละเอียดสำหรับชุดการจราจรทั้ง 19 ชุด พร้อมสคริปต์ เครื่องมือ
-  ระยะเวลา และการแมปฟีเจอร์ F5 XC
+  ข้อมูลอ้างอิงโดยละเอียดสำหรับชุดทราฟฟิกทั้ง 19 ชุด พร้อมสคริปต์ เครื่องมือ
+  ระยะเวลา และการจับคู่ฟีเจอร์ F5 XC
 sidebar:
   order: 5
 i18n:
@@ -12,94 +12,94 @@ i18n:
 
 import { Aside } from '@astrojs/starlight/components';
 
-แต่ละชุดการจราจรเป็นไดเรกทอรีภายใต้ `/opt/traffic-generator/suites/` ที่ประกอบด้วยเชลล์สคริปต์ที่มีหมายเลขลำดับ ซึ่งจะถูกรันตามลำดับโดย `runner.sh` สคริปต์ทุกตัวรับ FQDN เป้าหมายเป็นอาร์กิวเมนต์แรก และเขียนผลลัพธ์ออกทั้ง stdout และไดเรกทอรีผลลัพธ์
+ชุดทราฟฟิกแต่ละชุดเป็นไดเรกทอรีภายใต้ `/opt/traffic-generator/suites/` ที่ประกอบด้วยเชลล์สคริปต์ที่มีหมายเลขกำกับและถูกเรียกใช้ตามลำดับโดย `runner.sh` สคริปต์ทุกตัวรับ FQDN เป้าหมายเป็นอาร์กิวเมนต์แรกและเขียนผลลัพธ์ไปยังทั้ง stdout และไดเรกทอรีผลลัพธ์
 
 ## api-attacks
 
 **สคริปต์:** 4 | **ระยะเวลาโดยประมาณ:** 10-17 นาที
 
-การทดสอบ OWASP API Security Top 10 กับ VAmPI ผ่าน F5 XC ลงทะเบียนผู้ใช้ทดสอบ รับโทเค็นการยืนยันตัวตน จากนั้นทดสอบ BOLA, การโจมตีแบบ brute-force, การเปิดเผยข้อมูลมากเกินไป, การอนุญาตระดับฟังก์ชันที่ผิดพลาด, รูปแบบ SSRF, SQL injection กับ REST API endpoint, การค้นหาพารามิเตอร์ที่ซ่อนอยู่ และการ fuzzing endpoint มีเป้าหมายคือแอปพลิเคชัน VAmPI
+การทดสอบ OWASP API Security Top 10 กับ VAmPI ผ่าน F5 XC ลงทะเบียนผู้ใช้ทดสอบ รับ auth token จากนั้นทดสอบ BOLA, การยืนยันตัวตนแบบ brute-force, การเปิดเผยข้อมูลมากเกินไป, การอนุมัติฟังก์ชันระดับที่เสียหาย, รูปแบบ SSRF, SQL injection กับ REST API endpoint, การค้นพบพารามิเตอร์ที่ซ่อนอยู่ และการ fuzz endpoint กำหนดเป้าหมายที่แอปพลิเคชัน VAmPI
 
-**ฟีเจอร์ F5 XC:** API Security / API Discovery
+**ฟีเจอร์ F5 XC:** ความปลอดภัย API / API Discovery
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-vampi-owasp-top10.sh` | curl, jq | ชุดทดสอบ OWASP API Top 10 แบบครบวงจร ลงทะเบียนผู้ใช้ทดสอบ รับโทเค็นการยืนยันตัวตน จากนั้นทดสอบ BOLA (เข้าถึงข้อมูลของผู้ใช้อื่น), การโจมตีแบบ brute-force, การเปิดเผยข้อมูลมากเกินไป, การอนุญาตระดับฟังก์ชันที่ผิดพลาด, รูปแบบ SSRF และการตรวจสอบการตั้งค่าความปลอดภัยที่ผิดพลาด |
-| 02 | `02-sqlmap-api.sh` | sqlmap | SQL injection กับ VAmPI REST API endpoint: ค้นหาผู้ใช้, ล็อกอิน (POST) และลงทะเบียน (POST) ด้วย JSON payload |
-| 03 | `03-arjun-param-discovery.sh` | arjun | การค้นหาพารามิเตอร์ที่ซ่อนอยู่ข้าม endpoint ของ Juice Shop, DVWA และ VAmPI ค้นพบ query parameter ที่ไม่มีในเอกสารซึ่งอาจรับ injection payload ได้ |
-| 04 | `04-ffuf-api-fuzz.sh` | ffuf | การ fuzzing สองเฟส: การค้นหา endpoint โดยใช้ wordlist ของเส้นทาง API ทั่วไป (api, swagger, graphql, admin, .env, .git) ข้าม application prefix ทั้งหมด จากนั้น fuzzing เมธอด HTTP (GET, POST, PUT, DELETE, PATCH, OPTIONS, TRACE, PROPFIND) กับ endpoint หลัก |
+| 01 | `01-vampi-owasp-top10.sh` | curl, jq | ชุดทดสอบ OWASP API Top 10 แบบครอบคลุม ลงทะเบียนผู้ใช้ทดสอบ รับ auth token จากนั้นทดสอบ BOLA (การเข้าถึงข้อมูลของผู้ใช้รายอื่น), การยืนยันตัวตนแบบ brute-force, การเปิดเผยข้อมูลมากเกินไป, การอนุมัติฟังก์ชันระดับที่เสียหาย, รูปแบบ SSRF และการตรวจสอบการกำหนดค่าผิดพลาดด้านความปลอดภัย |
+| 02 | `02-sqlmap-api.sh` | sqlmap | SQL injection กับ VAmPI REST API endpoint: การค้นหาผู้ใช้, ล็อกอิน (POST) และลงทะเบียน (POST) พร้อม JSON payload |
+| 03 | `03-arjun-param-discovery.sh` | arjun | การค้นพบพารามิเตอร์ที่ซ่อนอยู่ใน Juice Shop, DVWA และ VAmPI endpoint ค้นพบพารามิเตอร์ query ที่ไม่มีเอกสารซึ่งอาจรับ injection payload |
+| 04 | `04-ffuf-api-fuzz.sh` | ffuf | การ fuzz สองขั้นตอน: การค้นพบ endpoint โดยใช้ wordlist ของ API path ทั่วไป (api, swagger, graphql, admin, .env, .git) ในทุก application prefix จากนั้น fuzz HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, TRACE, PROPFIND) กับ endpoint หลัก |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** API Discovery ควรแมป VAmPI API endpoint และระบุรูปแบบคำขอที่ผิดปกติ นโยบาย API Security ควรแจ้งเตือนความพยายามเข้าถึงโดยไม่ได้รับอนุญาต, injection payload ใน JSON body และรูปแบบการ enumerate ส่วน API Inventory ใน F5 XC จะแสดง endpoint ที่ค้นพบพร้อมจำนวนคำขอ
+**พฤติกรรมที่คาดหวังจาก F5 XC:** API Discovery ควรทำแผนที่ VAmPI API endpoint และระบุรูปแบบการร้องขอที่ผิดปกติ นโยบาย ความปลอดภัย API ควรตรวจจับการพยายามเข้าถึงโดยไม่ได้รับอนุมัติ, injection payload ใน JSON body และรูปแบบการระบุหมายเลข API Inventory ใน F5 XC จะแสดง endpoint ที่ค้นพบพร้อมจำนวนการร้องขอ
 
 ## bot-simulation
 
 **สคริปต์:** 4 | **ระยะเวลาโดยประมาณ:** 5-10 นาที
 
-กิจกรรมเบราว์เซอร์อัตโนมัติและรูปแบบการ crawl แบบบอทผ่าน F5 XC รวมถึง headless Chrome, Puppeteer พร้อม stealth plugin, การ crawl แบบรวดเร็ว และการโต้ตอบฟอร์มอัตโนมัติ มีเป้าหมายคือแอปพลิเคชันทั้งหมด
+กิจกรรมเบราว์เซอร์อัตโนมัติและรูปแบบการ crawl คล้าย bot ผ่าน F5 XC รวมถึง headless Chrome, Puppeteer พร้อม stealth plugin, การ crawl อย่างรวดเร็ว และการโต้ตอบแบบฟอร์มอัตโนมัติ กำหนดเป้าหมายที่ทุกแอปพลิเคชัน
 
-**ฟีเจอร์ F5 XC:** Bot Defense
+**ฟีเจอร์ F5 XC:** การป้องกัน Bot
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-headless-chrome.sh` | playwright | การเรียกดูด้วย Headless Chromium: โหลดเป้าหมาย นำทางระหว่างเส้นทางแอปพลิเคชัน ดึงชื่อหน้าและเนื้อหา ถ่ายภาพหน้าจอ สร้างทราฟฟิกผ่านเบราว์เซอร์โดยไม่มี stealth plugin (ตรวจจับได้ว่าเป็นระบบอัตโนมัติ) |
-| 02 | `02-puppeteer-stealth.sh` | puppeteer, puppeteer-extra-plugin-stealth | การเรียกดูแบบ stealth โดยใช้ puppeteer-extra พร้อม stealth plugin พยายามหลบเลี่ยงการตรวจจับบอทโดยการแก้ไขคุณสมบัติ navigator, WebGL และ browser fingerprint อื่น ๆ |
-| 03 | `03-rapid-crawl.sh` | curl, wget | คำขอ HTTP ความถี่สูงโดยใช้ curl และ wget อย่างรวดเร็วต่อเนื่อง จำลองพฤติกรรมของ scraper โดยไม่มีการหน่วงเวลาระหว่างคำขอและการหมุนเวียน User-Agent แบบรุกรี้ |
-| 04 | `04-form-interaction.sh` | playwright | การกรอกและส่งฟอร์มอัตโนมัติกับ DVWA login, Juice Shop registration และ VAmPI API endpoint โดยใช้ API การโต้ตอบฟอร์มของ Playwright |
+| 01 | `01-headless-chrome.sh` | playwright | การเรียกดูด้วย headless Chromium: โหลดเป้าหมาย นำทางระหว่าง application path, ดึงข้อมูลชื่อหน้าและเนื้อหา ถ่ายภาพหน้าจอ สร้างทราฟฟิกที่ใช้เบราว์เซอร์โดยไม่มี stealth plugin (ตรวจจับได้ว่าเป็น automation) |
+| 02 | `02-puppeteer-stealth.sh` | puppeteer, puppeteer-extra-plugin-stealth | การเรียกดูแบบ stealth โดยใช้ puppeteer-extra พร้อม stealth plugin พยายามหลีกเลี่ยงการตรวจจับ bot โดยการปรับแต่ง navigator properties, WebGL และ browser fingerprint อื่นๆ |
+| 03 | `03-rapid-crawl.sh` | curl, wget | HTTP request ความถี่สูงโดยใช้ curl และ wget อย่างรวดเร็วต่อเนื่อง จำลองพฤติกรรม scraper โดยไม่มีความล่าช้าระหว่างการร้องขอและการหมุนเวียน User-Agent อย่างรุนแรง |
+| 04 | `04-form-interaction.sh` | playwright | การกรอกและส่งแบบฟอร์มอัตโนมัติกับ DVWA login, Juice Shop registration และ VAmPI API endpoint โดยใช้ Playwright's form interaction API |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** Bot Defense ควรจำแนกทราฟฟิกว่าเป็นระบบอัตโนมัติตามการวิเคราะห์ browser fingerprint, เวลาของคำขอ และผลลัพธ์ JavaScript challenge Headless Chrome ที่ไม่มี stealth ควรถูกตรวจจับทันที การทดสอบ Stealth Puppeteer ทดสอบว่าเทคนิคการหลบเลี่ยงขั้นสูงสามารถข้ามการตรวจจับได้หรือไม่ แดชบอร์ด Bot Defense จะแสดงหมวดหมู่การจำแนกบอทและการดำเนินการบรรเทา
+**พฤติกรรมที่คาดหวังจาก F5 XC:** การป้องกัน Bot ควรจำแนกทราฟฟิกว่าเป็นแบบอัตโนมัติโดยอาศัยการวิเคราะห์ browser fingerprint, เวลาในการร้องขอ และผลลัพธ์ JavaScript challenge Headless Chrome ที่ไม่มี stealth ควรถูกตรวจจับทันที การทดสอบ Stealth Puppeteer ตรวจสอบว่าเทคนิคการหลีกเลี่ยงขั้นสูงสามารถผ่านการตรวจจับได้หรือไม่ แดชบอร์ดการป้องกัน Bot จะแสดงหมวดหมู่การจำแนก bot และการดำเนินการบรรเทา
 
 ## cdn-load-testing
 
 **สคริปต์:** 18 | **ระยะเวลาโดยประมาณ:** 20-30 นาที
 
-การทดสอบพฤติกรรมแคช CDN และการป้องกัน origin รวมถึง baseline throughput, query string isolation, accept-encoding variation, thundering herd simulation, POST/PUT bypass, cache key collision, conditional GET, range request, purge simulation, connection pool exhaustion, keepalive optimization, TLS handshake overhead, large object caching, multi-origin failover, rate limiting, gzip ratio testing, HTTP/2 multiplexing และ combined kraken benchmark มีเป้าหมายคือแอปพลิเคชัน CDN Simulator
+การทดสอบพฤติกรรม CDN cache และการปกป้อง origin การทดสอบประกอบด้วย baseline throughput, การแยก query string, การเปลี่ยนแปลง accept-encoding, การจำลอง thundering herd, การข้ามผ่าน POST/PUT, การชนกันของ cache key, conditional GET, range request, การจำลองการล้าง cache, การทำให้ connection pool หมด, การปรับ keepalive ให้เหมาะสม, TLS handshake overhead, การ cache large object, multi-origin failover, rate limiting, การทดสอบ gzip ratio, HTTP/2 multiplexing และ combined kraken benchmark กำหนดเป้าหมายที่แอปพลิเคชัน ตัวจำลอง CDN
 
-**ฟีเจอร์ F5 XC:** CDN Integration
+**ฟีเจอร์ F5 XC:** การรวม CDN
 
 ## crapi-exploits
 
 **สคริปต์:** 16 | **ระยะเวลาโดยประมาณ:** 15-25 นาที
 
-การใช้ประโยชน์จากช่องโหว่ OWASP crAPI (Completely Ridiculous API) รวมถึง register/auth, BOLA vehicle location, BOLA mechanic reports, OTP bruteforce, data exposure mechanics, excessive data exposure, mass assignment orders, SSRF coupon validation, NoSQL injection, JWT manipulation, IDOR dashboard, 2FA bypass, internal API access, server-side parameter pollution, user deletion และ video upload IDOR มีเป้าหมายคือแอปพลิเคชัน crAPI
+การโจมตี OWASP crAPI (Completely Ridiculous API) รวมถึงการลงทะเบียน/ยืนยันตัวตน, BOLA vehicle location, BOLA mechanic reports, OTP bruteforce, การเปิดเผยข้อมูล mechanics, excessive data exposure, mass assignment orders, SSRF coupon validation, NoSQL injection, JWT manipulation, IDOR dashboard, การข้าม 2FA, การเข้าถึง internal API, server-side parameter pollution, การลบผู้ใช้ และ video upload IDOR กำหนดเป้าหมายที่แอปพลิเคชัน crAPI
 
-**ฟีเจอร์ F5 XC:** API Security
+**ฟีเจอร์ F5 XC:** ความปลอดภัย API
 
 ## csd-demo-attacks
 
 **สคริปต์:** 5 (JavaScript) | **ระยะเวลาโดยประมาณ:** 3-5 นาที
 
-การโจมตีด้วย JavaScript injection ฝั่งไคลเอนต์ รวมถึง card skimmer injection, formjacker, keylogger, cryptominer และ DOM hijack scripts ทดสอบการโจมตี supply chain ฝั่งไคลเอนต์แบบ Magecart ที่ F5 XC Client-Side Defense ตรวจจับและบล็อก มีเป้าหมายคือแอปพลิเคชัน CSD Demo
+การโจมตีด้วย JavaScript injection ฝั่งไคลเอนต์ รวมถึง card skimmer injection, formjacker, keylogger, cryptominer และ DOM hijack script ทดสอบการโจมตีซัพพลายเชนฝั่งไคลเอนต์แบบ Magecart ที่ F5 XC การป้องกันฝั่งไคลเอนต์ตรวจจับและบล็อก กำหนดเป้าหมายที่แอปพลิเคชัน CSD Demo
 
-**ฟีเจอร์ F5 XC:** Client-Side Defense
+**ฟีเจอร์ F5 XC:** การป้องกันฝั่งไคลเอนต์
 
 ## demoapp-attacks
 
 **สคริปต์:** 2 | **ระยะเวลาโดยประมาณ:** 2-3 นาที
 
-Payload การโจมตีที่มุ่งเป้าไปยัง endpoint ทดสอบ WAF ที่มีในตัวของ F5 DemoApp (`/WAF/SQL`, `/WAF/XSS`, `/WAF/DIR`) ส่ง SQL injection, XSS และ path traversal payload ตรงไปยัง endpoint ที่ออกแบบมาเพื่อสาธิตพฤติกรรมการบล็อกของ WAF ใช้ชุดนี้เมื่อมุ่งเป้าที่ DemoApp content server แทนแอปพลิเคชัน origin-server มาตรฐาน
+payload การโจมตีที่กำหนดเป้าหมายกับ WAF testing endpoint ที่ติดตั้งมาใน F5 DemoApp (`/WAF/SQL`, `/WAF/XSS`, `/WAF/DIR`) ส่ง payload ของ SQL injection, XSS และ path traversal ตรงไปยัง endpoint ที่ออกแบบมาเพื่อสาธิตพฤติกรรมการบล็อกของ WAF ใช้ชุดนี้เมื่อกำหนดเป้าหมายที่ DemoApp content server แทนแอปพลิเคชัน origin-server มาตรฐาน
 
-**ฟีเจอร์ F5 XC:** WAF (Web Application Firewall)
+**ฟีเจอร์ F5 XC:** WAF (ไฟร์วอลล์แอปเว็บ (WAF))
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-sqli-waf-endpoint.sh` | curl, python3 | SQL injection payload 15 รายการกับ `/WAF/SQL?age=` รวมถึง UNION SELECT, DROP TABLE, WAITFOR DELAY, xp_cmdshell, comment-based bypass และ boolean logic payload |
-| 02 | `02-xss-waf-endpoint.sh` | curl, python3 | XSS payload 18 รายการกับ `/WAF/XSS?update=` รวมถึง script tag, event handler (onerror, onload, ontoggle, onfocus), base64 eval, style expression, polyglot payload และ cookie exfiltration |
+| 01 | `01-sqli-waf-endpoint.sh` | curl, python3 | SQL injection payload จำนวน 15 รายการกับ `/WAF/SQL?age=` รวมถึง UNION SELECT, DROP TABLE, WAITFOR DELAY, xp_cmdshell, comment-based bypass และ boolean logic payload |
+| 02 | `02-xss-waf-endpoint.sh` | curl, python3 | XSS payload จำนวน 18 รายการกับ `/WAF/XSS?update=` รวมถึง script tag, event handler (onerror, onload, ontoggle, onfocus), base64 eval, style expression, polyglot payload และการขโมย cookie |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** WAF ควรบล็อกคำขอที่มี SQL injection และ XSS payload และส่งคืนหน้าบล็อก แดชบอร์ด Security Events จะแสดงหมวดหมู่การละเมิดและการจับคู่ signature สำหรับแต่ละคำขอที่ถูกบล็อก
+**พฤติกรรมที่คาดหวังจาก F5 XC:** WAF ควรบล็อกการร้องขอที่มี SQL injection และ XSS payload และส่งคืนหน้าบล็อก แดชบอร์ด Security Events จะแสดงหมวดหมู่การละเมิดและ signature match สำหรับการร้องขอที่ถูกบล็อกแต่ละรายการ
 
 ## dvga-exploits
 
 **สคริปต์:** 9 | **ระยะเวลาโดยประมาณ:** 8-12 นาที
 
-การใช้ประโยชน์จากช่องโหว่เฉพาะของ GraphQL กับ Damn Vulnerable GraphQL Application รวมถึง batch query DoS, deep recursion, field duplication, SQL injection ผ่าน filter, XSS ผ่าน createPaste, alias-based DoS, introspection abuse, authorization bypass และ information disclosure มีเป้าหมายคือแอปพลิเคชัน DVGA
+การโจมตีช่องโหว่เฉพาะ GraphQL กับ Damn Vulnerable GraphQL Application รวมถึง batch query DoS, deep recursion, field duplication, SQL injection ผ่าน filter, XSS ผ่าน createPaste, alias-based DoS, introspection abuse, authorization bypass และการเปิดเผยข้อมูล กำหนดเป้าหมายที่แอปพลิเคชัน DVGA
 
-**ฟีเจอร์ F5 XC:** API Security (GraphQL)
+**ฟีเจอร์ F5 XC:** ความปลอดภัย API (GraphQL)
 
 ## dvwa-exploits
 
 **สคริปต์:** 14 | **ระยะเวลาโดยประมาณ:** 15-25 นาที
 
-การทดสอบ OWASP Top 10 กับ Damn Vulnerable Web Application รวมถึง brute force, command injection, CSRF password change, file inclusion, file upload, SQL injection (blind), SQL injection (union), XSS (DOM), XSS (reflected), XSS (stored), CAPTCHA bypass, weak session ID, insecure CORS และ open redirect มีเป้าหมายคือแอปพลิเคชัน DVWA
+การทดสอบ OWASP Top 10 กับ Damn Vulnerable Web Application รวมถึง brute force, command injection, CSRF password change, file inclusion, file upload, SQL injection (blind), SQL injection (union), XSS (DOM), XSS (reflected), XSS (stored), CAPTCHA bypass, weak session ID, insecure CORS และ open redirect กำหนดเป้าหมายที่แอปพลิเคชัน DVWA
 
 **ฟีเจอร์ F5 XC:** WAF
 
@@ -107,149 +107,149 @@ Payload การโจมตีที่มุ่งเป้าไปยัง
 
 **สคริปต์:** 3 | **ระยะเวลาโดยประมาณ:** 3-5 นาที
 
-รูปแบบการ injection สคริปต์ฝั่งไคลเอนต์และการจัดการ DOM ที่ทริกเกอร์การตรวจจับของ Client-Side Defense รวมถึง inline script injection ที่เลียนแบบ Magecart-style skimmer, การจัดการ DOM ผ่าน headless Chromium และการจำลองสคริปต์จากบุคคลที่สาม มีเป้าหมายคือแอปพลิเคชัน CSD Demo
+รูปแบบการ injection สคริปต์ฝั่งไคลเอนต์และการจัดการ DOM ที่กระตุ้นการตรวจจับของการป้องกันฝั่งไคลเอนต์ รวมถึง inline script injection ที่เลียนแบบ Magecart-style skimmer, DOM manipulation ผ่าน headless Chromium และการจำลองสคริปต์ third-party กำหนดเป้าหมายที่แอปพลิเคชัน CSD Demo
 
-**ฟีเจอร์ F5 XC:** Client-Side Defense (CSD)
+**ฟีเจอร์ F5 XC:** การป้องกันฝั่งไคลเอนต์ (CSD)
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-inline-script-injection.sh` | curl | ส่งคำขอที่มี inline JavaScript payload ที่ออกแบบมาเพื่อเลียนแบบ Magecart-style credit card skimmer และสคริปต์ขโมยข้อมูล |
-| 02 | `02-dom-manipulation.sh` | playwright | ใช้ headless Chromium เพื่อโหลดหน้า CSD demo และ inject การแก้ไข DOM: เพิ่ม script tag, แก้ไข form action และแทรก iframe ที่มองไม่เห็นเพื่อขโมยข้อมูลฟอร์ม |
-| 03 | `03-third-party-script-sim.sh` | curl, playwright | จำลองสคริปต์จากบุคคลที่สามที่ถูกบุกรุกโดยการ inject คำขอที่อ้างอิงแหล่ง JavaScript ภายนอกและพยายามโหลดสคริปต์ที่ไม่ได้รับอนุญาตเข้าสู่บริบทของหน้า |
+| 01 | `01-inline-script-injection.sh` | curl | ส่งการร้องขอที่มี inline JavaScript payload ที่ออกแบบมาเพื่อเลียนแบบ Magecart-style credit card skimmer และสคริปต์ขโมยข้อมูล |
+| 02 | `02-dom-manipulation.sh` | playwright | ใช้ headless Chromium เพื่อโหลดหน้า CSD demo และ inject การแก้ไข DOM: เพิ่ม script tag, แก้ไข form action และแทรก iframe ที่มองไม่เห็นซึ่งขโมยข้อมูลแบบฟอร์ม |
+| 03 | `03-third-party-script-sim.sh` | curl, playwright | จำลองสคริปต์ third-party ที่ถูกโจมตีโดยการ inject การร้องขอที่อ้างอิงแหล่ง JavaScript ภายนอกและพยายามโหลดสคริปต์ที่ไม่ได้รับอนุมัติเข้าไปในบริบทของหน้า |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** Client-Side Defense ควรตรวจจับการแก้ไขสคริปต์ที่ไม่ได้รับอนุญาตในหน้าที่ได้รับการป้องกัน แดชบอร์ด CSD จะแสดงการแจ้งเตือนสำหรับแหล่งสคริปต์ใหม่, องค์ประกอบ DOM ที่ถูกแก้ไข และความพยายามขโมยข้อมูล นี่คือการตรวจสอบฟังก์ชันการทำงานของ CSD เฟส 2
+**พฤติกรรมที่คาดหวังจาก F5 XC:** การป้องกันฝั่งไคลเอนต์ ควรตรวจจับการแก้ไขสคริปต์โดยไม่ได้รับอนุมัติในหน้าที่ได้รับการปกป้อง แดชบอร์ด CSD จะแสดงการแจ้งเตือนสำหรับแหล่งสคริปต์ใหม่, DOM element ที่ถูกแก้ไข และการพยายามขโมยข้อมูล ซึ่งจะตรวจสอบฟังก์ชัน CSD Phase 2
 
 <Aside type="note">
-ชุด javascript-exploits ออกแบบมาเพื่อทำงานร่วมกับแอปพลิเคชัน CSD demo บน origin server ตรวจสอบให้แน่ใจว่า origin server ได้เปิดใช้งานเส้นทาง `/csd-demo/` ก่อนรันชุดนี้
+ชุด javascript-exploits ได้รับการออกแบบให้ทำงานร่วมกับแอปพลิเคชัน CSD demo บน origin server ตรวจสอบให้แน่ใจว่า origin server มีการเปิดใช้งาน path `/csd-demo/` ก่อนรันชุดนี้
 </Aside>
 
 ## juice-shop-exploits
 
 **สคริปต์:** 12 | **ระยะเวลาโดยประมาณ:** 10-18 นาที
 
-การใช้ประโยชน์จากช่องโหว่ OWASP Juice Shop รวมถึง SQL injection login bypass, SQL injection search union, XSS DOM reflected, XSS stored API, IDOR basket access, admin section access, forged feedback, null byte file access, reflected XSS in search, HTTP header injection, repetitive registration และ login brute-force มีเป้าหมายคือแอปพลิเคชัน Juice Shop
+การโจมตี OWASP Juice Shop challenge รวมถึง SQL injection login bypass, SQL injection search union, XSS DOM reflected, XSS stored API, IDOR basket access, admin section access, forged feedback, null byte file access, reflected XSS in search, HTTP header injection, repetitive registration และ login brute-force กำหนดเป้าหมายที่แอปพลิเคชัน Juice Shop
 
-**ฟีเจอร์ F5 XC:** WAF, Bot Defense
+**ฟีเจอร์ F5 XC:** WAF, การป้องกัน Bot
 
 ## mitre-attack
 
 **สคริปต์:** 8 | **ระยะเวลาโดยประมาณ:** 10-15 นาที
 
-การจำลองยุทธวิธีตามกรอบ MITRE ATT&CK รวมถึง reconnaissance (การสแกนภายนอก), initial access (credential stuffing), execution (command injection), credential access (รหัสผ่านเริ่มต้น), discovery (directory enumeration), lateral movement simulation, collection (data scraping) และ exfiltration simulation แมปแต่ละสคริปต์กับยุทธวิธี MITRE ATT&CK เฉพาะสำหรับการรายงานความครอบคลุมภัยคุกคามอย่างเป็นระบบ มีเป้าหมายคือแอปพลิเคชันทั้งหมด
+การจำลอง MITRE ATT&CK framework tactic รวมถึงการลาดตระเวน (external scanning), initial access (credential stuffing), execution (command injection), credential access (default passwords), discovery (directory enumeration), การจำลอง lateral movement, collection (data scraping) และการจำลอง exfiltration จับคู่สคริปต์แต่ละตัวกับ MITRE ATT&CK tactic เฉพาะสำหรับการรายงานความครอบคลุมภัยคุกคามแบบมีโครงสร้าง กำหนดเป้าหมายที่ทุกแอปพลิเคชัน
 
-**ฟีเจอร์ F5 XC:** WAF, Bot Defense, API Security
+**ฟีเจอร์ F5 XC:** WAF, การป้องกัน Bot, ความปลอดภัย API
 
 ## owasp-scanning
 
 **สคริปต์:** 10 | **ระยะเวลาโดยประมาณ:** 20-35 นาที
 
-ชุดสแกน OWASP แบบครบวงจรโดยใช้เครื่องมือสแกนช่องโหว่เฉพาะทาง รวมถึง ZAP baseline scan, ZAP active scan, Nikto full scan, Nuclei full scan, Nmap vulnerability scan, SSL/TLS audit, directory fuzzing, subdomain enumeration, technology fingerprinting และการสร้างรายงาน OWASP แบบรวม มีเป้าหมายคือแอปพลิเคชันทั้งหมด
+ชุดการสแกน OWASP แบบครอบคลุมโดยใช้ vulnerability scanner เฉพาะทาง รวมถึง ZAP baseline scan, ZAP active scan, Nikto full scan, Nuclei full scan, Nmap vulnerability scan, SSL/TLS audit, directory fuzzing, subdomain enumeration, technology fingerprinting และการสร้างรายงาน OWASP แบบรวม กำหนดเป้าหมายที่ทุกแอปพลิเคชัน
 
-**ฟีเจอร์ F5 XC:** WAF, Web App Scanning
+**ฟีเจอร์ F5 XC:** WAF, การสแกนแอปเว็บ
 
 ## performance-testing
 
 **สคริปต์:** 12 | **ระยะเวลาโดยประมาณ:** 15-30 นาที
 
-การทดสอบคุณลักษณะด้านประสิทธิภาพภายใต้รูปแบบโหลดต่าง ๆ รวมถึง concurrency ramp, per-app throughput, sustained load, connection churn, mixed attack+load, spike testing, endurance test, breakpoint discovery, response time percentile, error rate under load, resource exhaustion และ latency distribution analysis มีเป้าหมายคือแอปพลิเคชันทั้งหมด
+การทดสอบลักษณะประสิทธิภาพภายใต้รูปแบบโหลดต่างๆ รวมถึง concurrency ramp, throughput ต่อแอป, sustained load, connection churn, mixed attack+load, spike testing, endurance test, breakpoint discovery, response time percentile, error rate ภายใต้โหลด, resource exhaustion และการวิเคราะห์การกระจาย latency กำหนดเป้าหมายที่ทุกแอปพลิเคชัน
 
-**ฟีเจอร์ F5 XC:** DDoS, Rate Limiting
+**ฟีเจอร์ F5 XC:** การป้องกัน DDoS, Rate Limiting
 
 ## reconnaissance
 
 **สคริปต์:** 6 | **ระยะเวลาโดยประมาณ:** 8-15 นาที
 
-การสแกนเครือข่าย, การ enumerate บริการ และการ brute-force ไดเรกทอรีกับโครงสร้างพื้นฐานเป้าหมาย รวมถึง nmap service detection, masscan port sweep, directory brute-forcing, subdomain enumeration, web technology fingerprinting และ DNS reconnaissance มีเป้าหมายคือแอปพลิเคชันทั้งหมด
+การสแกนเครือข่าย, การระบุบริการ และการ brute-force ไดเรกทอรีกับโครงสร้างพื้นฐานเป้าหมาย รวมถึงการตรวจจับบริการ nmap, การสวีปพอร์ต masscan, การ brute-force ไดเรกทอรี, subdomain enumeration, web technology fingerprinting และการลาดตระเวน DNS กำหนดเป้าหมายที่ทุกแอปพลิเคชัน
 
-**ฟีเจอร์ F5 XC:** WAF / Bot Defense
+**ฟีเจอร์ F5 XC:** WAF / การป้องกัน Bot
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-nmap-scan.sh` | nmap | การตรวจจับเวอร์ชันบริการและการสแกนสคริปต์เริ่มต้นกับพอร์ต HTTP/HTTPS ของเป้าหมาย |
-| 02 | `02-masscan-sweep.sh` | masscan | การสแกนพอร์ตความเร็วสูงของพอร์ตเว็บทั่วไป (80, 443, 8080, 8443) พร้อมการจำกัดอัตรา |
-| 03 | `03-gobuster-dirs.sh` | gobuster | การ brute-force ไดเรกทอรีโดยใช้ wordlist ทั่วไปจาก SecLists กับ application prefix ทั้งหมด |
-| 04 | `04-subfinder-enum.sh` | subfinder, httpx | การ enumerate subdomain แบบ passive สำหรับโดเมนเป้าหมาย จากนั้นตรวจสอบ HTTP ของโฮสต์ที่ค้นพบ |
-| 05 | `05-whatweb-fingerprint.sh` | whatweb | การตรวจสอบเทคโนโลยีเว็บของเป้าหมายและเส้นทางแอปพลิเคชันทั้งหมด |
-| 06 | `06-dns-recon.sh` | dnsrecon, fierce, dig | การ enumerate ระเบียน DNS, ความพยายาม zone transfer และ reverse lookup สำหรับโดเมนเป้าหมาย |
+| 01 | `01-nmap-scan.sh` | nmap | การตรวจจับ service version และการสแกน default script กับพอร์ต HTTP/HTTPS ของเป้าหมาย |
+| 02 | `02-masscan-sweep.sh` | masscan | การสแกนพอร์ตความเร็วสูงของพอร์ตเว็บทั่วไป (80, 443, 8080, 8443) พร้อม rate limiting |
+| 03 | `03-gobuster-dirs.sh` | gobuster | การ brute-force ไดเรกทอรีโดยใช้ SecLists common wordlist กับทุก application prefix |
+| 04 | `04-subfinder-enum.sh` | subfinder, httpx | Passive subdomain enumeration สำหรับโดเมนเป้าหมาย จากนั้น HTTP probing ของโฮสต์ที่ค้นพบ |
+| 05 | `05-whatweb-fingerprint.sh` | whatweb | Web technology fingerprinting ของเป้าหมายและทุก application path |
+| 06 | `06-dns-recon.sh` | dnsrecon, fierce, dig | การระบุ DNS record, การพยายาม zone transfer และ reverse lookup สำหรับโดเมนเป้าหมาย |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** WAF ควรตรวจจับและบันทึกกิจกรรมการสแกน Bot Defense อาจจำแนกคำขอต่อเนื่องอย่างรวดเร็วว่าเป็นระบบอัตโนมัติ แดชบอร์ด Security Events จะแสดง signature การ reconnaissance และสตริง User-Agent ของเครื่องมือสแกน
+**พฤติกรรมที่คาดหวังจาก F5 XC:** WAF ควรตรวจจับและบันทึกกิจกรรมการสแกน การป้องกัน Bot อาจจำแนกการร้องขอแบบต่อเนื่องอย่างรวดเร็วว่าเป็นแบบอัตโนมัติ แดชบอร์ด Security Events จะแสดง reconnaissance signature และ User-Agent string ของ scanning tool
 
 ## restaurant-exploits
 
 **สคริปต์:** 11 | **ระยะเวลาโดยประมาณ:** 10-18 นาที
 
-การทดสอบ OWASP API Security Top 10 2023 กับแอปพลิเคชัน Restaurant API รวมถึง register/auth, BOLA profile, BOLA orders, BOPLA mass assignment, BFLA privilege escalation, rate limiting bypass, SQL injection menu, command injection disk stats, SSRF image URL, JWT weak secret และ sensitive data exposure มีเป้าหมายคือแอปพลิเคชัน Restaurant API
+การทดสอบ OWASP API Security Top 10 2023 กับแอปพลิเคชัน Restaurant API รวมถึงการลงทะเบียน/ยืนยันตัวตน, BOLA profile, BOLA orders, BOPLA mass assignment, BFLA privilege escalation, rate limiting bypass, SQL injection menu, command injection disk stats, SSRF image URL, JWT weak secret และการเปิดเผยข้อมูลที่ละเอียดอ่อน กำหนดเป้าหมายที่แอปพลิเคชัน Restaurant API
 
-**ฟีเจอร์ F5 XC:** API Security
+**ฟีเจอร์ F5 XC:** ความปลอดภัย API
 
 ## ssl-scanning
 
 **สคริปต์:** 3 | **ระยะเวลาโดยประมาณ:** 3-5 นาที
 
-การวิเคราะห์การตั้งค่า TLS/SSL ของ HTTPS endpoint ของ F5 XC load balancer ระบุ cipher suite, เวอร์ชันโปรโตคอล, รายละเอียดใบรับรอง และตรวจสอบช่องโหว่ TLS ที่เป็นที่รู้จัก มีเป้าหมายคือ F5 XC load balancer endpoint
+การวิเคราะห์การกำหนดค่า TLS/SSL ของ HTTPS endpoint ของ F5 XC load balancer ระบุ cipher suite, protocol version, รายละเอียดใบรับรอง และตรวจสอบช่องโหว่ TLS ที่รู้จัก กำหนดเป้าหมายที่ endpoint ของ F5 XC load balancer
 
-**ฟีเจอร์ F5 XC:** WAF (ข้อมูลเพื่อการอ้างอิง)
+**ฟีเจอร์ F5 XC:** WAF (เพื่อการให้ข้อมูล)
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-sslscan.sh` | sslscan | ระบุ cipher suite ที่รองรับ, เวอร์ชันโปรโตคอล และรายละเอียดใบรับรอง |
-| 02 | `02-sslyze.sh` | sslyze | การวิเคราะห์ TLS แบบครบวงจร รวมถึงการตรวจสอบใบรับรอง, ลำดับ cipher suite และการตรวจสอบช่องโหว่ (Heartbleed, ROBOT เป็นต้น) |
-| 03 | `03-testssl.sh` | testssl.sh | การประเมิน TLS แบบเต็มรูปแบบโดยใช้กรอบ testssl.sh ทดสอบการรองรับโปรโตคอล, การตั้งค่า cipher, การวิเคราะห์ header และช่องโหว่ที่เป็นที่รู้จัก |
+| 01 | `01-sslscan.sh` | sslscan | ระบุ cipher suite ที่รองรับ, protocol version และรายละเอียดใบรับรอง |
+| 02 | `02-sslyze.sh` | sslyze | การวิเคราะห์ TLS แบบครอบคลุม รวมถึงการตรวจสอบใบรับรอง, การเรียงลำดับ cipher suite และการตรวจสอบช่องโหว่ (Heartbleed, ROBOT เป็นต้น) |
+| 03 | `03-testssl.sh` | testssl.sh | การประเมิน TLS แบบเต็มรูปแบบโดยใช้ testssl.sh framework ทดสอบการรองรับ protocol, cipher preference, การวิเคราะห์ header และช่องโหว่ที่รู้จัก |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** การสแกน SSL สร้าง TLS handshake จำนวนมากพร้อมข้อเสนอ cipher suite ที่ไม่ปกติ แม้ว่า F5 XC โดยทั่วไปจะไม่บล็อกสิ่งเหล่านี้ แต่รูปแบบทราฟฟิกจะมองเห็นได้ใน access log คุณค่าหลักคือการตรวจสอบว่าการตั้งค่า TLS ของ F5 XC เป็นไปตามแนวปฏิบัติด้านความปลอดภัยที่ดีที่สุด
+**พฤติกรรมที่คาดหวังจาก F5 XC:** การสแกน SSL สร้าง TLS handshake จำนวนมากพร้อม cipher suite proposal ที่ผิดปกติ แม้ F5 XC โดยทั่วไปจะไม่บล็อกสิ่งเหล่านี้ แต่รูปแบบทราฟฟิกจะปรากฏในบันทึกการเข้าถึง คุณค่าหลักคือการตรวจสอบว่าการกำหนดค่า TLS ของ F5 XC เป็นไปตามแนวปฏิบัติด้านความปลอดภัยที่ดีที่สุด
 
 ## traffic-generation
 
-**สคริปต์:** 4 | **ระยะเวลาโดยประมาณ:** 5-10 นาที (ปรับแต่งได้)
+**สคริปต์:** 4 | **ระยะเวลาโดยประมาณ:** 5-10 นาที (สามารถกำหนดค่าได้)
 
-ทราฟฟิก HTTP ที่ถูกต้องปริมาณสูงสำหรับการวัดค่า baseline และการทดสอบโหลด สร้างรูปแบบทราฟฟิกปกติในการวิเคราะห์ F5 XC เพื่อเปรียบเทียบกับทราฟฟิกชุดโจมตี มีเป้าหมายคือแอปพลิเคชันทั้งหมด
+HTTP traffic ที่ถูกต้องปริมาณสูงสำหรับการวัดค่า baseline และการทดสอบโหลด สร้างรูปแบบทราฟฟิกปกติใน F5 XC analytics เพื่อเปรียบเทียบกับทราฟฟิกจากชุดการโจมตี กำหนดเป้าหมายที่ทุกแอปพลิเคชัน
 
 **ฟีเจอร์ F5 XC:** ทั้งหมด (การเปรียบเทียบ baseline)
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-baseline-http.sh` | curl | คำขอ HTTP GET แบบลำดับไปยังเส้นทางแอปพลิเคชันทั้งหมดพร้อม User-Agent ของเบราว์เซอร์มาตรฐาน สร้าง baseline ของทราฟฟิกปกติในการวิเคราะห์ F5 XC |
-| 02 | `02-concurrent-load.sh` | curl | คำขอ HTTP แบบขนานโดยใช้ curl พร้อมการเชื่อมต่อพร้อมกันหลายรายการ ทดสอบการจัดการโหลดและสร้าง baseline ของ throughput |
-| 03 | `03-mixed-methods.sh` | curl | เมธอด HTTP แบบผสม (GET, POST, PUT, DELETE) กับ API endpoint พร้อม payload ที่ถูกต้อง สร้างรูปแบบทราฟฟิก API ปกติเพื่อเปรียบเทียบกับทราฟฟิกการโจมตี |
-| 04 | `04-user-journey.sh` | playwright | จำลองเส้นทางการใช้งานจริงของผู้ใช้: เรียกดูหน้า, ค้นหาสินค้า, กรอกฟอร์ม และนำทางระหว่างแอปพลิเคชันโดยใช้ Playwright พร้อมการตั้งค่าเบราว์เซอร์มาตรฐาน |
+| 01 | `01-baseline-http.sh` | curl | HTTP GET request แบบต่อเนื่องไปยังทุก application path พร้อม User-Agent เบราว์เซอร์มาตรฐาน สร้าง baseline ของทราฟฟิกปกติใน F5 XC analytics |
+| 02 | `02-concurrent-load.sh` | curl | HTTP request แบบขนานโดยใช้ curl พร้อม multiple concurrent connection ทดสอบการจัดการโหลดและสร้าง throughput baseline |
+| 03 | `03-mixed-methods.sh` | curl | HTTP method แบบผสม (GET, POST, PUT, DELETE) กับ API endpoint พร้อม payload ที่ถูกต้อง สร้างรูปแบบทราฟฟิก API ปกติเพื่อเปรียบเทียบกับทราฟฟิกการโจมตี |
+| 04 | `04-user-journey.sh` | playwright | จำลอง user journey ที่สมจริง: การเรียกดูหน้า, การค้นหาสินค้า, การกรอกแบบฟอร์ม และการนำทางระหว่างแอปพลิเคชันโดยใช้ Playwright พร้อมการตั้งค่าเบราว์เซอร์มาตรฐาน |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** คำขอทั้งหมดในชุดนี้ควรผ่านได้โดยไม่มีการแทรกแซงจาก WAF หรือ Bot Defense ใช้ชุดนี้เพื่อสร้างทราฟฟิก "สะอาด" ในแดชบอร์ดการวิเคราะห์ จากนั้นเปรียบเทียบกับทราฟฟิกชุดโจมตีเพื่อสาธิตความแตกต่างระหว่างรูปแบบคำขอที่ถูกต้องและเป็นอันตราย
+**พฤติกรรมที่คาดหวังจาก F5 XC:** การร้องขอทั้งหมดในชุดนี้ควรผ่านไปได้โดยไม่มีการแทรกแซงจาก WAF หรือการป้องกัน Bot ใช้ชุดนี้เพื่อสร้างทราฟฟิก "สะอาด" ในแดชบอร์ด analytics จากนั้นเปรียบเทียบกับทราฟฟิกจากชุดการโจมตีเพื่อสาธิตความแตกต่างระหว่างรูปแบบการร้องขอที่ถูกต้องและเป็นอันตราย
 
 ## waf-encoding-evasion
 
 **สคริปต์:** 7 | **ระยะเวลาโดยประมาณ:** 5-10 นาที
 
-การโจมตีด้วยการเข้ารหัสหลายชั้นเพื่อหลบเลี่ยง ออกแบบมาเพื่อทดสอบว่า WAF ทำการ normalize และถอดรหัส payload อย่างถูกต้องก่อนการตรวจสอบหรือไม่ ครอบคลุม URL encoding แบบชั้นเดียว สองชั้น และสามชั้น; HTML entity encoding (ทศนิยม, เลขฐานสิบหก, ชื่อ, เติมศูนย์); Unicode/UTF-8 insertion (zero-width space, BOM, fullwidth character, soft hyphen, overlong sequence); การเข้ารหัสแบบผสม/ซ้อนหลายชั้น (URL-encoded HTML entity, double-URL ภายใน entity, 3-layer stack); null byte injection; IIS %uXXXX encoding; case manipulation; chunked transfer encoding body splitting; Base64 parameter evasion; และ payload ที่เข้ารหัสใน header/cookie มีเป้าหมายคือแอปพลิเคชันใดก็ได้
+การโจมตีด้วย encoding หลายชั้นที่ออกแบบมาเพื่อทดสอบว่า WAF ทำ normalize และ decode payload อย่างถูกต้องก่อนการตรวจสอบหรือไม่ ครอบคลุม URL encoding ระดับเดี่ยว, คู่ และสาม; HTML entity encoding (decimal, hex, named, zero-padded); การแทรก Unicode/UTF-8 (zero-width space, BOM, fullwidth characters, soft hyphen, overlong sequences); mixed/nested multi-layer encoding (URL-encoded HTML entity, double-URL inside entity, 3-layer stack); null byte injection; IIS %uXXXX encoding; case manipulation; chunked transfer encoding body splitting; Base64 parameter evasion; และ payload ที่เข้ารหัสผ่าน header/cookie กำหนดเป้าหมายที่แอปพลิเคชันใดก็ได้
 
-**ฟีเจอร์ F5 XC:** WAF (ความลึกของการ normalize การเข้ารหัส)
+**ฟีเจอร์ F5 XC:** WAF (ความลึกของการ normalize encoding)
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-url-encoding.sh` | curl | URL encoding แบบชั้นเดียว สองชั้น และสามชั้นของ SQLi, XSS และ path traversal payload ข้ามเส้นทาง endpoint หลายรายการ ทดสอบว่า WAF ถอดรหัส URL parameter แบบ recursive หรือไม่ |
-| 02 | `02-html-entity-encoding.sh` | curl, python3 | HTML entity encoding แบบทศนิยม, เลขฐานสิบหก, ชื่อ และเติมศูนย์ของ attack payload ทั้งใน GET parameter และ POST body รวมถึง template injection ผ่าน `&#123;&#123;7*7&#125;&#125;` |
+| 01 | `01-url-encoding.sh` | curl | URL encoding ระดับเดี่ยว, คู่ และสามของ SQLi, XSS และ path traversal payload ใน endpoint path หลายรายการ ทดสอบว่า WAF ทำการ decode URL parameter แบบ recursive หรือไม่ |
+| 02 | `02-html-entity-encoding.sh` | curl, python3 | HTML entity encoding แบบ decimal, hex, named และ zero-padded ของ attack payload ทั้งใน GET parameter และ POST body รวมถึง template injection ผ่าน `&#123;&#123;7*7&#125;&#125;` |
 | 03 | `03-unicode-utf8-evasion.sh` | curl | การแทรก zero-width space (U+200B), BOM (U+FEFF), fullwidth character, soft hyphen และ ZWNJ เข้าไปใน SQL keyword และ XSS tag ทดสอบ overlong UTF-8 sequence (2-byte และ 3-byte) |
-| 04 | `04-mixed-nested-encoding.sh` | curl | Payload หลายชั้น: URL-encoded HTML entity, double-URL ภายใน entity, triple-layer stack, JSON body พร้อม Unicode escape (`<`) และรูปแบบ template injection `{{7*7}}` เฉพาะ |
-| 05 | `05-null-byte-iis-base64.sh` | curl | Null byte injection (`%00`) สำหรับ extension bypass, IIS `%uXXXX` Unicode encoding และ Base64-encoded payload ใน URL parameter พร้อม decode flag |
-| 06 | `06-case-chunked-evasion.sh` | curl | การสุ่ม case รวมกับการเข้ารหัส (`%3CsCrIpT%3E`), chunked transfer encoding เพื่อแบ่ง SQL/XSS keyword ข้าม HTTP chunk, Content-Length/Transfer-Encoding conflict probe และ alternate path separator (`%5c`, `%c0%af`) |
-| 07 | `07-header-cookie-evasion.sh` | curl | Attack payload ที่เข้ารหัสถูก inject ผ่าน Cookie, Referer, User-Agent, X-Forwarded-For และ X-Original-URL header ทดสอบว่า WAF ตรวจสอบและถอดรหัส HTTP header field ทั้งหมดหรือไม่ ไม่ใช่แค่ query parameter และ POST body เท่านั้น |
+| 04 | `04-mixed-nested-encoding.sh` | curl | Multi-layer payload: URL-encoded HTML entity, double-URL inside entity, triple-layer stack, JSON body พร้อม Unicode escape (`<`) และรูปแบบ template injection `{{7*7}}` ของผู้ใช้ |
+| 05 | `05-null-byte-iis-base64.sh` | curl | Null byte injection (`%00`) สำหรับการข้ามผ่าน extension, IIS `%uXXXX` Unicode encoding และ Base64-encoded payload ใน URL parameter พร้อม decode flag |
+| 06 | `06-case-chunked-evasion.sh` | curl | Case randomization รวมกับ encoding (`%3CsCrIpT%3E`), chunked transfer encoding เพื่อแยก SQL/XSS keyword ข้าม HTTP chunk, Content-Length/Transfer-Encoding conflict probe และ alternate path separator (`%5c`, `%c0%af`) |
+| 07 | `07-header-cookie-evasion.sh` | curl | Attack payload ที่เข้ารหัส inject ผ่าน Cookie, Referer, User-Agent, X-Forwarded-For และ X-Original-URL header ทดสอบว่า WAF ตรวจสอบและ decode ฟิลด์ HTTP header ทั้งหมดหรือไม่ ไม่ใช่แค่ query parameter และ POST body |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** WAF ที่กำหนดค่าอย่างถูกต้องควร normalize ชั้นการเข้ารหัสทั้งหมดก่อนการจับคู่รูปแบบ Payload ที่เข้ารหัสชั้นเดียวควรถูกบล็อกทันที การทดสอบการเข้ารหัสสองชั้นและสามชั้นเผยให้เห็นความลึกของ decode pipeline ของ WAF การทดสอบ Unicode insertion เผยให้เห็นว่าอักขระที่มองไม่เห็นถูกลบออกก่อนการจับคู่ keyword หรือไม่ ผลลัพธ์ที่ตัวแปรที่เข้ารหัสผ่านได้ในขณะที่ตัวแปรข้อความธรรมดาถูกบล็อกบ่งชี้ถึงช่องว่างในการ normalize ของนโยบาย WAF
+**พฤติกรรมที่คาดหวังจาก F5 XC:** WAF ที่กำหนดค่าอย่างถูกต้องควร normalize ทุกชั้น encoding ก่อนการจับคู่รูปแบบ Payload ที่เข้ารหัสชั้นเดียวควรถูกบล็อกทันที การทดสอบ double และ triple encoding เผยให้เห็นความลึกของ decode pipeline ของ WAF การทดสอบ Unicode insertion เผยให้เห็นว่าอักขระที่มองไม่เห็นถูกลบออกก่อนการจับคู่ keyword หรือไม่ ผลลัพธ์ที่ variant ที่เข้ารหัสผ่านไปได้ในขณะที่ plain-text เทียบเท่าถูกบล็อก บ่งชี้ถึงช่องว่างในการ normalize ของนโยบาย WAF
 
 ## web-app-attacks
 
 **สคริปต์:** 6 | **ระยะเวลาโดยประมาณ:** 12-20 นาที
 
-การทดสอบช่องโหว่เว็บแอปพลิเคชัน OWASP Top 10 กับ Juice Shop และ DVWA ผ่าน F5 XC รวมถึง SQL injection, XSS, command injection, path traversal, การสแกน Nikto และการสแกนตาม template ของ Nuclei มีเป้าหมายคือแอปพลิเคชัน Juice Shop และ DVWA
+การทดสอบช่องโหว่เว็บแอปพลิเคชัน OWASP Top 10 กับ Juice Shop และ DVWA ผ่าน F5 XC รวมถึง SQL injection, XSS, command injection, path traversal, Nikto scanning และ Nuclei template-based scanning กำหนดเป้าหมายที่แอปพลิเคชัน Juice Shop และ DVWA
 
-**ฟีเจอร์ F5 XC:** WAF (Web Application Firewall)
+**ฟีเจอร์ F5 XC:** ไฟร์วอลล์แอปเว็บ (WAF)
 
 | ลำดับ | สคริปต์ | เครื่องมือ | คำอธิบาย |
 |---|---|---|---|
-| 01 | `01-sqli.sh` | sqlmap, curl | SQL injection payload กับ Juice Shop search API และ DVWA SQLi endpoint รัน sqlmap automated scan จากนั้นส่ง injection payload โดยตรง 10 รายการผ่าน curl |
-| 02 | `02-xss.sh` | dalfox, curl | Cross-site scripting กับ Juice Shop และ DVWA XSS reflected/stored endpoint รัน dalfox automated scan จากนั้นส่ง XSS payload โดยตรง 12 รายการ รวมถึง script tag, event handler และ cookie exfiltration |
-| 03 | `03-command-injection.sh` | curl | OS command injection payload กับ DVWA exec endpoint ส่ง payload 12 รายการรวมถึง pipe chain, เครื่องหมายอัฒภาค, URL-encoded newline และรูปแบบ reverse shell |
-| 04 | `04-path-traversal.sh` | curl | Directory traversal กับ endpoint ของแอปพลิเคชันหลายรายการ ทดสอบ `../` traversal มาตรฐาน, ตัวแปร URL-encoded, ตัวแปร double-encoded, ตัวแปร null-byte และตัวแปร Unicode ข้ามเส้นทาง endpoint 6 รายการ |
-| 05 | `05-nikto-scan.sh` | nikto | การสแกนช่องโหว่เว็บเซิร์ฟเวอร์แบบเต็มรูปแบบพร้อมจำกัดเวลา 120 วินาที สร้างคำขอ HTTP ที่หลากหลายซึ่งทริกเกอร์การจับคู่ WAF signature |
-| 06 | `06-nuclei-scan.sh` | nuclei | การสแกนช่องโหว่ตาม template ที่ระดับความรุนแรงปานกลาง สูง และวิกฤต จำกัดอัตราที่ 50 คำขอ/วินาที |
+| 01 | `01-sqli.sh` | sqlmap, curl | SQL injection payload กับ Juice Shop search API และ DVWA SQLi endpoint รัน sqlmap automated scan จากนั้นส่ง injection payload แบบ curl ตรง 10 รายการ |
+| 02 | `02-xss.sh` | dalfox, curl | Cross-site scripting กับ Juice Shop และ DVWA XSS reflected/stored endpoint รัน dalfox automated scan จากนั้นส่ง XSS payload ตรง 12 รายการ รวมถึง script tag, event handler และการขโมย cookie |
+| 03 | `03-command-injection.sh` | curl | OS command injection payload กับ DVWA exec endpoint ส่ง payload จำนวน 12 รายการ รวมถึง pipe chain, semicolon, URL-encoded newline และ reverse shell pattern |
+| 04 | `04-path-traversal.sh` | curl | Directory traversal กับ application endpoint หลายรายการ ทดสอบ `../` traversal มาตรฐาน, URL-encoded variant, double-encoded variant, null-byte variant และ Unicode variant ใน 6 endpoint path |
+| 05 | `05-nikto-scan.sh` | nikto | การสแกนช่องโหว่เว็บเซิร์ฟเวอร์แบบเต็มรูปแบบพร้อม time limit 120 วินาที สร้าง HTTP request ที่หลากหลายซึ่งกระตุ้นการจับคู่ WAF signature |
+| 06 | `06-nuclei-scan.sh` | nuclei | การสแกนช่องโหว่แบบ template-based ในระดับ severity medium, high และ critical มี rate limit ที่ 50 request/วินาที |
 
-**พฤติกรรมที่คาดหวังของ F5 XC:** WAF ควรบล็อกหรือแจ้งเตือนคำขอที่มี SQL injection, XSS, command injection และ path traversal payload แดชบอร์ด Security Events จะแสดงหมวดหมู่การละเมิด, signature ID และรายละเอียดคำขอสำหรับแต่ละคำขอที่ถูกบล็อก
+**พฤติกรรมที่คาดหวังจาก F5 XC:** WAF ควรบล็อกหรือตรวจจับการร้องขอที่มี SQL injection, XSS, command injection และ path traversal payload แดชบอร์ด Security Events จะแสดงหมวดหมู่การละเมิด, signature ID และรายละเอียดการร้องขอสำหรับการร้องขอที่ถูกบล็อกแต่ละรายการ
