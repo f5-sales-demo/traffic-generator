@@ -2,7 +2,7 @@
 title: Abbau
 description: >-
   terraform destroy zum Entfernen aller Azure-Ressourcen, Überprüfung der
-  Ressourcengruppenlöschung mit az CLI und Bereinigung lokaler State-Dateien
+  Ressourcengruppen-Löschung mit az CLI und Bereinigung lokaler Statusdateien
 sidebar:
   order: 8
 i18n:
@@ -10,11 +10,11 @@ i18n:
   translator: machine
 ---
 
-Wenn die Lab-Sitzung abgeschlossen ist, zerstören Sie alle Azure-Ressourcen, um die Abrechnung zu stoppen.
+Wenn die Labsitzung abgeschlossen ist, zerstören Sie alle Azure-Ressourcen, um die Abrechnung zu stoppen.
 
 ## Terraform Destroy
 
-Aus dem `terraform/`-Verzeichnis:
+Aus dem Verzeichnis `terraform/`:
 
 ```bash
 cd terraform/
@@ -24,7 +24,7 @@ terraform plan -destroy
 terraform destroy
 ```
 
-Terraform wird zur Bestätigung auffordern. Geben Sie `yes` ein, um fortzufahren.
+Terraform fordert zur Bestätigung auf. Geben Sie `yes` ein, um fortzufahren.
 
 ## Bereinigung überprüfen
 
@@ -40,17 +40,17 @@ az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
 az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
 ```
 
-## Lokalen State bereinigen
+## Lokalen Status bereinigen
 
-Entfernen Sie Terraform-State- und Cache-Dateien:
+Entfernen Sie den Terraform-Status und zwischengespeicherte Dateien:
 
 ```bash
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 ```
 
-## Ergebnisse sichern (Optional)
+## Ergebnisse aufbewahren (Optional)
 
-Wenn Sie die Traffic-Suite-Ergebnisse vor der Zerstörung der VM behalten möchten, kopieren Sie diese lokal:
+Wenn Sie die Ergebnisse der Datenverkehrssuite aufbewahren möchten, bevor Sie die VM zerstören, kopieren Sie diese lokal:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -63,16 +63,16 @@ LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head 
 scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
 ```
 
-## F5 XC-Bereinigung
+## F5 XC Bereinigung
 
-Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Traffic-Generator abgezielt hat:
+Wenn Sie auch die F5 XC-Konfiguration entfernen möchten, auf die der Datenverkehrsgenerator ausgerichtet war:
 
-1. Löschen Sie den HTTP Load Balancer
-2. Löschen Sie den Origin Pool
-3. Löschen Sie alle WAF-Richtlinien, Bot-Defense-Konfigurationen, API-Security-Richtlinien oder CSD-Konfigurationen, die für Tests erstellt wurden
+1. Löschen Sie den HTTP-Load-Balancer
+2. Löschen Sie den Ursprungsserver-Pool
+3. Löschen Sie alle WAF-Richtlinien, Bot-Abwehr erweitert-Konfigurationen, API-Sicherheits-Richtlinien oder CSD-Konfigurationen, die für Tests erstellt wurden
 
 Diese F5 XC-Ressourcen verursachen keine Azure-Kosten, sollten aber bereinigt werden, wenn die Demo-Umgebung nicht mehr benötigt wird.
 
 :::tip
-Für wiederkehrende Demo-Nutzung sollten Sie den gesamten Lebenszyklus skripten: `cd terraform && terraform apply` vor einer Demo, Suites ausführen, dann `terraform destroy` danach. Der Standard-Tier wird in 15-20 Minuten bereitgestellt, was ein Setup und einen Abbau am selben Tag praktikabel macht.
+Für den wiederkehrenden Demo-Einsatz sollten Sie den gesamten Lebenszyklus skripten: `cd terraform && terraform apply` vor einer Demo ausführen, Suites durchführen und anschließend `terraform destroy` ausführen. Die Standard-Tier-Bereitstellung dauert 15–20 Minuten, was eine Einrichtung und Abbau am selben Tag praktikabel macht.
 :::

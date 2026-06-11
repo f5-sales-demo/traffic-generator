@@ -1,10 +1,10 @@
 ---
 title: Architektur
 description: >-
-  Ubuntu 24.04 Azure-VM mit über 50 vorinstallierten Sicherheitstools,
-  organisiert in 19 Traffic-Suites, die F5 XC HTTP Load Balancer zum Schutz von
-  Origin-Server-Anwendungen für WAF-, Bot Defense-, API Security- und
-  CSD-Validierung ansprechen
+  Ubuntu 24.04 Azure VM mit 50+ vorinstallierten Sicherheitswerkzeugen,
+  organisiert in 19 Traffic-Suites, die auf F5 XC HTTP-Lastverteiler abzielen,
+  welche Ursprungsserver-Anwendungen für WAF, Bot-Abwehr, API-Sicherheit und
+  CSD-Validierung schützen
 sidebar:
   order: 1
 i18n:
@@ -14,7 +14,7 @@ i18n:
 
 ## Zweck
 
-Diese Komponente bietet eine automatisierte Traffic-Generierungsplattform, die Angriffsverkehr, Aufklärungsscans, Bot-Simulationen und API-Missbrauch gegen einen F5 Distributed Cloud HTTP Load Balancer erzeugt. Sie ist der "Angreifer" in einer typischen Demo-Architektur – die Quelle von bösartigem und verdächtigem Datenverkehr, den die Sicherheitsfunktionen von F5 XC erkennen und blockieren sollen.
+Diese Komponente stellt eine automatisierte Plattform zur Datenverkehrsgenerierung bereit, die Angriffsdatenverkehr, Reconnaissance-Scans, Bot-Simulation und API-Missbrauch gegen einen F5 Distributed Cloud HTTP-Lastverteiler erzeugt. Sie ist der „Angreifer" in einer typischen Demo-Architektur – die Quelle von schädlichem und verdächtigem Datenverkehr, den die Sicherheitsfunktionen von F5 XC erkennen und blockieren sollen.
 
 In der Demo-Architektur:
 
@@ -22,7 +22,7 @@ In der Demo-Architektur:
 Traffic Generator VM -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server VM
 ```
 
-Der Traffic Generator sendet Anfragen an den öffentlichen FQDN des F5 XC Load Balancers. Die F5 XC-Plattform untersucht und filtert den Datenverkehr, bevor sie legitime Anfragen an den Origin-Server weiterleitet. Der Operator überprüft anschließend die F5 XC-Sicherheitsereignisprotokolle, um die Erkennung und Durchsetzung zu demonstrieren.
+Der Datenverkehrsgenerator sendet Anfragen an den öffentlichen FQDN des F5 XC-Lastverteilers. Die F5 XC-Plattform prüft und filtert den Datenverkehr, bevor legitime Anfragen an den Ursprungsserver weitergeleitet werden. Der Operator überprüft anschließend die F5 XC-Sicherheitsereignisprotokolle, um Erkennung und Durchsetzung zu demonstrieren.
 
 ## Architektur
 
@@ -38,58 +38,58 @@ graph LR
 Die Traffic Generator VM läuft auf Azure mit:
 
 - **Ubuntu 24.04 LTS** als Basis-Image
-- **Über 50 Sicherheitstools**, die während der Bereitstellung via cloud-init installiert werden
-- **19 organisierte Traffic-Suites** mit nummerierten Skripten, die der Reihe nach ausgeführt werden
-- **runner.sh**-Orchestrator für die Suite-Ausführung mit Ergebnisprotokollierung
-- **config.env** für die Zielkonfiguration (FQDN, Origin-IP)
+- **50+ Sicherheitswerkzeuge**, die über cloud-init während der Bereitstellung installiert werden
+- **19 organisierten Traffic-Suites** mit nummerierten Skripten, die der Reihe nach ausgeführt werden
+- **runner.sh** als Orchestrator für die Suite-Ausführung mit Ergebnisprotokollierung
+- **config.env** für die Zielkonfiguration (FQDN, Ursprungs-IP)
 
-## Tool-Kategorien
+## Werkzeugkategorien
 
-| Kategorie | Tools | Zweck |
+| Kategorie | Werkzeuge | Zweck |
 |---|---|---|
-| Webanwendungstests | nikto, sqlmap, nuclei, dalfox, ffuf, gobuster, feroxbuster, dirb, whatweb | WAF-Angriffs-Payload-Generierung |
-| Netzwerkanalyse | nmap, masscan, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr | Aufklärung und Netzwerk-Probing |
-| MITM und Proxy | mitmproxy, socat | Traffic-Abfangen und -Manipulation |
+| Web-Anwendungstests | nikto, sqlmap, nuclei, dalfox, ffuf, gobuster, feroxbuster, dirb, whatweb | Generierung von WAF-Angriffs-Payloads |
+| Netzwerkanalyse | nmap, masscan, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr | Reconnaissance und Netzwerk-Probing |
+| MITM und Proxy | mitmproxy, socat | Abfangen und Manipulation von Datenverkehr |
 | SSL/TLS-Tests | sslscan, sslyze, testssl.sh | TLS-Konfigurationsscanning |
 | Browser-Automatisierung | playwright, puppeteer, puppeteer-extra-plugin-stealth | Bot-Simulation mit Headless Chrome |
-| Subdomain und DNS | subfinder, httpx, amass, dnsrecon, fierce, whois, dnsutils | Aufklärung und Enumeration |
-| Anmeldedatentests | hydra, medusa, ncrack | Simulation von Authentifizierungsangriffen |
-| WAF-Umgehungstests | gotestwaf, waf-bypass, wfuzz | Multi-Layer-Kodierungs-Umgehung und WAF-Bypass-Bewertung |
-| Exploit-Frameworks | ZAP, Metasploit (nur Full-Tier) | Umfassendes Schwachstellenscanning |
+| Subdomain und DNS | subfinder, httpx, amass, dnsrecon, fierce, whois, dnsutils | Reconnaissance und Enumeration |
+| Credential-Tests | hydra, medusa, ncrack | Simulation von Authentifizierungsangriffen |
+| WAF-Umgehungstests | gotestwaf, waf-bypass, wfuzz | Mehrstufige Kodierungsumgehung und WAF-Bypass-Bewertung |
+| Exploit-Frameworks | ZAP, Metasploit (nur Full-Tier) | Umfassendes Schwachstellen-Scanning |
 
-## Abgestufte Installation
+## Gestufte Installation
 
-Der Traffic Generator unterstützt zwei Installationsstufen, die über die Terraform-Variable `tool_tier` gesteuert werden:
+Der Datenverkehrsgenerator unterstützt zwei Installationsstufen, die über die Terraform-Variable `tool_tier` gesteuert werden:
 
-### Standard-Stufe (Standard)
+### Standard-Tier (Standard)
 
-Installiert alle im Tool-Katalog aufgeführten Tools mit Ausnahme von ZAP und Metasploit. Die Bereitstellung wird in 15-20 Minuten abgeschlossen. Diese Stufe deckt alle 19 Traffic-Suites ab und ist für die meisten Demo-Szenarien ausreichend.
+Installiert alle im Werkzeugkatalog aufgeführten Werkzeuge außer ZAP und Metasploit. Die Bereitstellung wird in 15–20 Minuten abgeschlossen. Diese Stufe deckt alle 19 Traffic-Suites ab und ist für die meisten Demo-Szenarien ausreichend.
 
-### Full-Stufe
+### Full-Tier
 
-Fügt OWASP ZAP und Metasploit Framework zusätzlich zur Standard-Stufe hinzu. Die Bereitstellung dauert etwa 25 Minuten. Diese Tools sind groß (ZAP ~500 MiB, Metasploit ~1 GiB) und werden nur für fortgeschrittene Schwachstellenscanning-Demos benötigt.
+Fügt OWASP ZAP und das Metasploit-Framework zusätzlich zur Standard-Stufe hinzu. Die Bereitstellung dauert ungefähr 25 Minuten. Diese Werkzeuge sind umfangreich (ZAP ~500 MiB, Metasploit ~1 GiB) und werden nur für erweiterte Demos zum Schwachstellen-Scanning benötigt.
 
-Aktuelle VM-Kosten finden Sie im Azure-Preisrechner. Die standardmäßige Standard_F16s_v2 ist eine rechenoptimierte Instanz, die für nachhaltige Traffic-Generierung geeignet ist.
+Aktuelle VM-Kosten entnehmen Sie dem Azure-Preisrechner. Das standardmäßige Standard_F16s_v2 ist eine rechenoptimierte Instanz, die für die dauerhafte Datenverkehrsgenerierung geeignet ist.
 
 :::tip
-Verwenden Sie `terraform destroy`, wenn das Lab nicht in Gebrauch ist, um laufende Kosten zu vermeiden. Siehe [Abbau](../08-teardown/) für die Vorgehensweise.
+Verwenden Sie `terraform destroy`, wenn das Labor nicht in Betrieb ist, um laufende Kosten zu vermeiden. Weitere Informationen finden Sie unter [Teardown](../08-teardown/).
 :::
 
 ## Integrationspunkte
 
 Diese Komponente integriert sich mit zwei weiteren Demo-Komponenten:
 
-- **Origin Server** – Das Ziel-Backend, das Juice Shop, DVWA, VAmPI, httpbin und whoami hostet. Der Traffic Generator sendet Angriffsverkehr über F5 XC, um diese Anwendungen zu erreichen. Siehe [Integration](../07-integrate/) für vollständige Architekturdetails.
+- **Ursprungsserver** – Das Ziel-Backend, das Juice Shop, DVWA, VAmPI, httpbin und whoami hostet. Der Datenverkehrsgenerator sendet Angriffsdatenverkehr über F5 XC, um diese Anwendungen zu erreichen. Weitere Details zur Architektur finden Sie unter [Integration](../07-integrate/).
 
-- **CSD-Demo** – Die Client-Side Defense-Demoanwendung auf dem Origin-Server. Die `javascript-exploits`-Traffic-Suite erzeugt Magecart-artige Script-Injection-Payloads, die F5 XC Client-Side Defense erkennt. Dies validiert die CSD Phase 2-Funktionalität.
+- **CSD-Demo** – Die Demo-Anwendung für clientseitige Abwehr auf dem Ursprungsserver. Die Traffic-Suite `javascript-exploits` generiert Magecart-artige Script-Injection-Payloads, die F5 XC Clientseitige Abwehr erkennt. Dies validiert die CSD-Phase-2-Funktionalität.
 
 ## Modulares Komponentendesign
 
 Jede Lab-Komponente ist eigenständig und wird unabhängig bereitgestellt:
 
-- **Traffic Generator** (diese Komponente) stellt die Angriffsquelle bereit
-- **Origin Server** stellt die verwundbaren Anwendungsziele bereit
-- **CDN Simulator** stellt die CDN-Edge-Caching-Schicht bereit (optional)
-- **F5 XC-Konfiguration** stellt WAF-, Bot Defense-, API Security- und CSD-Richtlinien bereit
+- **Datenverkehrsgenerator** (diese Komponente) stellt die Angriffsquelle bereit
+- **Ursprungsserver** stellt die verwundbaren Anwendungsziele bereit
+- **CDN-Simulator** stellt die CDN-Edge-Caching-Schicht bereit (optional)
+- **F5 XC-Konfiguration** stellt WAF-, Bot-Abwehr-, API-Sicherheits- und CSD-Richtlinien bereit
 
-Der menschliche Operator oder KI-Assistent fügt Komponenten einzeln hinzu. Stellen Sie zuerst den Origin-Server bereit, konfigurieren Sie F5 XC davor und stellen Sie dann den Traffic Generator bereit, der auf den FQDN des F5 XC Load Balancers abzielt.
+Der menschliche Operator oder KI-Assistent fügt Komponenten einzeln hinzu. Stellen Sie zuerst den Ursprungsserver bereit, konfigurieren Sie F5 XC davor, und stellen Sie dann den Datenverkehrsgenerator bereit, der auf den FQDN des F5 XC-Lastverteilers abzielt.

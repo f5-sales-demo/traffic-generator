@@ -1,14 +1,14 @@
 ---
-title: Implantação
+title: Implantar
 description: >-
-  Implantação Terraform IaC da VM Azure do gerador de tráfego — VM série F
-  otimizada para computação com Ubuntu 24.04, ajuste de kernel, mais de 50
-  ferramentas de segurança e 19 suítes de tráfego provisionadas via cloud-init.
-  Todos os arquivos de configuração estão no diretório terraform/.
+  Implantação Terraform IaC da VM Azure geradora de tráfego — VM otimizada para
+  computação série F com Ubuntu 24.04, ajuste de kernel, mais de 50 ferramentas
+  de segurança e 19 suítes de tráfego provisionadas via cloud-init. Todos os
+  arquivos de configuração estão no diretório terraform/.
 sidebar:
   order: 3
 i18n:
-  sourceHash: bc522cf1cb30
+  sourceHash: 9cfd4eb9e98a
   translator: machine
 ---
 
@@ -18,7 +18,7 @@ Todos os arquivos Terraform estão no diretório [`terraform/`](https://github.c
 git clone https://github.com/f5xc-salesdemos/traffic-generator.git
 cd traffic-generator/terraform
 cp terraform.tfvars.example terraform.tfvars
-# Edite terraform.tfvars com seu ID de assinatura Azure e FQDN de destino
+# Edit terraform.tfvars with your Azure subscription ID and target FQDN
 ```
 
 ## Configuração do Terraform
@@ -27,10 +27,10 @@ cp terraform.tfvars.example terraform.tfvars
 
 O diretório terraform contém 9 arquivos seguindo o Padrão de Recursos de Demonstração:
 
-- `versions.tf` -- Restrições de versão do Terraform e provedores (azurerm ~> 4.0, azuread ~> 3.0)
+- `versions.tf` -- Restrições de versão do Terraform e dos provedores (azurerm ~> 4.0, azuread ~> 3.0)
 - `providers.tf` -- Configuração dos provedores Azure RM e Azure AD
-- `data.tf` -- Fontes de dados Azure AD para resolução automática do implantador
-- `locals.tf` -- Resolução do implantador, nomenclatura de recursos Azure Cloud Adoption Framework, tags padrão
+- `data.tf` -- Fontes de dados do Azure AD para resolução automática do implantador
+- `locals.tf` -- Resolução do implantador, nomenclatura de recursos do Azure Cloud Adoption Framework, tags padrão
 - `main.tf` -- Grupo de recursos (nomeado `rg-traffic-generator-{environment}-{deployer}`)
 - `variables.tf` -- Todas as variáveis de entrada (2 obrigatórias, 9 opcionais) com resolução automática do implantador via Azure AD
 - `network.tf` -- VNet (10.201.0.0/16), sub-rede, IP público, NSG (porta 22 SSH), NIC
@@ -44,7 +44,7 @@ O diretório terraform contém 9 arquivos seguindo o Padrão de Recursos de Demo
 ```hcl file=../_data/main.tf
 ```
 
-`variables.tf` define todos os parâmetros configuráveis. O padrão de `vm_size` é `Standard_F16s_v2` (16 vCPU otimizado para computação) -- consulte [Dimensionamento da VM](#dimensionamento-da-vm) para orientações de escalabilidade:
+`variables.tf` define todos os parâmetros configuráveis. O padrão de `vm_size` é `Standard_F16s_v2` (16 vCPU otimizado para computação) -- consulte [Dimensionamento de VM](#dimensionamento-de-vm) para orientações de escalonamento:
 
 ```hcl file=../_data/variables.tf
 ```
@@ -58,27 +58,27 @@ O diretório terraform contém 9 arquivos seguindo o Padrão de Recursos de Demo
 
 ### Máquina Virtual com Cloud-Init
 
-`vm.tf` cria a VM Ubuntu 24.04 e passa o template cloud-init com variáveis de destino e ferramentas:
+`vm.tf` cria a VM Ubuntu 24.04 e passa o template cloud-init com as variáveis de destino e ferramentas:
 
 ```hcl file=../_data/vm.tf
 ```
 
-### Provisionamento Cloud-Init
+### Provisionamento com Cloud-Init
 
-`cloud-init.yaml` é a configuração validada em produção, verificada em mais de 48 horas de testes de carga contínuos, incluindo 4 rodadas de testes de estresse na origem. Utiliza uma biblioteca auxiliar com lógica de retry, registro de progresso em `/var/log/cloud-init-progress.log`, 9 fases de provisionamento e relatório condicional de status (ready/degraded em `status.json`). Provisiona:
+`cloud-init.yaml` é a configuração validada em produção, verificada em mais de 48 horas de testes de carga contínuos, incluindo 4 rodadas de testes de tortura de origem. Utiliza uma biblioteca auxiliar com lógica de repetição, registro de progresso em `/var/log/cloud-init-progress.log`, 9 fases de provisionamento e relatórios de status condicionais (pronto/degradado em `status.json`). Ele provisiona:
 
 - **Ajuste de kernel** -- `somaxconn=131072`, `tcp_max_tw_buckets=4000000`, `tcp_fin_timeout=5`, buffers de socket de 64 MiB, `file-max=4194304`
-- **Otimização de NIC** -- RPS/RFS em todos os cores, buffers de anel maximizados via ethtool, THP=always
+- **Otimização de NIC** -- RPS/RFS em todos os núcleos, buffers de anel maximizados via ethtool, THP=always
 - **Pacotes APT** -- nikto, nmap, masscan, sqlmap, hydra, medusa, ncrack, tshark, hping3, tcpdump, netcat, ngrep, iperf3, mtr, sslscan, socat, dirb, whatweb, wrk, hey, vegeta, ethtool
-- **Releases do GitHub** -- nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass
+- **GitHub Releases** -- nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass
 - **Pacotes Python** -- mitmproxy, sslyze, dnsrecon, fierce, theHarvester, playwright, scapy, impacket, arjun
 - **Node.js 20.x** -- Puppeteer com plugin stealth para simulação de bots
-- **Automação de navegador** -- Playwright Chromium para testes de navegador headless
+- **Automação de navegador** -- Playwright Chromium para testes com navegador headless
 - **Clones Git** -- testssl.sh, recon-ng, spiderfoot, SecLists, waf-bypass, PayloadsAllTheThings
-- **Implantação de suítes** -- 19 suítes de tráfego clonadas deste repositório em `/opt/traffic-generator/suites/`
+- **Implantação de suítes** -- 19 suítes de tráfego clonadas deste repositório para `/opt/traffic-generator/suites/`
 - **Arquivo de configuração** -- `config.env` com `TARGET_FQDN`, `TARGET_ORIGIN_IP` e `CRAPI_PORT`
 
-O cloud-init utiliza variáveis de template do Terraform: `${target_fqdn}`, `${target_origin_ip}` e `${tool_tier}`. Variáveis shell como `$NPROC` são escapadas como `$$NPROC` no templatefile do Terraform.
+O cloud-init utiliza variáveis de template do Terraform: `${target_fqdn}`, `${target_origin_ip}` e `${tool_tier}`. Variáveis de shell como `$NPROC` são escapadas como `$$NPROC` no templatefile do Terraform.
 
 ```yaml file=../_data/cloud-init.yaml
 ```
@@ -90,14 +90,14 @@ O cloud-init utiliza variáveis de template do Terraform: `${target_fqdn}`, `${t
 ```hcl file=../_data/outputs.tf
 ```
 
-### Exemplo de Arquivo de Variáveis
+### Arquivo de Variáveis de Exemplo
 
-Copie `terraform.tfvars.example` para `terraform.tfvars` e preencha seus valores. O `.gitignore` exclui `terraform.tfvars` para evitar o commit de credenciais:
+Copie `terraform.tfvars.example` para `terraform.tfvars` e preencha com seus valores. O `.gitignore` exclui `terraform.tfvars` para evitar o commit de credenciais:
 
 ```hcl file=../_data/terraform.tfvars.example
 ```
 
-Substitua `subscription_id` pelo seu ID de assinatura Azure (obtido com `az account show --query id -o tsv`) e `target_fqdn` pelo domínio do seu balanceador de carga F5 XC.
+Substitua `subscription_id` pelo ID da sua assinatura Azure (obtido com `az account show --query id -o tsv`) e `target_fqdn` pelo domínio do seu balanceador de carga F5 XC.
 
 ## Implantar
 
@@ -109,31 +109,31 @@ terraform plan
 terraform apply
 ```
 
-O Terraform exibe o IP público, comando SSH e FQDN de destino após a implantação bem-sucedida.
+O Terraform exibe o IP público, o comando SSH e o FQDN de destino após a implantação bem-sucedida.
 
-## Dimensionamento da VM
+## Dimensionamento de VM
 
-As VMs série F otimizadas para computação são recomendadas para esta carga de trabalho de geração de tráfego com uso intensivo de CPU. O ajuste de kernel do cloud-init e a concorrência das ferramentas escalam automaticamente com a quantidade de vCPUs.
+As VMs da série F otimizadas para computação são recomendadas para esta carga de trabalho de geração de tráfego intensiva em CPU. O ajuste de kernel do cloud-init e a concorrência de ferramentas escalam automaticamente com a contagem de vCPUs.
 
 | SKU da VM | vCPU | RAM | Rede | Caso de Uso |
 |---|---|---|---|---|
-| Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | Laboratório/demonstração leve |
+| Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | Lab leve/demonstração |
 | Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | Demonstrações padrão |
 | Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | Testes de carga (padrão) |
-| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | Benchmarking pesado |
-| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | Cargas com uso intensivo de RAM |
+| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | Benchmarking intenso |
+| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | Cargas de trabalho com muita RAM |
 
 :::tip
-F16s_v2 foi validado como a opção ideal de custo-benefício por meio de testes de benchmark A/B/C/D contra alvos CDN F16s_v2 e F32s_v2. Consulte [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) para os resultados completos.
+O F16s_v2 foi validado como a opção de melhor custo-benefício por meio de testes de benchmark A/B/C/D contra alvos CDN F16s_v2 e F32s_v2. Consulte [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) para resultados completos.
 :::
 
 ## Verificação Pós-Implantação
 
-O provisionamento do cloud-init leva **15-20 minutos para o tier padrão** e **aproximadamente 25 minutos para o tier completo**. A VM fica acessível via SSH imediatamente, mas as ferramentas ainda estão sendo instaladas até que o cloud-init seja concluído.
+O provisionamento do cloud-init leva **15 a 20 minutos para o nível padrão** e **aproximadamente 25 minutos para o nível completo**. A VM fica acessível via SSH imediatamente, mas as ferramentas ainda estão sendo instaladas até que o cloud-init seja concluído.
 
 ### Aguardar o Cloud-Init
 
-Conecte-se à VM via SSH e aguarde o provisionamento finalizar:
+Acesse a VM via SSH e aguarde a conclusão do provisionamento:
 
 ```bash
 ssh azureuser@$(terraform output -raw public_ip)
@@ -141,13 +141,13 @@ ssh azureuser@$(terraform output -raw public_ip)
 cloud-init status --wait
 ```
 
-Saída esperada quando concluído:
+Saída esperada ao concluir:
 
 ```
 status: done
 ```
 
-### Verificar Arquivo de Status
+### Verificar o Arquivo de Status
 
 O script cloud-init grava um arquivo de status ao concluir:
 
@@ -183,9 +183,9 @@ for tool in nikto sqlmap nuclei dalfox ffuf gobuster feroxbuster nmap masscan \
 done
 ```
 
-### Verificar o Executor de Suítes
+### Verificar o Runner de Suítes
 
-Confirme que o executor e as suítes estão instalados:
+Confirme que o runner e as suítes estão instalados:
 
 ```bash
 ls /opt/traffic-generator/suites/runner.sh
@@ -198,8 +198,8 @@ ls /opt/traffic-generator/suites/*/
 
 | Saída | Descrição | Exemplo |
 |---|---|---|
-| `deployer` | Identificador resolvido do implantador | `jsmith` |
-| `public_ip` | Endereço IP público da VM do gerador de tráfego | `20.12.78.200` |
+| `deployer` | Identificador do implantador resolvido | `jsmith` |
+| `public_ip` | Endereço IP público da VM geradora de tráfego | `20.12.78.200` |
 | `private_ip` | Endereço IP privado da VM | `10.201.0.4` |
 | `ssh_command` | Comando SSH para conectar à VM | `ssh azureuser@20.12.78.200` |
 | `resource_group_name` | Nome do grupo de recursos | `rg-traffic-generator-dev-jsmith` |
@@ -223,12 +223,12 @@ terraform output -raw public_ip
 terraform output -raw ssh_command
 ```
 
-## Integração com Componentes Upstream
+## Conexão com Componentes Upstream
 
-O gerador de tráfego tem como alvo um balanceador de carga HTTP F5 XC que está à frente do servidor de origem. Implante o servidor de origem primeiro, configure o F5 XC e então defina `target_fqdn` com o FQDN do balanceador de carga:
+O gerador de tráfego tem como alvo um balanceador de carga HTTP F5 XC que protege o servidor de origem. Implante o servidor de origem primeiro, configure o F5 XC e, em seguida, defina `target_fqdn` com o FQDN do balanceador de carga:
 
 ```bash
-# Após implantar o origin-server e criar um balanceador de carga HTTP F5 XC:
+# After deploying origin-server and creating an F5 XC HTTP load balancer:
 cat > terraform.tfvars <<EOF
 subscription_id  = "your-subscription-id"
 target_fqdn      = "your-xc-load-balancer.example.com"
@@ -239,6 +239,6 @@ EOF
 | Variável Obrigatória | Origem | Descrição |
 |---|---|---|
 | `target_fqdn` | Console F5 XC | FQDN do balanceador de carga HTTP que protege o servidor de origem |
-| `target_origin_ip` | Saída `public_ip` do servidor de origem | IP direto da origem para testes de bypass (opcional) |
+| `target_origin_ip` | Saída `public_ip` do servidor de origem | IP de origem direto para testes de bypass (opcional) |
 
-Prossiga para o [Catálogo de Ferramentas](../04-tool-catalog/) para a referência completa de ferramentas ou [Suítes](../05-suites/) para começar a gerar tráfego.
+Prossiga para o [Catálogo de Ferramentas](../04-tool-catalog/) para a referência completa de ferramentas ou para [Suítes](../05-suites/) para começar a gerar tráfego.

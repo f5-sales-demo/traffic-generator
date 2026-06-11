@@ -1,12 +1,11 @@
 ---
-title: المنفذ (Runner)
+title: المُشغِّل
 description: >-
-  دليل استخدام منسق مجموعة الاختبارات runner.sh: أوضاع التنفيذ، تكوين
-  config.env، تجاوز متغيرات البيئة، وضع التشغيل التجريبي، بنية دليل النتائج،
-  تنسيق meta.json، تنفيذ السكربتات المستقلة، والاستدعاء عن بُعد عبر SSH
+  دليل استخدام منسق المجموعات runner.sh: أوضاع التنفيذ، وتهيئة config.env،
+  وتجاوزات متغيرات البيئة، ووضع التشغيل التجريبي، وبنية دليل النتائج، وتنسيق
+  meta.json، وتنفيذ السكريبتات المستقلة، والاستدعاء عن بُعد عبر SSH
 sidebar:
   order: 6
-  label: المنفذ (Runner)
 i18n:
   sourceHash: c476d62976ae
   translator: machine
@@ -16,7 +15,7 @@ import { Steps, Aside } from '@astrojs/starlight/components';
 
 ## نظرة عامة
 
-`runner.sh` هو منسق مجموعة الاختبارات الذي ينفذ جميع السكربتات المرقمة في دليل المجموعة بالترتيب، ويلتقط المخرجات، ويسجل بيانات النتائج الوصفية. يتم تثبيته في المسار `/opt/traffic-generator/suites/runner.sh` على الآلة الافتراضية.
+`runner.sh` هو منسق المجموعات الذي ينفّذ جميع السكريبتات المُرقَّمة في دليل المجموعة بالترتيب، ويلتقط المخرجات، ويسجّل البيانات الوصفية للنتائج. يتم تثبيته في `/opt/traffic-generator/suites/runner.sh` على الجهاز الافتراضي.
 
 ## الاستخدام
 
@@ -29,51 +28,51 @@ runner.sh <suite-name> [--dry-run]
 | المعامل | مطلوب | الوصف |
 |---|---|---|
 | `suite-name` | نعم | اسم دليل المجموعة (مثل: `web-app-attacks`، `api-attacks`) |
-| `--dry-run` | لا | طباعة ما سيتم تنفيذه دون تشغيل أي سكربتات |
+| `--dry-run` | لا | طباعة ما سيتم تنفيذه دون تشغيل أي سكريبتات |
 
 **أمثلة:**
 
 ```bash
-# Run the web-app-attacks suite
+# تشغيل مجموعة web-app-attacks
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 
-# Dry-run to preview api-attacks scripts
+# تشغيل تجريبي لمعاينة سكريبتات api-attacks
 /opt/traffic-generator/suites/runner.sh api-attacks --dry-run
 
-# Run bot simulation
+# تشغيل محاكاة البوت
 /opt/traffic-generator/suites/runner.sh bot-simulation
 ```
 
-## التكوين
+## الإعداد
 
 ### config.env
 
-يقرأ المنفذ التكوين من `/opt/traffic-generator/config.env`:
+يقرأ المُشغِّل الإعداد من `/opt/traffic-generator/config.env`:
 
 ```bash
-# Required: target FQDN (F5 XC load balancer domain)
+# مطلوب: النطاق المؤهل بالكامل للهدف (نطاق موازن التحميل F5 XC)
 TARGET_FQDN=demo.example.com
 
-# Optional: direct origin IP for baseline testing (bypasses F5 XC)
+# اختياري: عنوان IP المباشر للخادم الأصلي لاختبار الأساس (يتجاوز F5 XC)
 TARGET_ORIGIN_IP=
 ```
 
-يتم كتابة هذا الملف تلقائيًا أثناء توفير Terraform من المتغيرين `target_fqdn` و `target_origin_ip`. لتغيير الهدف بعد النشر، قم بتحرير هذا الملف مباشرة على الآلة الافتراضية.
+يُكتب هذا الملف تلقائيًا أثناء توفير Terraform من متغيرات `target_fqdn` و`target_origin_ip`. لتغيير الهدف بعد النشر، يمكن تعديل هذا الملف مباشرةً على الجهاز الافتراضي.
 
 ### تجاوز متغيرات البيئة
 
-يمكن تجاوز أي متغير في `config.env` عن طريق تصديره قبل تشغيل المجموعة:
+يمكن تجاوز أي متغير في `config.env` بتصديره قبل تشغيل المجموعة:
 
 ```bash
-# Override target FQDN for a single run
+# تجاوز النطاق المؤهل بالكامل للهدف لتشغيل واحد
 TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 
-# Override via export
+# التجاوز عبر التصدير
 export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-يمكن أيضًا تجاوز مسار ملف التكوين نفسه:
+يمكن أيضًا تجاوز مسار ملف الإعداد نفسه:
 
 ```bash
 CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
@@ -81,7 +80,7 @@ CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-a
 
 ## وضع التشغيل التجريبي
 
-يقوم العلم `--dry-run` بطباعة كل سكربت سيتم تنفيذه دون تشغيله فعليًا:
+يُطبع الراية `--dry-run` كل سكريبت كان سيتم تنفيذه دون تشغيله فعليًا:
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
@@ -107,11 +106,11 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-استخدم التشغيل التجريبي للتحقق من بنية المجموعة بعد النشر أو قبل تشغيل مجموعة ضد هدف جديد.
+استخدم وضع التشغيل التجريبي للتحقق من بنية المجموعة بعد النشر أو قبل تشغيل مجموعة على هدف جديد.
 
 ## دليل النتائج
 
-ينشئ كل تشغيل لمجموعة دليل نتائج مُؤرَّخ بالطابع الزمني:
+يُنشئ كل تشغيل للمجموعة دليل نتائج مُؤرَّخًا بالزمن:
 
 ```
 /opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
@@ -130,11 +129,11 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
   06-nuclei-scan.sh.log
 ```
 
-يتم التقاط المخرجات القياسية ومخرجات الأخطاء لكل سكربت في ملف `.log` مسمى باسم السكربت.
+يُلتقط الإخراج القياسي والإخراج القياسي للأخطاء لكل سكريبت في ملف `.log` يحمل اسم السكريبت.
 
 ### تنسيق meta.json
 
-يسجل ملف `meta.json` البيانات الوصفية لتنفيذ المجموعة:
+يسجّل ملف `meta.json` البيانات الوصفية لتنفيذ المجموعة:
 
 ```json
 {
@@ -152,35 +151,35 @@ Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 | الحقل | الوصف |
 |---|---|
 | `suite` | اسم المجموعة |
-| `target` | اسم النطاق المؤهل بالكامل (FQDN) المستخدم للتشغيل |
+| `target` | النطاق المؤهل بالكامل للهدف المستخدم في التشغيل |
 | `started` | الطابع الزمني بتوقيت UTC عند بدء المجموعة |
 | `completed` | الطابع الزمني بتوقيت UTC عند انتهاء المجموعة |
-| `status` | `running` أثناء التنفيذ، `completed` عند الانتهاء |
-| `passed` | عدد السكربتات التي خرجت بالرمز 0 |
-| `failed` | عدد السكربتات التي خرجت برمز غير صفري |
-| `skipped` | عدد السكربتات التي تم تخطيها (غير قابلة للتنفيذ أو في وضع التشغيل التجريبي) |
+| `status` | `running` أثناء التنفيذ، و`completed` عند الانتهاء |
+| `passed` | عدد السكريبتات التي خرجت بالرمز 0 |
+| `failed` | عدد السكريبتات التي خرجت برمز غير صفري |
+| `skipped` | عدد السكريبتات التي تم تخطيها (غير قابلة للتنفيذ أو في وضع التشغيل التجريبي) |
 
 <Aside type="tip">
-لا يعني رمز الخروج غير الصفري من سكربت بالضرورة فشل المجموعة. تخرج العديد من أدوات الأمان برمز غير صفري عندما تكتشف ثغرات أمنية، وهو السلوك المتوقع أثناء توليد حركة مرور الهجمات.
+لا يعني رمز الخروج غير الصفري من سكريبت بالضرورة فشل المجموعة. تخرج كثير من أدوات الأمان برمز غير صفري عند اكتشافها لثغرات، وهو السلوك المتوقع أثناء توليد حركة مرور الهجوم.
 </Aside>
 
-## تشغيل السكربتات الفردية
+## تشغيل السكريبتات الفردية
 
-يمكن تنفيذ كل سكربت بشكل مستقل بدون المنفذ:
+يمكن تنفيذ كل سكريبت بشكل مستقل دون المُشغِّل:
 
 ```bash
-# Run a single script directly
+# تشغيل سكريبت واحد مباشرةً
 /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
 
-# Run a specific API attack
+# تشغيل هجوم API محدد
 /opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
 ```
 
-تقبل السكربتات اسم النطاق المؤهل بالكامل (FQDN) كأول معامل موضعي. وهي لا تقرأ `config.env` مباشرة -- المنفذ فقط هو من يفعل ذلك. عند التشغيل بشكل مستقل، يجب تمرير FQDN صراحةً.
+تقبل السكريبتات النطاق المؤهل بالكامل للهدف كأول معامل موضعي. لا تقرأ `config.env` مباشرةً — يفعل ذلك المُشغِّل فقط. عند التشغيل المستقل، يجب تمرير النطاق المؤهل بالكامل صراحةً.
 
-## تشغيل جميع المجموعات بالتتابع
+## تشغيل جميع المجموعات بالتسلسل
 
-لتشغيل كل مجموعة تلو الأخرى:
+لتشغيل كل مجموعة واحدة تلو الأخرى:
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -192,50 +191,50 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-يولد هذا حركة مرور شاملة عبر جميع ميزات أمان F5 XC. توقع أن يستغرق التشغيل الكامل من 45 إلى 80 دقيقة حسب أوقات استجابة الهدف.
+يُولّد هذا حركة مرور شاملة عبر جميع ميزات الأمان في F5 XC. توقّع أن يستغرق التشغيل الكامل من 45 إلى 80 دقيقة حسب أوقات استجابة الهدف.
 
 ## التنفيذ عن بُعد عبر SSH
 
-قم بتشغيل المجموعات من جهازك المحلي دون الحاجة للحفاظ على جلسة SSH:
+شغّل المجموعات من جهازك المحلي دون الحاجة إلى الحفاظ على جلسة SSH:
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
 
-# Run a single suite
+# تشغيل مجموعة واحدة
 ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
 
-# Run a suite with target override
+# تشغيل مجموعة مع تجاوز الهدف
 ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
 
-# Run in background (disconnection-safe)
+# التشغيل في الخلفية (آمن عند قطع الاتصال)
 ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
 
-# Check results later
+# التحقق من النتائج لاحقًا
 ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-للمجموعات طويلة التشغيل، استخدم `nohup` أو `tmux` لمنع انقطاع اتصال SSH من إنهاء العملية:
+للمجموعات طويلة التشغيل، استخدم `nohup` أو `tmux` لمنع قطع اتصال SSH من إيقاف العملية:
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
 
-# Reattach later to watch progress
+# إعادة الاتصال لاحقًا لمتابعة التقدم
 ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 ```
 
-## مسار التنفيذ
+## تدفق التنفيذ
 
 <Steps>
 
-1. **تحميل التكوين** -- يقرأ المنفذ `config.env` (أو تجاوز `CONFIG_FILE`)، ثم يتحقق من وجود `TARGET_FQDN` في البيئة.
+1. **تحميل الإعداد** -- يقرأ المُشغِّل `config.env` (أو تجاوز `CONFIG_FILE`)، ثم يتحقق من وجود `TARGET_FQDN` في البيئة.
 
-2. **التحقق من المجموعة** -- يؤكد وجود دليل المجموعة المحدد تحت دليل المجموعات. يعرض قائمة المجموعات المتاحة إذا لم يتم العثور عليه.
+2. **التحقق من المجموعة** -- يؤكد وجود دليل المجموعة المُسمَّى ضمن دليل المجموعات. يعرض المجموعات المتاحة إن لم يتم العثور عليها.
 
-3. **إنشاء دليل النتائج** -- ينشئ `/opt/traffic-generator/results/<timestamp>-<suite>/` ويكتب `meta.json` الأولي بحالة `status: running`.
+3. **إنشاء دليل النتائج** -- ينشئ `/opt/traffic-generator/results/<timestamp>-<suite>/` ويكتب ملف `meta.json` الأولي بالحالة `status: running`.
 
-4. **تنفيذ السكربتات** -- يمر عبر الملفات المطابقة لنمط `[0-9]*` في دليل المجموعة، مرتبة حسب الاسم. يتخطى الملفات غير القابلة للتنفيذ. يمرر `TARGET_FQDN` كأول معامل. يلتقط المخرجات في `<script-name>.log`.
+4. **تنفيذ السكريبتات** -- يتكرر عبر الملفات المطابقة لـ `[0-9]*` في دليل المجموعة، مرتبةً بالاسم. يتخطى الملفات غير القابلة للتنفيذ. يمرر `TARGET_FQDN` كأول معامل. يلتقط المخرجات في `<script-name>.log`.
 
-5. **تسجيل النتائج** -- يُحدّث `meta.json` بالطابع الزمني للاكتمال وأعداد النجاح/الفشل/التخطي.
+5. **تسجيل النتائج** -- يحدّث `meta.json` بطابع زمني للإتمام وعدد النجاحات/الإخفاقات/المتخطَّيات.
 
 </Steps>

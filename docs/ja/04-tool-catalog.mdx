@@ -1,7 +1,8 @@
 ---
 title: ツールカタログ
 description: >-
-  トラフィックジェネレーターVMにインストールされた50以上のセキュリティツールの完全カタログ。カテゴリ別に整理され、インストール方法、コマンド例、トラフィックスイートのマッピングを掲載
+  トラフィックジェネレーター VM にインストールされた 50
+  以上のセキュリティツールの完全カタログ。カテゴリ別に整理され、インストール方法、コマンド例、トラフィックスイートのマッピングを記載
 sidebar:
   order: 4
 i18n:
@@ -9,9 +10,9 @@ i18n:
   translator: machine
 ---
 
-以下に記載されたすべてのツールは、cloud-initプロビジョニング時にプリインストールされます。デプロイ後に手動でインストールする必要はありません。
+以下に示すすべてのツールは、cloud-init プロビジョニング時にあらかじめインストールされます。デプロイ後に手動でインストールする必要はありません。
 
-## Webアプリケーションテスト
+## Web アプリケーションテスト
 
 | ツール | インストール方法 | コマンド例 | 使用スイート |
 |---|---|---|---|
@@ -26,14 +27,14 @@ i18n:
 | whatweb | apt | `whatweb https://TARGET` | reconnaissance |
 | wfuzz | pip | `wfuzz -c -z file,wordlist.txt -e urlencode,double_urlencode "https://TARGET/FUZZ"` | waf-encoding-evasion |
 
-## WAF回避テスト
+## WAF 回避テスト
 
 | ツール | インストール方法 | コマンド例 | 使用スイート |
 |---|---|---|---|
 | gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
 | waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
 
-GoTestWAF（Wallarm製）は、複数のエンコーダー（URL、Base64、JSUnicode）と配置ゾーン（body、header、URLパラメータ、cookie）を組み合わせてペイロードを展開する業界標準のWAF評価フレームワークです。waf-bypass（Nemesida製）は、Base64、HTML-ENTITY、UTF-16エンコーディングを使用して、ARGS、BODY、COOKIE、HEADERの各ゾーンにペイロードを送信します。
+GoTestWAF（Wallarm 製）は業界標準の WAF 評価フレームワークで、複数のエンコーダー（URL、Base64、JSUnicode）および配置ゾーン（ボディ、ヘッダー、URL パラメーター、クッキー）にわたってペイロードを多重化します。waf-bypass（Nemesida 製）は、ARGS、BODY、COOKIE、HEADER の各ゾーンに対して Base64、HTML エンティティ、UTF-16 エンコードのペイロードを送信します。
 
 ## ネットワーク分析
 
@@ -49,7 +50,7 @@ GoTestWAF（Wallarm製）は、複数のエンコーダー（URL、Base64、JSUn
 | iperf3 | apt | `iperf3 -c TARGET_IP -p 5201 -t 10` | traffic-generation |
 | mtr | apt | `mtr --report TARGET_IP` | reconnaissance |
 
-## SSL/TLSテスト
+## SSL/TLS テスト
 
 | ツール | インストール方法 | コマンド例 | 使用スイート |
 |---|---|---|---|
@@ -57,7 +58,7 @@ GoTestWAF（Wallarm製）は、複数のエンコーダー（URL、Base64、JSUn
 | sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
 | testssl.sh | git clone | `/opt/testssl.sh/testssl.sh TARGET:443` | ssl-scanning |
 
-## MITMおよびプロキシ
+## MITM およびプロキシ
 
 | ツール | インストール方法 | コマンド例 | 使用スイート |
 |---|---|---|---|
@@ -70,11 +71,11 @@ GoTestWAF（Wallarm製）は、複数のエンコーダー（URL、Base64、JSUn
 |---|---|---|---|
 | playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
 | puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
-| puppeteer-extra-plugin-stealth | npm | ステルスブラウジング用のPuppeteerプラグインとして使用 | bot-simulation |
+| puppeteer-extra-plugin-stealth | npm | ステルスブラウジング用の Puppeteer プラグインとして使用 | bot-simulation |
 
-Playwrightは`playwright install chromium`を通じて独自のChromiumバイナリをインストールします。Puppeteerは可能な限り同じシステムChromiumを使用します。
+Playwright は `playwright install chromium` によって独自の Chromium バイナリをインストールします。Puppeteer は可能な場合、同じシステムの Chromium を使用します。
 
-## サブドメインおよびDNS列挙
+## サブドメインおよび DNS 列挙
 
 | ツール | インストール方法 | コマンド例 | 使用スイート |
 |---|---|---|---|
@@ -86,7 +87,7 @@ Playwrightは`playwright install chromium`を通じて独自のChromiumバイナ
 | whois | apt | `whois example.com` | reconnaissance |
 | dnsutils (dig, nslookup) | apt | `dig TARGET +short` | reconnaissance |
 
-## 資格情報テスト
+## 認証情報テスト
 
 | ツール | インストール方法 | コマンド例 | 使用スイート |
 |---|---|---|---|
@@ -94,7 +95,7 @@ Playwrightは`playwright install chromium`を通じて独自のChromiumバイナ
 | medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
 | ncrack | apt | `ncrack -vv --user admin -P passwords.txt TARGET:443` | web-app-attacks |
 
-## Pythonセキュリティライブラリ
+## Python セキュリティライブラリ
 
 | ツール | インストール方法 | コマンド例 | 使用スイート |
 |---|---|---|---|
@@ -105,7 +106,7 @@ Playwrightは`playwright install chromium`を通じて独自のChromiumバイナ
 | hashid | pip | `hashid 'HASH_VALUE'` | -- |
 | theHarvester | uv | `theHarvester -d example.com -b all` | reconnaissance |
 
-## OSINTおよび偵察
+## OSINT および偵察
 
 | ツール | インストール方法 | 場所 | 使用スイート |
 |---|---|---|---|
@@ -115,31 +116,31 @@ Playwrightは`playwright install chromium`を通じて独自のChromiumバイナ
 | PayloadsAllTheThings | git clone | `/opt/PayloadsAllTheThings/` | waf-encoding-evasion |
 | waf-bypass payloads | git clone | `/opt/waf-bypass/` | waf-encoding-evasion |
 
-SecListsは、ffuf、gobuster、feroxbuster、dirb、hydraなど複数のツールで使用されるワードリストを提供します。PayloadsAllTheThingsは、攻撃クラス（XSS、SQLi、XXE）別に整理された、hex、octal、Unicode、HTMLエンティティ、ダブルURLエンコーディング、JSFuckバリアントを含む厳選されたマルチエンコーディング攻撃ペイロードを提供します。
+SecLists は ffuf、gobuster、feroxbuster、dirb、hydra など複数のツールが使用するワードリストを提供します。PayloadsAllTheThings は、攻撃クラス（XSS、SQLi、XXE）ごとに整理された、hex、オクタル、Unicode、HTML エンティティ、ダブル URL エンコード、JSFuck バリアントを含む精選された多重エンコード攻撃ペイロードを提供します。
 
-## フルティア限定
+## フルティアのみ
 
-これらのツールは`tool_tier = "full"`の場合のみインストールされます：
+これらのツールは `tool_tier = "full"` の場合にのみインストールされます：
 
 | ツール | インストール方法 | コマンド例 | 使用スイート |
 |---|---|---|---|
 | ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
-| Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
+| Metasploit Framework | インストーラースクリプト | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
 
 :::note
-ZAPとMetasploitは、ディスク使用量に約1.5 GiB、プロビジョニング時間に5〜10分を追加します。デモでこれらのツールが具体的に必要な場合にのみフルティアを使用してください。
+ZAP と Metasploit はディスク使用量に約 1.5 GiB を追加し、プロビジョニング時間に 5〜10 分を追加します。これらのツールがデモで特に必要な場合にのみフルティアを使用してください。
 :::
 
 ## インストール方法リファレンス
 
 | 方法 | 説明 |
 |---|---|
-| apt | `apt-get install`を使用してUbuntu 24.04 APTリポジトリからインストール |
-| ghlatest | `ghlatest.sh`と`install-release.sh`を使用してGitHub Releasesから最新バイナリをダウンロード |
-| uv | `uv`パッケージマネージャーを使用してPythonツールとしてインストール |
-| pip | `pip install`を使用してシステムPythonにPythonパッケージとしてインストール |
-| npm | `npm install -g`を使用してグローバルNode.jsパッケージとしてインストール |
-| go install | `go install`を使用してソースからコンパイルし、`/usr/local/bin`にインストール |
-| git clone | `/opt/`ディレクトリにリポジトリをクローン |
-| git clone + pip | リポジトリをクローンし、Pythonの依存関係をインストール |
-| installer script | cloud-init中にベンダー提供のインストーラースクリプトを実行 |
+| apt | `apt-get install` を使用して Ubuntu 24.04 APT リポジトリからインストール |
+| ghlatest | `ghlatest.sh` と `install-release.sh` を使用して GitHub Releases から最新バイナリをダウンロード |
+| uv | `uv` パッケージマネージャーを使用して Python ツールとしてインストール |
+| pip | システム Python に `pip install` を使用して Python パッケージとしてインストール |
+| npm | `npm install -g` を使用してグローバル Node.js パッケージとしてインストール |
+| go install | `go install` を使用してソースからコンパイルし `/usr/local/bin` にインストール |
+| git clone | `/opt/` ディレクトリにリポジトリをクローン |
+| git clone + pip | リポジトリをクローンし Python の依存関係をインストール |
+| installer script | cloud-init 時にベンダー提供のインストーラースクリプトを実行 |

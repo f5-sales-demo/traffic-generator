@@ -2,9 +2,9 @@
 title: Runner
 description: >-
   Guide d'utilisation de l'orchestrateur de suites runner.sh : modes
-  d'exécution, configuration config.env, surcharges de variables
-  d'environnement, mode dry-run, structure du répertoire des résultats, format
-  meta.json, exécution autonome de scripts et invocation SSH distante
+  d'exécution, configuration config.env, substitutions de variables
+  d'environnement, mode simulation, structure du répertoire de résultats, format
+  meta.json, exécution de scripts autonomes et invocation SSH distante
 sidebar:
   order: 6
 i18n:
@@ -14,9 +14,9 @@ i18n:
 
 import { Steps, Aside } from '@astrojs/starlight/components';
 
-## Aperçu
+## Vue d'ensemble
 
-`runner.sh` est l'orchestrateur de suites qui exécute tous les scripts numérotés d'un répertoire de suite dans l'ordre, capture la sortie et enregistre les métadonnées des résultats. Il est installé à `/opt/traffic-generator/suites/runner.sh` sur la VM.
+`runner.sh` est l'orchestrateur de suites qui exécute tous les scripts numérotés d'un répertoire de suite dans l'ordre, capture les sorties et enregistre les métadonnées des résultats. Il est installé à l'emplacement `/opt/traffic-generator/suites/runner.sh` sur la VM.
 
 ## Utilisation
 
@@ -26,9 +26,9 @@ runner.sh <suite-name> [--dry-run]
 
 **Arguments :**
 
-| Argument | Requis | Description |
+| Argument | Obligatoire | Description |
 |---|---|---|
-| `suite-name` | Oui | Nom du répertoire de la suite (par ex., `web-app-attacks`, `api-attacks`) |
+| `suite-name` | Oui | Nom du répertoire de suite (ex. : `web-app-attacks`, `api-attacks`) |
 | `--dry-run` | Non | Affiche ce qui serait exécuté sans lancer aucun script |
 
 **Exemples :**
@@ -58,11 +58,11 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=
 ```
 
-Ce fichier est écrit automatiquement lors du provisionnement Terraform à partir des variables `target_fqdn` et `target_origin_ip`. Pour changer la cible après le déploiement, modifiez ce fichier directement sur la VM.
+Ce fichier est écrit automatiquement lors du provisionnement Terraform à partir des variables `target_fqdn` et `target_origin_ip`. Pour modifier la cible après le déploiement, éditez ce fichier directement sur la VM.
 
-### Surcharge par variable d'environnement
+### Substitution par variable d'environnement
 
-Toute variable de `config.env` peut être surchargée en l'exportant avant de lancer la suite :
+Toute variable de `config.env` peut être substituée en l'exportant avant d'exécuter la suite :
 
 ```bash
 # Override target FQDN for a single run
@@ -73,15 +73,15 @@ export TARGET_FQDN=staging.example.com
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-Le chemin du fichier de configuration lui-même peut également être surchargé :
+Le chemin du fichier de configuration lui-même peut également être substitué :
 
 ```bash
 CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-## Mode Dry-Run
+## Mode simulation (Dry-Run)
 
-Le flag `--dry-run` affiche chaque script qui serait exécuté sans le lancer :
+L'option `--dry-run` affiche chaque script qui serait exécuté sans le lancer :
 
 ```bash
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
@@ -107,9 +107,9 @@ Passed: 0 | Failed: 0 | Skipped: 6
 Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
 ```
 
-Utilisez le dry-run pour vérifier la structure de la suite après le déploiement ou avant de lancer une suite contre une nouvelle cible.
+Utilisez le mode simulation pour vérifier la structure de la suite après le déploiement ou avant d'exécuter une suite contre une nouvelle cible.
 
-## Répertoire des résultats
+## Répertoire de résultats
 
 Chaque exécution de suite crée un répertoire de résultats horodaté :
 
@@ -130,7 +130,7 @@ Chaque exécution de suite crée un répertoire de résultats horodaté :
   06-nuclei-scan.sh.log
 ```
 
-Les sorties stdout et stderr de chaque script sont capturées dans un fichier `.log` nommé d'après le script.
+La sortie standard et la sortie d'erreur de chaque script sont capturées dans un fichier `.log` portant le nom du script.
 
 ### Format meta.json
 
@@ -153,15 +153,15 @@ Le fichier `meta.json` enregistre les métadonnées d'exécution de la suite :
 |---|---|
 | `suite` | Nom de la suite |
 | `target` | FQDN cible utilisé pour l'exécution |
-| `started` | Horodatage UTC du début de la suite |
+| `started` | Horodatage UTC du démarrage de la suite |
 | `completed` | Horodatage UTC de la fin de la suite |
-| `status` | `running` pendant l'exécution, `completed` une fois terminé |
-| `passed` | Nombre de scripts ayant terminé avec le code de sortie 0 |
-| `failed` | Nombre de scripts ayant terminé avec un code de sortie non nul |
-| `skipped` | Nombre de scripts ignorés (non exécutables ou dry-run) |
+| `status` | `running` pendant l'exécution, `completed` une fois terminée |
+| `passed` | Nombre de scripts ayant terminé avec le code 0 |
+| `failed` | Nombre de scripts ayant terminé avec un code non nul |
+| `skipped` | Nombre de scripts ignorés (non exécutables ou mode simulation) |
 
 <Aside type="tip">
-Un code de sortie non nul d'un script ne signifie pas nécessairement que la suite a échoué. De nombreux outils de sécurité retournent un code non nul lorsqu'ils trouvent des vulnérabilités, ce qui est le comportement attendu lors de la génération de trafic d'attaque.
+Un code de sortie non nul d'un script ne signifie pas nécessairement que la suite a échoué. De nombreux outils de sécurité retournent un code non nul lorsqu'ils détectent des vulnérabilités, ce qui correspond au comportement attendu lors de la génération de trafic d'attaque.
 </Aside>
 
 ## Exécution de scripts individuels
@@ -180,7 +180,7 @@ Les scripts acceptent le FQDN cible comme premier argument positionnel. Ils ne l
 
 ## Exécution de toutes les suites en séquence
 
-Pour exécuter toutes les suites l'une après l'autre :
+Pour exécuter toutes les suites les unes après les autres :
 
 ```bash
 for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
@@ -192,11 +192,11 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-Cela génère un trafic complet couvrant toutes les fonctionnalités de sécurité F5 XC. Prévoyez 45 à 80 minutes pour l'exécution complète selon les temps de réponse de la cible.
+Cette commande génère un trafic complet couvrant toutes les fonctionnalités de sécurité de F5 XC. Prévoyez entre 45 et 80 minutes pour l'exécution complète selon les temps de réponse de la cible.
 
 ## Exécution distante via SSH
 
-Lancez des suites depuis votre machine locale sans maintenir une session SSH :
+Exécutez des suites depuis votre machine locale sans maintenir une session SSH active :
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -215,7 +215,7 @@ ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
 
-Pour les suites de longue durée, utilisez `nohup` ou `tmux` pour éviter qu'une déconnexion SSH ne tue le processus :
+Pour les suites de longue durée, utilisez `nohup` ou `tmux` pour éviter qu'une déconnexion SSH n'interrompe le processus :
 
 ```bash
 ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
@@ -228,14 +228,14 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 
 <Steps>
 
-1. **Chargement de la configuration** -- Le runner lit `config.env` (ou la surcharge `CONFIG_FILE`), puis vérifie la présence de `TARGET_FQDN` dans l'environnement.
+1. **Chargement de la configuration** -- Le runner lit `config.env` (ou la substitution `CONFIG_FILE`), puis vérifie la présence de `TARGET_FQDN` dans l'environnement.
 
-2. **Validation de la suite** -- Confirme que le répertoire de suite nommé existe sous le répertoire des suites. Liste les suites disponibles s'il n'est pas trouvé.
+2. **Validation de la suite** -- Vérifie que le répertoire de suite nommé existe sous le répertoire des suites. Liste les suites disponibles si introuvable.
 
-3. **Création du répertoire des résultats** -- Crée `/opt/traffic-generator/results/<timestamp>-<suite>/` et écrit le `meta.json` initial avec `status: running`.
+3. **Création du répertoire de résultats** -- Crée `/opt/traffic-generator/results/<timestamp>-<suite>/` et écrit le fichier `meta.json` initial avec `status: running`.
 
-4. **Exécution des scripts** -- Itère sur les fichiers correspondant à `[0-9]*` dans le répertoire de la suite, triés par nom. Ignore les fichiers non exécutables. Passe `TARGET_FQDN` comme premier argument. Capture la sortie dans `<script-name>.log`.
+4. **Exécution des scripts** -- Parcourt les fichiers correspondant à `[0-9]*` dans le répertoire de suite, triés par nom. Ignore les fichiers non exécutables. Passe `TARGET_FQDN` comme premier argument. Capture la sortie dans `<script-name>.log`.
 
-5. **Enregistrement des résultats** -- Met à jour `meta.json` avec l'horodatage de fin et les compteurs de réussite/échec/ignoré.
+5. **Enregistrement des résultats** -- Met à jour `meta.json` avec l'horodatage de fin et les compteurs de succès/échec/ignoré.
 
 </Steps>

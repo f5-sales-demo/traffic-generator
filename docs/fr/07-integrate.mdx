@@ -1,9 +1,10 @@
 ---
 title: Intégration
 description: >-
-  Integration guide for the traffic generator with origin-server, F5 XC HTTP
-  load balancer, CSD demo, and CDN simulator: architecture diagrams, targeting
-  configuration, direct vs LB traffic comparison, and multi-component deployment
+  Guide d'intégration du générateur de trafic avec le serveur d'origine,
+  l'équilibreur de charge HTTP F5 XC, la démo CSD et le simulateur CDN :
+  diagrammes d'architecture, configuration du ciblage, comparaison du trafic
+  direct et via équilibreur de charge, et déploiement multi-composants
 sidebar:
   order: 7
 i18n:
@@ -13,7 +14,7 @@ i18n:
 
 ## Architecture complète
 
-Le générateur de trafic est un composant dans un environnement de démonstration multi-couches. L'architecture complète lorsque tous les composants sont déployés :
+Le Générateur de trafic est l'un des Composants d'un environnement de démonstration multicouche. L'architecture complète lorsque tous les Composants sont déployés :
 
 ```
 Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
@@ -29,42 +30,42 @@ graph LR
     TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
 ```
 
-Chaque composant est déployé et configuré indépendamment via Terraform. Le générateur de trafic cible le FQDN du répartiteur de charge F5 XC, et non le serveur d'origine directement.
+Chaque composant est déployé et configuré indépendamment via Terraform. Le Générateur de trafic cible le FQDN de l'équilibreur de charge F5 XC, et non directement le Serveur d'origine.
 
-## Intégration du serveur d'origine
+## Intégration du Serveur d'origine
 
-Le [serveur d'origine](https://f5xc-salesdemos.github.io/origin-server/) fournit les applications backend que les suites d'attaques du générateur de trafic ciblent :
+Le [Serveur d'origine](https://f5xc-salesdemos.github.io/origin-server/) fournit les applications backend que les suites d'attaques du Générateur de trafic ciblent :
 
 | Suite de trafic | Application d'origine | Chemin |
 |---|---|---|
 | api-attacks | VAmPI | `/vampi/` |
 | bot-simulation | Toutes les applications | Tous les chemins |
-| cdn-load-testing | CDN Simulator | Point de terminaison CDN |
+| cdn-load-testing | Simulateur CDN | Point de terminaison CDN |
 | crapi-exploits | crAPI | `/crapi/` |
-| csd-demo-attacks | CSD Demo | `/csd-demo/` |
+| csd-demo-attacks | Démo CSD | `/csd-demo/` |
 | dvga-exploits | DVGA | `/dvga/` |
 | dvwa-exploits | DVWA | `/dvwa/` |
-| javascript-exploits | CSD Demo | `/csd-demo/` |
+| javascript-exploits | Démo CSD | `/csd-demo/` |
 | juice-shop-exploits | Juice Shop | `/juice-shop/` |
 | mitre-attack | Toutes les applications | Tous les chemins |
 | owasp-scanning | Toutes les applications | Tous les chemins |
 | performance-testing | Toutes les applications | Tous les chemins |
 | reconnaissance | Toutes les applications | Tous les chemins |
-| restaurant-exploits | Restaurant API | `/restaurant/` |
+| restaurant-exploits | API Restaurant | `/restaurant/` |
 | ssl-scanning | F5 XC LB (pas directement l'origine) | N/A |
 | traffic-generation | Toutes les applications | Tous les chemins |
 | web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
 
 ### Ordre de déploiement
 
-1. Déployez le **serveur d'origine** en premier -- il fournit les applications backend
-2. Configurez le **répartiteur de charge HTTP F5 XC** avec le serveur d'origine comme pool d'origine
-3. Attachez les **politiques WAF, Bot Defense, API Security et CSD** au répartiteur de charge
-4. Déployez le **générateur de trafic** avec `target_fqdn` défini sur le domaine du LB F5 XC
+1. Déployer le **Serveur d'origine** en premier -- il fournit les applications backend
+2. Configurer l'**équilibreur de charge HTTP F5 XC** avec le Serveur d'origine comme pool d'origine
+3. Attacher les **politiques WAF, Défense Bot, Sécurité des API et CSD** à l'équilibreur de charge
+4. Déployer le **Générateur de trafic** avec `target_fqdn` défini sur le domaine de l'équilibreur de charge F5 XC
 
 ### Configuration du ciblage
 
-Le fichier `config.env` du générateur de trafic le connecte au reste de l'architecture :
+Le fichier `config.env` du Générateur de trafic le connecte au reste de l'architecture :
 
 ```bash
 # Target the F5 XC load balancer (traffic passes through security policies)
@@ -74,20 +75,20 @@ TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-Lorsque `TARGET_FQDN` est défini, tous les scripts de suite envoient le trafic vers `https://<TARGET_FQDN>/...`. Le répartiteur de charge F5 XC reçoit les requêtes, applique les politiques de sécurité et transmet le trafic autorisé au serveur d'origine.
+Lorsque `TARGET_FQDN` est défini, tous les scripts de suite envoient le trafic vers `https://<TARGET_FQDN>/...`. L'équilibreur de charge HTTP F5 XC reçoit les requêtes, applique les politiques de Sécurité et transfère le trafic autorisé au Serveur d'origine.
 
 ## Intégration de la démo CSD
 
-La suite `javascript-exploits` est spécifiquement conçue pour la démonstration Client-Side Defense sur le serveur d'origine. Cette suite valide la fonctionnalité CSD Phase 2 :
+La suite `javascript-exploits` est spécifiquement conçue pour la démonstration de la Défense côté client sur le Serveur d'origine. Cette suite valide la fonctionnalité CSD Phase 2 :
 
 **Flux de la Phase 2 :**
 
-1. Le serveur d'origine héberge la page de démo CSD à `/csd-demo/`
+1. Le Serveur d'origine héberge la page de démo CSD à `/csd-demo/`
 2. F5 XC CSD injecte son JavaScript de surveillance dans la page
-3. La suite javascript-exploits du générateur de trafic tente de :
-   - Injecter des scripts inline imitant des skimmers Magecart
+3. La suite javascript-exploits du Générateur de trafic tente de :
+   - Injecter des scripts inline qui imitent des skimmers Magecart
    - Modifier des éléments DOM pour rediriger les soumissions de formulaires
-   - Charger du JavaScript tiers non autorisé
+   - Charger des JavaScript tiers non autorisés
 4. F5 XC CSD détecte ces modifications et les signale dans le tableau de bord CSD
 
 Pour utiliser la suite javascript-exploits :
@@ -98,30 +99,30 @@ Pour utiliser la suite javascript-exploits :
 /opt/traffic-generator/suites/runner.sh javascript-exploits
 ```
 
-## Intégration du simulateur CDN
+## Intégration du Simulateur CDN
 
-Lorsque le simulateur CDN est déployé, l'architecture ajoute une couche de mise en cache :
+Lorsque le Simulateur CDN est déployé, l'architecture ajoute une couche de mise en cache :
 
 ```
 Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 ```
 
-Le simulateur CDN se place devant le répartiteur de charge F5 XC, mettant en cache les réponses et ajoutant des en-têtes de type CDN. Pour diriger le trafic via le CDN :
+Le Simulateur CDN se positionne devant l'équilibreur de charge F5 XC, met en cache les réponses et ajoute des en-têtes de type CDN. Pour acheminer le trafic via le CDN :
 
 ```bash
 # Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
 TARGET_FQDN=cdn.demo.example.com
 ```
 
-Ceci est utile pour démontrer comment F5 XC gère le trafic qui arrive via un CDN, notamment :
+Cela est utile pour démontrer comment F5 XC gère le trafic arrivant via un CDN, notamment :
 
-- Identifier la véritable IP client derrière les en-têtes proxy du CDN
-- Appliquer les règles WAF aux requêtes qui ont pu être modifiées par le CDN
-- Classification Bot Defense lorsque le CDN modifie les empreintes du navigateur
+- L'identification de l'adresse IP client réelle derrière les en-têtes de proxy CDN
+- L'application des règles WAF aux requêtes susceptibles d'avoir été modifiées par le CDN
+- La classification par la Défense Bot lorsque le CDN modifie les empreintes du navigateur
 
-## Comparaison trafic direct vs via le LB
+## Comparaison du trafic direct et via équilibreur de charge
 
-Le générateur de trafic prend en charge l'envoi de trafic à la fois via F5 XC et directement vers l'origine. Cette comparaison démontre la valeur des fonctionnalités de sécurité F5 XC :
+Le Générateur de trafic permet d'envoyer du trafic à la fois via F5 XC et directement vers l'origine. Cette comparaison démontre la valeur des fonctionnalités de Sécurité de F5 XC :
 
 ### Via F5 XC (par défaut)
 
@@ -130,9 +131,9 @@ Le générateur de trafic prend en charge l'envoi de trafic à la fois via F5 XC
 TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
 
-Résultat attendu : le WAF bloque les charges utiles d'injection SQL, XSS et d'injection de commandes. Le tableau de bord Security Events affiche les requêtes bloquées avec les détails des violations.
+Résultat attendu : le Pare-feu applicatif (WAF) bloque les charges utiles d'injection SQL, XSS et d'injection de commandes. Le tableau de bord des événements de Sécurité affiche les requêtes bloquées avec les détails des violations.
 
-### Directement vers l'origine (référence)
+### Direct vers l'origine (référence)
 
 ```bash
 # Traffic goes: Generator -> Origin (no security layer)
@@ -143,12 +144,12 @@ Résultat attendu : toutes les charges utiles atteignent les applications d'orig
 
 ### Flux de démonstration côte à côte
 
-Pour une démonstration convaincante, exécutez la même suite des deux manières :
+Pour une démonstration convaincante, exécutez la même suite dans les deux modes :
 
 1. Exécutez `web-app-attacks` directement contre l'origine -- montrez que les attaques réussissent
 2. Exécutez `web-app-attacks` via F5 XC -- montrez que les attaques sont bloquées
-3. Ouvrez le tableau de bord F5 XC Security Events pour afficher les requêtes bloquées
-4. Comparez les résultats `meta.json` de la suite : les exécutions directes affichent plus de « passed » (attaques réussies), les exécutions via le LB affichent plus de « failed » (attaques bloquées)
+3. Ouvrez le tableau de bord des événements de Sécurité F5 XC pour afficher les requêtes bloquées
+4. Comparez les résultats `meta.json` de la suite : les exécutions directes affichent plus de « passed » (attaques réussies), les exécutions via équilibreur de charge affichent plus de « failed » (attaques bloquées)
 
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
@@ -167,7 +168,7 @@ ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | hea
 
 ## Déploiement Terraform multi-composants
 
-Lors du déploiement de l'environnement de laboratoire complet, utilisez des espaces de travail ou des répertoires Terraform séparés pour chaque composant :
+Lors du déploiement de l'environnement de laboratoire complet, utilisez des espaces de travail ou des répertoires Terraform distincts pour chaque composant :
 
 ```bash
 # 1. Deploy origin server

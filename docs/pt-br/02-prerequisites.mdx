@@ -1,9 +1,9 @@
 ---
 title: Pré-requisitos
 description: >-
-  Assinatura Azure com função de Contributor, Terraform >= 1.5, par de chaves
-  SSH (Ed25519 recomendado), Azure CLI para consulta de subscription_id e HTTPS
-  de saída para download de ferramentas durante o provisionamento via cloud-init
+  Assinatura Azure com função Contributor, Terraform >= 1.5, par de chaves SSH
+  (Ed25519 recomendado), Azure CLI para consulta do subscription_id, e HTTPS de
+  saída para downloads de ferramentas durante o provisionamento via cloud-init
 sidebar:
   order: 2
 i18n:
@@ -15,17 +15,17 @@ i18n:
 
 ### Assinatura Azure
 
-Uma assinatura Azure ativa com função de Contributor ou permissões equivalentes para criar:
+Uma assinatura Azure ativa com a função Contributor ou permissões equivalentes para criar:
 
 - Grupos de recursos
 - Redes virtuais e sub-redes
 - Grupos de segurança de rede
 - Endereços IP públicos
-- Máquinas virtuais (Standard_F16s_v2 por padrão)
+- Máquinas virtuais (padrão Standard_F16s_v2)
 
 ### Azure CLI
 
-Instale e autentique o Azure CLI para recuperar seu ID de assinatura:
+Instale e autentique o Azure CLI para recuperar o ID da sua assinatura:
 
 ```bash
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -35,11 +35,11 @@ az login
 az account show --query '{name:name, id:id}' -o table
 ```
 
-Copie o valor de `id` -- este é o `subscription_id` exigido pelo Terraform.
+Copie o valor `id` — este é o `subscription_id` exigido pelo Terraform.
 
 ### Terraform
 
-Terraform >= 1.5 é obrigatório:
+O Terraform >= 1.5 é obrigatório:
 
 ```bash
 terraform version
@@ -63,7 +63,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### Acesso à Rede
 
-A VM do Traffic Generator requer acesso HTTPS de saída durante o provisionamento para baixar ferramentas de:
+A VM do Gerador de Tráfego requer acesso HTTPS de saída durante o provisionamento para baixar ferramentas de:
 
 - GitHub Releases (nuclei, dalfox, ffuf, gobuster, feroxbuster, subfinder, httpx, amass)
 - PyPI (sqlmap, scapy, impacket, arjun, pwntools, mitmproxy, sslyze, playwright)
@@ -71,22 +71,22 @@ A VM do Traffic Generator requer acesso HTTPS de saída durante o provisionament
 - Repositórios APT do Ubuntu (nikto, nmap, masscan, hydra, tshark e outros pacotes do sistema)
 - Repositórios Git (testssl.sh, recon-ng, spiderfoot, SecLists)
 
-Se sua assinatura Azure impõe regras de firewall de saída ou restrições de NSG, certifique-se de que o HTTPS (porta 443) para essas fontes esteja permitido durante a janela inicial de provisionamento (15-25 minutos).
+Se a sua assinatura Azure impõe regras de firewall de saída ou restrições de NSG, certifique-se de que o HTTPS (porta 443) para essas fontes esteja permitido durante a janela inicial de provisionamento (15 a 25 minutos).
 
 ### Componentes Pré-implantados
 
-Antes de implantar o Traffic Generator, você deve ter:
+Antes de implantar o Gerador de Tráfego, você deve ter:
 
-1. **Origin Server** implantado e acessível (consulte a [documentação do origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
-2. **F5 XC HTTP Load Balancer** configurado com o origin server como backend
+1. **Servidor de Origem** implantado e acessível (consulte a [documentação do origin-server](https://f5xc-salesdemos.github.io/origin-server/03-deploy/))
+2. **F5 XC HTTP Load Balancer** configurado com o servidor de origem como backend
 3. Uma **política WAF** vinculada ao load balancer (para validação de tráfego WAF)
 
 A variável Terraform `target_fqdn` deve ser definida com o domínio público do load balancer do F5 XC.
 
 :::tip
-Utilize `terraform destroy` quando o laboratório não estiver em uso para evitar cobranças contínuas. Consulte [Destruição do Ambiente](../08-teardown/) para o procedimento.
+Utilize `terraform destroy` quando o laboratório não estiver em uso para evitar cobranças contínuas. Consulte [Teardown](../08-teardown/) para o procedimento.
 :::
 
 :::note
-Standard_F16s_v2 (32 GiB de RAM) é o padrão porque diversas ferramentas são executadas simultaneamente durante a execução das suítes. A automação de navegador (Playwright, Puppeteer) com Chromium headless é o principal consumidor de memória. SKUs F-series menores funcionarão para suítes sem navegador, mas podem ser insuficientes ao executar simulação de bots.
+O Standard_F16s_v2 (32 GiB de RAM) é o padrão porque diversas ferramentas são executadas simultaneamente durante a execução da suite. A automação de navegador (Playwright, Puppeteer) com Chromium headless é o principal consumidor de memória. SKUs menores da série F funcionarão para suites sem navegador, mas podem ser insuficientes ao executar simulação de bots.
 :::

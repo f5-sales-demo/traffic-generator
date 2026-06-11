@@ -1,8 +1,8 @@
 ---
-title: 前置需求
+title: 前置條件
 description: >-
-  具有 Contributor 角色的 Azure 訂閱、Terraform >= 1.5、SSH 金鑰對（建議使用 Ed25519）、用於查詢
-  subscription_id 的 Azure CLI，以及在 cloud-init 佈建期間下載工具所需的輸出 HTTPS 連線
+  需要具備 Contributor 角色的 Azure 訂閱、Terraform >= 1.5、SSH 金鑰對（建議使用 Ed25519）、用於查詢
+  subscription_id 的 Azure CLI，以及 cloud-init 佈建期間下載工具所需的對外 HTTPS 連線
 sidebar:
   order: 2
 i18n:
@@ -14,10 +14,10 @@ i18n:
 
 ### Azure 訂閱
 
-一個有效的 Azure 訂閱，具有 Contributor 角色或同等權限以建立：
+需要一個具有 Contributor 角色或同等權限的有效 Azure 訂閱，以建立下列資源：
 
 - 資源群組
-- 虛擬網路和子網路
+- 虛擬網路與子網路
 - 網路安全性群組
 - 公用 IP 位址
 - 虛擬機器（預設為 Standard_F16s_v2）
@@ -34,7 +34,7 @@ az login
 az account show --query '{name:name, id:id}' -o table
 ```
 
-複製 `id` 值 -- 這是 Terraform 所需的 `subscription_id`。
+複製 `id` 的值——此即為 Terraform 所需的 `subscription_id`。
 
 ### Terraform
 
@@ -44,7 +44,7 @@ az account show --query '{name:name, id:id}' -o table
 terraform version
 ```
 
-如果尚未安裝，請使用 HashiCorp APT 儲存庫：
+若尚未安裝，請使用 HashiCorp APT 套件庫：
 
 ```bash
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -54,7 +54,7 @@ sudo apt update && sudo apt install terraform
 
 ### SSH 金鑰對
 
-用於 VM 存取的 SSH 金鑰對。建議使用 Ed25519：
+用於存取虛擬機器的 SSH 金鑰對，建議使用 Ed25519：
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
@@ -62,30 +62,30 @@ ssh-keygen -t ed25519 -f ~/.ssh/traffic-generator-key -N ""
 
 ### 網路存取
 
-Traffic Generator VM 在佈建期間需要輸出 HTTPS 存取以從以下來源下載工具：
+流量產生器虛擬機器在佈建期間需要對外的 HTTPS 連線，以從下列來源下載工具：
 
 - GitHub Releases（nuclei、dalfox、ffuf、gobuster、feroxbuster、subfinder、httpx、amass）
 - PyPI（sqlmap、scapy、impacket、arjun、pwntools、mitmproxy、sslyze、playwright）
 - npm registry（puppeteer、puppeteer-extra-plugin-stealth）
-- Ubuntu APT 儲存庫（nikto、nmap、masscan、hydra、tshark 及其他系統套件）
+- Ubuntu APT 套件庫（nikto、nmap、masscan、hydra、tshark 及其他系統套件）
 - Git 儲存庫（testssl.sh、recon-ng、spiderfoot、SecLists）
 
-如果您的 Azure 訂閱強制執行輸出防火牆規則或 NSG 限制，請確保在初始佈建視窗期間（15-25 分鐘）允許 HTTPS（連接埠 443）連線至這些來源。
+若您的 Azure 訂閱強制執行對外防火牆規則或 NSG 限制，請確保在初始佈建期間（15-25 分鐘）允許對這些來源的 HTTPS（連接埠 443）流量通過。
 
 ### 預先部署的元件
 
-在部署 Traffic Generator 之前，您應已具備：
+在部署流量產生器之前，您應已完成下列準備：
 
-1. 已部署且可連線的 **Origin Server**（請參閱 [origin-server 文件](https://f5xc-salesdemos.github.io/origin-server/03-deploy/)）
-2. 已設定 origin server 作為後端的 **F5 XC HTTP Load Balancer**
-3. 已附加至負載平衡器的 **WAF 策略**（用於 WAF 流量驗證）
+1. **原始伺服器**已部署且可連線（請參閱 [origin-server 文件](https://f5xc-salesdemos.github.io/origin-server/03-deploy/)）
+2. **F5 XC HTTP 負載平衡器**已設定，並以原始伺服器作為後端
+3. 已將 **WAF 政策**附加至負載平衡器（用於 WAF 流量驗證）
 
-`target_fqdn` Terraform 變數應設定為 F5 XC 負載平衡器的公用網域。
+Terraform 變數 `target_fqdn` 應設定為 F5 XC 負載平衡器的公用網域。
 
 :::tip
-實驗室未使用時，請使用 `terraform destroy` 以避免持續產生費用。操作程序請參閱[清除資源](../08-teardown/)。
+實驗室未使用時，請執行 `terraform destroy` 以避免持續產生費用。相關程序請參閱[卸除部署](../08-teardown/)。
 :::
 
 :::note
-Standard_F16s_v2（32 GiB RAM）為預設值，因為在套件執行期間有多個工具同時執行。使用無頭 Chromium 的瀏覽器自動化（Playwright、Puppeteer）是主要的記憶體消耗者。較小的 F 系列 SKU 可適用於非瀏覽器套件，但在執行機器人模擬時可能會較為吃緊。
+預設使用 Standard_F16s_v2（32 GiB RAM），原因在於套件執行期間會有多項工具同時運行。瀏覽器自動化（Playwright、Puppeteer）搭配無頭 Chromium 是主要的記憶體消耗來源。較小型的 F 系列 SKU 可用於非瀏覽器套件，但執行機器人模擬時記憶體可能較為緊張。
 :::
