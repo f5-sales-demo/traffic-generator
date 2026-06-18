@@ -5,21 +5,13 @@
 Files in `.claude/governance.json` are managed by docs-control.
 A hook blocks direct edits — open an issue in docs-control instead.
 
-## Git Operations
+## Git Workflow
 
-Delegate ALL Git/GitHub operations to `f5xc-github-ops:github-ops`.
-Never run `git commit`, `git push`, `gh pr create` directly.
-
-```
-Agent(
-  subagent_type="f5xc-github-ops:github-ops",
-  mode="bypassPermissions",
-  prompt="<type>: <desc>\n\nFiles:\n- <list>\n\nWhy: <reason>"
-)
-```
-
-`mode="bypassPermissions"` is required — without it, plan mode can
-re-engage mid-workflow and strip the agent's Bash access, leaving
-it stuck after the first step.
+- The `main` branch is protected — never commit or push directly to it.
+- Create a feature branch, commit there, and open a pull request.
+- Every pull request must reference a GitHub issue (CI enforces this).
+- **Perform all git operations directly.** Do not delegate git commits,
+  pushes, or pull requests to subagents. Run `git`, `gh`, and CLI
+  commands yourself.
 
 See `CONTRIBUTING.md` for project rules.
