@@ -1,3 +1,17 @@
+🌐 English |
+[日本語](https://f5xc-salesdemos.github.io/traffic-generator/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/traffic-generator/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/traffic-generator/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/traffic-generator/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/traffic-generator/es/) |
+[Português](https://f5xc-salesdemos.github.io/traffic-generator/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/traffic-generator/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/traffic-generator/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/traffic-generator/it/) |
+[العربية](https://f5xc-salesdemos.github.io/traffic-generator/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/traffic-generator/hi/) |
+[ไทย](https://f5xc-salesdemos.github.io/traffic-generator/th/)
+
 # Traffic Generator
 
 [![GitHub Pages Deploy](https://github.com/f5xc-salesdemos/traffic-generator/actions/workflows/github-pages-deploy.yml/badge.svg)](https://github.com/f5xc-salesdemos/traffic-generator/actions/workflows/github-pages-deploy.yml)
@@ -6,18 +20,10 @@
 
 Azure traffic generator with 150+ security testing scripts across 17 suites for F5 XC demo environments
 
+
 ## Documentation
 
 Full documentation is available at **[https://f5xc-salesdemos.github.io/traffic-generator/](https://f5xc-salesdemos.github.io/traffic-generator/)**.
-
-## Getting Started
-
-```bash
-git clone https://github.com/f5xc-salesdemos/traffic-generator.git
-```
-
-See the [documentation](https://f5xc-salesdemos.github.io/traffic-generator/) for detailed setup
-and usage guides.
 
 ## Contributing
 

@@ -1,10 +1,3 @@
-# Gitleaks configuration for traffic-generator
-# This repo contains intentional test/demo credentials for attack simulation
-
 [allowlist]
-  description = "Allow test/demo credentials in attack simulation scripts"
-  paths = [
-    '''suites/api-attacks/05-broken-auth\.sh''',
-    '''suites/crapi-exploits/14-unauth-order-access\.sh''',
-    '''docs/05-suites\.mdx'''
-  ]
+  description = "Allowlist placeholder values in example files"
+  paths = ["examples/"]

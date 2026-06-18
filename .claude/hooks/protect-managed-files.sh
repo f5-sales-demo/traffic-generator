@@ -11,10 +11,19 @@ if ! read -t 0 2>/dev/null; then
   exit 0
 fi
 
-# ── Self-exclusion: allow edits in docs-control itself ──────────────
+# ── Self-exclusion: allow edits in the governance source repo ───────
 REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-if echo "$REMOTE_URL" | grep -q "docs-control"; then
-  exit 0
+SCRIPT_DIR_EARLY="$(cd "$(dirname "$0")" && pwd)"
+GOVERNANCE_EARLY="${SCRIPT_DIR_EARLY}/../governance.json"
+SOURCE_REPO=""
+if [ -f "$GOVERNANCE_EARLY" ]; then
+  SOURCE_REPO=$(jq -r '.source_repo // empty' "$GOVERNANCE_EARLY" 2>/dev/null || echo "")
+fi
+if [ -n "$SOURCE_REPO" ] && [ -n "$REMOTE_URL" ]; then
+  REMOTE_PATH=$(echo "$REMOTE_URL" | sed 's|\.git$||' | sed -E 's|.*[:/]([^/]+/[^/]+)$|\1|')
+  if [ "$REMOTE_PATH" = "$SOURCE_REPO" ]; then
+    exit 0
+  fi
 fi
 
 # ── Read tool input from stdin ──────────────────────────────────────
