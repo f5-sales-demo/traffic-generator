@@ -184,6 +184,26 @@ repos:
         language: system
         pass_filenames: false
 
+  # ===========================================================================
+  # Translation generation — regenerate locale docs when English changes.
+  # Runs docs-translate --staged (docs-theme) for staged docs/en/*.mdx, which
+  # needs ANTHROPIC_API_KEY and the docs-theme toolchain. No-ops gracefully
+  # when either is unavailable; the required CI translation-audit verifies
+  # freshness regardless. Generation is intentionally local, never in CI.
+  # ===========================================================================
+  - repo: local
+    hooks:
+      - id: docs-translate
+        name: "i18n: regenerate translations for staged English docs"
+        entry: >-
+          bash -c
+          'if command -v docs-translate >/dev/null 2>&1 && [ -n "${ANTHROPIC_API_KEY:-}" ];
+          then docs-translate --staged;
+          else echo "[i18n] docs-translate/ANTHROPIC_API_KEY unavailable — skipping; CI translation-audit will verify freshness."; fi'
+        language: system
+        files: ^docs/en/.*\.mdx?$
+        pass_filenames: false
+
 ci:
   autofix_prs: true
   autoupdate_schedule: weekly
@@ -204,3 +224,4 @@ ci:
     - zizmor
     - checkov
     - gitleaks
+    - docs-translate
