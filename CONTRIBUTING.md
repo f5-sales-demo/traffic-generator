@@ -79,7 +79,8 @@ If you are Claude Code, Copilot, or another AI coding assistant, follow these ru
 2. **Always work on a feature branch.** Never commit directly to `main`.
 3. **Always link the PR to the issue.** Use `Closes #N` in the PR description.
 4. **Use the `/ship` skill** when available — it handles the full Issue → Branch → PR flow.
-5. **Never force push** or attempt to bypass branch protection.
-6. **Fill out the PR template checklist** completely.
-7. **Follow the branch naming convention**: `feature/<issue>-desc`, `fix/<issue>-desc`, `docs/<issue>-desc`.
-8. **Respect CODEOWNERS** — Review the CODEOWNERS file for the default reviewer.
+5. **Perform git operations directly.** Run `git commit`, `git push`, and `gh pr create` yourself. Do not delegate to subagents.
+6. **Never force push** or attempt to bypass branch protection.
+7. **Fill out the PR template checklist** completely.
+8. **Follow the branch naming convention**: `feature/<issue>-desc`, `fix/<issue>-desc`, `docs/<issue>-desc`.
+9. **Respect CODEOWNERS** — Review the CODEOWNERS file for the default reviewer.
