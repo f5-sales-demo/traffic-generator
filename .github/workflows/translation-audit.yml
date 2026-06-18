@@ -1,0 +1,18 @@
+---
+# Managed by docs-control. Verifies that translations stay fresh when
+# English docs change. Generation happens in pre-commit (docs-translate
+# --staged); this gate only audits sourceHash freshness (no API calls).
+name: Translation Audit
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    # Read-only freshness audit — no secrets required.
+    uses: f5xc-salesdemos/docs-control/.github/workflows/translation-audit.yml@main
