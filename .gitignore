@@ -14,6 +14,9 @@ node_modules/
 dist/
 *.tgz
 
+# Chrome extension signing key (never commit)
+key.pem
+
 # Environment
 .env
 .env.*
