@@ -2,6 +2,8 @@
   "threshold": 10,
   "reporters": ["console"],
   "ignore": [
+    "**/*.yaml",
+    "**/*.yml",
     "**/.github/workflows/**",
     "**/workflows/**",
     "**/node_modules/**",
