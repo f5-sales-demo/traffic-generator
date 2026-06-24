@@ -13,7 +13,7 @@
     ],
     "api-specs": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini"],
     "api-specs-enriched": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini"],
-    "vscode-f5xc-tools": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
+    "vscode-xcsh": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
     "i18n-core": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"]
   },
   "protected_files": [
