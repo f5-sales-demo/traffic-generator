@@ -182,6 +182,7 @@ packages/ai/test/.temp-images/
 docs/superpowers/
 !.xcsh/
 .xcsh/plugins/
+.xcsh/contexts/
 .pi_config/
 .opencode/
 .worktree-test-baseline.txt
