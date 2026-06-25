@@ -5,16 +5,15 @@
       "biome.json",
       "LICENSE",
       "CONTRIBUTING.md",
-      "ruff.toml",
       ".ruff.toml",
       ".python-lint",
       ".mypy.ini",
       ".github/workflows/super-linter.yml"
     ],
-    "api-specs": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini"],
-    "api-specs-enriched": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini"],
-    "vscode-xcsh": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
-    "i18n-core": ["ruff.toml", ".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"]
+    "api-specs": [".ruff.toml", ".python-lint", ".mypy.ini"],
+    "api-specs-enriched": [".ruff.toml", ".python-lint", ".mypy.ini"],
+    "vscode-xcsh": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
+    "i18n-core": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"]
   },
   "protected_files": [
     ".github/workflows/github-pages-deploy.yml",
@@ -48,7 +47,6 @@
     ".gitleaks.toml",
     ".prettierignore",
     ".trivyignore",
-    "ruff.toml",
     ".ruff.toml",
     ".isort.cfg",
     ".python-lint",
