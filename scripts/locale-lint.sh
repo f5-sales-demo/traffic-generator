@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Detects hardcoded locale lists that should import from @f5xc-salesdemos/i18n-core.
+# Detects hardcoded locale lists that should import from @f5-sales-demo/i18n-core.
 # Run from any repo root: bash scripts/locale-lint.sh
 # Exit 0 = clean, Exit 1 = violations found.
 set -euo pipefail
@@ -30,7 +30,7 @@ check_pattern() {
     -E "$pattern" . 2>/dev/null |
     grep -vE "($EXCLUDE_DIRS)" |
     grep -vE "($EXCLUDE_FILES)" |
-    grep -vE "from\s+['\"]@f5xc-salesdemos/i18n-core" |
+    grep -vE "from\s+['\"]@f5-sales-demo/i18n-core" |
     grep -vE "i18n-core/(src|dist)/" ||
     true)
 
@@ -53,7 +53,7 @@ done
 echo ""
 if [ "$VIOLATIONS" -gt 0 ]; then
   echo "FAIL: Found $VIOLATIONS pattern(s) with hardcoded locale data."
-  echo "These should import from @f5xc-salesdemos/i18n-core instead."
+  echo "These should import from @f5-sales-demo/i18n-core instead."
   exit 1
 else
   echo "PASS: No hardcoded locale lists detected."

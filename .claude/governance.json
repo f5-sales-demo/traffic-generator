@@ -1,5 +1,5 @@
 {
-  "source_repo": "f5xc-salesdemos/docs-control",
+  "source_repo": "f5-sales-demo/docs-control",
   "skip_files": {
     "xcsh": [
       "biome.json",

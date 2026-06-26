@@ -10,10 +10,10 @@ i18n:
   translator: machine
 ---
 
-所有 Terraform 文件位于 [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) 目录中。克隆仓库并直接部署：
+所有 Terraform 文件位于 [`terraform/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform) 目录中。克隆仓库并直接部署：
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/traffic-generator.git
+git clone https://github.com/f5-sales-demo/traffic-generator.git
 cd traffic-generator/terraform
 cp terraform.tfvars.example terraform.tfvars
 # 使用您的 Azure 订阅 ID 和目标 FQDN 编辑 terraform.tfvars
@@ -122,7 +122,7 @@ terraform apply
 | Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | 内存密集型工作负载 |
 
 :::tip
-F16s_v2 通过针对 CDN F16s_v2 和 F32s_v2 目标的 A/B/C/D 基准测试，被验证为最佳性价比选项。完整结果请参阅 [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks)。
+F16s_v2 通过针对 CDN F16s_v2 和 F32s_v2 目标的 A/B/C/D 基准测试，被验证为最佳性价比选项。完整结果请参阅 [benchmarks/](https://github.com/f5-sales-demo/traffic-generator/tree/main/benchmarks)。
 :::
 
 ## 部署后验证

@@ -5,10 +5,10 @@ sidebar:
   order: 3
 ---
 
-All Terraform files are in the [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) directory. Clone the repository and deploy directly:
+All Terraform files are in the [`terraform/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform) directory. Clone the repository and deploy directly:
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/traffic-generator.git
+git clone https://github.com/f5-sales-demo/traffic-generator.git
 cd traffic-generator/terraform
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your Azure subscription ID and target FQDN
@@ -117,7 +117,7 @@ The F-series compute-optimized VMs are recommended for this CPU-bound traffic ge
 | Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM-heavy workloads |
 
 :::tip
-F16s_v2 was validated as the optimal price-performance option by A/B/C/D benchmark testing against CDN F16s_v2 and F32s_v2 targets. See [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) for full results.
+F16s_v2 was validated as the optimal price-performance option by A/B/C/D benchmark testing against CDN F16s_v2 and F32s_v2 targets. See [benchmarks/](https://github.com/f5-sales-demo/traffic-generator/tree/main/benchmarks) for full results.
 :::
 
 ## Post-Deploy Verification

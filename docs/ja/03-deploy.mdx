@@ -11,10 +11,10 @@ i18n:
   translator: machine
 ---
 
-すべての Terraform ファイルは [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) ディレクトリに格納されています。リポジトリをクローンして直接デプロイします：
+すべての Terraform ファイルは [`terraform/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform) ディレクトリに格納されています。リポジトリをクローンして直接デプロイします：
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/traffic-generator.git
+git clone https://github.com/f5-sales-demo/traffic-generator.git
 cd traffic-generator/terraform
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your Azure subscription ID and target FQDN
@@ -123,7 +123,7 @@ F シリーズのコンピュート最適化 VM は、この CPU バウンドの
 | Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM 重視ワークロード |
 
 :::tip
-F16s_v2 は、CDN F16s_v2 および F32s_v2 ターゲットに対する A/B/C/D ベンチマークテストにより、最適なコストパフォーマンスオプションとして検証されました。完全な結果については [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks) を参照してください。
+F16s_v2 は、CDN F16s_v2 および F32s_v2 ターゲットに対する A/B/C/D ベンチマークテストにより、最適なコストパフォーマンスオプションとして検証されました。完全な結果については [benchmarks/](https://github.com/f5-sales-demo/traffic-generator/tree/main/benchmarks) を参照してください。
 :::
 
 ## デプロイ後の確認
