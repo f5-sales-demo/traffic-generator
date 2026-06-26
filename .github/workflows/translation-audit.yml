@@ -15,4 +15,4 @@ permissions:
 jobs:
   audit:
     # Read-only freshness audit — no secrets required.
-    uses: f5xc-salesdemos/docs-control/.github/workflows/translation-audit.yml@main
+    uses: f5-sales-demo/docs-control/.github/workflows/translation-audit.yml@main

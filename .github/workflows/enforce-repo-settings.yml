@@ -25,14 +25,14 @@ concurrency:
 
 jobs:
   enforce-settings:
-    uses: f5xc-salesdemos/docs-control/.github/workflows/enforce-repo-settings.yml@main
+    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@main
     with:
       source_sha: ${{ inputs.source_sha || '' }}
     secrets:
       repo-settings-token: ${{ secrets.REPO_SETTINGS_TOKEN }}
 
   sync-files:
-    uses: f5xc-salesdemos/docs-control/.github/workflows/sync-managed-files.yml@main
+    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@main
     with:
       source_sha: ${{ inputs.source_sha || '' }}
     secrets:

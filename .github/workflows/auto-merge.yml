@@ -15,5 +15,5 @@ jobs:
     if: >-
       github.event.pull_request.draft == false &&
       github.actor != 'dependabot[bot]'
-    uses: f5xc-salesdemos/docs-control/.github/workflows/auto-merge.yml@main
+    uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@main
     secrets: inherit

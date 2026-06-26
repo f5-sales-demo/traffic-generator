@@ -422,7 +422,7 @@ runcmd:
   - |
     . /usr/local/lib/cloud-init-helpers.sh
     log_phase "phase8" "cloning traffic generator suites"
-    clone_repo "https://github.com/f5xc-salesdemos/traffic-generator.git" /opt/traffic-generator/repo 1 || log_phase "warning" "traffic-generator repo clone failed — suites will be from cloud-init"
+    clone_repo "https://github.com/f5-sales-demo/traffic-generator.git" /opt/traffic-generator/repo 1 || log_phase "warning" "traffic-generator repo clone failed — suites will be from cloud-init"
   - |
     if [ -d /opt/traffic-generator/repo/suites ]; then
       cp -r /opt/traffic-generator/repo/suites/* /opt/traffic-generator/suites/

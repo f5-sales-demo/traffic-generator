@@ -12,10 +12,10 @@ i18n:
   translator: machine
 ---
 
-ไฟล์ Terraform ทั้งหมดอยู่ในไดเรกทอรี [`terraform/`](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/terraform) โคลน repository และปรับใช้งานโดยตรง:
+ไฟล์ Terraform ทั้งหมดอยู่ในไดเรกทอรี [`terraform/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform) โคลน repository และปรับใช้งานโดยตรง:
 
 ```bash
-git clone https://github.com/f5xc-salesdemos/traffic-generator.git
+git clone https://github.com/f5-sales-demo/traffic-generator.git
 cd traffic-generator/terraform
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your Azure subscription ID and target FQDN
@@ -124,7 +124,7 @@ Terraform แสดงผล public IP, คำสั่ง SSH และ target 
 | Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | Workload ที่ต้องการ RAM มาก |
 
 :::tip
-F16s_v2 ได้รับการตรวจสอบว่าเป็นตัวเลือกที่มีอัตราส่วนราคาต่อประสิทธิภาพดีที่สุดจากการทดสอบ benchmark A/B/C/D กับเป้าหมาย CDN F16s_v2 และ F32s_v2 ดูผลลัพธ์เต็มรูปแบบได้ที่ [benchmarks/](https://github.com/f5xc-salesdemos/traffic-generator/tree/main/benchmarks)
+F16s_v2 ได้รับการตรวจสอบว่าเป็นตัวเลือกที่มีอัตราส่วนราคาต่อประสิทธิภาพดีที่สุดจากการทดสอบ benchmark A/B/C/D กับเป้าหมาย CDN F16s_v2 และ F32s_v2 ดูผลลัพธ์เต็มรูปแบบได้ที่ [benchmarks/](https://github.com/f5-sales-demo/traffic-generator/tree/main/benchmarks)
 :::
 
 ## การตรวจสอบหลังปรับใช้งาน
