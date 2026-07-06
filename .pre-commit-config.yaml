@@ -134,6 +134,11 @@ repos:
         entry: codespell
         language: system
         types: [text]
+        # codespell's own `skip` list only applies during its directory
+        # traversal; when pre-commit passes explicit file paths it is bypassed.
+        # Filter translation dirs here so their foreign-language words
+        # (e.g. German "Referenz") never reach codespell. See issue #579.
+        exclude: ^docs/(ar|de|es|fr|hi|it|ja|ko|pt-br|th|zh-cn|zh-tw)/
 
   # ===========================================================================
   # EditorConfig conformance — config: .editorconfig-checker.json
