@@ -83,3 +83,64 @@ If you are Claude Code, Copilot, or another AI coding assistant, follow these ru
 6. **Fill out the PR template checklist** completely.
 7. **Follow the branch naming convention**: `feature/<issue>-desc`, `fix/<issue>-desc`, `docs/<issue>-desc`.
 8. **Respect CODEOWNERS** — Review the CODEOWNERS file for the default reviewer.
+
+## Engineering Standards
+
+These standards apply to all contributors — human and AI — for every change, where
+applicable to this repository. Code standards apply to code changes; docs-only repos
+apply what fits.
+
+### Detailed issues
+
+- A linked issue is not enough — it must be *detailed*: problem statement, scope, and
+  acceptance criteria.
+- CI blocks any PR with no linked issue; thin or empty issues are rejected in review.
+
+### Specs and task-driven work
+
+- Start non-trivial work from an engineering-level spec: what and why, the interfaces or
+  content affected, and acceptance criteria.
+- Break the spec into an explicit task/todo list and work it item by item.
+
+### Test-driven development
+
+- For code changes, write the test first, watch it fail, then write code to make it pass.
+- Automate user-acceptance testing wherever possible instead of relying on manual checks.
+
+### Verify before claiming done
+
+- Substantiate every "it works" / "done" claim with evidence: passing tests or
+  reproducible output.
+- Do not assert completion you have not verified.
+
+### No papering over problems
+
+- When you find a pre-existing problem, fix the root cause. Never skip, ignore, silence,
+  patch over, or band-aid it.
+- CI rejects changes that mask problems (disabling checks, swallowing errors,
+  TODO-and-move-on).
+
+### Prerelease: no backward compatibility
+
+- This is prerelease code heading to production. Make clean-break changes.
+- Do not add compatibility shims or preserve deprecated interfaces — remove and replace.
+
+### DRY — reuse first
+
+- Reuse existing code, patterns, and content before adding new. Do not duplicate.
+
+### Clean branches
+
+- Troubleshoot and experiment freely on a branch.
+- Never commit broken or experimental code, or speculative work that is not needed
+  (YAGNI). Keep merged history green.
+
+### Local checks vs CI
+
+- The authoritative lint gate is CI's `Lint Code Base` (Super-Linter). It runs more
+  validators than the local `pre-commit` hooks — notably textlint (`NATURAL_LANGUAGE`)
+  prose and terminology, which `pre-commit` does not run.
+- Passing `pre-commit` locally is necessary but not sufficient. Terminology is enforced
+  (for example `prerelease`, not `pre-release`). Before pushing Markdown or prose,
+  reproduce the full gate — run the Super-Linter image, or textlint with the repo's
+  `.textlintrc` — so CI-only rules do not surprise you.

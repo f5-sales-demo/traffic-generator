@@ -120,6 +120,7 @@ oauth-success.html
 # Lock file preferences (Bun-based repos)
 package-lock.json
 yarn.lock
+bun.lock
 
 # Monorepo build
 .turbo/
@@ -138,6 +139,9 @@ worktrees/
 .wt/
 .codex/
 playground/
+
+# Locally cloned dev repos (checked out alongside the parent, not tracked by it)
+starlight-mega-menu/
 
 # Documentation build artifacts
 docs/_data/
