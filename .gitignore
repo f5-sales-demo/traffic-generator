@@ -24,6 +24,9 @@ key.pem
 # Logs
 *.log
 
+# Test/UAT artifacts (headless-render screenshots, scratch HTML, etc.)
+.artifacts/
+
 # Astro
 .astro/
 site/
