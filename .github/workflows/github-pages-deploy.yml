@@ -15,7 +15,10 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Queue Pages deployments; never cancel an in-flight deploy. Cancelling mid-
+  # deploy leaves the Pages backend with a superseded deployment and the next
+  # run fails with "Deployment failed, try again later" (see actions/deploy-pages).
+  cancel-in-progress: false
 
 jobs:
   docs:
