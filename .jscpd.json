@@ -16,8 +16,6 @@
     "**/internal/client/**",
     "**/internal/provider/**",
     "**/templates/**",
-    "**/docs/resources/**",
-    "**/docs/data-sources/**",
-    "**/docs/functions/**"
+    "**/docs/**"
   ]
 }
