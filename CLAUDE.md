@@ -19,8 +19,9 @@ Apply where applicable to this repo:
 - **Spec first** — start from an engineering-level spec, then work a task/todo list.
 - **TDD** — write the failing test first, then the code.
 - **Automate UAT** — automate acceptance testing wherever possible.
-- **Verify before done** — back every "done" claim with passing tests or reproducible output.
-- **Root-cause only** — never skip, silence, patch over, or band-aid a problem; CI rejects masked issues.
+- **Programmatic & idempotent** — fix with deterministic, re-runnable automation, not one-off manual steps; the same run yields the same result in CI.
+- **Verify before done (IMPORTANT)** — never assume a fix works. Watch the GitHub Actions runs to completion; when a change publishes a version, install and exercise it. Back every "done" claim with command output or a run link.
+- **Root-cause only** — fix problems (including lint and CI failures) at the source; never skip, suppress, inline-disable, or hand-wave them. CI rejects masked issues.
 - **No backward compat** — prerelease code; make clean-break changes, no shims or deprecated interfaces.
 - **DRY** — reuse existing code, patterns, and content before adding new.
 - **Clean branches** — experiment freely, but never commit broken or unneeded (YAGNI) code.

@@ -107,18 +107,35 @@ apply what fits.
 - For code changes, write the test first, watch it fail, then write code to make it pass.
 - Automate user-acceptance testing wherever possible instead of relying on manual checks.
 
+### Programmatic, idempotent solutions
+
+- Prefer a deterministic, re-runnable script or automation over manual, one-off
+  intervention. If you fixed it by hand, capture it as code.
+- Solutions must be idempotent: running them again, or running them in CI, produces the
+  same result with no drift or side effects.
+
 ### Verify before claiming done
 
-- Substantiate every "it works" / "done" claim with evidence: passing tests or
-  reproducible output.
+- Never guess or assume a change works. Substantiate every "it works" / "done" claim with
+  evidence: passing tests, reproducible output, or a workflow run link.
 - Do not assert completion you have not verified.
+- When a change triggers GitHub Actions, watch every affected workflow run to completion
+  — not just "queued" or "in progress". A merge is not done until its runs are green.
+- When a change publishes a new version or artifact, close the loop end-to-end: download,
+  install, and exercise the published version to confirm the fix is real — not merely
+  that the pipeline reported success.
 
 ### No papering over problems
 
 - When you find a pre-existing problem, fix the root cause. Never skip, ignore, silence,
   patch over, or band-aid it.
+- This applies to lint and CI failures specifically: fix them at the source. Do not
+  suppress them with inline-disable comments (for example `# noqa`, `eslint-disable`),
+  skipped tests, relaxed rules, or ignore lists, and do not hand-wave them as unrelated.
 - CI rejects changes that mask problems (disabling checks, swallowing errors,
   TODO-and-move-on).
+- There is no schedule pressure that justifies a shortcut — take the time to engineer the
+  correct solution.
 
 ### Prerelease: no backward compatibility
 
