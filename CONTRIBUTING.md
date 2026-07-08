@@ -161,3 +161,5 @@ apply what fits.
   (for example `prerelease`, not `pre-release`). Before pushing Markdown or prose,
   reproduce the full gate — run the Super-Linter image, or textlint with the repo's
   `.textlintrc` — so CI-only rules do not surprise you.
+- Install-free local textlint (no `package.json` required):
+  `npx --yes --package textlint --package textlint-rule-terminology textlint -c .textlintrc <files>`.
