@@ -13,7 +13,7 @@
     "terraform-provider-xcsh": [".github/workflows/translation-audit.yml", "scripts/locale-lint.sh"],
     "api-specs": [".ruff.toml", ".python-lint", ".mypy.ini"],
     "api-specs-enriched": [".ruff.toml", ".python-lint", ".mypy.ini"],
-    "vscode-xcsh": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
+    "vscode-xcsh": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg", "README.md"],
     "i18n-core": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"]
   },
   "protected_files": [
