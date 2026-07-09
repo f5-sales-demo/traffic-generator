@@ -46,9 +46,9 @@
         "server ?side",
         "sub[- ]class((?:es|ing)?)",
         "user[- ]name(s)?",
-        "[Cc]loudfront",
-        "[Ss]alesforce",
-        "common\\.js"
+        "CloudFront",
+        "Common[ .]?js",
+        "Sales?forces?"
       ]
     }
   }
