@@ -45,7 +45,10 @@
         "client ?side",
         "server ?side",
         "sub[- ]class((?:es|ing)?)",
-        "user[- ]name(s)?"
+        "user[- ]name(s)?",
+        "[Cc]loudfront",
+        "[Ss]alesforce",
+        "common\\.js"
       ]
     }
   }
