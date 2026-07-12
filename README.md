@@ -18,7 +18,7 @@
 [![Repository Settings](https://github.com/f5-sales-demo/traffic-generator/actions/workflows/enforce-repo-settings.yml/badge.svg)](https://github.com/f5-sales-demo/traffic-generator/actions/workflows/enforce-repo-settings.yml)
 [![License](https://img.shields.io/github/license/f5-sales-demo/traffic-generator)](LICENSE)
 
-Azure traffic generator with 153+ security testing scripts across 18 suites for F5 XC demo environments
+Azure traffic generator with 150+ security testing scripts across 17 suites for F5 XC demo environments
 
 
 ## Documentation
