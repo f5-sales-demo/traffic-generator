@@ -15,6 +15,7 @@
     "**/vendor/**",
     "**/internal/client/**",
     "**/internal/provider/**",
+    "**/*_pairs.py",
     "**/templates/**",
     "**/docs/**"
   ]
