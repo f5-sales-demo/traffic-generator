@@ -6,11 +6,11 @@ hero:
   tagline: Deploy a traffic generation VM with 50+ security tools, 19 organized attack suites, and headless Chrome automation for comprehensive F5 XC demo validation.
   actions:
     - text: Get Started
-      link: /traffic-generator/01-architecture/
+      link: /traffic-generator/en/01-architecture/
       icon: right-arrow
       variant: primary
     - text: Deploy Now
-      link: /traffic-generator/03-deploy/
+      link: /traffic-generator/en/03-deploy/
       icon: rocket
       variant: minimal
 ---
@@ -28,25 +28,25 @@ All tools are pre-installed via cloud-init during Terraform provisioning. Traffi
 
 | Suite | Description | F5 XC Feature Validated |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, SQLMap API mode, parameter discovery, endpoint fuzzing | API Security |
-| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Headless Chrome, Puppeteer stealth, Playwright automation, rapid crawling | Bot Defense |
-| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | Cache behavior, thundering herd, connection pool, HTTP/2 multiplexing | CDN Integration |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, OTP bruteforce, JWT manipulation, SSRF, NoSQL injection, IDOR | API Security |
-| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | Card skimmer, formjacker, keylogger, cryptominer, DOM hijack | Client-Side Defense |
-| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | Batch query DoS, deep recursion, SQL injection, introspection abuse | API Security (GraphQL) |
-| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | Brute force, command injection, CSRF, file inclusion, SQLi, XSS | WAF |
-| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM manipulation, inline script injection, Magecart-style skimming payloads | Client-Side Defense |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi login bypass, XSS, IDOR, admin access, null byte file access | WAF, Bot Defense |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK tactics: recon, initial access, credential access, exfiltration | WAF, Bot Defense, API Security |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, Nmap vulnerability scanning, combined OWASP report | WAF, Web App Scanning |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | Concurrency ramp, sustained load, spike testing, breakpoint discovery | DDoS, Rate Limiting |
-| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, directory brute-forcing | WAF / Bot Defense |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, rate limiting bypass, JWT weak secret | API Security |
-| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan, sslyze, testssl.sh TLS configuration analysis | WAF |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | High-volume legitimate HTTP traffic for baseline and load testing | All |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | Multi-layer URL/HTML/Unicode encoding, mixed nested encoding, chunked TE, header injection | WAF |
-| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | SQL injection, XSS, command injection, path traversal, Nikto, Nuclei | WAF |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi, XSS, path traversal against F5 DemoApp WAF testing endpoints | WAF |
+| [api-attacks](/traffic-generator/en/05-suites/#api-attacks) | OWASP API Top 10, SQLMap API mode, parameter discovery, endpoint fuzzing | API Security |
+| [bot-simulation](/traffic-generator/en/05-suites/#bot-simulation) | Headless Chrome, Puppeteer stealth, Playwright automation, rapid crawling | Bot Defense |
+| [cdn-load-testing](/traffic-generator/en/05-suites/#cdn-load-testing) | Cache behavior, thundering herd, connection pool, HTTP/2 multiplexing | CDN Integration |
+| [crapi-exploits](/traffic-generator/en/05-suites/#crapi-exploits) | BOLA, OTP bruteforce, JWT manipulation, SSRF, NoSQL injection, IDOR | API Security |
+| [csd-demo-attacks](/traffic-generator/en/05-suites/#csd-demo-attacks) | Card skimmer, formjacker, keylogger, cryptominer, DOM hijack | Client-Side Defense |
+| [dvga-exploits](/traffic-generator/en/05-suites/#dvga-exploits) | Batch query DoS, deep recursion, SQL injection, introspection abuse | API Security (GraphQL) |
+| [dvwa-exploits](/traffic-generator/en/05-suites/#dvwa-exploits) | Brute force, command injection, CSRF, file inclusion, SQLi, XSS | WAF |
+| [javascript-exploits](/traffic-generator/en/05-suites/#javascript-exploits) | DOM manipulation, inline script injection, Magecart-style skimming payloads | Client-Side Defense |
+| [juice-shop-exploits](/traffic-generator/en/05-suites/#juice-shop-exploits) | SQLi login bypass, XSS, IDOR, admin access, null byte file access | WAF, Bot Defense |
+| [mitre-attack](/traffic-generator/en/05-suites/#mitre-attack) | ATT&CK tactics: recon, initial access, credential access, exfiltration | WAF, Bot Defense, API Security |
+| [owasp-scanning](/traffic-generator/en/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, Nmap vulnerability scanning, combined OWASP report | WAF, Web App Scanning |
+| [performance-testing](/traffic-generator/en/05-suites/#performance-testing) | Concurrency ramp, sustained load, spike testing, breakpoint discovery | DDoS, Rate Limiting |
+| [reconnaissance](/traffic-generator/en/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, directory brute-forcing | WAF / Bot Defense |
+| [restaurant-exploits](/traffic-generator/en/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, rate limiting bypass, JWT weak secret | API Security |
+| [ssl-scanning](/traffic-generator/en/05-suites/#ssl-scanning) | SSLScan, sslyze, testssl.sh TLS configuration analysis | WAF |
+| [traffic-generation](/traffic-generator/en/05-suites/#traffic-generation) | High-volume legitimate HTTP traffic for baseline and load testing | All |
+| [waf-encoding-evasion](/traffic-generator/en/05-suites/#waf-encoding-evasion) | Multi-layer URL/HTML/Unicode encoding, mixed nested encoding, chunked Transfer-Encoding, header injection | WAF |
+| [web-app-attacks](/traffic-generator/en/05-suites/#web-app-attacks) | SQL injection, XSS, command injection, path traversal, Nikto, Nuclei | WAF |
+| [demoapp-attacks](/traffic-generator/en/05-suites/#demoapp-attacks) | SQLi, XSS, path traversal against F5 DemoApp WAF testing endpoints | WAF |
 
 <CardGrid>
   <LinkCard

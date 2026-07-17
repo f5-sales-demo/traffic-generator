@@ -10,15 +10,15 @@ hero:
     포함된 트래픽 생성 VM을 배포하세요.
   actions:
     - text: 시작하기
-      link: /traffic-generator/01-architecture/
+      link: /traffic-generator/ko/01-architecture/
       icon: right-arrow
       variant: primary
     - text: 지금 배포
-      link: /traffic-generator/03-deploy/
+      link: /traffic-generator/ko/03-deploy/
       icon: rocket
       variant: minimal
 i18n:
-  sourceHash: dcdf052b1e68
+  sourceHash: 614628e12b9f
   translator: machine
 ---
 
@@ -35,25 +35,25 @@ import LinkCard from '@f5-sales-demo/docs-theme/components/LinkCard.astro';
 
 | 스위트 | 설명 | 검증되는 F5 XC 기능 |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, SQLMap API 모드, 파라미터 검색, 엔드포인트 퍼징 | API 보안 |
-| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | 헤드리스 Chrome, Puppeteer 스텔스, Playwright 자동화, 고속 크롤링 | Bot 방어 |
-| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | 캐시 동작, 썬더링 허드, 연결 풀, HTTP/2 멀티플렉싱 | CDN 통합 |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, OTP 무차별 대입, JWT 조작, SSRF, NoSQL 인젝션, IDOR | API 보안 |
-| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | 카드 스키머, 폼재킹, 키로거, 크립토마이너, DOM 하이재킹 | 클라이언트 측 방어 |
-| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | 배치 쿼리 DoS, 깊은 재귀, SQL 인젝션, 인트로스펙션 남용 | API 보안 (GraphQL) |
-| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | 무차별 대입, 커맨드 인젝션, CSRF, 파일 인클루전, SQLi, XSS | 웹 앱 방화벽 (WAF) |
-| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM 조작, 인라인 스크립트 인젝션, Magecart 스타일 스키밍 페이로드 | 클라이언트 측 방어 |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi 로그인 우회, XSS, IDOR, 관리자 접근, 널 바이트 파일 접근 | 웹 앱 방화벽 (WAF), Bot 방어 |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK 전술: 정찰, 초기 접근, 자격 증명 접근, 데이터 유출 | 웹 앱 방화벽 (WAF), Bot 방어, API 보안 |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, Nmap 취약점 스캐닝, 통합 OWASP 보고서 | 웹 앱 방화벽 (WAF), 웹 앱 스캐닝 |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | 동시성 램프, 지속 부하, 스파이크 테스트, 브레이크포인트 탐색 | DDoS 보호, 속도 제한 |
-| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, 디렉터리 무차별 대입 | 웹 앱 방화벽 (WAF) / Bot 방어 |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, 속도 제한 우회, JWT 취약한 시크릿 | API 보안 |
-| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan, sslyze, testssl.sh TLS 구성 분석 | 웹 앱 방화벽 (WAF) |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | 기준선 및 부하 테스트를 위한 대용량 정상 HTTP 트래픽 | 전체 |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | 다층 URL/HTML/유니코드 인코딩, 혼합 중첩 인코딩, 청크 TE, 헤더 인젝션 | 웹 앱 방화벽 (WAF) |
-| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | SQL 인젝션, XSS, 커맨드 인젝션, 경로 탐색, Nikto, Nuclei | 웹 앱 방화벽 (WAF) |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | F5 DemoApp 웹 앱 방화벽 (WAF) 테스트 엔드포인트 대상 SQLi, XSS, 경로 탐색 | 웹 앱 방화벽 (WAF) |
+| [api-attacks](/traffic-generator/ko/05-suites/#api-attacks) | OWASP API Top 10, SQLMap API 모드, 파라미터 검색, 엔드포인트 퍼징 | API 보안 |
+| [bot-simulation](/traffic-generator/ko/05-suites/#bot-simulation) | 헤드리스 Chrome, Puppeteer 스텔스, Playwright 자동화, 고속 크롤링 | Bot 방어 |
+| [cdn-load-testing](/traffic-generator/ko/05-suites/#cdn-load-testing) | 캐시 동작, 썬더링 허드, 연결 풀, HTTP/2 멀티플렉싱 | CDN 통합 |
+| [crapi-exploits](/traffic-generator/ko/05-suites/#crapi-exploits) | BOLA, OTP 무차별 대입, JWT 조작, SSRF, NoSQL 인젝션, IDOR | API 보안 |
+| [csd-demo-attacks](/traffic-generator/ko/05-suites/#csd-demo-attacks) | 카드 스키머, 폼재킹, 키로거, 크립토마이너, DOM 하이재킹 | 클라이언트 측 방어 |
+| [dvga-exploits](/traffic-generator/ko/05-suites/#dvga-exploits) | 배치 쿼리 DoS, 깊은 재귀, SQL 인젝션, 인트로스펙션 남용 | API 보안 (GraphQL) |
+| [dvwa-exploits](/traffic-generator/ko/05-suites/#dvwa-exploits) | 무차별 대입, 커맨드 인젝션, CSRF, 파일 인클루전, SQLi, XSS | 웹 앱 방화벽 (WAF) |
+| [javascript-exploits](/traffic-generator/ko/05-suites/#javascript-exploits) | DOM 조작, 인라인 스크립트 인젝션, Magecart 스타일 스키밍 페이로드 | 클라이언트 측 방어 |
+| [juice-shop-exploits](/traffic-generator/ko/05-suites/#juice-shop-exploits) | SQLi 로그인 우회, XSS, IDOR, 관리자 접근, 널 바이트 파일 접근 | 웹 앱 방화벽 (WAF), Bot 방어 |
+| [mitre-attack](/traffic-generator/ko/05-suites/#mitre-attack) | ATT&CK 전술: 정찰, 초기 접근, 자격 증명 접근, 데이터 유출 | 웹 앱 방화벽 (WAF), Bot 방어, API 보안 |
+| [owasp-scanning](/traffic-generator/ko/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, Nmap 취약점 스캐닝, 통합 OWASP 보고서 | 웹 앱 방화벽 (WAF), 웹 앱 스캐닝 |
+| [performance-testing](/traffic-generator/ko/05-suites/#performance-testing) | 동시성 램프, 지속 부하, 스파이크 테스트, 브레이크포인트 탐색 | DDoS 보호, 속도 제한 |
+| [reconnaissance](/traffic-generator/ko/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, 디렉터리 무차별 대입 | 웹 앱 방화벽 (WAF) / Bot 방어 |
+| [restaurant-exploits](/traffic-generator/ko/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, 속도 제한 우회, JWT 취약한 시크릿 | API 보안 |
+| [ssl-scanning](/traffic-generator/ko/05-suites/#ssl-scanning) | SSLScan, sslyze, testssl.sh TLS 구성 분석 | 웹 앱 방화벽 (WAF) |
+| [traffic-generation](/traffic-generator/ko/05-suites/#traffic-generation) | 기준선 및 부하 테스트를 위한 대용량 정상 HTTP 트래픽 | 전체 |
+| [waf-encoding-evasion](/traffic-generator/ko/05-suites/#waf-encoding-evasion) | 다층 URL/HTML/유니코드 인코딩, 혼합 중첩 인코딩, 청크 TE, 헤더 인젝션 | 웹 앱 방화벽 (WAF) |
+| [web-app-attacks](/traffic-generator/ko/05-suites/#web-app-attacks) | SQL 인젝션, XSS, 커맨드 인젝션, 경로 탐색, Nikto, Nuclei | 웹 앱 방화벽 (WAF) |
+| [demoapp-attacks](/traffic-generator/ko/05-suites/#demoapp-attacks) | F5 DemoApp 웹 앱 방화벽 (WAF) 테스트 엔드포인트 대상 SQLi, XSS, 경로 탐색 | 웹 앱 방화벽 (WAF) |
 
 <CardGrid>
   <LinkCard
