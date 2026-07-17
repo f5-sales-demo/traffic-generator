@@ -12,15 +12,15 @@ hero:
     una validazione completa delle demo F5 XC.
   actions:
     - text: Inizia
-      link: /traffic-generator/01-architecture/
+      link: /traffic-generator/it/01-architecture/
       icon: right-arrow
       variant: primary
     - text: Distribuisci ora
-      link: /traffic-generator/03-deploy/
+      link: /traffic-generator/it/03-deploy/
       icon: rocket
       variant: minimal
 i18n:
-  sourceHash: dcdf052b1e68
+  sourceHash: c814f46e1009
   translator: machine
 ---
 
@@ -37,25 +37,25 @@ Tutti gli strumenti sono pre-installati tramite cloud-init durante il provisioni
 
 | Suite | Descrizione | Funzionalità F5 XC validata |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, modalità API di SQLMap, discovery dei parametri, fuzzing degli endpoint | Sicurezza API |
-| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Chrome headless, Puppeteer stealth, automazione Playwright, crawling rapido | Difesa Bot |
-| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | Comportamento della cache, thundering herd, pool di connessioni, multiplexing HTTP/2 | Integrazione CDN |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, bruteforce OTP, manipolazione JWT, SSRF, iniezione NoSQL, IDOR | Sicurezza API |
-| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | Card skimmer, formjacker, keylogger, cryptominer, DOM hijack | Difesa lato client |
-| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | DoS tramite batch query, ricorsione profonda, iniezione SQL, abuso di introspezione | Sicurezza API (GraphQL) |
-| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | Brute force, iniezione di comandi, CSRF, file inclusion, SQLi, XSS | Firewall per applicazioni web (WAF) |
-| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | Manipolazione DOM, iniezione di script inline, payload di skimming in stile Magecart | Difesa lato client |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | Bypass login SQLi, XSS, IDOR, accesso admin, accesso file con null byte | Firewall per applicazioni web (WAF), Difesa Bot |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | Tattiche ATT&CK: ricognizione, accesso iniziale, accesso alle credenziali, esfiltrazione | Firewall per applicazioni web (WAF), Difesa Bot, Sicurezza API |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, scansione vulnerabilità Nmap, report OWASP combinato | Firewall per applicazioni web (WAF), Scansione delle applicazioni web |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | Rampa di concorrenza, carico sostenuto, spike testing, scoperta del punto di rottura | Protezione DDoS, Limitazione della velocità |
-| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, brute-forcing delle directory | Firewall per applicazioni web (WAF) / Difesa Bot |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, bypass della limitazione della velocità, segreto JWT debole | Sicurezza API |
-| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan, sslyze, analisi della configurazione TLS con testssl.sh | Firewall per applicazioni web (WAF) |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | Traffico HTTP legittimo ad alto volume per baseline e load testing | Tutto |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | Codifica URL/HTML/Unicode a più livelli, codifica annidata mista, TE a blocchi, iniezione di header | Firewall per applicazioni web (WAF) |
-| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | Iniezione SQL, XSS, iniezione di comandi, path traversal, Nikto, Nuclei | Firewall per applicazioni web (WAF) |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi, XSS, path traversal contro gli endpoint di test WAF di F5 DemoApp | Firewall per applicazioni web (WAF) |
+| [api-attacks](/traffic-generator/it/05-suites/#api-attacks) | OWASP API Top 10, modalità API di SQLMap, discovery dei parametri, fuzzing degli endpoint | Sicurezza API |
+| [bot-simulation](/traffic-generator/it/05-suites/#bot-simulation) | Chrome headless, Puppeteer stealth, automazione Playwright, crawling rapido | Difesa Bot |
+| [cdn-load-testing](/traffic-generator/it/05-suites/#cdn-load-testing) | Comportamento della cache, thundering herd, pool di connessioni, multiplexing HTTP/2 | Integrazione CDN |
+| [crapi-exploits](/traffic-generator/it/05-suites/#crapi-exploits) | BOLA, bruteforce OTP, manipolazione JWT, SSRF, iniezione NoSQL, IDOR | Sicurezza API |
+| [csd-demo-attacks](/traffic-generator/it/05-suites/#csd-demo-attacks) | Card skimmer, formjacker, keylogger, cryptominer, DOM hijack | Difesa lato client |
+| [dvga-exploits](/traffic-generator/it/05-suites/#dvga-exploits) | DoS tramite batch query, ricorsione profonda, iniezione SQL, abuso di introspezione | Sicurezza API (GraphQL) |
+| [dvwa-exploits](/traffic-generator/it/05-suites/#dvwa-exploits) | Brute force, iniezione di comandi, CSRF, file inclusion, SQLi, XSS | Firewall per applicazioni web (WAF) |
+| [javascript-exploits](/traffic-generator/it/05-suites/#javascript-exploits) | Manipolazione DOM, iniezione di script inline, payload di skimming in stile Magecart | Difesa lato client |
+| [juice-shop-exploits](/traffic-generator/it/05-suites/#juice-shop-exploits) | Bypass login SQLi, XSS, IDOR, accesso admin, accesso file con null byte | Firewall per applicazioni web (WAF), Difesa Bot |
+| [mitre-attack](/traffic-generator/it/05-suites/#mitre-attack) | Tattiche ATT&CK: ricognizione, accesso iniziale, accesso alle credenziali, esfiltrazione | Firewall per applicazioni web (WAF), Difesa Bot, Sicurezza API |
+| [owasp-scanning](/traffic-generator/it/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, scansione vulnerabilità Nmap, report OWASP combinato | Firewall per applicazioni web (WAF), Scansione delle applicazioni web |
+| [performance-testing](/traffic-generator/it/05-suites/#performance-testing) | Rampa di concorrenza, carico sostenuto, spike testing, scoperta del punto di rottura | Protezione DDoS, Limitazione della velocità |
+| [reconnaissance](/traffic-generator/it/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, brute-forcing delle directory | Firewall per applicazioni web (WAF) / Difesa Bot |
+| [restaurant-exploits](/traffic-generator/it/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, bypass della limitazione della velocità, segreto JWT debole | Sicurezza API |
+| [ssl-scanning](/traffic-generator/it/05-suites/#ssl-scanning) | SSLScan, sslyze, analisi della configurazione TLS con testssl.sh | Firewall per applicazioni web (WAF) |
+| [traffic-generation](/traffic-generator/it/05-suites/#traffic-generation) | Traffico HTTP legittimo ad alto volume per baseline e load testing | Tutto |
+| [waf-encoding-evasion](/traffic-generator/it/05-suites/#waf-encoding-evasion) | Codifica URL/HTML/Unicode a più livelli, codifica annidata mista, TE a blocchi, iniezione di header | Firewall per applicazioni web (WAF) |
+| [web-app-attacks](/traffic-generator/it/05-suites/#web-app-attacks) | Iniezione SQL, XSS, iniezione di comandi, path traversal, Nikto, Nuclei | Firewall per applicazioni web (WAF) |
+| [demoapp-attacks](/traffic-generator/it/05-suites/#demoapp-attacks) | SQLi, XSS, path traversal contro gli endpoint di test WAF di F5 DemoApp | Firewall per applicazioni web (WAF) |
 
 <CardGrid>
   <LinkCard

@@ -12,15 +12,15 @@ hero:
     validation complète des démonstrations F5 XC.
   actions:
     - text: Commencer
-      link: /traffic-generator/01-architecture/
+      link: /traffic-generator/fr/01-architecture/
       icon: right-arrow
       variant: primary
     - text: Déployer maintenant
-      link: /traffic-generator/03-deploy/
+      link: /traffic-generator/fr/03-deploy/
       icon: rocket
       variant: minimal
 i18n:
-  sourceHash: dcdf052b1e68
+  sourceHash: c814f46e1009
   translator: machine
 ---
 
@@ -37,25 +37,25 @@ Tous les outils sont préinstallés via cloud-init lors du provisionnement Terra
 
 | Suite | Description | Fonctionnalité F5 XC validée |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10, mode API SQLMap, découverte de paramètres, fuzzing de points de terminaison | Sécurité des API |
-| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | Chrome headless, furtivité Puppeteer, Automatisation Playwright, exploration rapide | Défense Bot |
-| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | Comportement du cache, thundering herd, pool de connexions, multiplexage HTTP/2 | Intégration CDN |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA, force brute OTP, manipulation JWT, SSRF, injection NoSQL, IDOR | Sécurité des API |
-| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | Écrémeur de carte, formjacker, keylogger, cryptomineur, détournement DOM | Défense côté client |
-| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | DoS par requête batch, récursion profonde, injection SQL, abus d'introspection | Sécurité des API (GraphQL) |
-| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | Force brute, injection de commandes, CSRF, inclusion de fichiers, SQLi, XSS | Pare-feu applicatif (WAF) |
-| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | Manipulation DOM, injection de scripts inline, charges utiles d'écrémage de style Magecart | Défense côté client |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | Contournement de connexion par SQLi, XSS, IDOR, accès administrateur, accès fichier par octet nul | Pare-feu applicatif (WAF), Défense Bot |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | Tactiques ATT&CK : reconnaissance, accès initial, accès aux informations d'identification, exfiltration | Pare-feu applicatif (WAF), Défense Bot, Sécurité des API |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, analyse de vulnérabilités Nmap, rapport OWASP combiné | Pare-feu applicatif (WAF), Analyse des applications web |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | Montée en charge de concurrence, charge soutenue, tests de pointe, découverte de point de rupture | Protection DDoS, Limitation de débit |
-| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, force brute de répertoires | Pare-feu applicatif (WAF) / Défense Bot |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, contournement de limitation de débit, secret JWT faible | Sécurité des API |
-| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan, sslyze, analyse de configuration TLS testssl.sh | Pare-feu applicatif (WAF) |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | Trafic HTTP légitime à volume élevé pour les tests de référence et de charge | Tous |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | Encodage multi-couches URL/HTML/Unicode, encodage imbriqué mixte, TE fragmenté, injection d'en-têtes | Pare-feu applicatif (WAF) |
-| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | Injection SQL, XSS, injection de commandes, traversée de chemin, Nikto, Nuclei | Pare-feu applicatif (WAF) |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | SQLi, XSS, traversée de chemin contre les points de terminaison de test WAF de F5 DemoApp | Pare-feu applicatif (WAF) |
+| [api-attacks](/traffic-generator/fr/05-suites/#api-attacks) | OWASP API Top 10, mode API SQLMap, découverte de paramètres, fuzzing de points de terminaison | Sécurité des API |
+| [bot-simulation](/traffic-generator/fr/05-suites/#bot-simulation) | Chrome headless, furtivité Puppeteer, Automatisation Playwright, exploration rapide | Défense Bot |
+| [cdn-load-testing](/traffic-generator/fr/05-suites/#cdn-load-testing) | Comportement du cache, thundering herd, pool de connexions, multiplexage HTTP/2 | Intégration CDN |
+| [crapi-exploits](/traffic-generator/fr/05-suites/#crapi-exploits) | BOLA, force brute OTP, manipulation JWT, SSRF, injection NoSQL, IDOR | Sécurité des API |
+| [csd-demo-attacks](/traffic-generator/fr/05-suites/#csd-demo-attacks) | Écrémeur de carte, formjacker, keylogger, cryptomineur, détournement DOM | Défense côté client |
+| [dvga-exploits](/traffic-generator/fr/05-suites/#dvga-exploits) | DoS par requête batch, récursion profonde, injection SQL, abus d'introspection | Sécurité des API (GraphQL) |
+| [dvwa-exploits](/traffic-generator/fr/05-suites/#dvwa-exploits) | Force brute, injection de commandes, CSRF, inclusion de fichiers, SQLi, XSS | Pare-feu applicatif (WAF) |
+| [javascript-exploits](/traffic-generator/fr/05-suites/#javascript-exploits) | Manipulation DOM, injection de scripts inline, charges utiles d'écrémage de style Magecart | Défense côté client |
+| [juice-shop-exploits](/traffic-generator/fr/05-suites/#juice-shop-exploits) | Contournement de connexion par SQLi, XSS, IDOR, accès administrateur, accès fichier par octet nul | Pare-feu applicatif (WAF), Défense Bot |
+| [mitre-attack](/traffic-generator/fr/05-suites/#mitre-attack) | Tactiques ATT&CK : reconnaissance, accès initial, accès aux informations d'identification, exfiltration | Pare-feu applicatif (WAF), Défense Bot, Sécurité des API |
+| [owasp-scanning](/traffic-generator/fr/05-suites/#owasp-scanning) | ZAP, Nikto, Nuclei, analyse de vulnérabilités Nmap, rapport OWASP combiné | Pare-feu applicatif (WAF), Analyse des applications web |
+| [performance-testing](/traffic-generator/fr/05-suites/#performance-testing) | Montée en charge de concurrence, charge soutenue, tests de pointe, découverte de point de rupture | Protection DDoS, Limitation de débit |
+| [reconnaissance](/traffic-generator/fr/05-suites/#reconnaissance) | Nmap, Masscan, Gobuster, Subfinder, force brute de répertoires | Pare-feu applicatif (WAF) / Défense Bot |
+| [restaurant-exploits](/traffic-generator/fr/05-suites/#restaurant-exploits) | BOLA, BOPLA, BFLA, contournement de limitation de débit, secret JWT faible | Sécurité des API |
+| [ssl-scanning](/traffic-generator/fr/05-suites/#ssl-scanning) | SSLScan, sslyze, analyse de configuration TLS testssl.sh | Pare-feu applicatif (WAF) |
+| [traffic-generation](/traffic-generator/fr/05-suites/#traffic-generation) | Trafic HTTP légitime à volume élevé pour les tests de référence et de charge | Tous |
+| [waf-encoding-evasion](/traffic-generator/fr/05-suites/#waf-encoding-evasion) | Encodage multi-couches URL/HTML/Unicode, encodage imbriqué mixte, TE fragmenté, injection d'en-têtes | Pare-feu applicatif (WAF) |
+| [web-app-attacks](/traffic-generator/fr/05-suites/#web-app-attacks) | Injection SQL, XSS, injection de commandes, traversée de chemin, Nikto, Nuclei | Pare-feu applicatif (WAF) |
+| [demoapp-attacks](/traffic-generator/fr/05-suites/#demoapp-attacks) | SQLi, XSS, traversée de chemin contre les points de terminaison de test WAF de F5 DemoApp | Pare-feu applicatif (WAF) |
 
 <CardGrid>
   <LinkCard

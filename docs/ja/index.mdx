@@ -10,15 +10,15 @@ hero:
     をデプロイして、F5 XC デモの包括的な検証を実現します。
   actions:
     - text: はじめに
-      link: /traffic-generator/01-architecture/
+      link: /traffic-generator/ja/01-architecture/
       icon: right-arrow
       variant: primary
     - text: 今すぐデプロイ
-      link: /traffic-generator/03-deploy/
+      link: /traffic-generator/ja/03-deploy/
       icon: rocket
       variant: minimal
 i18n:
-  sourceHash: dcdf052b1e68
+  sourceHash: c814f46e1009
   translator: machine
 ---
 
@@ -35,25 +35,25 @@ import LinkCard from '@f5-sales-demo/docs-theme/components/LinkCard.astro';
 
 | スイート | 説明 | 検証対象の F5 XC 機能 |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10、SQLMap API モード、パラメーター探索、エンドポイントファジング | API セキュリティ |
-| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | ヘッドレス Chrome、Puppeteer ステルス、Playwright 自動化、高速クローリング | Bot 標準防御 |
-| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | キャッシュ動作、サンダリングハード、接続プール、HTTP/2 マルチプレキシング | CDN 統合 |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA、OTP ブルートフォース、JWT 操作、SSRF、NoSQL インジェクション、IDOR | API セキュリティ |
-| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | カードスキマー、フォームジャッキング、キーロガー、クリプトマイナー、DOM ハイジャック | クライアントサイド防御 |
-| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | バッチクエリ DoS、深い再帰、SQL インジェクション、イントロスペクション悪用 | API セキュリティ (GraphQL) |
-| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | ブルートフォース、コマンドインジェクション、CSRF、ファイルインクルージョン、SQLi、XSS | Web アプリファイアウォール (WAF) |
-| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM 操作、インラインスクリプトインジェクション、Magecart スタイルのスキミングペイロード | クライアントサイド防御 |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi ログインバイパス、XSS、IDOR、管理者アクセス、ヌルバイトファイルアクセス | Web アプリファイアウォール (WAF)、Bot 標準防御 |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK 戦術: 偵察、初期アクセス、認証情報アクセス、データ流出 | Web アプリファイアウォール (WAF)、Bot 標準防御、API セキュリティ |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP、Nikto、Nuclei、Nmap 脆弱性スキャン、統合 OWASP レポート | Web アプリファイアウォール (WAF)、Web アプリスキャン |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | 同時接続数ランプ、持続的負荷、スパイクテスト、ブレークポイント探索 | DDoS 対策、レート制限 |
-| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap、Masscan、Gobuster、Subfinder、ディレクトリブルートフォース | Web アプリファイアウォール (WAF) / Bot 標準防御 |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA、BOPLA、BFLA、レート制限バイパス、JWT 弱シークレット | API セキュリティ |
-| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan、sslyze、testssl.sh TLS 設定分析 | Web アプリファイアウォール (WAF) |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | ベースラインおよび負荷テスト向けの大量の正規 HTTP トラフィック | すべて |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | 多層 URL/HTML/Unicode エンコード、混在ネストエンコード、チャンク TE、ヘッダーインジェクション | Web アプリファイアウォール (WAF) |
-| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | SQL インジェクション、XSS、コマンドインジェクション、パストラバーサル、Nikto、Nuclei | Web アプリファイアウォール (WAF) |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | F5 DemoApp WAF テストエンドポイントに対する SQLi、XSS、パストラバーサル | Web アプリファイアウォール (WAF) |
+| [api-attacks](/traffic-generator/ja/05-suites/#api-attacks) | OWASP API Top 10、SQLMap API モード、パラメーター探索、エンドポイントファジング | API セキュリティ |
+| [bot-simulation](/traffic-generator/ja/05-suites/#bot-simulation) | ヘッドレス Chrome、Puppeteer ステルス、Playwright 自動化、高速クローリング | Bot 標準防御 |
+| [cdn-load-testing](/traffic-generator/ja/05-suites/#cdn-load-testing) | キャッシュ動作、サンダリングハード、接続プール、HTTP/2 マルチプレキシング | CDN 統合 |
+| [crapi-exploits](/traffic-generator/ja/05-suites/#crapi-exploits) | BOLA、OTP ブルートフォース、JWT 操作、SSRF、NoSQL インジェクション、IDOR | API セキュリティ |
+| [csd-demo-attacks](/traffic-generator/ja/05-suites/#csd-demo-attacks) | カードスキマー、フォームジャッキング、キーロガー、クリプトマイナー、DOM ハイジャック | クライアントサイド防御 |
+| [dvga-exploits](/traffic-generator/ja/05-suites/#dvga-exploits) | バッチクエリ DoS、深い再帰、SQL インジェクション、イントロスペクション悪用 | API セキュリティ (GraphQL) |
+| [dvwa-exploits](/traffic-generator/ja/05-suites/#dvwa-exploits) | ブルートフォース、コマンドインジェクション、CSRF、ファイルインクルージョン、SQLi、XSS | Web アプリファイアウォール (WAF) |
+| [javascript-exploits](/traffic-generator/ja/05-suites/#javascript-exploits) | DOM 操作、インラインスクリプトインジェクション、Magecart スタイルのスキミングペイロード | クライアントサイド防御 |
+| [juice-shop-exploits](/traffic-generator/ja/05-suites/#juice-shop-exploits) | SQLi ログインバイパス、XSS、IDOR、管理者アクセス、ヌルバイトファイルアクセス | Web アプリファイアウォール (WAF)、Bot 標準防御 |
+| [mitre-attack](/traffic-generator/ja/05-suites/#mitre-attack) | ATT&CK 戦術: 偵察、初期アクセス、認証情報アクセス、データ流出 | Web アプリファイアウォール (WAF)、Bot 標準防御、API セキュリティ |
+| [owasp-scanning](/traffic-generator/ja/05-suites/#owasp-scanning) | ZAP、Nikto、Nuclei、Nmap 脆弱性スキャン、統合 OWASP レポート | Web アプリファイアウォール (WAF)、Web アプリスキャン |
+| [performance-testing](/traffic-generator/ja/05-suites/#performance-testing) | 同時接続数ランプ、持続的負荷、スパイクテスト、ブレークポイント探索 | DDoS 対策、レート制限 |
+| [reconnaissance](/traffic-generator/ja/05-suites/#reconnaissance) | Nmap、Masscan、Gobuster、Subfinder、ディレクトリブルートフォース | Web アプリファイアウォール (WAF) / Bot 標準防御 |
+| [restaurant-exploits](/traffic-generator/ja/05-suites/#restaurant-exploits) | BOLA、BOPLA、BFLA、レート制限バイパス、JWT 弱シークレット | API セキュリティ |
+| [ssl-scanning](/traffic-generator/ja/05-suites/#ssl-scanning) | SSLScan、sslyze、testssl.sh TLS 設定分析 | Web アプリファイアウォール (WAF) |
+| [traffic-generation](/traffic-generator/ja/05-suites/#traffic-generation) | ベースラインおよび負荷テスト向けの大量の正規 HTTP トラフィック | すべて |
+| [waf-encoding-evasion](/traffic-generator/ja/05-suites/#waf-encoding-evasion) | 多層 URL/HTML/Unicode エンコード、混在ネストエンコード、チャンク TE、ヘッダーインジェクション | Web アプリファイアウォール (WAF) |
+| [web-app-attacks](/traffic-generator/ja/05-suites/#web-app-attacks) | SQL インジェクション、XSS、コマンドインジェクション、パストラバーサル、Nikto、Nuclei | Web アプリファイアウォール (WAF) |
+| [demoapp-attacks](/traffic-generator/ja/05-suites/#demoapp-attacks) | F5 DemoApp WAF テストエンドポイントに対する SQLi、XSS、パストラバーサル | Web アプリファイアウォール (WAF) |
 
 <CardGrid>
   <LinkCard

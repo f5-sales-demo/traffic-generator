@@ -8,15 +8,15 @@ hero:
   tagline: 部署一台配備 50+ 安全工具、19 個有組織的攻擊套件以及無頭 Chrome 自動化的流量產生 VM，以進行全面的 F5 XC 示範驗證。
   actions:
     - text: 開始使用
-      link: /traffic-generator/01-architecture/
+      link: /traffic-generator/zh-tw/01-architecture/
       icon: right-arrow
       variant: primary
     - text: 立即部署
-      link: /traffic-generator/03-deploy/
+      link: /traffic-generator/zh-tw/03-deploy/
       icon: rocket
       variant: minimal
 i18n:
-  sourceHash: dcdf052b1e68
+  sourceHash: c814f46e1009
   translator: machine
 ---
 
@@ -33,25 +33,25 @@ import LinkCard from '@f5-sales-demo/docs-theme/components/LinkCard.astro';
 
 | 套件 | 說明 | 已驗證的 F5 XC 功能 |
 |---|---|---|
-| [api-attacks](/traffic-generator/05-suites/#api-attacks) | OWASP API Top 10、SQLMap API 模式、參數探索、端點模糊測試 | API Security |
-| [bot-simulation](/traffic-generator/05-suites/#bot-simulation) | 無頭 Chrome、Puppeteer 隱匿模式、Playwright 自動化、快速爬取 | Bot Defense |
-| [cdn-load-testing](/traffic-generator/05-suites/#cdn-load-testing) | 快取行為、雷群效應、連線池、HTTP/2 多工 | CDN 整合 |
-| [crapi-exploits](/traffic-generator/05-suites/#crapi-exploits) | BOLA、OTP 暴力破解、JWT 操縱、SSRF、NoSQL 注入、IDOR | API Security |
-| [csd-demo-attacks](/traffic-generator/05-suites/#csd-demo-attacks) | 信用卡側錄、表單劫持、鍵盤記錄、加密貨幣挖礦、DOM 劫持 | Client-Side Defense |
-| [dvga-exploits](/traffic-generator/05-suites/#dvga-exploits) | 批次查詢 DoS、深度遞迴、SQL 注入、內省濫用 | API Security（GraphQL） |
-| [dvwa-exploits](/traffic-generator/05-suites/#dvwa-exploits) | 暴力破解、命令注入、CSRF、檔案引入、SQLi、XSS | WAF |
-| [javascript-exploits](/traffic-generator/05-suites/#javascript-exploits) | DOM 操縱、內嵌腳本注入、Magecart 風格側錄酬載 | Client-Side Defense |
-| [juice-shop-exploits](/traffic-generator/05-suites/#juice-shop-exploits) | SQLi 登入繞過、XSS、IDOR、管理員存取、空位元組檔案存取 | WAF、Bot Defense |
-| [mitre-attack](/traffic-generator/05-suites/#mitre-attack) | ATT&CK 戰術：偵察、初始存取、憑證存取、資料外洩 | WAF、Bot Defense、API Security |
-| [owasp-scanning](/traffic-generator/05-suites/#owasp-scanning) | ZAP、Nikto、Nuclei、Nmap 漏洞掃描、OWASP 綜合報告 | WAF、Web 應用程式掃描 |
-| [performance-testing](/traffic-generator/05-suites/#performance-testing) | 並發量提升、持續負載、尖峰測試、臨界點探索 | DDoS、速率限制 |
-| [reconnaissance](/traffic-generator/05-suites/#reconnaissance) | Nmap、Masscan、Gobuster、Subfinder、目錄暴力破解 | WAF / Bot Defense |
-| [restaurant-exploits](/traffic-generator/05-suites/#restaurant-exploits) | BOLA、BOPLA、BFLA、速率限制繞過、JWT 弱密鑰 | API Security |
-| [ssl-scanning](/traffic-generator/05-suites/#ssl-scanning) | SSLScan、sslyze、testssl.sh TLS 設定分析 | WAF |
-| [traffic-generation](/traffic-generator/05-suites/#traffic-generation) | 高流量合法 HTTP 流量，用於基準和負載測試 | 全部 |
-| [waf-encoding-evasion](/traffic-generator/05-suites/#waf-encoding-evasion) | 多層 URL/HTML/Unicode 編碼、混合巢狀編碼、分塊傳輸編碼、標頭注入 | WAF |
-| [web-app-attacks](/traffic-generator/05-suites/#web-app-attacks) | SQL 注入、XSS、命令注入、路徑遍歷、Nikto、Nuclei | WAF |
-| [demoapp-attacks](/traffic-generator/05-suites/#demoapp-attacks) | 針對 F5 DemoApp WAF 測試端點的 SQLi、XSS、路徑遍歷 | WAF |
+| [api-attacks](/traffic-generator/zh-tw/05-suites/#api-attacks) | OWASP API Top 10、SQLMap API 模式、參數探索、端點模糊測試 | API Security |
+| [bot-simulation](/traffic-generator/zh-tw/05-suites/#bot-simulation) | 無頭 Chrome、Puppeteer 隱匿模式、Playwright 自動化、快速爬取 | Bot Defense |
+| [cdn-load-testing](/traffic-generator/zh-tw/05-suites/#cdn-load-testing) | 快取行為、雷群效應、連線池、HTTP/2 多工 | CDN 整合 |
+| [crapi-exploits](/traffic-generator/zh-tw/05-suites/#crapi-exploits) | BOLA、OTP 暴力破解、JWT 操縱、SSRF、NoSQL 注入、IDOR | API Security |
+| [csd-demo-attacks](/traffic-generator/zh-tw/05-suites/#csd-demo-attacks) | 信用卡側錄、表單劫持、鍵盤記錄、加密貨幣挖礦、DOM 劫持 | Client-Side Defense |
+| [dvga-exploits](/traffic-generator/zh-tw/05-suites/#dvga-exploits) | 批次查詢 DoS、深度遞迴、SQL 注入、內省濫用 | API Security（GraphQL） |
+| [dvwa-exploits](/traffic-generator/zh-tw/05-suites/#dvwa-exploits) | 暴力破解、命令注入、CSRF、檔案引入、SQLi、XSS | WAF |
+| [javascript-exploits](/traffic-generator/zh-tw/05-suites/#javascript-exploits) | DOM 操縱、內嵌腳本注入、Magecart 風格側錄酬載 | Client-Side Defense |
+| [juice-shop-exploits](/traffic-generator/zh-tw/05-suites/#juice-shop-exploits) | SQLi 登入繞過、XSS、IDOR、管理員存取、空位元組檔案存取 | WAF、Bot Defense |
+| [mitre-attack](/traffic-generator/zh-tw/05-suites/#mitre-attack) | ATT&CK 戰術：偵察、初始存取、憑證存取、資料外洩 | WAF、Bot Defense、API Security |
+| [owasp-scanning](/traffic-generator/zh-tw/05-suites/#owasp-scanning) | ZAP、Nikto、Nuclei、Nmap 漏洞掃描、OWASP 綜合報告 | WAF、Web 應用程式掃描 |
+| [performance-testing](/traffic-generator/zh-tw/05-suites/#performance-testing) | 並發量提升、持續負載、尖峰測試、臨界點探索 | DDoS、速率限制 |
+| [reconnaissance](/traffic-generator/zh-tw/05-suites/#reconnaissance) | Nmap、Masscan、Gobuster、Subfinder、目錄暴力破解 | WAF / Bot Defense |
+| [restaurant-exploits](/traffic-generator/zh-tw/05-suites/#restaurant-exploits) | BOLA、BOPLA、BFLA、速率限制繞過、JWT 弱密鑰 | API Security |
+| [ssl-scanning](/traffic-generator/zh-tw/05-suites/#ssl-scanning) | SSLScan、sslyze、testssl.sh TLS 設定分析 | WAF |
+| [traffic-generation](/traffic-generator/zh-tw/05-suites/#traffic-generation) | 高流量合法 HTTP 流量，用於基準和負載測試 | 全部 |
+| [waf-encoding-evasion](/traffic-generator/zh-tw/05-suites/#waf-encoding-evasion) | 多層 URL/HTML/Unicode 編碼、混合巢狀編碼、分塊傳輸編碼、標頭注入 | WAF |
+| [web-app-attacks](/traffic-generator/zh-tw/05-suites/#web-app-attacks) | SQL 注入、XSS、命令注入、路徑遍歷、Nikto、Nuclei | WAF |
+| [demoapp-attacks](/traffic-generator/zh-tw/05-suites/#demoapp-attacks) | 針對 F5 DemoApp WAF 測試端點的 SQLi、XSS、路徑遍歷 | WAF |
 
 <CardGrid>
   <LinkCard
