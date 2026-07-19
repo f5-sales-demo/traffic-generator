@@ -24,7 +24,7 @@ Apply where applicable to this repo:
 - **Root-cause only** — fix problems (including lint and CI failures) at the source; never skip, suppress, inline-disable, or hand-wave them. CI rejects masked issues.
 - **No backward compat** — prerelease code; make clean-break changes, no shims or deprecated interfaces.
 - **DRY** — reuse existing code, patterns, and content before adding new.
-- **Clean branches** — a branch is for trial-and-error; only verified, feature-complete code merges. A PR means "this works", not "does this work?" — never open or merge exploratory code, and drop unneeded (YAGNI) work. Once your PR is verified-merged, prune and delete your local `[gone]` branches so the workstation does not accumulate merged branches.
+- **Clean branches** — a branch is for trial-and-error; only verified, feature-complete code merges. A PR means "this works", not "does this work?" — never open or merge exploratory code, and drop unneeded (YAGNI) work. Once your PR is verified-merged, prune and delete your merged local branch so the workstation does not accumulate branches (see CONTRIBUTING.md for safe `[gone]` cleanup).
 - **Local vs CI** — `pre-commit` runs a subset; the `Lint Code Base` gate also runs textlint prose/terminology. Reproduce it before pushing.
 
 See `CONTRIBUTING.md` for the full detail.
