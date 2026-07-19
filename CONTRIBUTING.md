@@ -165,6 +165,29 @@ apply what fits.
 - Never commit broken or experimental code, or speculative work that is not needed
   (YAGNI). Keep merged history green.
 
+#### After merge: clean up local branches
+
+- The server deletes the remote branch on merge (`delete_branch_on_merge`); the local
+  copy remains and must be cleaned up, or merged branches accumulate on the workstation.
+- Once your PR is merged and CI is green, return to `main` and prune:
+  `git checkout main && git pull && git fetch --prune`.
+- Delete every branch whose upstream is gone. Squash-merges mean these are not ancestors
+  of `main` (so `git branch --merged` misses them); their deleted upstream marks them
+  `[gone]`. The `/clean_gone` skill does this in one step (and removes associated
+  worktrees) where available; otherwise detect and delete them with:
+
+  ```bash
+  git for-each-ref --format '%(refname:short) %(upstream:track)' refs/heads \
+    | awk '$2 == "[gone]" {print $1}' \
+    | xargs -r git branch -D
+  ```
+
+- Detect `[gone]` with `%(upstream:track)` as above (it emits a literal `[gone]`); do not
+  grep `git branch -vv`, which renders it as `[origin/<branch>: gone]` and will not match.
+- Safety: delete only `[gone]` branches. Never delete a branch with unmerged commits or
+  uncommitted changes, and never force-delete unmerged work. If unsure, leave the branch
+  and surface it for a human.
+
 ### Local checks vs CI
 
 - The authoritative lint gate is CI's `Lint Code Base` (Super-Linter). It runs more
