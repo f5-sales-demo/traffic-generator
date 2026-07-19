@@ -20,6 +20,13 @@ Describe how you'd like this feature to work.
 
 Describe any alternative solutions or features you've considered.
 
+## Acceptance Criteria
+
+A checklist of specific, objectively verifiable conditions that must all be true for
+this to be considered done. Each item should be testable, not aspirational.
+
+- [ ]
+
 ## Additional Context
 
 Add any other context, mockups, or references about the feature request here.

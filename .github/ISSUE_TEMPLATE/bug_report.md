@@ -29,6 +29,13 @@ A clear and concise description of what actually happened.
 - Browser: [e.g., Chrome 120, Firefox 121]
 - Version/Commit: [e.g., commit SHA or tag]
 
+## Acceptance Criteria
+
+How we will know the bug is fixed — the specific, objectively verifiable conditions,
+ideally a failing test that turns green.
+
+- [ ]
+
 ## Additional Context
 
 Add any other context, screenshots, or log output about the problem here.
