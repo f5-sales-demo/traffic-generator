@@ -149,6 +149,11 @@ apply what fits.
 - When a change publishes a new version or artifact, close the loop end-to-end: download,
   install, and exercise the published version to confirm the fix is real — not merely
   that the pipeline reported success.
+- Leaving a clean workspace is part of "done": once merge is confirmed and CI is green,
+  return to `main`, delete your merged local branch, and proactively report git hygiene
+  — current branch, uncommitted or unmerged changes, and any stale `[gone]` branches —
+  rather than waiting to be asked. See "After merge: clean up local branches" for the
+  safe confirm-then-delete steps.
 
 ### No papering over problems
 
