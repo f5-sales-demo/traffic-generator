@@ -169,8 +169,8 @@ apply what fits.
 
 ### Prerelease: no backward compatibility
 
-- This is prerelease code heading to production. Make clean-break changes.
-- Do not add compatibility shims or preserve deprecated interfaces — remove and replace.
+- This is prerelease, pre-production code still in development, heading to production.
+- Because nothing depends on a stable release yet, make clean-break changes: remove and replace — no compatibility shims, no deprecated interfaces.
 
 ### DRY — reuse first
 
