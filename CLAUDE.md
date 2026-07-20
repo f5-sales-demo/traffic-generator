@@ -16,11 +16,11 @@ A hook blocks direct edits — open an issue in docs-control instead.
 Apply where applicable to this repo:
 
 - **Detailed issue** — CI stays red until the PR links a detailed issue (problem, scope, acceptance criteria).
-- **Spec first** — start from an engineering-level spec, then work a task/todo list.
+- **Spec first** — start from an engineering-level spec, then work an explicit task list to the end. Keep it current, finish every item, and never silently defer or abandon work; if blocked, mark it blocked and say what's needed.
 - **TDD** — write the failing test first, then the code.
 - **Automate UAT** — automate acceptance testing wherever possible.
 - **Programmatic & idempotent** — fix with deterministic, re-runnable automation, not one-off manual steps; the same run yields the same result in CI.
-- **Verify before done (IMPORTANT)** — never guess; verify locally before you push. Watch the GitHub Actions runs to completion; when a change publishes a version, install and exercise it. Every PR must carry evidence (commands, output, run link) — no unverified claims.
+- **Verify before done (IMPORTANT)** — never guess; verify locally before you push, and mark a task complete only when its result is verified with evidence (commands, output, run link). Watch the GitHub Actions runs to completion; when a change publishes a version, install and exercise it. No unverified claims.
 - **Root-cause only** — fix problems (including lint and CI failures) at the source; never skip, suppress, inline-disable, or hand-wave them. CI rejects masked issues.
 - **No backward compat** — prerelease code; make clean-break changes, no shims or deprecated interfaces.
 - **DRY** — reuse existing code, patterns, and content before adding new.

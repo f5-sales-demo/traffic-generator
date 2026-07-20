@@ -101,6 +101,21 @@ apply what fits.
 - Start non-trivial work from an engineering-level spec: what and why, the interfaces or
   content affected, and acceptance criteria.
 - Break the spec into an explicit task/todo list and work it item by item.
+- Keep the task list current: generally one item in progress at a time (one per worker
+  when work is fanned out across agents), mark it complete the moment it is genuinely
+  done, add newly-discovered work as new items rather than silently widening an existing
+  one, and remove an item that turns out unnecessary with a note — never silently.
+- Mark a task complete only with verifiable evidence of its result — the command run and
+  its output, a passing test, or a run link — never on inference or "should work" (see
+  "Verify before claiming done").
+- Work the list to completion. Do not defer, punt, or silently leave items incomplete or
+  half-done. If you cannot finish an item, keep it open, mark it blocked, and state
+  exactly what blocks it and what is needed — surface it, do not drop it.
+- For long or unattended runs where finishing matters, set a `/goal` completion condition
+  (for example, "every task-list item complete with evidence, or explicitly blocked and
+  surfaced") so the session keeps
+  working toward it instead of stopping early. The condition must be checkable from what
+  you have surfaced in the session, since the evaluator cannot run tools.
 
 ### Test-driven development
 
@@ -119,6 +134,8 @@ apply what fits.
 - Never guess or assume a change works. Substantiate every "it works" / "done" claim with
   evidence: passing tests, reproducible output, or a workflow run link.
 - Do not assert completion you have not verified.
+- This applies per task-list item, not only at the end: do not mark an item complete
+  without its evidence.
 - Verify locally before you push: run the tests, then run or exercise the change itself
   (the dev server, or the actual command path a user hits) and confirm the behavior. CI
   and the PR are not your test harness — do not push to find out whether it works.
