@@ -1,0 +1,10 @@
+---
+# Registers the "code-review" self-hosted runner label so actionlint (run by
+# Super-Linter, which reads linter configs from the repo root: LINTER_RULES_PATH=".")
+# accepts `runs-on: [self-hosted, macOS, code-review]` in the governed Code Review
+# caller. Harmless on repos without the reviewer — it only declares a valid label.
+self-hosted-runner:
+  labels:
+    - code-review
+
+config-variables: null
