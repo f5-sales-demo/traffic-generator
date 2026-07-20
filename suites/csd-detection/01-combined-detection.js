@@ -53,8 +53,12 @@ const isBeacon = (u) => /__imp_apg__\/api\/dip/.test(u);
     const responses = [];
     page.on('response', (r) => {
       const u = r.url();
-      if (isCsdJs(u) || isBeacon(u) || CDNS.some((c) => u.startsWith(c.url.split('/npm')[0])) ||
-          EXFIL.some((e) => u.startsWith(e.split('/').slice(0, 3).join('/')))) {
+      if (
+        isCsdJs(u) ||
+        isBeacon(u) ||
+        CDNS.some((c) => u.startsWith(c.url.split('/npm')[0])) ||
+        EXFIL.some((e) => u.startsWith(e.split('/').slice(0, 3).join('/')))
+      ) {
         responses.push({ status: r.status(), method: r.request().method(), url: u });
       }
     });
@@ -102,15 +106,17 @@ const isBeacon = (u) => /__imp_apg__\/api\/dip/.test(u);
 
     console.log(`[CSD Detection] harvested ${harvested} form fields`);
     console.log(`[CSD Detection] CDN script requests: ${cdnHits.length} (${cdnHits.map((r) => r.status).join(',')})`);
-    console.log(`[CSD Detection] external exfil requests: ${exfilHits.length} (${exfilHits.map((r) => r.status).join(',')})`);
+    console.log(
+      `[CSD Detection] external exfil requests: ${exfilHits.length} (${exfilHits.map((r) => r.status).join(',')})`,
+    );
     console.log(`[CSD Detection] CSD JS load: ${csdJs ? csdJs.status : 'MISSING'}`);
     console.log(`[CSD Detection] CSD telemetry beacon (dip): ${beacon ? beacon.status : 'MISSING'}`);
 
-    if (!csdJs || csdJs.status !== 200) {
+    if (csdJs?.status !== 200) {
       console.error('FAIL: CSD JS not injected on target (CSD not enabled/propagated on the LB).');
       process.exit(1);
     }
-    if (!beacon || beacon.status !== 200) {
+    if (beacon?.status !== 200) {
       console.error('FAIL: CSD telemetry beacon did not fire/return 200 (browser did not report activity).');
       process.exit(1);
     }
