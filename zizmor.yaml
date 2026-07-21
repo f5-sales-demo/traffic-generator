@@ -10,10 +10,6 @@ rules:
   # for our use case
   artipacked:
     disable: true
-  # pull_request_target is intentional in
-  # this governance repo
-  dangerous-triggers:
-    disable: true
   # dependabot[bot] actor check is standard
   # practice for auto-merge
   bot-conditions:
@@ -22,17 +18,17 @@ rules:
   # for our update frequency
   dependabot-cooldown:
     disable: true
-  # Template injection findings are false
-  # positives in controlled workflow contexts
+  # template-injection stays ENABLED fleet-wide so untrusted-data code
+  # injection (PR titles, branch names, comment bodies flowing into run:)
+  # is caught. github-pages-deploy.yml is scoped-ignored: it triggers only on
+  # `push: main` (already-merged, trusted content) and its expansions are
+  # trusted workflow_call inputs plus non-attacker github context
+  # (github.workspace, github.repository_owner) — no untrusted-data path, and
+  # the flagged lines live inside a docker `run:` block scalar that cannot
+  # carry an inline ignore comment. Every other workflow stays audited.
   template-injection:
-    disable: true
-  # Reusable workflow callers inherit
-  # permissions from callers, making
-  # zizmor's analysis unreliable. Repos
-  # manage permissions via workflow-level
-  # blocks.
-  excessive-permissions:
-    disable: true
+    ignore:
+      - github-pages-deploy.yml
   # Standard GitHub Actions cache patterns
   # (setup-node, upload-artifact) are flagged
   # as cache poisoning vectors; these are
