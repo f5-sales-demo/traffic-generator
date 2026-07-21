@@ -9,7 +9,6 @@ A hook blocks direct edits — open an issue in docs-control instead.
 
 - `main` is protected — never commit or push to it directly.
 - Work on a feature branch and open a pull request.
-- Every PR must reference a detailed GitHub issue (CI enforces this).
 
 ## Engineering Standards
 
