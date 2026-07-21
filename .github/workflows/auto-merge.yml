@@ -1,7 +1,10 @@
 ---
 name: Auto-Merge
+# `pull_request` (NOT pull_request_target): the reusable never needs fork context.
+# Same-repo PRs run with secrets + a writable token; fork PRs run with neither, so
+# the reusable's author-trust gate declines them. Keeps the PAT out of fork runs.
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, reopened, ready_for_review]
 
 permissions:
@@ -10,8 +13,9 @@ permissions:
 
 jobs:
   call:
-    # Enable auto-merge on any non-draft PR (merge still gated by branch
-    # protection + required checks). Dependabot PRs use dependabot-auto-merge.yml.
+    # Candidate filter only (non-draft, non-dependabot). The reusable further gates
+    # the actual merge on author write/admin permission, and branch protection +
+    # required checks still gate the merge. Dependabot uses dependabot-auto-merge.yml.
     if: >-
       github.event.pull_request.draft == false &&
       github.actor != 'dependabot[bot]'
