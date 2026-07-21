@@ -2,12 +2,24 @@
 
 This document describes the workflow and rules that all contributors — human and AI — must follow.
 
+## Ecosystem & governance
+
+This repository is part of a fleet governed by a central hub, **docs-control**. If you are not in
+docs-control, you are in a **downstream** repository.
+
+- **Managed files** — including this `CONTRIBUTING.md` and `CLAUDE.md` — are owned by docs-control
+  and synced to every downstream repo. Do not edit them directly here; a hook blocks it. To change
+  one, open an issue in docs-control: the change is made there and propagates fleet-wide. The
+  authoritative list is `.claude/governance.json`.
+- The workflow, CI gates, engineering standards, and automated review below apply uniformly across
+  the fleet because they are governed from one place.
+
 ## Workflow Overview
 
 Every change follows this path:
 
 ```
-Issue → Branch → PR (linked to issue) → CI passes → Merge → Branch auto-deleted
+Issue → Branch → PR (linked to issue) → CI + automated code review pass → auto-merge when green → Branch auto-deleted
 ```
 
 No exceptions. PRs without a linked issue will be blocked by CI.
@@ -57,10 +69,32 @@ git checkout -b feature/42-add-rate-limiting
 
 ## Step 5: Review and Merge
 
-- All CI checks must pass before merge
-- PRs require manual review and approval before merge
-- Squash merge is preferred
-- The branch is automatically deleted after merge (`delete_branch_on_merge` is enabled)
+- All required CI checks must pass before merge.
+- On ecosystem repos, an automated Claude Code review is a required check (see
+  [Automated code review](#automated-code-review)); address any blocking findings before merge.
+- Merging is automated: once every required check is green, auto-merge squash-merges the PR.
+- The branch is automatically deleted after merge (`delete_branch_on_merge` is enabled); clean up
+  your local branch afterward.
+
+## Automated code review
+
+Every downstream pull request is reviewed by a **Claude Code reviewer** running on a self-hosted
+runner. It is a **required status check** (`review / claude-review`) — auto-merge will not merge
+until it passes.
+
+- **It enforces the [Engineering Standards](#engineering-standards) in this document** — it is not
+  a separate rulebook. Meet those standards and it approves. Its reviewer persona and rubric live
+  in `REVIEW.md` in docs-control.
+- **It emits a verdict** — approve, comment, or block. A blocking verdict holds the PR.
+- **A blocking verdict is authoritative.** Read the findings, fix them at the source on the
+  branch, and push — a new push re-runs the review. Repeat until it approves.
+- **Never work around it.** Do not merge past it, disable or skip the check, dismiss the review,
+  or rename your branch to an automated-branch prefix to dodge it. If you believe a finding is
+  wrong, say so in a PR comment and escalate to a human — do not override it yourself.
+- **Automated/bot branches** (for example `sync/…`, `dependabot/…`) intentionally bypass review
+  and the linked-issue check — this is for machine-generated PRs only. The authoritative prefix
+  list lives in `require-linked-issue.yml` and `code-review.yml`; never adopt such a prefix for
+  human or agent work.
 
 ## Branch Protection Rules
 
@@ -68,7 +102,7 @@ The `main` branch is protected. The following rules are enforced:
 
 - No direct pushes to `main` — all changes go through PRs
 - No force pushes
-- Required status checks: `Check linked issues` and `Lint Code Base` must pass
+- Required status checks: `Check linked issues` and `Lint Code Base` must pass; ecosystem repos additionally require the `review / claude-review` check
 - Admin enforcement enabled — these rules apply to everyone
 
 ## AI Assistant Guidelines
@@ -83,6 +117,7 @@ If you are Claude Code, Copilot, or another AI coding assistant, follow these ru
 6. **Fill out the PR template checklist** completely.
 7. **Follow the branch naming convention**: `feature/<issue>-desc`, `fix/<issue>-desc`, `docs/<issue>-desc`.
 8. **Respect CODEOWNERS** — Review the CODEOWNERS file for the default reviewer.
+9. **The automated reviewer is authoritative** — if it blocks, fix and re-push; never bypass, disable, or override it. See [Automated code review](#automated-code-review).
 
 ## Engineering Standards
 

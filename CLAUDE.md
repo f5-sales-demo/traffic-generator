@@ -9,6 +9,8 @@ A hook blocks direct edits — open an issue in docs-control instead.
 
 - `main` is protected — never commit or push to it directly.
 - Work on a feature branch and open a pull request.
+- Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, linked-issue check, and — on ecosystem repos — a Claude Code review) → auto-merge when every check is green → remote branch auto-deleted.
+- The Claude Code review is a **required, merge-gating check** that can block. On a block, read its findings, fix at the source, and push to re-trigger it — never merge around it, disable it, or rename the branch to a bypass prefix. See CONTRIBUTING.md.
 
 ## Engineering Standards
 
