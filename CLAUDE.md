@@ -23,7 +23,7 @@ Apply where applicable to this repo:
 - **Root-cause only** — fix problems (including lint and CI failures) at the source; never skip, suppress, inline-disable, or hand-wave them. CI rejects masked issues.
 - **No backward compat** — prerelease, pre-production code under active development; make clean-break changes, never add compatibility shims or keep deprecated interfaces.
 - **DRY** — reuse existing code, patterns, and content before adding new.
-- **Clean branches** — only verified, feature-complete code merges; never merge exploratory or unneeded (YAGNI) work. Cleanup is part of "done": once verified-merged, return to main, delete your merged branch, and report git hygiene (branch, uncommitted changes, stale `[gone]` branches) unprompted — see CONTRIBUTING.md for safe `[gone]` cleanup.
+- **Clean branches** — only verified, feature-complete code merges; never merge exploratory or unneeded (YAGNI) work. Cleanup is part of "done": once verified-merged, return to main, delete your merged branch, and report git hygiene (branch, uncommitted changes, stale `[gone]` branches) unprompted — see CONTRIBUTING.md for safe `[gone]` cleanup and per-session isolation of concurrent sessions.
 - **Local vs CI** — `pre-commit` runs a subset; the `Lint Code Base` gate also runs textlint prose/terminology. Reproduce it before pushing.
 
 See `CONTRIBUTING.md` for the full detail.
