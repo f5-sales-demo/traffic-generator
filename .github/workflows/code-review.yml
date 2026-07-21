@@ -26,21 +26,34 @@ jobs:
     # below — anything skipped here must get its status posted there, or the PR
     # deadlocks.
     #
+    # The automated set mirrors require-linked-issue.yml's EXCLUDE_BRANCHES
+    # (dependabot, release, openapi-sync, plugin-sync, deps, sync, docs/update-*)
+    # plus governance/, auto-regenerate/, auto-generate/, autoresearch/ — so a
+    # machine-generated PR is bypassed by BOTH gates consistently instead of
+    # burning a real Opus review on the laptop runner.
+    #
     # dependabot/ requires actor == dependabot[bot]: a human naming a branch
-    # `dependabot/x` therefore gets the REAL review, not a free pass. governance/,
-    # sync/ and release/ are created by the sync workflow via a human-owned PAT
+    # `dependabot/x` therefore gets the REAL review, not a free pass. The other
+    # prefixes are created by sync/automation via a human-owned PAT
     # (REPO_SYNC_TOKEN), so github.actor is a human account and cannot distinguish
-    # a genuine sync PR from a person naming the branch — a prefix check is the
-    # best signal available here. RESIDUAL RISK: a write-access contributor could
-    # bypass the required review by using one of those prefixes. Mitigated by
+    # a genuine automated PR from a person naming the branch — a prefix check is
+    # the best signal available here. RESIDUAL RISK: a write-access contributor
+    # could bypass the required review by using one of those prefixes. Mitigated by
     # trusted-write-access + the reusable's fork guard; full closure requires a
-    # dedicated bot/App identity for the sync or a branch-creation ruleset
-    # restricting who may push governance/*, sync/*, release/*.
+    # dedicated bot/App identity for the automation or a branch-creation ruleset
+    # restricting who may push those prefixes.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
       !(startsWith(github.head_ref, 'governance/') ||
         startsWith(github.head_ref, 'sync/') ||
         startsWith(github.head_ref, 'release/') ||
+        startsWith(github.head_ref, 'openapi-sync/') ||
+        startsWith(github.head_ref, 'plugin-sync/') ||
+        startsWith(github.head_ref, 'deps/') ||
+        startsWith(github.head_ref, 'docs/update-') ||
+        startsWith(github.head_ref, 'auto-regenerate/') ||
+        startsWith(github.head_ref, 'auto-generate/') ||
+        startsWith(github.head_ref, 'autoresearch/') ||
         (startsWith(github.head_ref, 'dependabot/') && github.actor == 'dependabot[bot]'))
     uses: f5-sales-demo/docs-control/.github/workflows/claude-review.yml@main
     permissions:
@@ -61,6 +74,13 @@ jobs:
       (startsWith(github.head_ref, 'governance/') ||
        startsWith(github.head_ref, 'sync/') ||
        startsWith(github.head_ref, 'release/') ||
+       startsWith(github.head_ref, 'openapi-sync/') ||
+       startsWith(github.head_ref, 'plugin-sync/') ||
+       startsWith(github.head_ref, 'deps/') ||
+       startsWith(github.head_ref, 'docs/update-') ||
+       startsWith(github.head_ref, 'auto-regenerate/') ||
+       startsWith(github.head_ref, 'auto-generate/') ||
+       startsWith(github.head_ref, 'autoresearch/') ||
        (startsWith(github.head_ref, 'dependabot/') && github.actor == 'dependabot[bot]'))
     runs-on: ubuntu-latest
     permissions:
