@@ -187,6 +187,25 @@ apply what fits.
 - Never commit broken or experimental code, or speculative work that is not needed
   (YAGNI). Keep merged history green.
 
+#### Concurrent sessions on a shared workstation
+
+- Multiple sessions on one workstation authenticate through the same `gh` login, so every
+  branch, PR, and commit is attributed to the same GitHub user — the username cannot tell you
+  which live session produced which artifact. Use the stable per-session
+  `CLAUDE_CODE_SESSION_ID` as the discriminator.
+- Derive a short slug once per session: `SLUG=$(printf '%.8s' "$CLAUDE_CODE_SESSION_ID")`
+  (for example `515f9231`).
+- Isolate each session in its own git worktree so concurrent sessions cannot mutate one shared
+  checkout: `git worktree add ../<repo>-$SLUG s-$SLUG/<branch>`.
+- Prefix every branch `s-<slug>/…` (for example `s-515f9231/docs/653-local-branch-hygiene`).
+  The prefix shows in `git branch` and the `gh pr list` head-branch column and is searchable, so
+  a session can find its own in-flight work:
+  - `gh pr list --search "head:s-<slug>"` — this session's PRs
+  - `git branch --list "s-<slug>/*"` — this session's local branches
+- Composes with the after-merge `[gone]` cleanup below: cleanup is naturally scoped per session,
+  and retiring the merged branch also removes its worktree.
+- Advisory only — a local-workstation concern CI cannot enforce.
+
 #### After merge: clean up local branches
 
 - The server deletes the remote branch on merge (`delete_branch_on_merge`); the local
