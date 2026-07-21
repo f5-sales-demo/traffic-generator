@@ -1,0 +1,78 @@
+---
+# Governed caller for the Claude PR reviewer. Synced by docs-control managed-files
+# to opted-in (runner-equipped) repos only; other repos skip it via skip_files.
+# Invokes the shared reusable reviewer in docs-control at @main (fleet convention).
+name: Code Review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Per-PR dedup: a new push cancels the superseded in-flight review for the SAME
+# PR, so two reviews of one PR never overlap and a stale commit's review does not
+# hold a machine-wide slot (see review-slot.sh). Concurrency groups are scoped per
+# repository, so this key needs no repo component (PR #5 in two repos never
+# collide). Same idiom as require-linked-issue.yml / super-linter.yml callers.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Real agentic review for HUMAN, same-repo PRs. Skipped for genuine automated
+    # branches (handled by review-status-automated below) so fleet automation is
+    # not gated on the laptop runner. Skipping a reusable-workflow caller does NOT
+    # satisfy a required `review / claude-review` context (the nested context is
+    # never produced), so the skip set here MUST exactly mirror the automated set
+    # below — anything skipped here must get its status posted there, or the PR
+    # deadlocks.
+    #
+    # dependabot/ requires actor == dependabot[bot]: a human naming a branch
+    # `dependabot/x` therefore gets the REAL review, not a free pass. governance/,
+    # sync/ and release/ are created by the sync workflow via a human-owned PAT
+    # (REPO_SYNC_TOKEN), so github.actor is a human account and cannot distinguish
+    # a genuine sync PR from a person naming the branch — a prefix check is the
+    # best signal available here. RESIDUAL RISK: a write-access contributor could
+    # bypass the required review by using one of those prefixes. Mitigated by
+    # trusted-write-access + the reusable's fork guard; full closure requires a
+    # dedicated bot/App identity for the sync or a branch-creation ruleset
+    # restricting who may push governance/*, sync/*, release/*.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !(startsWith(github.head_ref, 'governance/') ||
+        startsWith(github.head_ref, 'sync/') ||
+        startsWith(github.head_ref, 'release/') ||
+        (startsWith(github.head_ref, 'dependabot/') && github.actor == 'dependabot[bot]'))
+    uses: f5-sales-demo/docs-control/.github/workflows/claude-review.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+    secrets:
+      F5_GATEWAY_TOKEN: ${{ secrets.F5_GATEWAY_TOKEN }}
+      REPO_SETTINGS_TOKEN: ${{ secrets.REPO_SETTINGS_TOKEN }}
+
+  # Genuine automated branches skip the reviewer above (never touching the
+  # self-hosted runner), so the required `review / claude-review` context would
+  # never post and the PR would deadlock. Post it as a passing commit status on
+  # exactly those branches (same-repo only, so GITHUB_TOKEN can write and forks
+  # are excluded). Condition MUST mirror the negated `review` condition above.
+  review-status-automated:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (startsWith(github.head_ref, 'governance/') ||
+       startsWith(github.head_ref, 'sync/') ||
+       startsWith(github.head_ref, 'release/') ||
+       (startsWith(github.head_ref, 'dependabot/') && github.actor == 'dependabot[bot]'))
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Post passing review/claude-review status for automated PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          gh api -X POST "repos/${REPO}/statuses/${SHA}" \
+            -f state=success \
+            -f context='review / claude-review' \
+            -f description='Automated PR: AI review not required'
