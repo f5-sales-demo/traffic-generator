@@ -187,6 +187,7 @@ tui-debug.log
 .nyc_output/
 packages/ai/test/.temp-images/
 docs/superpowers/
+.superpowers/
 !.xcsh/
 .xcsh/plugins/
 .xcsh/contexts/
