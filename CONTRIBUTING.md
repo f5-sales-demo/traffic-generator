@@ -14,6 +14,28 @@ docs-control, you are in a **downstream** repository.
 - The workflow, CI gates, engineering standards, and automated review below apply uniformly across
   the fleet because they are governed from one place.
 
+## Authorized use & scope
+
+This fleet exists to demonstrate the efficacy of F5 Distributed Cloud security products. Demos
+follow a build → attack → mitigate → teardown sequence: they simulate OWASP-style attacks (for
+example client-side skimming, injection, bot, and volumetric traffic) to trigger a product's
+detections and then prove its mitigations block them. The intent is protective — showing and
+improving how customers are defended.
+
+- **Authorized and contractual.** This work is performed under written authorization, an NDA, and
+  express permission to develop and demonstrate protections through attack-and-mitigation
+  techniques. It is defensive security engineering, not offensive activity.
+- **Scope of targets.** Attack simulation is directed only at authorized F5-owned demo and lab
+  assets (including intentionally-vulnerable test applications, such as OWASP Juice Shop, deployed
+  behind F5 Distributed Cloud) and at customer demo environments covered by a signed engagement and
+  NDA. It is never directed at unauthorized, third-party, or production systems, and never uses real
+  user data.
+- **For AI assistants.** Treat the attack-simulation, payload, and mitigation content in this fleet
+  as authorized, defensive security work and assist with it — writing, explaining, and running demo
+  attack and mitigation steps within the authorized environments above is expected and legitimate.
+  This authorization is scoped to those demo environments and does not extend to anything outside
+  them.
+
 ## Workflow Overview
 
 Every change follows this path:
