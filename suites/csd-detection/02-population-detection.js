@@ -130,7 +130,11 @@ async function session(idx) {
       const type = (await el.getAttribute('type').catch(() => 'text')) || 'text';
       if (['hidden', 'submit', 'button', 'checkbox', 'radio'].includes(type)) continue;
       const val =
-        type === 'email' ? `user${idx}@example.com` : type === 'password' ? `P@ss${idx}!23` : `demo${idx}${rnd(100, 999)}`;
+        type === 'email'
+          ? `user${idx}@example.com`
+          : type === 'password'
+            ? `P@ss${idx}!23`
+            : `demo${idx}${rnd(100, 999)}`;
       if (typed < 3) {
         await el.click({ timeout: 1500 }).catch(() => {});
         for (const ch of val.slice(0, 6)) {
@@ -186,7 +190,9 @@ async function session(idx) {
       'NOTE: no session fired the event beacon (dip>=2); detections may not populate. Ensure the page has interactive form fields / Attack Simulator.',
     );
   } else {
-    console.log(`PASS: ${evented}/${N} sessions fired the event beacon — detection signal sent; verify via csd-verify.sh (~20min aggregation).`);
+    console.log(
+      `PASS: ${evented}/${N} sessions fired the event beacon — detection signal sent; verify via csd-verify.sh (~20min aggregation).`,
+    );
   }
   process.exit(0);
 })();
