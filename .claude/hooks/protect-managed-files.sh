@@ -4,10 +4,14 @@
 # Exit 0 = allow, Exit 2 = block (stderr shown to Claude).
 set -euo pipefail
 
-# ── Guard: exit if no stdin data (e.g., linter running script) ───────
-# read -t 0 checks if stdin has data without consuming it.
-# BASH_EXEC and other linters run scripts without piped input.
-if ! read -t 0 2>/dev/null; then
+# ── Guard: skip when there is no piped hook payload (e.g. a linter or shell
+# completion executing the script directly). A TTY on stdin means no hook input;
+# reading it would block. We test the descriptor type rather than `read -t 0`
+# because bash 3.2 (macOS /bin/bash) does NOT detect piped data with `read -t 0`
+# — it always reports "no data", which silently disabled this hook on macOS.
+# With a pipe/redirect on stdin we fall through and read it below; an empty
+# payload is handled by the `FILE_PATH` emptiness check further down.
+if [ -t 0 ]; then
   exit 0
 fi
 

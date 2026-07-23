@@ -14,7 +14,9 @@
     "api-specs": [".ruff.toml", ".python-lint", ".mypy.ini"],
     "api-specs-enriched": [".ruff.toml", ".python-lint", ".mypy.ini"],
     "vscode-xcsh": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg", "README.md"],
-    "i18n-core": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"]
+    "i18n-core": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
+    "console": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
+    "xcsh-chrome-extension": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"]
   },
   "protected_files": [
     ".github/workflows/github-pages-deploy.yml",
@@ -22,6 +24,9 @@
     ".github/workflows/require-linked-issue.yml",
     ".github/workflows/super-linter.yml",
     ".github/workflows/dependabot-auto-merge.yml",
+    ".github/workflows/auto-merge.yml",
+    ".github/workflows/code-review.yml",
+    ".github/workflows/translation-audit.yml",
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/ISSUE_TEMPLATE/bug_report.md",
     ".github/ISSUE_TEMPLATE/feature_request.md",
@@ -43,6 +48,7 @@
     ".editorconfig-checker.json",
     ".checkov.yaml",
     "zizmor.yaml",
+    "actionlint.yml",
     ".shellcheckrc",
     ".codespellrc",
     ".gitleaks.toml",
