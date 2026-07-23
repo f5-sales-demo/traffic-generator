@@ -2,6 +2,10 @@
 name: Require Linked Issue
 
 on:
+  # zizmor: ignore[dangerous-triggers] — this caller needs pull-requests:write on
+  # fork PRs so the required linked-issue check can post its status/comment; a plain
+  # `pull_request` gives forks a read-only token and the required check deadlocks.
+  # The caller only dispatches the reusable workflow — no PR-code checkout or exec.
   pull_request_target:
     types: [opened, edited, reopened, synchronize]
 
