@@ -20,6 +20,12 @@ A hook blocks direct edits — open an issue in docs-control instead.
 - Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, linked-issue check, and — on ecosystem repos — a Claude Code review) → auto-merge when every check is green → remote branch auto-deleted.
 - The Claude Code review is a **required, merge-gating check** that can block. On a block, read its findings, fix at the source, and push to re-trigger it — never merge around it, disable it, or rename the branch to a bypass prefix. See CONTRIBUTING.md.
 
+## Worktrees
+
+- For non-trivial coding tasks, work in a git worktree (Claude Code: `EnterWorktree` or `claude --worktree`) to isolate changes from the main checkout and enable parallel sessions.
+- New worktrees branch fresh from the default branch (`worktree.baseRef` is set to `fresh` in `.claude/settings.json`). The `.claude/worktrees/` directory is already gitignored.
+- If a repository's build needs gitignored inputs (`.env`, secrets, local config), add a repo-local `.worktreeinclude` listing them so new worktrees carry those files in.
+
 ## Engineering Standards
 
 Apply where applicable to this repo:
