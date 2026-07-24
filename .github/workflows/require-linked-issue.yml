@@ -19,5 +19,7 @@ concurrency:
 
 jobs:
   check:
+    # No `secrets:` — least privilege. The reusable uses only the automatic
+    # GITHUB_TOKEN (always available to a called workflow), so passing repository
+    # secrets would hand over more than it needs.
     uses: f5-sales-demo/docs-control/.github/workflows/require-linked-issue.yml@main
-    secrets: inherit

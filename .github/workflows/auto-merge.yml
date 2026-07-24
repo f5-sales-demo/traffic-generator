@@ -20,4 +20,9 @@ jobs:
       github.event.pull_request.draft == false &&
       github.actor != 'dependabot[bot]'
     uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@main
-    secrets: inherit
+    # Least privilege: pass ONLY the secret the reusable needs, not every
+    # repository secret (`secrets: inherit`). REPO_SYNC_TOKEN is the PAT that lets
+    # an auto-merge trigger downstream workflows; the reusable falls back to
+    # GITHUB_TOKEN when it is unset, so repos without the PAT still work.
+    secrets:
+      REPO_SYNC_TOKEN: ${{ secrets.REPO_SYNC_TOKEN }}
