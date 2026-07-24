@@ -15,5 +15,6 @@ permissions:
 jobs:
   call:
     if: github.actor == 'dependabot[bot]'
+    # No `secrets:` — least privilege. The reusable uses only the automatic
+    # GITHUB_TOKEN, so passing repository secrets would over-provision it.
     uses: f5-sales-demo/docs-control/.github/workflows/dependabot-auto-merge.yml@main
-    secrets: inherit
