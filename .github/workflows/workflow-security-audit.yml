@@ -1,0 +1,64 @@
+---
+name: Workflow Security Audit
+
+# Scheduled zizmor audit over ALL workflow files in this repo.
+#
+# WHY THIS EXISTS: the `Lint Code Base` gate runs super-linter with
+# VALIDATE_ALL_CODEBASE=false, so its zizmor pass only audits workflow files a PR
+# actually CHANGED. A workflow that is never edited is therefore never audited, and
+# its findings can sit indefinitely. That is not hypothetical: vscode-xcsh's ci.yml
+# carried 4 high-severity `template-injection` vectors (attacker-controlled
+# `repository_dispatch` client_payload interpolated into a `run:` body) plus 5
+# `excessive-permissions` findings, invisible until an unrelated PR happened to touch
+# the file. This job closes that blind spot by auditing every workflow on a schedule.
+#
+# The PR-time gate is unchanged and still catches regressions in changed files; this
+# is the backstop for the files nobody is touching.
+on:
+  schedule:
+    # Weekly, off-peak, deliberately not on the hour.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'zizmor.yaml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workflow-security-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Audit workflows (zizmor)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Full report first (all severities) into the run summary, so low and
+      # informational findings are visible and countable without failing the job.
+      - name: Report all findings
+        run: |
+          set -uo pipefail
+          {
+            echo '## Workflow security audit (zizmor)'
+            echo
+            echo 'Full report — every severity. The job only FAILS on medium or higher.'
+            echo
+            echo '```'
+            pipx run zizmor --config zizmor.yaml .github/workflows/ 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Gate on what actually matters. Low/informational findings (e.g. ad-hoc
+      # package installs) are reported above but do not fail the audit, so a repo is
+      # not permanently red over hygiene items. Medium and high — excessive
+      # permissions, template injection, credential persistence — do fail, because
+      # those are exploitable and someone needs to look.
+      - name: Fail on medium or higher
+        run: pipx run zizmor --config zizmor.yaml --min-severity medium .github/workflows/
