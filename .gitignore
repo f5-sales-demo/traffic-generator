@@ -203,3 +203,7 @@ pi-*.html
 packages/coding-agent/src/internal-urls/docs-index.generated.ts
 packages/coding-agent/src/internal-urls/build-info.generated.ts
 packages/typescript-edit-benchmark/runs/
+
+# Verified-review working artifacts (findings and verification evidence).
+# No trailing slash, so a symlink of this name is matched too.
+.codex-review

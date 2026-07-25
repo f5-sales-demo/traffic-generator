@@ -39,6 +39,23 @@ repos:
         pass_filenames: false
 
   # ===========================================================================
+  # Repository hygiene — rejects tracked symlinks with absolute targets and
+  # hardcoded home directories. A `.gitignore` pattern ending in `/` matches
+  # only directories, so a symlink of an ignored name is still staged.
+  # ===========================================================================
+  - repo: local
+    hooks:
+      - id: check-repo-hygiene
+        name: Repository hygiene
+        entry: >-
+          bash -c
+          'if [ -f scripts/check-repo-hygiene.sh ];
+          then bash scripts/check-repo-hygiene.sh; fi'
+        language: system
+        always_run: true
+        pass_filenames: false
+
+  # ===========================================================================
   # File size guard
   # ===========================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -218,6 +235,7 @@ ci:
   # They run locally and in GitHub Actions CI where tools are pre-installed.
   skip:
     - local-hooks
+    - check-repo-hygiene
     - yamllint
     - markdownlint
     - shellcheck
