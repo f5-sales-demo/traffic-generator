@@ -56,6 +56,22 @@ repos:
         pass_filenames: false
 
   # ===========================================================================
+  # Locale lint — hardcoded locale lists should import from @f5-sales-demo/i18n-core.
+  # The script no-ops in repositories that do not carry it.
+  # ===========================================================================
+  - repo: local
+    hooks:
+      - id: locale-lint
+        name: Locale lint
+        entry: >-
+          bash -c
+          'if [ -f scripts/locale-lint.sh ];
+          then bash scripts/locale-lint.sh; fi'
+        language: system
+        always_run: true
+        pass_filenames: false
+
+  # ===========================================================================
   # File size guard
   # ===========================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -236,6 +252,7 @@ ci:
   skip:
     - local-hooks
     - check-repo-hygiene
+    - locale-lint
     - yamllint
     - markdownlint
     - shellcheck

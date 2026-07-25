@@ -41,6 +41,15 @@ check_pattern() {
   return 0
 }
 
+# The package that owns these definitions cannot import them from itself. The
+# exclusion below matches "i18n-core/src/", which only appears when i18n-core is a
+# dependency; inside its own repository the path is "./src/...", so the check used
+# to flag its own source of truth and could never pass there.
+if [ -f package.json ] && grep -qE '"name"[[:space:]]*:[[:space:]]*"@f5-sales-demo/i18n-core"' package.json; then
+  echo "Locale lint: this is the i18n-core package itself — its locale definitions are canonical."
+  exit 0
+fi
+
 echo "Locale lint: checking for hardcoded locale lists..."
 echo ""
 
