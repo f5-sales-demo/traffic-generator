@@ -61,6 +61,8 @@
     ".python-lint",
     ".mypy.ini",
     "scripts/locale-lint.sh",
+    "scripts/check-repo-hygiene.sh",
+    "tests/test-check-repo-hygiene.sh",
     "trivy.yaml",
     ".claude/settings.json",
     ".claude/governance.json",
