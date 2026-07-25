@@ -26,6 +26,7 @@
     ".github/workflows/dependabot-auto-merge.yml",
     ".github/workflows/auto-merge.yml",
     ".github/workflows/code-review.yml",
+    ".github/workflows/workflow-security-audit.yml",
     ".github/workflows/semgrep.yml",
     ".github/workflows/translation-audit.yml",
     ".github/PULL_REQUEST_TEMPLATE.md",
