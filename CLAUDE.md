@@ -20,6 +20,18 @@ A hook blocks direct edits — open an issue in docs-control instead.
 - Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, linked-issue check, and — on ecosystem repos — a Claude Code review) → auto-merge when every check is green → remote branch auto-deleted.
 - The Claude Code review is a **required, merge-gating check** that can block. On a block, read its findings, fix at the source, and push to re-trigger it — never merge around it, disable it, or rename the branch to a bypass prefix. See CONTRIBUTING.md.
 
+## Second-opinion review (when available)
+
+When the `codex` plugin provides the `verified-code-review` skill, use it as a second-opinion reviewer at three points. When the skill is not installed, skip it and continue — this is an additive local layer, never a merge gate.
+
+- Before asking a human to review a written spec or an implementation plan.
+- Before pushing a branch that will open or update a pull request.
+- After each round of fixes, until no confirmed critical or high finding remains.
+
+Treat every second-opinion finding as external review feedback under `superpowers:receiving-code-review`: verify each claim against this codebase before acting on it, and push back with technical reasoning when it is wrong. Fix only confirmed findings, each with a test that fails before the fix and passes after.
+
+Report the findings you dismissed and the evidence that dismissed them — a review that produced two refuted findings is not the same result as a review that produced none. The required `review / claude-review` check remains the merge gate, and this local layer never replaces it.
+
 ## Worktrees
 
 - For non-trivial coding tasks, work in a git worktree (Claude Code: `EnterWorktree` or `claude --worktree`) to isolate changes from the main checkout and enable parallel sessions.
