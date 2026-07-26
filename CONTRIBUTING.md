@@ -100,6 +100,15 @@ git checkout -b feature/42-add-rate-limiting
 
 ## Automated code review
 
+Review happens in two layers. They are not interchangeable, and neither substitutes for the other:
+
+| Layer | What it reviews | Authority |
+| ----- | --------------- | --------- |
+| **Local, pre-PR** | A spec, an implementation plan, or an unpushed branch | Advisory |
+| **CI** | The pull-request diff | **Required and merge-gating** |
+
+### CI review (the gate)
+
 Every downstream pull request is reviewed by a **Claude Code reviewer** running on a self-hosted
 runner. It is a **required status check** (`review / claude-review`) — auto-merge will not merge
 until it passes.
@@ -117,6 +126,29 @@ until it passes.
   and the linked-issue check — this is for machine-generated PRs only. The authoritative prefix
   list lives in `require-linked-issue.yml` and `code-review.yml`; never adopt such a prefix for
   human or agent work.
+
+### Local pre-PR review (advisory second opinion)
+
+A second review layer runs on your own machine **before the pull request exists**. It catches
+problems while they are still cheap to fix — in a spec or a plan, before any code is written.
+
+- **Advisory, never a gate.** It emits no verdict and posts no commit status, so it cannot block a
+  merge or deadlock a required check. When the tooling is absent it is skipped and work continues.
+- **Where it runs.** At the spec and plan review points, before a push that opens or updates a pull
+  request, and after each round of fixes. Reviewing a written spec or implementation plan is its
+  primary use — a document, not a diff.
+- **Verification is mandatory.** A finding counts only once it has been confirmed against the
+  codebase: for code, with a test that fails today; for a document, with a quotation. An AI reviewer
+  misattributes findings to files that do not contain them, and a hallucinated blocking finding can
+  never be fixed — treating it as blocking would stop the loop from ever terminating.
+- **Bounded.** Three iterations maximum, with no-progress detection when two consecutive rounds
+  produce the same blocking set. On either, the outstanding findings go to a human.
+- **Do not reach for a PR-diff reviewer instead.** Reviewing a spec, a plan, or a local branch with
+  a pull-request review tool is the wrong layer — a spec has no diff to review. `CLAUDE.md` names
+  the tool to use, the tools not to use, and the deny rules that enforce it.
+
+The two layers are complementary: the local layer catches issues before the pull request exists and
+costs nothing when it is wrong, while CI remains the gate that decides whether a change merges.
 
 ## Branch Protection Rules
 
