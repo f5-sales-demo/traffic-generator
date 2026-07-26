@@ -67,5 +67,65 @@
     ".claude/settings.json",
     ".claude/governance.json",
     ".claude/hooks/protect-managed-files.sh"
-  ]
+  ],
+  "repo_classes": {
+    "_default": "developer",
+    "classes": {
+      "content": {
+        "authority": "author",
+        "description": "Demo, product and lab content. Documentation, Terraform plans, howtos and demo scripts are authored here directly through the governed path: linked issue, branch, pull request, auto-merge.",
+        "surfaces": ["docs/", "terraform/", "coverage/", "scripts/", "*.mdx", "*.md", "*.tf", "*.tftest.hcl"]
+      },
+      "developer": {
+        "authority": "delegate",
+        "description": "Compiled or tested code with its own build and test harness. Feature implementation is delegated to a dedicated development environment; contributions here take the form of verified issues, specifications, reviews and documentation.",
+        "delegate_to": "claude-code|codex"
+      },
+      "scaffolding": {
+        "authority": "governed",
+        "description": "Fleet plumbing: continuous integration, packaging, container images and governance itself. Changes propagate to every repository, so they go through the governed path only and are never made freehand."
+      }
+    },
+    "repos": {
+      "administration": "content",
+      "api-protection": "content",
+      "api-specs": "developer",
+      "api-specs-enriched": "developer",
+      "apt-repo": "scaffolding",
+      "bot-advanced": "content",
+      "bot-standard": "content",
+      "cdn": "content",
+      "cdn-simulator": "content",
+      "code-review": "scaffolding",
+      "console": "developer",
+      "csd": "content",
+      "ddos": "content",
+      "demo-resource-template": "scaffolding",
+      "demo-resources": "content",
+      "devcontainer": "scaffolding",
+      "dns": "content",
+      "docs": "content",
+      "docs-builder": "developer",
+      "docs-control": "scaffolding",
+      "docs-icons": "developer",
+      "docs-theme": "developer",
+      "i18n-core": "developer",
+      "marketplace": "developer",
+      "marketplace-claude-code": "developer",
+      "mcn": "content",
+      "nginx": "content",
+      "observability": "content",
+      "origin-server": "content",
+      "starlight-llms-txt": "developer",
+      "starlight-mega-menu": "developer",
+      "terraform-provider-xcsh": "developer",
+      "traffic-generator": "content",
+      "vscode-xcsh": "developer",
+      "waf": "content",
+      "was": "content",
+      "webapp-api-protection": "content",
+      "xcsh": "developer",
+      "xcsh-chrome-extension": "developer"
+    }
+  }
 }
