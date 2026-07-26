@@ -2,6 +2,9 @@
   "worktree": {
     "baseRef": "fresh"
   },
+  "permissions": {
+    "deny": ["Skill(code-review:code-review)", "Skill(pr-review-toolkit:review-pr)"]
+  },
   "hooks": {
     "PreToolUse": [
       {
