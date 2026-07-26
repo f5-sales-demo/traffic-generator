@@ -15,6 +15,7 @@ A hook blocks direct edits — open an issue in docs-control instead.
 
 ## Workflow
 
+- **Start from current.** `git fetch --prune` and confirm you are not behind `origin/<default-branch>` before you plan, branch, or edit; create branches from `origin/<default-branch>`, never from local `main`. The git status injected at session start is a snapshot with no ahead/behind count — a stale checkout still reports a clean tree.
 - `main` is protected — never commit or push to it directly.
 - Work on a feature branch and open a pull request.
 - Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, linked-issue check, and — on ecosystem repos — a Claude Code review) → auto-merge when every check is green → remote branch auto-deleted.
@@ -53,7 +54,8 @@ The Claude Code review is a **required, merge-gating check** that can block. On 
 ## Worktrees
 
 - For non-trivial coding tasks, work in a git worktree (Claude Code: `EnterWorktree` or `claude --worktree`) to isolate changes from the main checkout and enable parallel sessions.
-- New worktrees branch fresh from the default branch (`worktree.baseRef` is set to `fresh` in `.claude/settings.json`). The `.claude/worktrees/` directory is already gitignored.
+- New worktrees branch from `origin/<default-branch>` (`worktree.baseRef` is set to `fresh` in `.claude/settings.json`). The `.claude/worktrees/` directory is already gitignored.
+- `fresh` means "from the cached remote ref", not "freshly fetched" — it only re-fetches when `FETCH_HEAD` is over 24 hours old. A worktree created after an earlier same-day fetch is born behind whatever merged since, so fetch before you create one.
 - If a repository's build needs gitignored inputs (`.env`, secrets, local config), add a repo-local `.worktreeinclude` listing them so new worktrees carry those files in.
 
 ## Engineering Standards

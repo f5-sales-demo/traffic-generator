@@ -68,11 +68,38 @@ Branch from `main` using one of these naming conventions:
 
 Format: `<prefix>/<issue-number>-short-description`
 
+**Start from current.** Sync with the remote and confirm you are not behind before you branch — or
+plan, or edit. This is a rule, not a formality: a stale base does not announce itself. It surfaces
+later as an unrelated CI failure, and the instinct is then to debug the change's content rather than
+its base. Do not infer freshness from a clean working tree; a checkout twenty commits behind is also
+clean.
+
 ```bash
-git checkout main
-git pull origin main
-git checkout -b feature/42-add-rate-limiting
+git fetch --prune        # if this fails, stop — do not branch from a stale guess
+git switch --no-track -c feature/42-add-rate-limiting origin/main
+git push -u origin HEAD  # on your first push — sets the branch's own upstream
 ```
+
+Branch from `origin/main`, not from local `main`. Local `main` can be *ahead* with unpushed commits,
+which a "not behind" check does not catch, and those commits would silently ride along into your PR.
+Branching from the fetched ref also works when `main` is checked out in another worktree — there,
+`git checkout main` fails outright (`fatal: 'main' is already used by worktree at …`), and a pasted
+`git checkout -b` would quietly branch from whatever you were on instead.
+
+`--no-track` and the `-u` on first push matter together. Without `--no-track`, Git's default
+`branch.autoSetupMerge` makes a branch created from `origin/main` *track* `origin/main`: a bare
+`git pull` would then merge `main` into your feature branch, and the branch would never be marked
+`[gone]` once its own remote branch is deleted — silently defeating the cleanup procedure below.
+
+If you are editing an existing checkout rather than creating a branch, confirm it is current first —
+`git status -sb` should show `## main...origin/main` with no `[behind N]`.
+
+A long-running session goes stale the same way, since nothing re-checks after start. Fetch again
+before branching a second time, and before creating a git worktree — a worktree inherits whatever
+the cached remote ref says, so it can be born behind (see CLAUDE.md).
+
+If a branch falls behind `main` while its PR is open, use the **Update branch** button on the PR
+(`allow_update_branch` is enabled fleet-wide) rather than merging `main` in by hand.
 
 ## Step 3: Make Changes and Commit
 
