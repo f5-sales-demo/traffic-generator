@@ -3,7 +3,11 @@
     "baseRef": "fresh"
   },
   "permissions": {
-    "deny": ["Skill(code-review:code-review)", "Skill(pr-review-toolkit:review-pr)"]
+    "deny": [
+      "Skill(code-review:code-review)",
+      "Skill(pr-review-toolkit:review-pr)",
+      "Skill(commit-commands:clean_gone)"
+    ]
   },
   "hooks": {
     "PreToolUse": [
