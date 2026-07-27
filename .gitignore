@@ -62,7 +62,12 @@ wheels/
 *.dylib
 *.test
 *.out
-vendor/
+# Root-anchored: `go mod vendor` writes at the module root, whereas an unanchored
+# `vendor/` also swallows deliberately-committed vendored trees such as a browser
+# extension's src/vendor/. A repo with a NESTED Go module wanting its vendor tree
+# ignored should add that path locally; no such module exists in the fleet today
+# (the one Go repo has go.mod at its root and does not vendor). See #794.
+/vendor/
 
 # Terraform
 .terraform/
