@@ -94,6 +94,58 @@ Branching from the fetched ref also works when `main` is checked out in another 
 If you are editing an existing checkout rather than creating a branch, confirm it is current first —
 `git status -sb` should show `## main...origin/main` with no `[behind N]`.
 
+If it *does* show `[behind N]` and you have work in progress, park the work rather than discarding it:
+
+```bash
+git status --short --ignored   # ignored files are NOT protected — see below
+git stash push -u              # -u covers untracked files, but NOT ignored ones
+git pull --ff-only
+git stash pop
+```
+
+`git stash pop` can hit a conflict when the pull touched the same file you edited. That is safe: pop
+exits non-zero and **keeps the stash entry**, so resolve the conflict and drop the stash afterwards —
+nothing is lost by trying.
+
+Ignored files are the exception, and they are not protected anywhere in this flow. `-u` does not
+stash them, and if upstream starts tracking a path you hold as ignored — `.env` is the obvious case —
+`git pull` overwrites it **silently and exits 0**. Git refuses to clobber an *untracked* file that
+way; it does not extend that courtesy to ignored ones. `git stash push --all` does capture them, but
+`pop` then fails with `.env already exists, no checkout` once the path is tracked. The stash is
+retained, but recovering from it is not the obvious command: `--all` stores untracked and ignored
+files in the stash commit's **third parent**, so `git checkout stash@{0} -- <path>` fails with
+`did not match any file(s) known to git`. Read it out of the third parent instead, to a scratch file
+**outside** the repository:
+
+```bash
+git show 'stash@{0}^3:.env' > /tmp/recovered.env   # never redirect onto the path itself
+```
+
+Two reasons for the scratch file. Redirecting onto the original path would write your ignored local
+copy over the version upstream now tracks, turning a secret into a tracked modification somebody can
+commit by accident. And the shell truncates the target *before* `git show` runs, so a wrong ref or
+path empties the file even when the command fails — `git show` exits 128 and the destination is left
+at 0 bytes. Recover to the side, then merge by hand.
+
+The reliable move is to copy out any ignored file you care about before you sync. This is the same blind spot as the worktree
+warning under Worktrees: git's safety checks do not see ignored files.
+
+**Never sync by overwriting the working tree.** `git checkout <ref> -- .` looks like a refresh and is
+not one: it overwrites tracked files with the other ref's content, stages the result, and leaves
+files that exist only in your branch behind — a mixed state that is neither commit. Git writes no
+reflog entry for what it overwrote, so unlike a mistaken `git branch -D` there is no ref to restore.
+
+How much is lost depends on whether the work was staged, and the difference is worth knowing before
+you give up on it. Content you had `git add`ed still exists as a blob and stays recoverable until
+garbage collection — `git fsck --lost-found` lists it, and `git cat-file -p <blob>` prints it. Content
+you never staged was never written to the object store at all, and that is genuinely gone. So if you
+do clobber something, check `git fsck --lost-found` before concluding the work is lost.
+
+`git reset --hard` has the same effect on
+uncommitted changes (commits it moves past *are* reflog-recoverable; uncommitted edits are not), and
+`git clean -fd` deletes untracked files and directories — add `-x` and it takes ignored files too,
+including the `.env` and local config described under Worktrees.
+
 A long-running session goes stale the same way, since nothing re-checks after start. Fetch again
 before branching a second time, and before creating a git worktree — a worktree inherits whatever
 the cached remote ref says, so it can be born behind (see CLAUDE.md).
