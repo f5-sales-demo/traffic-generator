@@ -19,7 +19,7 @@ A hook blocks direct edits — open an issue in docs-control instead.
 - **Never sync by overwriting the working tree.** `git checkout <ref> -- .`, `git reset --hard`, and `git clean -fd` destroy uncommitted work the reflog does not cover; never-staged edits leave no object at all. Behind with work in progress? Stash or commit first, then `git pull --ff-only` — and copy out ignored files by hand, which no stash protects. See CONTRIBUTING.md.
 - `main` is protected — never commit or push to it directly.
 - Work on a feature branch and open a pull request.
-- Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, linked-issue check, and — on ecosystem repos — a Claude Code review) → auto-merge when every check is green → remote branch auto-deleted.
+- Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, linked-issue check, translation-freshness audit) → auto-merge when every check is green → remote branch auto-deleted. The Claude Code review is **suspended** and is no longer part of this gate — see "CI (suspended)" below.
 
 ## Two review layers — never substitute one for the other
 
@@ -28,7 +28,7 @@ Reviewing a **spec or plan** and reviewing a **pull-request diff** are different
 | Layer | What it reviews | When | Tool | Authority |
 | ----- | --------------- | ---- | ---- | --------- |
 | **Local, pre-PR** | A spec, an implementation plan, or your own unpushed branch | Before a human reviews the document; before a push that opens or updates a PR; after each round of fixes | `codex:verified-code-review` | Advisory. Never a merge gate. |
-| **CI** | The pull-request diff | Automatically, on every PR | Self-hosted `review / claude-review` workflow | **Required and merge-gating.** |
+| **CI** | The pull-request diff | — | Self-hosted `review / claude-review` workflow | **Currently suspended.** Not running, not required. |
 
 ### Local, pre-PR (Codex second opinion)
 
@@ -48,9 +48,20 @@ Treat every second-opinion finding as external review feedback under `superpower
 
 Report the findings you dismissed and the evidence that dismissed them — a review that produced two refuted findings is not the same result as a review that produced none.
 
-### CI (the merge gate)
+### CI (suspended)
 
-The Claude Code review is a **required, merge-gating check** that can block. On a block, read its findings, fix at the source, and push to re-trigger it — never merge around it, disable it, or rename the branch to a bypass prefix. The local layer never replaces it. See CONTRIBUTING.md.
+**The Claude Code review is currently suspended and is no longer a required check.** The self-hosted reviewer could not reliably reach model inference or the VPN, so the check often never went green and blocked PRs for infrastructure reasons rather than code-quality ones.
+
+The `review / claude-review` context was removed from branch protection (docs-control#833), and the workflow is gated off behind the `REVIEWER_ENABLED` variable (docs-control#838).
+
+What this means for you now:
+
+- **Do not wait for it, and do not treat its absence as a problem.** No CI job reviews PR diffs at present.
+- Required checks are the linked-issue check, `Lint Code Base`, and `audit / Translation freshness` (plus any repo-specific contexts).
+- The local pre-PR layer above is now the only review step in practice. It remains **advisory** — it is not a gate and does not become one because the CI layer is absent.
+- **Do not re-enable it, re-add the required context, or work around the suspension** without going through REVIEWER-SPEC.md. Order matters: set the variable first and confirm a real review completes, then re-add the context. Reversing that deadlocks every open PR.
+
+When it is restored it becomes a required, merge-gating check again: on a block, read its findings, fix at the source, and push to re-trigger it — never merge around it or rename the branch to a bypass prefix. See CONTRIBUTING.md.
 
 ## Worktrees
 

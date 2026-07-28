@@ -41,8 +41,11 @@ improving how customers are defended.
 Every change follows this path:
 
 ```
-Issue → Branch → PR (linked to issue) → CI + automated code review pass → auto-merge when green → Branch auto-deleted
+Issue → Branch → PR (linked to issue) → CI passes → auto-merge when green → Branch auto-deleted
 ```
+
+The automated code review used to sit in that chain. It is **currently suspended** — see
+[CI review](#ci-review-suspended).
 
 No exceptions. PRs without a linked issue will be blocked by CI.
 
@@ -171,8 +174,8 @@ If a branch falls behind `main` while its PR is open, use the **Update branch** 
 ## Step 5: Review and Merge
 
 - All required CI checks must pass before merge.
-- On ecosystem repos, an automated Claude Code review is a required check (see
-  [Automated code review](#automated-code-review)); address any blocking findings before merge.
+- The automated Claude Code review is **currently suspended** and is not a required check (see
+  [CI review](#ci-review-suspended)).
 - Merging is automated: once every required check is green, auto-merge squash-merges the PR.
 - The branch is automatically deleted after merge (`delete_branch_on_merge` is enabled); clean up
   your local branch afterward.
@@ -184,9 +187,20 @@ Review happens in two layers. They are not interchangeable, and neither substitu
 | Layer | What it reviews | Authority |
 | ----- | --------------- | --------- |
 | **Local, pre-PR** | A spec, an implementation plan, or an unpushed branch | Advisory |
-| **CI** | The pull-request diff | **Required and merge-gating** |
+| **CI** | The pull-request diff | **Currently suspended** — not running, not required |
 
-### CI review (the gate)
+### CI review (suspended)
+
+> **Suspended.** The self-hosted reviewer could not reliably reach model inference or the VPN, so
+> the check often never went green and blocked pull requests for infrastructure reasons rather than
+> code-quality ones. The `review / claude-review` context has been removed from branch protection
+> (docs-control#833) and the workflow is gated off behind the `REVIEWER_ENABLED` variable
+> (docs-control#838). **No CI job currently reviews pull-request diffs.** Do not wait for it, and do
+> not treat its absence as a fault. Restoring it is described in `REVIEWER-SPEC.md` — set the
+> variable and confirm a real review completes *before* re-adding the required context, because the
+> reverse order deadlocks every open pull request.
+
+The rest of this section describes the reviewer as it behaves when enabled.
 
 Every downstream pull request is reviewed by a **Claude Code reviewer** running on a self-hosted
 runner. It is a **required status check** (`review / claude-review`) — auto-merge will not merge
@@ -235,7 +249,7 @@ The `main` branch is protected. The following rules are enforced:
 
 - No direct pushes to `main` — all changes go through PRs
 - No force pushes
-- Required status checks: `Check linked issues` and `Lint Code Base` must pass; ecosystem repos additionally require the `review / claude-review` check
+- Required status checks: `Check linked issues`, `Lint Code Base` and `audit / Translation freshness` must pass, plus any repo-specific contexts. The `review / claude-review` check is **suspended** and no longer required
 - Admin enforcement enabled — these rules apply to everyone
 
 ## AI Assistant Guidelines
