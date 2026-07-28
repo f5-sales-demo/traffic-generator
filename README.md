@@ -20,7 +20,6 @@
 
 Azure traffic generator with 150+ security testing scripts across 17 suites for F5 XC demo environments
 
-
 ## Documentation
 
 Full documentation is available at **[https://f5-sales-demo.github.io/traffic-generator/](https://f5-sales-demo.github.io/traffic-generator/)**.
