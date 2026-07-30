@@ -257,7 +257,7 @@ The `main` branch is protected. The following rules are enforced:
 
 - No direct pushes to `main` — all changes go through PRs
 - No force pushes
-- Required status checks: `Check linked issues`, `Lint Code Base` and `audit / Translation freshness` must pass, plus any repo-specific contexts. The `review / claude-review` check is **suspended** and no longer required
+- Required status checks: `Check linked issues` and `Lint Code Base` must pass, plus any repo-specific contexts. The `review / claude-review` check is **suspended**. `audit / Translation freshness` still runs but **no longer gates a merge**
 - Admin enforcement enabled — these rules apply to everyone
 
 ## AI Assistant Guidelines
