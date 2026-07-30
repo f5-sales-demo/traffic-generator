@@ -225,9 +225,21 @@ repos:
   # ===========================================================================
   # Translation generation — regenerate locale docs when English changes.
   # Runs docs-translate --staged (docs-theme) for staged docs/en/*.mdx, which
-  # needs ANTHROPIC_API_KEY and the docs-theme toolchain. No-ops gracefully
-  # when either is unavailable; the required CI translation-audit verifies
-  # freshness regardless. Generation is intentionally local, never in CI.
+  # needs ANTHROPIC_API_KEY and the docs-theme toolchain. Generation is
+  # intentionally local, never in CI.
+  #
+  # SUSPENDED: gated on TRANSLATIONS_ENABLED, which is currently unset, so this
+  # hook does not run. Each changed English file costs one model API call per
+  # locale — twelve per file — and that is not justified while the documentation
+  # is still churning. The `audit / Translation freshness` context was removed
+  # from branch protection first (docs-control#867); stopping generation while
+  # that check was still required would have failed every docs/en pull request.
+  # Existing docs/<locale>/ files stay in place and drift out of date on purpose.
+  # To restore, see "Restoring translations" in CONTRIBUTING.md — set the
+  # variable and regenerate BEFORE re-adding the required context.
+  #
+  # An unset variable is empty, so the default is off: nobody spends money by
+  # accident, and enabling it is an explicit act.
   # ===========================================================================
   - repo: local
     hooks:
@@ -235,9 +247,11 @@ repos:
         name: "i18n: regenerate translations for staged English docs"
         entry: >-
           bash -c
-          'if command -v docs-translate >/dev/null 2>&1 && [ -n "${ANTHROPIC_API_KEY:-}" ];
+          'if [ "${TRANSLATIONS_ENABLED:-}" != "true" ];
+          then echo "[i18n] translations suspended (TRANSLATIONS_ENABLED unset) — skipping generation; see CONTRIBUTING.md.";
+          elif command -v docs-translate >/dev/null 2>&1 && [ -n "${ANTHROPIC_API_KEY:-}" ];
           then docs-translate --staged;
-          else echo "[i18n] docs-translate/ANTHROPIC_API_KEY unavailable — skipping; CI translation-audit will verify freshness."; fi'
+          else echo "[i18n] docs-translate/ANTHROPIC_API_KEY unavailable — skipping."; fi'
         language: system
         files: ^docs/en/.*\.mdx?$
         pass_filenames: false
