@@ -29,6 +29,7 @@
     ".github/dependabot.yml",
     "CONTRIBUTING.md",
     "CLAUDE.md",
+    "STYLE_GUIDE.md",
     "README.md",
     ".editorconfig",
     ".gitignore",
