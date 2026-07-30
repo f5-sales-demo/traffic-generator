@@ -50,6 +50,7 @@ Apply where applicable to this repo:
 - **Root-cause only** — fix problems (including lint and CI failures) at the source; never skip, suppress, inline-disable, or hand-wave them. CI rejects masked issues.
 - **No backward compat** — prerelease, pre-production code under active development; make clean-break changes, never add compatibility shims or keep deprecated interfaces.
 - **DRY** — reuse existing code, patterns, and content before adding new.
+- **Documentation style** — published content (guides, product documentation, READMEs) follows `STYLE_GUIDE.md`: documentation-reserved example values only (RFC 5737 addresses, `example.com`, RFC 5398 ASNs), never ACME, no credential material even if revoked, no real customer data, and sanitized screenshots. Run its pre-publish checklist before opening a documentation PR.
 - **Clean branches** — only verified, feature-complete code merges; never merge exploratory or unneeded (YAGNI) work. Cleanup is part of "done": once verified-merged, retire your worktree, return to main, delete your merged branch, and report git hygiene (branch, uncommitted changes, stale `[gone]` branches, leftover worktrees) unprompted — see CONTRIBUTING.md for the safe procedure.
 - **Local vs CI** — `pre-commit` runs a subset; the `Lint Code Base` gate also runs textlint prose/terminology. Reproduce it before pushing.
 

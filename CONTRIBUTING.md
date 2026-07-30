@@ -501,6 +501,17 @@ apply what fits.
 
 - Reuse existing code, patterns, and content before adding new. Do not duplicate.
 
+### Documentation content
+
+- Published content — blog articles, how-to guides, demo guides, product documentation, and
+  README files — follows `STYLE_GUIDE.md`, a managed file synced across the fleet.
+- Examples use only identifiers reserved for documentation (RFC 5737 addresses, `example.com`,
+  RFC 5398 ASNs), so content a reader copies cannot reach infrastructure we do not own. Never
+  publish credential material — including revoked or expired material — real customer data, or
+  an unsanitized screenshot.
+- Work that guide's pre-publish checklist before opening a documentation PR, and treat its
+  detection commands as a first pass rather than proof.
+
 ### Clean branches
 
 - A branch is for trial-and-error: guess, probe, refactor, and learn freely while you
