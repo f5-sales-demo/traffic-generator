@@ -1,15 +1,7 @@
 {
   "source_repo": "f5-sales-demo/docs-control",
   "skip_files": {
-    "xcsh": [
-      "biome.json",
-      "LICENSE",
-      "CONTRIBUTING.md",
-      ".ruff.toml",
-      ".python-lint",
-      ".mypy.ini",
-      ".github/workflows/super-linter.yml"
-    ],
+    "xcsh": ["biome.json", "LICENSE", ".ruff.toml", ".python-lint", ".mypy.ini", ".github/workflows/super-linter.yml"],
     "terraform-provider-xcsh": [".github/workflows/translation-audit.yml", "scripts/locale-lint.sh"],
     "api-specs": [".ruff.toml", ".python-lint", ".mypy.ini"],
     "api-specs-enriched": [".ruff.toml", ".python-lint", ".mypy.ini"],

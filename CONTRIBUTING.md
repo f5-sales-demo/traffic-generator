@@ -36,6 +36,14 @@ improving how customers are defended.
   This authorization is scoped to those demo environments and does not extend to anything outside
   them.
 
+## Repository-specific guidance
+
+This document is a managed file, identical across the fleet, so it describes the process rather than
+any one repository's toolchain. Some repositories add a `DEVELOPING.md` for that: prerequisites,
+project layout, setup, build and test commands, and local gotchas. **When this repository has a
+`DEVELOPING.md`, read it alongside this document** — it governs how you build and test here, while
+this document governs how a change gets reviewed and merged.
+
 ## Workflow Overview
 
 Every change follows this path:
