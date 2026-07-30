@@ -251,6 +251,139 @@ problems while they are still cheap to fix — in a spec or a plan, before any c
 The two layers are complementary: the local layer catches issues before the pull request exists and
 costs nothing when it is wrong, while CI remains the gate that decides whether a change merges.
 
+## Translations (suspended)
+
+> **Suspended during development.** Translation generation calls a model API once per locale per
+> changed English file — twelve calls for every edit under `docs/en/`. That cost is not justified
+> while the documentation is still churning, so generation is off and the freshness audit no longer
+> gates merges. Translations will be regenerated as a deliberate effort before go-live.
+
+How the three parts fit together, because only one of them costs anything:
+
+| Part | Where | Cost |
+| ---- | ----- | ---- |
+| Generation | the `docs-translate` pre-commit hook, on `docs/en/**/*.md[x]` | the entire spend |
+| Freshness audit | `.github/workflows/translation-audit.yml` — compares each translation's `i18n.sourceHash` against the SHA-256 of its English source | none; it performs no translation |
+| Required context | `audit / Translation freshness` in branch protection | none; it made the audit blocking |
+
+What this means for you now:
+
+- **Existing translations under `docs/<locale>/` stay in place and will drift out of date.** That is
+  expected. Do not regenerate them individually, and do not treat the drift as a defect to fix.
+- Editing `docs/en/` no longer requires a matching translation update.
+- Both the generation hook and the audit are gated on the `TRANSLATIONS_ENABLED` variable. Unset means
+  off, so nothing spends money by accident.
+
+### Restoring translations
+
+Order matters, and getting it wrong deadlocks every open pull request — the same trap the suspended
+reviewer left behind.
+
+1. Turn on **both** switches. `TRANSLATIONS_ENABLED` is one name for two independent settings, and
+   setting only one half-restores the system:
+
+   ```bash
+   # Generation — the pre-commit hook reads your local process environment.
+   # No organisation variable sets this; it must be exported where you commit.
+   export TRANSLATIONS_ENABLED=true
+   export ANTHROPIC_API_KEY=...
+   ```
+
+   Then set the `TRANSLATIONS_ENABLED` **organisation variable** to `true`, which is what the audit
+   workflow reads — an organisation variable is exposed to Actions through the `vars` context only, so
+   it never reaches the hook on your machine.
+
+   Setting just the organisation variable is the trap: the `--force` run in step 2 works, because you
+   run it directly, and then every later English edit silently skips generation. Nothing complains
+   until the audit is required again, at which point pull requests fail fleet-wide.
+   Make sure the organisation variable is visible to **all** governed repositories. An organisation
+   variable scoped to a subset leaves the rest with a job that silently never runs.
+2. Regenerate everything with `docs-translate --force` and commit. Expect roughly 4,320 files across
+   the fleet.
+3. **Un-gate both, and let that sync downstream.** In `workflows/translation-audit.yml`, delete the
+   `if: vars.TRANSLATIONS_ENABLED == 'true'` line *and* the `SUSPENDED:` comment block, returning the
+   job to unconditional. In `.pre-commit-config.yaml`, remove the `TRANSLATIONS_ENABLED` branch from
+   the `docs-translate` hook.
+
+   Delete the `if:`, do not merely set the variable. Leaving the condition in place makes organisation
+   variable visibility permanently load-bearing for CI: any repository the variable is not visible to
+   silently skips the job, and once the context is required again its pull requests wait forever for a
+   check that is never emitted. An unconditional job removes that whole class of failure — after this,
+   `TRANSLATIONS_ENABLED` governs only local generation, which fails visibly and cheaply.
+
+   `tests/test-translation-suspension.sh` keys section 1 on the `SUSPENDED:` marker, so leaving it in
+   place fails the guard the moment the context comes back.
+4. Confirm the audit actually reports on **every governed repository that receives the workflow**, not
+   on one pull request. Three traps here, all of them load-bearing:
+
+   - **One green PR proves one repo.** During the suspension a five-repository spot check came back
+     clean while **9 of 38** still had the old branch protection, because enforcement fans out in
+     batches of five. Re-adding the context on that evidence would have deadlocked nine repositories.
+   - **An old run proves nothing.** The last conclusion may predate the un-gating in step 3, or come
+     from a repository still running the gated workflow. Confirm the synced file no longer contains the
+     `if:` before trusting a run, and only count runs created after that.
+   - **Some repos never receive this workflow at all.** Anything listed under `skip_files` for
+     `translation-audit.yml` does not have the file — `terraform-provider-xcsh` skips it, and the path
+     returns 404 there. Demanding a report from those repos is impossible, and it is exactly why they
+     carry an `excluded_required_contexts` entry: a required check whose workflow does not exist is a
+     *permanent* deadlock, not a transient one.
+
+   ```bash
+   SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)   # capture AFTER step 3 has synced
+   SKIP=$(jq -r '.skip_files | to_entries[]
+                 | select(any(.value[]; test("translation-audit"))) | .key' .claude/governance.json)
+   while IFS= read -r r; do
+     grep -qxF "$r" <<<"$SKIP" && { printf '%-24s n/a (no workflow)\n' "$r"; continue; }
+     # the synced file must be un-gated, or a green run proves nothing
+     gated=$(gh api "repos/f5-sales-demo/$r/contents/.github/workflows/translation-audit.yml" \
+               -q .content 2>/dev/null | base64 -d 2>/dev/null | grep -c 'TRANSLATIONS_ENABLED')
+     [ "${gated:-1}" -ne 0 ] && { printf '%-24s STILL GATED — wait for sync\n' "$r"; continue; }
+     gh run list -R "f5-sales-demo/$r" --workflow=translation-audit.yml \
+       --created ">$SINCE" --limit 1 --json conclusion \
+       -q '.[0].conclusion // "NO RUN SINCE UN-GATING"' \
+       | xargs printf '%-24s %s\n' "$r"
+   done < <(jq -r '.[]' .github/config/downstream-repos.json)
+   ```
+
+   Every non-skipped repository must read `success`. Anything else — `STILL GATED`, `NO RUN SINCE
+   UN-GATING`, `skipped`, `failure` — means that repository will not emit the check, and re-adding the
+   context would deadlock it.
+
+   `NO RUN SINCE UN-GATING` is the expected result for most repositories, not a fault. The audit
+   triggers only on `pull_request` `opened`, `synchronize`, and `reopened`; **merging** the sync pull
+   request fires nothing afterwards, so a repository with no later pull-request activity will report it
+   indefinitely. Do not wave that through — provoke a run instead:
+
+   ```bash
+   # for any repo reading NO RUN SINCE UN-GATING
+   git clone --depth 1 "https://github.com/f5-sales-demo/$r" /tmp/probe-$r
+   cd /tmp/probe-$r && git switch -c "chore/audit-probe" \
+     && printf '\n' >> README.md && git commit -aqm "chore: probe translation audit" \
+     && git push -q -u origin HEAD && gh pr create --fill --base main
+   ```
+
+   Probe **every** repository that reads `NO RUN SINCE UN-GATING`, including those with no `docs/en`.
+   It is tempting to skip them on the grounds that the audit passes trivially there — the reusable
+   workflow exits 0 when `docs/en` is absent — but passing and *reporting* are different things. Once
+   the context is required, such a repository must still emit `audit / Translation freshness`, and it
+   cannot do so if its caller workflow is missing, malformed, or not triggering. That is exactly the
+   deadlock this step exists to catch, and it is invisible until the context is already required.
+
+   Close the probe pull request once the audit reports. Skipping this step is how an operator ends up
+   re-adding the required context on the strength of repositories that were never actually exercised.
+
+5. **Only then** re-add `audit / Translation freshness` to
+   `branch_protection[0].required_status_checks.contexts` — **and re-add
+   `excluded_required_contexts: ["audit / Translation freshness"]` to the `terraform-provider-xcsh`
+   and `code-review` overrides**, which were removed with the base context because an exclusion that
+   matches no required context silently no-ops. Without them those two repositories would gain a
+   check they were deliberately exempt from.
+
+Re-adding the required context before step 4 makes a check that never reports mandatory, which blocks
+every pull request until an administrator intervenes. The guard test cannot catch this for you: it
+reads files, and no static check can see whether an organisation variable is set in every repository.
+Step 4 is the only thing standing between a restore and a fleet-wide outage.
+
 ## Branch Protection Rules
 
 The `main` branch is protected. The following rules are enforced:

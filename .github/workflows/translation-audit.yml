@@ -15,4 +15,24 @@ permissions:
 jobs:
   audit:
     # Read-only freshness audit — no secrets required.
+    #
+    # SUSPENDED: gated on the `TRANSLATIONS_ENABLED` variable, which is currently
+    # unset, so this job never runs. Generation is suspended for cost reasons
+    # (docs-control#863), so translations drift out of date on purpose — leaving
+    # the audit enabled would paint every docs/en pull request red for an expected
+    # condition, which trains people to ignore failing checks.
+    #
+    # The `audit / Translation freshness` context was removed from branch
+    # protection FIRST (docs-control#867), and that removal was confirmed on every
+    # governed repository before this gate landed. Skipping a job while its context
+    # is still required makes a check that never reports mandatory, deadlocking
+    # every open pull request — the same trap the suspended reviewer left behind
+    # (see the SUSPENDED note in code-review.yml). To restore, see "Restoring
+    # translations" in CONTRIBUTING.md: set the variable and regenerate BEFORE
+    # re-adding the required context.
+    #
+    # `vars` is used rather than `env` because the `env` context is not available
+    # in a job-level `if:`. An unset variable evaluates false, so this fails safe
+    # toward not spending money.
+    if: vars.TRANSLATIONS_ENABLED == 'true'
     uses: f5-sales-demo/docs-control/.github/workflows/translation-audit.yml@main
