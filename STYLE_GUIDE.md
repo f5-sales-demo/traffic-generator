@@ -80,7 +80,7 @@ address, `2001:db8::/32` remains the better-recognized choice.
 
 ## Fictitious organizations and people
 
-### Do not use ACME
+### Do not use ACME as a placeholder
 
 Two independent reasons:
 
@@ -88,13 +88,16 @@ Two independent reasons:
    multiple operating companies use it. Placeholders that are genuinely safe — Microsoft's
    Contoso, Google's Altostrat — were trademark-cleared and their domains are company-owned and
    redirected. ACME has neither property.
-2. **In networking and TLS content the name is already taken.** ACME means RFC 8555, the
-   certificate issuance protocol behind Let's Encrypt and behind automated certificate
-   management in F5 Distributed Cloud and most modern platforms. "ACME certificate renewal" in
-   one of our documents is a genuine ambiguity, not a stylistic preference.
+2. **In networking and TLS content the name is already taken.** The Automated Certificate
+   Management Environment (ACME) service, protocol, and challenge flow are legitimate registered
+   concepts defined by RFC 8555. They underpin Let's Encrypt, automated certificate management in
+   F5 Distributed Cloud, and most modern platforms. "ACME certificate renewal" in one of our
+   documents is a genuine technical reference, not a fictional organization.
 
-Do not introduce new ACME references. Rename existing ones as you touch the surrounding
-content; no separate cleanup sweep is required.
+This restriction applies only to fictitious organizations, tenants, people, and other placeholder
+values. Use ACME when the content genuinely documents the registered service, protocol, or
+challenge flow, and keep that terminology exact. Rename existing ACME placeholders as you touch
+the surrounding content; no separate cleanup sweep is required.
 
 ### Organization names
 
@@ -132,6 +135,45 @@ addresses are fine: `security@example.com`, `noreply@example.com`.
 This applies to internal drafts, demo tenants, and screenshots, not only to published work. When
 you need realistic-looking data, generate it. A sanitized real dataset is still a real dataset;
 treat removal of identifying details as unreliable and synthesis as the default.
+
+### Personally identifiable information across the repository
+
+The same rule applies outside prose. Do not commit personally identifiable information (PII) to
+source code, fixtures, test snapshots, generated files, logs, telemetry examples, error output,
+media metadata, filenames, or commit messages. PII includes direct identifiers and values that can
+identify or single out a party when combined:
+
+- Real names, person-specific email addresses, phone numbers, postal addresses, avatars, and
+  precise locations
+- User names embedded in local filesystem paths
+- Customer, tenant, account, subscription, project, support-case, and other party-specific
+  identifiers
+- Internet Protocol (IP) addresses, device identifiers, session identifiers, and provider subject
+  identifiers when they are associated with a person or customer
+
+Keep exact product names, public API paths, schema field names, error codes, and other facts that
+describe the system. Preserve legally required license and copyright notices, authoritative
+upstream attribution, and normal Git or GitHub contributor provenance. These are narrow provenance
+exceptions, not permission to reuse their values as examples or fixtures.
+
+Demo and lab software does not need a person's profile. Remove name, email, avatar, address, and
+similar inputs and outputs unless the behavior genuinely cannot work without them. Authentication
+may use a provider-issued opaque subject only for the active authorization decision. Do not log it,
+expose it in errors, or persist it unless the design documents why persistence is indispensable and
+how access and deletion are controlled.
+
+Use the managed scanner as a first pass; it cannot prove that free-form prose or pixels are clean:
+
+```bash
+bash scripts/check-pii.sh --scope staged --mode enforce
+bash scripts/check-pii.sh --scope head --mode audit
+bash scripts/check-pii.sh --scope history --mode audit
+```
+
+The audit reports review-required media even when it finds no embedded text. Inspect every image,
+Portable Document Format (PDF) file, and video visually, check metadata, and use optical character
+recognition (OCR) as a second check. Never paste a matched value into an issue, pull request, build
+log, or audit ledger; record the category and remediation instead.
 
 ## Secrets, credentials, and identifiers
 
@@ -250,11 +292,13 @@ file.
 - [ ] Every domain is `example.com`, `example.net`, `example.org`, a reserved top-level domain,
       or F5-owned
 - [ ] Every ASN and MAC address is in the documentation range
-- [ ] No ACME; organizations follow the `Example` pattern
+- [ ] No ACME used as a placeholder; legitimate protocol and challenge references remain exact
 - [ ] No real person's name, email address, or contact details
+- [ ] No PII in fixtures, snapshots, logs, telemetry, errors, filenames, or commit messages
 - [ ] No credential, token, key, or certificate material — live, expired, or otherwise
 - [ ] No real tenant, namespace, or account identifier
 - [ ] Screenshots checked against the list above and verified flat
+- [ ] Managed PII enforcement and audit scans run; every media-review finding inspected
 - [ ] Every command can be copied and run; every fence is language-tagged
 - [ ] Prerequisites, Verify, and Clean up sections present
 - [ ] Product names current

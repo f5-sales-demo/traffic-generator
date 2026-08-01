@@ -83,18 +83,20 @@ git -C "$repo" add -A
 assert_clean "relative symlink using ../ that stays inside the repository" "$repo"
 
 # --- hardcoded home directories ------------------------------------------------
+# acct1234 is synthetic but intentionally not a portable placeholder: these fixtures must exercise
+# rejection of a concrete account segment on every supported platform.
 repo=$(new_repo home-macos)
-printf 'cache=/Users/rmordasiewicz/.cache/thing\n' >"${repo}/config.ini"
+printf 'cache=/Users/acct1234/.cache/thing\n' >"${repo}/config.ini"
 git -C "$repo" add -A
 assert_violation "hardcoded /Users/<name>/ path" "$repo" --include-paths
 
 repo=$(new_repo home-linux)
-printf 'export DATA=/home/rmordasiewicz/data\n' >"${repo}/env.sh"
+printf 'export DATA=/home/acct1234/data\n' >"${repo}/env.sh"
 git -C "$repo" add -A
 assert_violation "hardcoded /home/<name>/ path" "$repo" --include-paths
 
 repo=$(new_repo home-windows)
-printf 'path=C:\\Users\\rmordasiewicz\\AppData\n' >"${repo}/win.ini"
+printf 'path=C:\\Users\\acct1234\\AppData\n' >"${repo}/win.ini"
 git -C "$repo" add -A
 assert_violation "hardcoded C:\\Users\\<name>\\ path" "$repo" --include-paths
 
@@ -112,40 +114,40 @@ assert_clean "CI runner home directory" "$repo" --include-paths
 
 # --- the explicit escape hatch -------------------------------------------------
 repo=$(new_repo allow-marker)
-printf 'example=/Users/rmordasiewicz/thing  # repo-hygiene:allow\n' >"${repo}/notes.md"
+printf 'example=/Users/acct1234/thing  # repo-hygiene:allow\n' >"${repo}/notes.md"
 git -C "$repo" add -A
 assert_clean "line carrying repo-hygiene:allow" "$repo" --include-paths
 
 # --- untracked files are out of scope: the check gates what is committed -------
 repo=$(new_repo untracked)
-printf 'cache=/Users/rmordasiewicz/.cache\n' >"${repo}/scratch.txt"
+printf 'cache=/Users/acct1234/.cache\n' >"${repo}/scratch.txt"
 assert_clean "untracked file with a home path" "$repo" --include-paths
 
 # --- binary files must not produce noise ---------------------------------------
 repo=$(new_repo binary)
-printf '\x00\x01/Users/rmordasiewicz/x\x00' >"${repo}/blob.bin"
+printf '\x00\x01/Users/acct1234/x\x00' >"${repo}/blob.bin"
 git -C "$repo" add -A
 assert_clean "binary file is skipped" "$repo" --include-paths
 
 # --- an exact home directory, with no trailing slash ---------------------------
 repo=$(new_repo home-exact)
-printf 'HOME=/home/rmordasiewicz\n' >"${repo}/env.sh"
+printf 'HOME=/home/acct1234\n' >"${repo}/env.sh"
 git -C "$repo" add -A
 assert_violation "hardcoded /home/<name> with no trailing slash" "$repo" --include-paths
 
 repo=$(new_repo home-exact-macos)
-printf 'root=/Users/rmordasiewicz\n' >"${repo}/conf.ini"
+printf 'root=/Users/acct1234\n' >"${repo}/conf.ini"
 git -C "$repo" add -A
 assert_violation "hardcoded /Users/<name> with no trailing slash" "$repo" --include-paths
 
 # --- an allowed path must not launder a real one on the same line --------------
 repo=$(new_repo mixed-ci)
-printf 'PATH=/home/runner/bin:/home/rmordasiewicz/bin\n' >"${repo}/paths.sh"
+printf 'PATH=/home/runner/bin:/home/acct1234/bin\n' >"${repo}/paths.sh"
 git -C "$repo" add -A
 assert_violation "real home alongside a CI home on one line" "$repo" --include-paths
 
 repo=$(new_repo mixed-placeholder)
-printf 'see /Users/you/notes and /Users/rmordasiewicz/notes\n' >"${repo}/README.md"
+printf 'see /Users/you/notes and /Users/acct1234/notes\n' >"${repo}/README.md"
 git -C "$repo" add -A
 assert_violation "real home alongside a placeholder on one line" "$repo" --include-paths
 
@@ -157,39 +159,39 @@ assert_violation "absolute symlink whose name contains repeated spaces" "$repo"
 
 # --- an option-like filename must not be handed to grep as an option -----------
 repo=$(new_repo dash-filename)
-printf 'cache=/Users/rmordasiewicz/.cache\n' >"${repo}/real.ini"
+printf 'cache=/Users/acct1234/.cache\n' >"${repo}/real.ini"
 printf 'placeholder\n' >"${repo}/-q"
 git -C "$repo" add -A
 assert_violation "home path still found when a file is named -q" "$repo" --include-paths
 
 # --- backslash-escaped Windows paths, as they appear inside JSON ----------------
 repo=$(new_repo json-windows)
-printf '{"path": "C:\\\\Users\\\\rmordasiewicz\\\\data"}\n' >"${repo}/settings.json"
+printf '{"path": "C:\\\\Users\\\\acct1234\\\\data"}\n' >"${repo}/settings.json"
 git -C "$repo" add -A
 assert_violation "JSON-escaped C:\\\\Users\\\\<name> path" "$repo" --include-paths
 
 # --- a relative symlink that escapes the repository ----------------------------
 repo=$(new_repo escaping-symlink)
-ln -s ../../home/rmordasiewicz/project "${repo}/outside"
+ln -s ../../home/acct1234/project "${repo}/outside"
 git -C "$repo" add -A --force
 assert_violation "relative symlink whose target escapes the repository" "$repo"
 
 # --- a dangling symlink must not silently disable the content scan -------------
 repo=$(new_repo dangling-symlink)
-printf 'cache=/Users/rmordasiewicz/.cache\n' >"${repo}/real.ini"
+printf 'cache=/Users/acct1234/.cache\n' >"${repo}/real.ini"
 ln -s ./nowhere-at-all "${repo}/dangling"
 git -C "$repo" add -A --force
 assert_violation "home path still found alongside a dangling symlink" "$repo" --include-paths
 
 # --- Windows profiles outside C: ------------------------------------------------
 repo=$(new_repo windows-other-drive)
-printf 'path=D:\\Users\\rmordasiewicz\\data\n' >"${repo}/d.ini"
+printf 'path=D:\\Users\\acct1234\\data\n' >"${repo}/d.ini"
 git -C "$repo" add -A
 assert_violation "hardcoded D:\\Users\\<name> path" "$repo" --include-paths
 
 # --- the home-directory scan is opt-in ------------------------------------------
 repo=$(new_repo opt-in)
-printf 'cache=/Users/rmordasiewicz/.cache\n' >"${repo}/config.ini"
+printf 'cache=/Users/acct1234/.cache\n' >"${repo}/config.ini"
 git -C "$repo" add -A
 assert_clean "home paths are ignored without --include-paths" "$repo"
 assert_violation "home paths are reported with --include-paths" "$repo" --include-paths
