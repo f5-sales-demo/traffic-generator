@@ -7,6 +7,7 @@ set -euo pipefail
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 SCANNER="${REPO_ROOT}/scripts/check-pii.sh"
 PYTHON_SCANNER="${REPO_ROOT}/scripts/check_pii.py"
+SYNTHETIC_USER=realperson
 
 FAIL=0
 WORK=$(mktemp -d)
@@ -216,19 +217,19 @@ git -C "$repo" commit -qm numeric-name
 assert_clean "numeric person fields are not names" "$repo" --scope head --mode enforce
 
 repo=$(new_repo home-path)
-printf 'cache=/Users/realperson/.cache/tool\n' >"${repo}/config.ini"
+printf 'cache=/Users/%s/.cache/tool\n' "$SYNTHETIC_USER" >"${repo}/config.ini"
 git -C "$repo" add config.ini
 git -C "$repo" commit -qm path
 assert_violation "personal home path" "$repo" --scope head --mode enforce
 
 repo=$(new_repo placeholder-paths)
-printf 'mac=/Users/you/work ci=/home/runner/work variable=/home/${USERNAME}/work route=/home/index\n' >"${repo}/config.ini"
+printf 'mac=/Users/you/work ci=/home/runner/work variable=/home/${USERNAME}/work route=/home/%s\n' index >"${repo}/config.ini"
 git -C "$repo" add config.ini
 git -C "$repo" commit -qm paths
 assert_clean "placeholder, CI, and variable home paths" "$repo" --scope head --mode enforce
 
 repo=$(new_repo embedded-home-tokens)
-printf 'keys=Shift+page/home/end route=service/Users/list windows=prefixC:\\Users\\record\n' >"${repo}/config.ini"
+printf 'keys=Shift+page/%s/%s route=service/%s/%s windows=prefixC:\\%s\\%s\n' home end Users list Users record >"${repo}/config.ini"
 git -C "$repo" add config.ini
 git -C "$repo" commit -qm tokens
 assert_clean "embedded home-like tokens are not absolute paths" "$repo" --scope head --mode enforce
@@ -413,7 +414,7 @@ git -C "$repo" commit -qm odd
 assert_violation "option-like filename containing spaces" "$repo" --scope head --mode enforce
 
 repo=$(new_repo symlink)
-ln -s /Users/realperson/private "${repo}/linked"
+ln -s "/Users/${SYNTHETIC_USER}/private" "${repo}/linked"
 git -C "$repo" add linked
 git -C "$repo" commit -qm symlink
 assert_clean "scanner does not dereference symlinks" "$repo" --scope head --mode enforce
