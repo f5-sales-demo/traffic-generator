@@ -71,6 +71,8 @@ SOURCE_CODE_SUFFIXES = {
     ".ts",
     ".tsx",
 }
+DOCUMENTATION_PROSE_SUFFIXES = {".adoc", ".asciidoc", ".md", ".mdx", ".rst", ".txt"}
+JQ_SOURCE_SUFFIXES = {".jq"}
 
 EMAIL_RE = re.compile(
     r"(?<![-A-Za-z0-9._%+/])"
@@ -95,7 +97,7 @@ PERSON_FIELD_RE = re.compile(
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
 IDENTITY_FIELD_RE = re.compile(
-    r"(?i)(?:^|[,{\s])(?P<key_quote>['\"]?)"
+    r"(?i)(?P<delimiter>^|[,{\[\s])(?P<key_quote>['\"]?)"
     r"(?P<key>tenant(?:_name|_id)?|customer(?:_name|_id)?|account(?:_name|_id)?|"
     r"subscription(?:_name|_id)|project(?:_name|_id)|namespace)"
     r"(?P=key_quote)\s*(?P<separator>[:=])\s*(?P<quote>['\"`]?)"
@@ -148,6 +150,20 @@ NUMERIC_LITERAL_RE = re.compile(
     r"[0-9][0-9_]*(?:\.[0-9_]+)?"
     r");?"
 )
+ISO_TIMESTAMP_PREFIX_RE = re.compile(
+    r"^\s*[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+    r"(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})?(?:\s|$)",
+)
+LOG_LEVEL_PREFIX_RE = re.compile(
+    r"(?:^|[\s|])(?:trace|debug|info|warn(?:ing)?|error|fatal|critical)(?:[\s:\]]|$)",
+    re.IGNORECASE,
+)
+MARKDOWN_STRUCTURAL_PREFIX_RE = re.compile(r"^\s*(?:>|[-+*]|[0-9]+[.)]|\|)(?:\s|$)")
+PROSE_IDENTITY_PREFIX_RE = re.compile(
+    r"(?:^|\s)(?:a|all|an|any|each|every|no|one|our|the|their|these|this|those|your)\s*$",
+    re.IGNORECASE,
+)
+JQ_COMMAND_PREFIX_RE = re.compile(r"(?:^|[|;&(]\s*)jq(?:\s|$)", re.IGNORECASE)
 
 SAFE_EMAIL_DOMAINS = {"example.com", "example.net", "example.org"}
 PROVENANCE_EMAIL_DOMAINS = {"noreply.github.com", "users.noreply.github.com"}
@@ -309,24 +325,42 @@ def placeholder_value(value: str) -> bool:
     )
 
 
-def is_structured_identity_field(line: str, match: re.Match[str]) -> bool:
+def is_structured_identity_field(
+    path: str,
+    line: str,
+    match: re.Match[str],
+) -> bool:
     """Return whether an identity-shaped token occurs in field syntax, not prose."""
-    if match.group("separator") == "=":
+    if match.group("separator") == "=" or match.group("delimiter") in {",", "{", "["}:
         return True
-    before = line[: match.start()].rstrip()
-    if not before:
-        return True
-    return before.endswith(("{", "[", ",")) or before in {"-", "+", "*"}
+    prefix = line[: match.start()]
+    prose_label = (
+        bool(prefix.strip())
+        and PurePosixPath(path).suffix.lower() in DOCUMENTATION_PROSE_SUFFIXES
+        and not MARKDOWN_STRUCTURAL_PREFIX_RE.match(prefix)
+        and not ISO_TIMESTAMP_PREFIX_RE.match(prefix)
+        and not LOG_LEVEL_PREFIX_RE.search(prefix)
+        and bool(PROSE_IDENTITY_PREFIX_RE.search(prefix))
+    )
+    return not prose_label
 
 
-def is_nonliteral_code_expression(path: str, match: re.Match[str]) -> bool:
+def is_nonliteral_code_expression(
+    path: str,
+    line: str,
+    match: re.Match[str],
+) -> bool:
     """Return whether a structured field is executable or type syntax, not data."""
     if match.group("quote"):
         return False
     value = normalized_value(match.group("value"))
+    suffix = PurePosixPath(path).suffix.lower()
     if value.startswith("."):
-        return True
-    if PurePosixPath(path).suffix.lower() not in SOURCE_CODE_SUFFIXES:
+        prefix = line[: match.start()]
+        is_source_expression = suffix in SOURCE_CODE_SUFFIXES | JQ_SOURCE_SUFFIXES
+        is_jq_command = bool(JQ_COMMAND_PREFIX_RE.search(prefix))
+        return is_source_expression or is_jq_command
+    if suffix not in SOURCE_CODE_SUFFIXES:
         return False
     return not bool(NUMERIC_LITERAL_RE.fullmatch(value))
 
@@ -417,7 +451,7 @@ def scan_contacts(
             value = normalized_value(match.group("value"))
             if NUMERIC_LITERAL_RE.fullmatch(value):
                 continue
-            if is_nonliteral_code_expression(path, match):
+            if is_nonliteral_code_expression(path, line, match):
                 continue
             if not placeholder_value(value):
                 add_finding(
@@ -458,9 +492,9 @@ def scan_structured_identity(
 ) -> None:
     """Scan structured fields for customer identifiers and personal records."""
     for match in IDENTITY_FIELD_RE.finditer(line):
-        if not is_structured_identity_field(line, match):
+        if not is_structured_identity_field(path, line, match):
             continue
-        if is_nonliteral_code_expression(path, match):
+        if is_nonliteral_code_expression(path, line, match):
             continue
         if not placeholder_value(match.group("value")):
             add_finding(
@@ -472,7 +506,7 @@ def scan_structured_identity(
             )
 
     for match in ADDRESS_FIELD_RE.finditer(line):
-        if is_nonliteral_code_expression(path, match):
+        if is_nonliteral_code_expression(path, line, match):
             continue
         if not placeholder_value(match.group("value")):
             add_finding(
