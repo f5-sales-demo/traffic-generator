@@ -139,6 +139,12 @@ git -C "$repo" add fixture.mdx
 git -C "$repo" commit -qm prose-labels
 assert_clean "identity words used as prose labels" "$repo" --scope head --mode enforce
 
+repo=$(new_repo prose-shaped-structured-data)
+printf 'Every tenant: tenant-literal\n' >"${repo}/fixture.yaml"
+git -C "$repo" add fixture.yaml
+git -C "$repo" commit -qm structured-prefix
+assert_violation "prose-shaped prefixes outside documentation" "$repo" --scope head --mode enforce
+
 repo=$(new_repo expression-shaped-literals)
 cat >"${repo}/fixture.mdx" <<'EOF'
 ```yaml
@@ -239,6 +245,66 @@ printf 'tenant: real-customer\n' >"${repo}/fixture.yaml"
 git -C "$repo" add fixture.yaml
 git -C "$repo" commit -qm tenant
 assert_violation "literal customer tenant" "$repo" --scope head --mode enforce
+
+repo=$(new_repo compact-json-after-field)
+printf '{"status":"active","tenant":"tenant-literal"}\n' >"${repo}/fixture.json"
+git -C "$repo" add fixture.json
+git -C "$repo" commit -qm compact-json
+assert_violation "compact JSON tenant after another field" "$repo" --scope head --mode enforce
+
+repo=$(new_repo nested-compact-json)
+printf '{"metadata":{"namespace":"namespace-literal"}}\n' >"${repo}/fixture.json"
+git -C "$repo" add fixture.json
+git -C "$repo" commit -qm nested-json
+assert_violation "nested compact JSON namespace" "$repo" --scope head --mode enforce
+
+repo=$(new_repo bracket-delimited-flow-yaml)
+printf '[tenant: tenant-literal]\n' >"${repo}/fixture.yaml"
+git -C "$repo" add fixture.yaml
+git -C "$repo" commit -qm flow-yaml
+assert_violation "bracket-delimited YAML tenant" "$repo" --scope head --mode enforce
+
+repo=$(new_repo log-level-prefix)
+printf 'INFO tenant: tenant-literal\n' >"${repo}/fixture.mdx"
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm log-prefix
+assert_violation "tenant after a log-level prefix" "$repo" --scope head --mode enforce
+
+repo=$(new_repo timestamp-prefix)
+printf '2026-08-01T12:34:56Z customer_id: customer-record\n' >"${repo}/fixture.txt"
+git -C "$repo" add fixture.txt
+git -C "$repo" commit -qm timestamp-prefix
+assert_violation "customer identifier after an ISO timestamp" "$repo" --scope head --mode enforce
+
+repo=$(new_repo markdown-blockquote)
+printf '> tenant: tenant-literal\n' >"${repo}/fixture.mdx"
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm blockquote
+assert_violation "tenant inside a Markdown blockquote" "$repo" --scope head --mode enforce
+
+repo=$(new_repo indented-yaml-list)
+printf 'items:\n  - tenant: tenant-literal\n' >"${repo}/fixture.yaml"
+git -C "$repo" add fixture.yaml
+git -C "$repo" commit -qm yaml-list
+assert_violation "tenant inside an indented YAML list" "$repo" --scope head --mode enforce
+
+repo=$(new_repo markdown-table)
+printf '| tenant: tenant-literal |\n' >"${repo}/fixture.mdx"
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm markdown-table
+assert_violation "tenant inside a Markdown table" "$repo" --scope head --mode enforce
+
+repo=$(new_repo decorated-log-prefix)
+printf '2026-08-01T12:34:56Z INFO api-component tenant: tenant-literal\n' >"${repo}/fixture.txt"
+git -C "$repo" add fixture.txt
+git -C "$repo" commit -qm decorated-log
+assert_violation "tenant after a decorated log prefix" "$repo" --scope head --mode enforce
+
+repo=$(new_repo dot-prefixed-yaml-literal)
+printf 'namespace: .namespace-literal\n' >"${repo}/fixture.yaml"
+git -C "$repo" add fixture.yaml
+git -C "$repo" commit -qm dot-literal
+assert_violation "dot-prefixed YAML identity literal" "$repo" --scope head --mode enforce
 
 repo=$(new_repo suffixed-customer-identifiers)
 printf 'project_id: customer-project\nsubscription_name: customer-plan\n' >"${repo}/fixture.yaml"
