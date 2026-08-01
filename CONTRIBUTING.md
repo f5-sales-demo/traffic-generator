@@ -512,6 +512,50 @@ apply what fits.
 - Work that guide's pre-publish checklist before opening a documentation PR, and treat its
   detection commands as a first pass rather than proof.
 
+### PII minimization and repository sweeps
+
+Real personally identifiable information (PII) does not belong in this fleet. This covers tracked
+content and runtime handling: source, fixtures, snapshots, generated files, logs, telemetry, error
+messages, media and its metadata, filenames, and commit messages. `STYLE_GUIDE.md` defines the
+identifiers, synthetic replacements, and narrow legal, upstream, and source-control provenance
+exceptions.
+
+Minimize runtime identity at the interface, not after storage. Delete nonessential name, email,
+avatar, address, and similar fields from schemas, APIs, clients, and callers. Authentication may use
+only an opaque provider subject for the authorization decision; never log it or persist it unless an
+engineering design establishes that persistence is indispensable and defines access and deletion.
+Because the fleet is prerelease, remove and replace PII-bearing interfaces in one change. Do not add
+aliases, dual-read logic, deprecated fields, migrations, or compatibility shims.
+
+Use this sequence for a PII sweep:
+
+1. Create a detailed issue without quoting or attaching the sensitive value.
+2. Run `bash scripts/check-pii.sh --scope head --mode enforce`, then `--mode audit`.
+3. Review inputs, validation, memory, persistence, logging, telemetry, errors, exports, and deletion.
+4. Inspect every reported media file visually and with metadata and OCR tooling.
+5. Replace real data with generated synthetic data at its source, then regenerate derived files.
+6. Run the repository's complete test and lint suite plus gitleaks and the PII enforcement scan.
+7. Merge the focused PR, then run `bash scripts/check-pii.sh --scope history --mode audit`.
+8. Record the issue, PR, categories fixed, HEAD result, media review, runtime review, history result,
+   and CI result in the campaign ledger. Never record a matched value.
+
+A finding in reachable history is not fixed by deleting it from `main`. Pause work on that repository
+and coordinate a `git filter-repo` rewrite with its owners. Re-run the scanner before the protected
+force-push, invalidate affected clones and cached artifacts, and verify the remote again afterward.
+Normal Git author and committer identities, signed commits, contributor attribution, and GitHub user
+names are provenance and are not rewritten. Rewriting history is an incident response action, not a
+pull-request change.
+
+The scanner deliberately separates broad `audit` findings from high-confidence `enforce` findings.
+Do not add a baseline, blanket allowlist, inline suppression, disabled check, or skipped path to make
+either result green. Fix operational and example data at the source. A legally required notice or
+authoritative upstream attribution must stay in its original context and must never be copied into a
+fixture or example.
+
+The `pii-guard` check requires zero enforcement findings; there is no accepted-findings baseline.
+Run `bun run pii:gate` against tracked `HEAD`, or `bun run pii:gate -- --scope staged` before a commit
+to scan the index. Empty, malformed, or failed scanner output is an operational error, never a pass.
+
 ### Clean branches
 
 - A branch is for trial-and-error: guess, probe, refactor, and learn freely while you
