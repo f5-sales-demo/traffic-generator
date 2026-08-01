@@ -126,7 +126,8 @@ PDF_AUTHOR_RE = re.compile(
     re.IGNORECASE,
 )
 SENSITIVE_MEDIA_TAG_RE = re.compile(
-    r"GPSLatitude|GPSLongitude|OwnerName|CameraOwnerName", re.IGNORECASE
+    r"GPSLatitude|GPSLongitude|OwnerName|CameraOwnerName",
+    re.IGNORECASE,
 )
 MEDIA_AUTHOR_METADATA_RE = re.compile(
     r"(?:^|\n)(?:Author|Artist|Creator|OwnerName|CameraOwnerName)"
@@ -294,14 +295,10 @@ def placeholder_value(value: str) -> bool:
     if re.fullmatch(r"example(?:[-_.][a-z0-9]+)*", lower):
         return True
     first, separator, second = value.partition("|")
-    safe_composite = bool(
-        first
-        and separator
-        and second
-        and "|" not in second
-        and placeholder_value(first)
-        and placeholder_value(second)
-    )
+    if first and separator and second and "|" not in second:
+        safe_composite = placeholder_value(first) and placeholder_value(second)
+    else:
+        safe_composite = False
     return (
         safe_composite
         or lower in SAFE_PERSON_NAMES
@@ -440,7 +437,10 @@ def scan_contacts(
 
 
 def scan_structured_identity(
-    path: str, line_number: int, line: str, findings: set[Finding]
+    path: str,
+    line_number: int,
+    line: str,
+    findings: set[Finding],
 ) -> None:
     """Scan structured fields for customer identifiers and personal records."""
     for match in IDENTITY_FIELD_RE.finditer(line):
@@ -648,10 +648,8 @@ def render_text(findings: Sequence[Finding], *, scope: str, mode: str) -> str:
         location = finding.path
         if finding.line:
             location = f"{location}:{finding.line}"
-        lines.append(
-            f"::error file={finding.path},line={finding.line}::"
-            f"[{finding.category}] {finding.message} ({location})"
-        )
+        annotation = f"[{finding.category}] {finding.message} ({location})"
+        lines.append(f"::error file={finding.path},line={finding.line}::{annotation}")
     lines.append(f"PII {mode}: {len(findings)} finding(s) in {scope} scope.")
     return "\n".join(lines)
 
