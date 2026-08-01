@@ -177,7 +177,7 @@ If a branch falls behind `main` while its PR is open, use the **Update branch** 
 1. Push your branch and open a PR against `main`
 2. **Link the issue** — use `Closes #42` in the PR description, or link from the sidebar
 3. Fill out the PR template (it loads automatically)
-4. The `Check linked issues` and `Lint Code Base` CI checks will block merge if no issue is linked or linting fails
+4. The `Check linked issues`, `Lint Code Base`, and `Shell Unit Tests` CI checks block merge if the issue link, lint, or repository shell tests fail
 
 ## Step 5: Review and Merge
 
@@ -390,7 +390,7 @@ The `main` branch is protected. The following rules are enforced:
 
 - No direct pushes to `main` — all changes go through PRs
 - No force pushes
-- Required status checks: `Check linked issues` and `Lint Code Base` must pass, plus any repo-specific contexts. The `review / claude-review` check is **suspended**. `audit / Translation freshness` still runs but **no longer gates a merge**
+- Required status checks: `Check linked issues`, `Lint Code Base`, and `Shell Unit Tests` must pass, plus any repo-specific contexts. The `review / claude-review` check is **suspended**. `audit / Translation freshness` still runs but **no longer gates a merge**
 - Admin enforcement enabled — these rules apply to everyone
 
 ## AI Assistant Guidelines
