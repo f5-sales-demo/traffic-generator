@@ -115,6 +115,42 @@ git -C "$repo" add fixture.yaml
 git -C "$repo" commit -qm synthetic
 assert_clean "reserved synthetic values" "$repo" --scope head --mode enforce
 
+repo=$(new_repo documentation-expressions)
+cat >"${repo}/fixture.mdx" <<'EOF'
+```bash
+curl "https://example.com/api/config/namespaces/xEXAMPLE_NAMESPACEx/resources" \
+  | jq '{namespace: .metadata.namespace}'
+jq -n '{metadata: {namespace: "xEXAMPLE_NAMESPACEx"}}'
+jq -n '{detail: "Namespace: write denied — create it before continuing"}'
+```
+EOF
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm expressions
+assert_clean "schematic variables and documentation expressions" "$repo" --scope head --mode enforce
+
+repo=$(new_repo documentation-prose-labels)
+cat >"${repo}/fixture.mdx" <<'EOF'
+<Note>
+Every customer: "Use the documented example tenant." Continue with the setup instructions.
+</Note>
+EOF
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm prose-labels
+assert_clean "identity words used as prose labels" "$repo" --scope head --mode enforce
+
+repo=$(new_repo expression-shaped-literals)
+cat >"${repo}/fixture.mdx" <<'EOF'
+```yaml
+namespace: xcustomer-namespacex
+```
+```json
+{"namespace": ".customer-namespace"}
+```
+EOF
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm literals
+assert_violation "expression-shaped identity literals remain enforced" "$repo" --scope head --mode enforce
+
 repo=$(new_repo public-ip-contexts)
 cat >"${repo}/fixture.txt" <<'EOF'
 rfc6598=100.64.0.1/10

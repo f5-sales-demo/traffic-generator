@@ -95,10 +95,10 @@ PERSON_FIELD_RE = re.compile(
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
 IDENTITY_FIELD_RE = re.compile(
-    r"(?i)(?:^|[,{\s])['\"]?"
+    r"(?i)(?:^|[,{\s])(?P<key_quote>['\"]?)"
     r"(?P<key>tenant(?:_name|_id)?|customer(?:_name|_id)?|account(?:_name|_id)?|"
     r"subscription(?:_name|_id)|project(?:_name|_id)|namespace)"
-    r"['\"]?\s*[:=]\s*(?P<quote>['\"`]?)"
+    r"(?P=key_quote)\s*(?P<separator>[:=])\s*(?P<quote>['\"`]?)"
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
 ADDRESS_FIELD_RE = re.compile(
@@ -294,6 +294,8 @@ def placeholder_value(value: str) -> bool:
         return True
     if re.fullmatch(r"example(?:[-_.][a-z0-9]+)*", lower):
         return True
+    if re.fullmatch(r"x[A-Z][A-Z0-9_]*x", value):
+        return True
     first, separator, second = value.partition("|")
     if first and separator and second and "|" not in second:
         safe_composite = placeholder_value(first) and placeholder_value(second)
@@ -307,13 +309,25 @@ def placeholder_value(value: str) -> bool:
     )
 
 
+def is_structured_identity_field(line: str, match: re.Match[str]) -> bool:
+    """Return whether an identity-shaped token occurs in field syntax, not prose."""
+    if match.group("separator") == "=":
+        return True
+    before = line[: match.start()].rstrip()
+    if not before:
+        return True
+    return before.endswith(("{", "[", ",")) or before in {"-", "+", "*"}
+
+
 def is_nonliteral_code_expression(path: str, match: re.Match[str]) -> bool:
     """Return whether a structured field is executable or type syntax, not data."""
-    if PurePosixPath(path).suffix.lower() not in SOURCE_CODE_SUFFIXES:
-        return False
     if match.group("quote"):
         return False
     value = normalized_value(match.group("value"))
+    if value.startswith("."):
+        return True
+    if PurePosixPath(path).suffix.lower() not in SOURCE_CODE_SUFFIXES:
+        return False
     return not bool(NUMERIC_LITERAL_RE.fullmatch(value))
 
 
@@ -444,6 +458,8 @@ def scan_structured_identity(
 ) -> None:
     """Scan structured fields for customer identifiers and personal records."""
     for match in IDENTITY_FIELD_RE.finditer(line):
+        if not is_structured_identity_field(line, match):
+            continue
         if is_nonliteral_code_expression(path, match):
             continue
         if not placeholder_value(match.group("value")):
