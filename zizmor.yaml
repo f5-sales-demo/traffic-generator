@@ -1,10 +1,7 @@
 ---
 rules:
-  # SHA-pinning is enforced by convention and by ref-version-mismatch.
-  # This rule's heuristic flags some valid SHA pins; redundant with
-  # the stricter rule we already rely on.
-  unpinned-uses:
-    disable: true
+  # Remote actions and reusable workflows are commit-pinned. Keep
+  # unpinned-uses active so any mutable ref fails the security audit.
   # Low-confidence finding;
   # persist-credentials: false not required
   # for our use case

@@ -70,7 +70,7 @@ jobs:
         startsWith(github.head_ref, 'auto-generate/') ||
         startsWith(github.head_ref, 'autoresearch/') ||
         (startsWith(github.head_ref, 'dependabot/') && github.actor == 'dependabot[bot]'))
-    uses: f5-sales-demo/docs-control/.github/workflows/claude-review.yml@main
+    uses: f5-sales-demo/docs-control/.github/workflows/claude-review.yml@4796ba660860c59b27aedd52fb30ed1841897a16
     permissions:
       contents: read # inspect the same-repository pull request
       pull-requests: write # publish the reusable review result

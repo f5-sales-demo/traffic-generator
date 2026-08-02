@@ -4,7 +4,7 @@
     "xcsh": ["biome.json", "LICENSE", ".ruff.toml", ".python-lint", ".mypy.ini", ".github/workflows/super-linter.yml"],
     "terraform-provider-xcsh": [".github/workflows/translation-audit.yml", "scripts/locale-lint.sh"],
     "api-specs": [".ruff.toml", ".python-lint", ".mypy.ini"],
-    "api-specs-enriched": [".ruff.toml", ".python-lint", ".mypy.ini"],
+    "api-specs-enriched": [".ruff.toml", ".python-lint", ".mypy.ini", ".github/workflows/github-pages-deploy.yml"],
     "vscode-xcsh": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg", "README.md"],
     "i18n-core": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
     "console": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],

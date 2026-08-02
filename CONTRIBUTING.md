@@ -311,8 +311,8 @@ reviewer left behind.
    check that is never emitted. An unconditional job removes that whole class of failure — after this,
    `TRANSLATIONS_ENABLED` governs only local generation, which fails visibly and cheaply.
 
-   `tests/test-translation-suspension.sh` keys section 1 on the `SUSPENDED:` marker, so leaving it in
-   place fails the guard the moment the context comes back.
+   docs-control's `tests/test-translation-suspension.sh` keys section 1 on the `SUSPENDED:` marker,
+   so leaving it in place fails the guard the moment the context comes back.
 4. Confirm the audit actually reports on **every governed repository that receives the workflow**, not
    on one pull request. Three traps here, all of them load-bearing:
 
