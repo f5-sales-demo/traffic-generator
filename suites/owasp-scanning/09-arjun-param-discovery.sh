@@ -28,7 +28,9 @@ run_arjun() {
   local label="$1"
   local url="$2"
   local method="${3:-GET}"
-  local output_file="${OUTPUT_DIR}/arjun-$(echo "${label}" | tr ' /' '-' | tr '[:upper:]' '[:lower:]').json"
+  local normalized_label output_file
+  normalized_label=$(printf '%s' "${label}" | tr ' /' '-' | tr '[:upper:]' '[:lower:]')
+  output_file="${OUTPUT_DIR}/arjun-${normalized_label}.json"
 
   echo "----------------------------------------"
   echo "[*] ${label}"

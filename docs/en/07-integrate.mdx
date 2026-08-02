@@ -9,7 +9,7 @@ sidebar:
 
 The traffic generator is one component in a multi-layer demo environment. The complete architecture when all components are deployed:
 
-```
+```text
 Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
                          |
                CDN Simulator (optional)
@@ -30,7 +30,7 @@ Each component is independently deployed and configured via Terraform. The traff
 The [origin server](https://f5-sales-demo.github.io/origin-server/) provides the backend applications that the traffic generator's attack suites target:
 
 | Traffic Suite | Origin Application | Path |
-|---|---|---|
+| --- | --- | --- |
 | api-attacks | VAmPI | `/vampi/` |
 | bot-simulation | All applications | All paths |
 | cdn-load-testing | CDN Simulator | CDN endpoint |
@@ -96,7 +96,7 @@ To use the javascript-exploits suite:
 
 When the CDN Simulator is deployed, the architecture adds a caching layer:
 
-```
+```text
 Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
 ```
 

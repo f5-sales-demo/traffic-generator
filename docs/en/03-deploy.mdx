@@ -109,7 +109,7 @@ Terraform outputs the public IP, SSH command, and target FQDN after successful d
 The F-series compute-optimized VMs are recommended for this CPU-bound traffic generation workload. The cloud-init kernel tuning and tool concurrency scale automatically with vCPU count.
 
 | VM SKU | vCPU | RAM | Network | Use Case |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | Light lab/demo |
 | Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | Standard demos |
 | Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | Load testing (default) |
@@ -136,7 +136,7 @@ cloud-init status --wait
 
 Expected output when complete:
 
-```
+```text
 status: done
 ```
 
@@ -190,7 +190,7 @@ ls /opt/traffic-generator/suites/*/
 ## Terraform Outputs
 
 | Output | Description | Example |
-|---|---|---|
+| --- | --- | --- |
 | `deployer` | Resolved deployer identifier | `jsmith` |
 | `public_ip` | Public IP address of the traffic generator VM | `20.12.78.200` |
 | `private_ip` | Private IP address of the VM | `10.201.0.4` |
@@ -230,7 +230,7 @@ EOF
 ```
 
 | Required Variable | Source | Description |
-|---|---|---|
+| --- | --- | --- |
 | `target_fqdn` | F5 XC console | FQDN of the HTTP load balancer protecting the origin server |
 | `target_origin_ip` | Origin server `public_ip` output | Direct origin IP for bypass testing (optional) |
 

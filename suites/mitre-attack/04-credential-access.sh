@@ -78,7 +78,7 @@ if echo "$resp" | grep -qiE "(\\\$2[aby]|md5|[a-f0-9]{32})" 2>/dev/null; then
   echo "  [VULN] T1212 Password hashes extracted via UNION SELECT"
   echo "$resp" | jq -r '.data[]? | "\(.email // .id): \(.password // "N/A")"' 2>/dev/null | head -5
 else
-  echo "  [INFO] T1212 UNION SELECT attempted (response: $(echo "$resp" | wc -c)B)"
+  printf '  [INFO] T1212 UNION SELECT attempted (response: %sB)\n' "${#resp}"
 fi
 echo ""
 

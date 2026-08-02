@@ -11,7 +11,7 @@
 ### Test A: D8s_v3 (8 vCPU, 32 GiB, Xeon 8370C @ 2.80 GHz)
 
 | Test | Result |
-|------|--------|
+| ------ | -------- |
 | T1 wrk static (7 ep) | 149,678 req/s |
 | T2 wrk Lua randomized | 68,126 req/s |
 | T3 hey goroutine (4 ep) | 14,641 req/s |
@@ -22,7 +22,7 @@
 ### Test B: F16s_v2 (16 vCPU, 32 GiB, Xeon 8272CL @ 2.60 GHz)
 
 | Test | Result |
-|------|--------|
+| ------ | -------- |
 | T1 wrk static (7 ep) | 243,530 req/s |
 | T2 wrk Lua randomized | 118,002 req/s |
 | T3 hey goroutine (4 ep) | 52,465 req/s |
@@ -33,7 +33,7 @@
 ### Test C: F32s_v2 (32 vCPU, 64 GiB, Xeon 8272CL @ 2.60 GHz)
 
 | Test | Result |
-|------|--------|
+| ------ | -------- |
 | T1 wrk static (7 ep) | 219,581 req/s |
 | T2 wrk Lua randomized | 160,823 req/s |
 | T3 hey goroutine (4 ep) | 85,465 req/s |
@@ -44,7 +44,7 @@
 ### Test D: D16s_v3 (16 vCPU, 64 GiB, Xeon 8272CL @ 2.60 GHz)
 
 | Test | Result |
-|------|--------|
+| ------ | -------- |
 | T1 wrk static (7 ep) | 224,699 req/s |
 | T2 wrk Lua randomized | 117,142 req/s |
 | T3 hey goroutine (4 ep) | 47,019 req/s |
@@ -73,7 +73,7 @@ RPS/RFS: mask=ffff on eth0 (16 queues), ring buf rx=18139 tx=2560, THP=always
 Test params: wrk 16t/256c/ep, hey 192c/ep, ~3,072 total persistent connections
 
 | Test | Result |
-|------|--------|
+| ------ | -------- |
 | T1 wrk static (7 ep) | 205,169 req/s (avg lat 8.9ms) |
 | T2 wrk Lua randomized | 36,576 req/s (avg lat 575ms) |
 | T3 hey goroutine (4 ep) | 123,497 req/s (avg lat 17ms) |
@@ -89,7 +89,7 @@ RPS/RFS: mask=ffffffff on eth0 (16 queues), ring buf rx=18139 tx=2560, THP=alway
 Test params: wrk 32t/512c/ep, hey 384c/ep, ~5,920 total persistent connections
 
 | Test | Result |
-|------|--------|
+| ------ | -------- |
 | T1 wrk static (7 ep) | 208,884 req/s (avg lat 17.5ms) |
 | T2 wrk Lua randomized | 53,537 req/s (avg lat 638ms) |
 | T3 hey goroutine (4 ep) | 167,745 req/s (avg lat 34ms) |

@@ -10,7 +10,7 @@ Every tool listed below is pre-installed during cloud-init provisioning. No manu
 ## Web Application Testing
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | nikto | apt | `nikto -h https://TARGET -maxtime 120s` | web-app-attacks |
 | sqlmap | apt | `sqlmap --batch -u "https://TARGET/dvwa/vulnerabilities/sqli/?id=1"` | web-app-attacks, api-attacks |
 | nuclei | ghlatest | `nuclei -u https://TARGET -severity medium,high,critical` | web-app-attacks |
@@ -25,7 +25,7 @@ Every tool listed below is pre-installed during cloud-init provisioning. No manu
 ## WAF Evasion Testing
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | gotestwaf | go install | `cd /opt/gotestwaf && gotestwaf --url https://TARGET --noEmailReport --includePayloads=false` | waf-encoding-evasion |
 | waf-bypass | git clone + pip | `waf-bypass --host TARGET:443 --timeout 10 --threads 10` | waf-encoding-evasion |
 
@@ -34,7 +34,7 @@ GoTestWAF (by Wallarm) is an industry-standard WAF assessment framework that mul
 ## Network Analysis
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | nmap | apt | `nmap -sV -sC -p 80,443 TARGET_IP` | reconnaissance |
 | masscan | apt | `masscan TARGET_IP -p 1-1000 --rate=1000` | reconnaissance |
 | tshark | apt | `tshark -i eth0 -c 100 -f "host TARGET_IP"` | -- |
@@ -48,7 +48,7 @@ GoTestWAF (by Wallarm) is an industry-standard WAF assessment framework that mul
 ## SSL/TLS Testing
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | sslscan | apt | `sslscan TARGET:443` | ssl-scanning |
 | sslyze | uv | `sslyze TARGET:443` | ssl-scanning |
 | testssl.sh | git clone | `/opt/testssl.sh/testssl.sh TARGET:443` | ssl-scanning |
@@ -56,14 +56,14 @@ GoTestWAF (by Wallarm) is an industry-standard WAF assessment framework that mul
 ## MITM and Proxy
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | mitmproxy | uv | `mitmproxy --mode reverse:https://TARGET -p 8080` | -- |
 | socat | apt | `socat TCP-LISTEN:8080,fork TCP:TARGET:443` | -- |
 
 ## Browser Automation
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | playwright | npm + uv | `playwright open https://TARGET` | bot-simulation, javascript-exploits |
 | puppeteer | npm | `node -e "const b=await require('puppeteer').launch(); ..."` | bot-simulation |
 | puppeteer-extra-plugin-stealth | npm | Used as Puppeteer plugin for stealth browsing | bot-simulation |
@@ -73,9 +73,9 @@ Playwright installs its own Chromium binary via `playwright install chromium`. P
 ## Subdomain and DNS Enumeration
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | subfinder | ghlatest | `subfinder -d example.com -silent` | reconnaissance |
-| httpx | ghlatest | `echo TARGET | httpx -status-code -title` | reconnaissance |
+| httpx | ghlatest | `echo TARGET \| httpx -status-code -title` | reconnaissance |
 | amass | ghlatest | `amass enum -passive -d example.com` | reconnaissance |
 | dnsrecon | uv | `dnsrecon -d example.com -t std` | reconnaissance |
 | fierce | uv | `fierce --domain example.com` | reconnaissance |
@@ -85,7 +85,7 @@ Playwright installs its own Chromium binary via `playwright install chromium`. P
 ## Credential Testing
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | hydra | apt | `hydra -l admin -P /opt/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt TARGET https-post-form "/dvwa/login.php:..."` | web-app-attacks |
 | medusa | apt | `medusa -h TARGET -u admin -P passwords.txt -M http` | web-app-attacks |
 | ncrack | apt | `ncrack -vv --user admin -P passwords.txt TARGET:443` | web-app-attacks |
@@ -93,7 +93,7 @@ Playwright installs its own Chromium binary via `playwright install chromium`. P
 ## Python Security Libraries
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | scapy | pip | `python3 -c "from scapy.all import *; sr1(IP(dst='TARGET')/TCP(dport=443,flags='S'))"` | reconnaissance |
 | impacket | pip | `python3 -m impacket.smbclient TARGET` | reconnaissance |
 | arjun | pip | `arjun -u https://TARGET/endpoint` | api-attacks |
@@ -104,7 +104,7 @@ Playwright installs its own Chromium binary via `playwright install chromium`. P
 ## OSINT and Recon
 
 | Tool | Install Method | Location | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | recon-ng | git clone | `/opt/recon-ng/` | reconnaissance |
 | spiderfoot | git clone | `/opt/spiderfoot/` | reconnaissance |
 | SecLists | git clone | `/opt/SecLists/` | web-app-attacks, api-attacks, reconnaissance |
@@ -118,7 +118,7 @@ SecLists provides wordlists used by multiple tools including ffuf, gobuster, fer
 These tools are only installed when `tool_tier = "full"`:
 
 | Tool | Install Method | Example Command | Used By Suite |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | ZAP (OWASP Zed Attack Proxy) | ghlatest | `zap-cli quick-scan -s all -r https://TARGET` | web-app-attacks |
 | Metasploit Framework | installer script | `msfconsole -q -x "use auxiliary/scanner/http/http_version; set RHOSTS TARGET; run; exit"` | reconnaissance |
 
@@ -129,7 +129,7 @@ ZAP and Metasploit add approximately 1.5 GiB to the disk footprint and 5-10 minu
 ## Install Methods Reference
 
 | Method | Description |
-|---|---|
+| --- | --- |
 | apt | Installed from Ubuntu 24.04 APT repositories via `apt-get install` |
 | ghlatest | Latest binary downloaded from GitHub Releases using `ghlatest.sh` and `install-release.sh` |
 | uv | Installed as a Python tool using the `uv` package manager |
