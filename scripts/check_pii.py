@@ -1800,10 +1800,9 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
         if opening_fence and fence:
             fence_marker = fence.group("marker")
             fence_language = parse_fence_language(fence.group("info"))
-            if fence.group("container"):
-                fence_close_column = fence.start("marker") + 3
-            else:
-                fence_close_column = 3
+            fence_container = fence.group("container")
+            container_close_column = fence.start("marker") + 3
+            fence_close_column = container_close_column if fence_container else 3
             active_jq_quote = None
 
         fence_boundary = closing_fence or opening_fence
