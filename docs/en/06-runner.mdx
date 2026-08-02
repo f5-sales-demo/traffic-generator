@@ -20,7 +20,7 @@ runner.sh <suite-name> [--dry-run]
 **Arguments:**
 
 | Argument | Required | Description |
-|---|---|---|
+| --- | --- | --- |
 | `suite-name` | Yes | Name of the suite directory (e.g., `web-app-attacks`, `api-attacks`) |
 | `--dry-run` | No | Print what would execute without running any scripts |
 
@@ -82,7 +82,7 @@ The `--dry-run` flag prints each script that would be executed without running i
 
 Output:
 
-```
+```text
 === 01-sqli.sh ===
 [DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
 === 02-xss.sh ===
@@ -106,13 +106,13 @@ Use dry-run to verify suite structure after deployment or before running a suite
 
 Each suite run creates a timestamped results directory:
 
-```
+```text
 /opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
 ```
 
 **Structure:**
 
-```
+```text
 /opt/traffic-generator/results/20260425-143000-web-app-attacks/
   meta.json
   01-sqli.sh.log
@@ -143,7 +143,7 @@ The `meta.json` file records suite execution metadata:
 ```
 
 | Field | Description |
-|---|---|
+| --- | --- |
 | `suite` | Suite name |
 | `target` | Target FQDN used for the run |
 | `started` | UTC timestamp when the suite started |

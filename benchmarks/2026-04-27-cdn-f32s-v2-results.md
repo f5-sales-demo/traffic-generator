@@ -14,7 +14,7 @@
 **Test params**: wrk 16t/256c/ep, hey 192c/ep, ~3,072 total persistent connections
 
 | Test | Result |
-|------|--------|
+| ------ | -------- |
 | T1 wrk static (7 ep) | 350,718 req/s (avg lat 5.2-6.9ms) |
 | T2 wrk Lua randomized | 35,708 req/s (avg lat 591ms) |
 | T3 hey goroutine (4 ep) | 158,378 req/s (avg lat 17ms) |
@@ -32,7 +32,7 @@
 **Test params**: wrk 32t/512c/ep, hey 384c/ep, ~5,920 total persistent connections
 
 | Test | Result |
-|------|--------|
+| ------ | -------- |
 | T1 wrk static (7 ep) | 330,266 req/s (avg lat 11.4-12.6ms) |
 | T2 wrk Lua randomized | 53,156 req/s (avg lat 637ms) |
 | T3 hey goroutine (4 ep) | 233,037 req/s (avg lat 34ms) |
@@ -50,7 +50,7 @@
 ### Individual Tests (tool running alone)
 
 | Test | F16s_v2 (16c) | F32s_v2 (32c) | Delta | Winner |
-|------|---------------|---------------|-------|--------|
+| ------ | --------------- | --------------- | ------- | -------- |
 | T1 wrk static | 350,718 | 330,266 | -6% | F16s_v2 |
 | T2 wrk Lua | 35,708 | 53,156 | **+49%** | F32s_v2 |
 | T3 hey goroutine | 158,378 | 233,037 | **+47%** | F32s_v2 |
@@ -59,7 +59,7 @@
 ### Combined Kraken (all tools simultaneous)
 
 | Metric | F16s_v2 (16c) | F32s_v2 (32c) | Delta |
-|--------|---------------|---------------|-------|
+| -------- | --------------- | --------------- | ------- |
 | **Kraken combined** | **224,646** | **152,404** | **-32%** |
 | Kraken wrk | 188,013 | 115,637 | -38% |
 | Kraken hey | 30,209 | 33,306 | +10% |
@@ -90,7 +90,7 @@ F32s_v2 should be run with F16s_v2's connection count (3,072) but 32 wrk threads
 ## Comparison Across CDN Sizes
 
 | Generator → CDN | T1 wrk static | T3 hey | T5 kraken | Generator CPU |
-|-----------------|---------------|--------|-----------|---------------|
+| ----------------- | --------------- | -------- | ----------- | --------------- |
 | F16 → CDN F16 | 205,169 | 123,497 | 156,659 | 61.38 |
 | F32 → CDN F16 | 208,884 | 167,745 | 131,606 | 18.57 |
 | **F16 → CDN F32** | **350,718** | **158,378** | **224,646** | **84.90** |
