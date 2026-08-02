@@ -8,13 +8,13 @@ on:
     branches: [main]
     paths:
       - '.github/config/**'
+      - '.github/workflows/enforce-repo-settings.yml'
   workflow_dispatch:
     inputs:
       source_sha:
-        description: 'Commit SHA of the docs-control push that triggered this run. Forwarded to sync-managed-files for Pages staleness check.'
-        required: false
+        description: 'Exact docs-control commit receipt for every governed read.'
+        required: true
         type: string
-        default: ''
 
 permissions:
   contents: read
@@ -24,16 +24,208 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  resolve-source:
+    runs-on: ubuntu-latest
+    outputs:
+      source_sha: ${{ steps.resolve.outputs.source_sha }}
+      ready: ${{ steps.resolve.outputs.ready }}
+    steps:
+      - name: Resolve one exact docs-control receipt
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.REPO_SETTINGS_TOKEN }}
+          REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
+          DOWNSTREAM_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          source_sha="$REQUESTED_SOURCE_SHA"
+          if ! current_source_sha=$(gh api \
+            "repos/${GITHUB_REPOSITORY_OWNER}/docs-control/commits/main" \
+            --jq '.sha'); then
+            echo "::error::Could not resolve protected docs-control main"
+            exit 1
+          fi
+          if ! printf '%s' "$current_source_sha" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::Protected docs-control main returned an invalid commit"
+            exit 1
+          fi
+          if [ -z "$source_sha" ]; then
+            source_sha="$current_source_sha"
+          fi
+          if ! printf '%s' "$source_sha" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::Could not resolve an exact docs-control source commit"
+            exit 1
+          fi
+          source_status="identical"
+          if [ "$source_sha" != "$current_source_sha" ]; then
+            if ! source_status=$(gh api \
+              "repos/${GITHUB_REPOSITORY_OWNER}/docs-control/compare/${source_sha}...${current_source_sha}" \
+              --jq '.status'); then
+              echo "::error::Could not prove the source receipt is on protected docs-control main"
+              exit 1
+            fi
+            if [ "$source_status" != "ahead" ]; then
+              echo "::error::Source receipt is not an approved protected-main commit"
+              exit 1
+            fi
+          fi
+
+          if ! printf '%s' "$DOWNSTREAM_SHA" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::Could not resolve the exact downstream caller commit"
+            exit 1
+          fi
+          caller_json=$(mktemp)
+          caller_file=$(mktemp)
+          rollout_json=$(mktemp)
+          rollout_file=$(mktemp)
+          trap 'rm -f "$caller_json" "$caller_file" "$rollout_json" "$rollout_file"' EXIT
+          if ! gh api \
+            "repos/${GITHUB_REPOSITORY_OWNER}/docs-control/contents/workflows/enforce-repo-settings.yml?ref=${current_source_sha}" \
+            >"$caller_json"; then
+            echo "::error::Could not resolve the canonical managed caller"
+            exit 1
+          fi
+          if ! jq -e '
+            .type == "file" and .encoding == "base64" and
+            (.sha | type == "string" and test("^[0-9a-f]{40}$")) and
+            (.content | type == "string" and length > 0)
+          ' "$caller_json" >/dev/null; then
+            echo "::error::Canonical managed caller response is malformed"
+            exit 1
+          fi
+          canonical_caller_blob=$(jq -r '.sha' "$caller_json")
+          if ! jq -r '.content' "$caller_json" | tr -d '\n' | base64 -d >"$caller_file"; then
+            echo "::error::Canonical managed caller contains invalid base64"
+            exit 1
+          fi
+          if [ "$(git hash-object "$caller_file")" != "$canonical_caller_blob" ]; then
+            echo "::error::Canonical caller bytes do not match their blob receipt"
+            exit 1
+          fi
+
+          caller_ready=true
+          live_err=$(mktemp)
+          if ! live_caller_blob=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/contents/.github/workflows/enforce-repo-settings.yml?ref=${DOWNSTREAM_SHA}" \
+            --jq '.sha' 2>"$live_err"); then
+            if grep -qE '\(HTTP 404\)$' "$live_err"; then
+              live_caller_blob=""
+            else
+              echo "::error::Could not read the live downstream caller"
+              rm -f "$live_err"
+              exit 1
+            fi
+          elif ! printf '%s' "$live_caller_blob" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::Invalid live downstream caller blob receipt"
+            rm -f "$live_err"
+            exit 1
+          fi
+          rm -f "$live_err"
+          if [ "$live_caller_blob" != "$canonical_caller_blob" ]; then
+            caller_ready=false
+          fi
+
+          for workflow in enforce-repo-settings.yml sync-managed-files.yml; do
+            pin_revision=$(sed -nE \
+              "s#^[[:space:]]*uses: f5-sales-demo/docs-control/.github/workflows/${workflow}@([0-9a-f]{40})\$#\\1#p" \
+              "$caller_file")
+            pin_count=$(printf '%s' "$pin_revision" | awk 'NF { count++ } END { print count + 0 }')
+            if [ "$pin_count" -ne 1 ] ||
+              ! printf '%s' "$pin_revision" | grep -qxE '[0-9a-f]{40}'; then
+              echo "::error::Canonical caller does not contain one immutable ${workflow} pin"
+              exit 1
+            fi
+            pinned_blob=$(gh api \
+              "repos/${GITHUB_REPOSITORY_OWNER}/docs-control/contents/.github/workflows/${workflow}?ref=${pin_revision}" \
+              --jq '.sha')
+            source_blob=$(gh api \
+              "repos/${GITHUB_REPOSITORY_OWNER}/docs-control/contents/.github/workflows/${workflow}?ref=${current_source_sha}" \
+              --jq '.sha')
+            if ! printf '%s\n%s\n' "$pinned_blob" "$source_blob" |
+              awk '/^[0-9a-f]{40}$/ { valid++ } END { exit valid != 2 }'; then
+              echo "::error::Invalid reusable workflow blob receipt"
+              exit 1
+            fi
+            if [ "$pinned_blob" != "$source_blob" ]; then
+              caller_ready=false
+            fi
+          done
+
+          if ! gh api \
+            "repos/${GITHUB_REPOSITORY_OWNER}/docs-control/contents/.github/config/governance-rollout.json?ref=${current_source_sha}" \
+            >"$rollout_json"; then
+            echo "::error::Could not resolve the exact governance rollout state"
+            exit 1
+          fi
+          if ! jq -e '
+            .type == "file" and .encoding == "base64" and
+            (.sha | type == "string" and test("^[0-9a-f]{40}$")) and
+            (.content | type == "string" and length > 0)
+          ' "$rollout_json" >/dev/null; then
+            echo "::error::Governance rollout response is malformed"
+            exit 1
+          fi
+          rollout_blob=$(jq -r '.sha' "$rollout_json")
+          if ! jq -r '.content' "$rollout_json" | tr -d '\n' | base64 -d >"$rollout_file"; then
+            echo "::error::Governance rollout response contains invalid base64"
+            exit 1
+          fi
+          if [ "$(git hash-object "$rollout_file")" != "$rollout_blob" ]; then
+            echo "::error::Governance rollout bytes do not match their blob receipt"
+            exit 1
+          fi
+          if ! rollout_state=$(jq -er \
+            '.state | select(. == "quiesced" or . == "active")' "$rollout_file"); then
+            echo "::error::Governance rollout state is missing or invalid"
+            exit 1
+          fi
+
+          if [ "$caller_ready" != true ] || [ "$rollout_state" = "quiesced" ]; then
+            if [ "$caller_ready" != true ]; then
+              echo "[BOOTSTRAP] exact managed caller is not live; enqueueing central bootstrap"
+            else
+              echo "[DEFER] governance rollout is quiesced; enqueueing workflow-state reconciliation"
+            fi
+            if ! gh workflow run dispatch-downstream.yml \
+              --repo "${GITHUB_REPOSITORY_OWNER}/docs-control" \
+              --ref main; then
+              echo "::error::Could not enqueue exact-caller bootstrap"
+              exit 1
+            fi
+            echo "source_sha=${source_sha}" >>"$GITHUB_OUTPUT"
+            echo "ready=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$source_status" = "ahead" ]; then
+            echo "[DEFER] historical docs-control receipt ${source_sha:0:8}; enqueueing protected main ${current_source_sha:0:8}"
+            if ! gh workflow run enforce-repo-settings.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              -f source_sha="$current_source_sha"; then
+              echo "::error::Could not enqueue the current protected-main receipt"
+              exit 1
+            fi
+            echo "source_sha=${source_sha}" >>"$GITHUB_OUTPUT"
+            echo "ready=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "source_sha=${source_sha}" >>"$GITHUB_OUTPUT"
+          echo "ready=true" >>"$GITHUB_OUTPUT"
+
   enforce-settings:
-    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@1fdac0c56a9fe211da5b858e480cb1ee854bbdd3
+    needs: resolve-source
+    if: needs.resolve-source.outputs.ready == 'true'
+    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@bd59d19a39642bddd649f207f85a80d538fd081b
     with:
-      source_sha: ${{ inputs.source_sha || '' }}
+      source_sha: ${{ needs.resolve-source.outputs.source_sha }}
     secrets:
       repo-settings-token: ${{ secrets.REPO_SETTINGS_TOKEN }}
 
   sync-files:
-    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@1fdac0c56a9fe211da5b858e480cb1ee854bbdd3
+    needs: resolve-source
+    if: needs.resolve-source.outputs.ready == 'true'
+    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@bd59d19a39642bddd649f207f85a80d538fd081b
     with:
-      source_sha: ${{ inputs.source_sha || '' }}
+      source_sha: ${{ needs.resolve-source.outputs.source_sha }}
     secrets:
       repo-sync-token: ${{ secrets.REPO_SYNC_TOKEN }}
