@@ -9,9 +9,7 @@ on:
   pull_request_target:
     types: [opened, edited, reopened, synchronize]
 
-permissions:
-  issues: read
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -23,3 +21,6 @@ jobs:
     # GITHUB_TOKEN (always available to a called workflow), so passing repository
     # secrets would hand over more than it needs.
     uses: f5-sales-demo/docs-control/.github/workflows/require-linked-issue.yml@main
+    permissions:
+      issues: read # verify that the referenced tracking issue exists
+      pull-requests: write # publish the required check result and comment

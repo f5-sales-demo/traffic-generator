@@ -8,9 +8,7 @@ on:
   # workflow — no PR-code checkout or exec.
   pull_request_target:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   call:
@@ -18,3 +16,6 @@ jobs:
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
     uses: f5-sales-demo/docs-control/.github/workflows/dependabot-auto-merge.yml@main
+    permissions:
+      contents: write # merge the validated Dependabot update
+      pull-requests: write # approve and enable auto-merge

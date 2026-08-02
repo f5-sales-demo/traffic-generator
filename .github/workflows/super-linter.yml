@@ -6,11 +6,7 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
 
-permissions:
-  contents: read
-  packages: read
-  statuses: write
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -21,3 +17,8 @@ jobs:
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
     uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@main
+    permissions:
+      contents: read # checkout repository content in the reusable workflow
+      packages: read # pull lint tooling from GitHub Packages
+      statuses: write # publish the lint status context
+      pull-requests: write # annotate pull requests with lint results
