@@ -77,6 +77,10 @@ main() {
   local -a files=()
   local f
   for f in "${candidates[@]:-}"; do
+    # Skip non-English translation folders to align with Super-Linter's FILTER_REGEX_EXCLUDE posture
+    if [[ "$f" =~ ^docs/(fr|es|de|ja|pt-br|ko|zh-cn|zh-tw|ar|it|hi|th)/ ]]; then
+      continue
+    fi
     case "$f" in
     *.mdx) [ -f "$f" ] && files+=("$f") ;;
     *.md) [ "$textlint_only" -eq 1 ] && [ -f "$f" ] && files+=("$f") ;;
