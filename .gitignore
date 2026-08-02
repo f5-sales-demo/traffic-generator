@@ -87,6 +87,9 @@ venv/
 env/
 ENV/
 .venv/
+# A directory-only pattern does not match a worktree's virtual-environment
+# symlink, so protect both forms from accidental staging.
+.venv
 
 # Test coverage
 .coverage

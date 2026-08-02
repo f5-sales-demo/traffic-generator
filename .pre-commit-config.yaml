@@ -268,11 +268,16 @@ repos:
         name: "i18n: regenerate translations for staged English docs"
         entry: >-
           bash -c
-          'if [ "${TRANSLATIONS_ENABLED:-}" != "true" ];
-          then echo "[i18n] translations suspended (TRANSLATIONS_ENABLED unset) — skipping generation; see CONTRIBUTING.md.";
-          elif command -v docs-translate >/dev/null 2>&1 && [ -n "${ANTHROPIC_API_KEY:-}" ];
-          then docs-translate --staged;
-          else echo "[i18n] docs-translate/ANTHROPIC_API_KEY unavailable — skipping."; fi'
+          'case "${TRANSLATIONS_ENABLED:-false}" in
+          false) echo "[i18n] translations suspended — skipping generation; see CONTRIBUTING.md." ;;
+          true)
+          if ! command -v docs-translate >/dev/null 2>&1;
+          then echo "[i18n] TRANSLATIONS_ENABLED=true requires docs-translate." >&2; exit 1;
+          elif [ -z "${ANTHROPIC_API_KEY:-}" ];
+          then echo "[i18n] TRANSLATIONS_ENABLED=true requires ANTHROPIC_API_KEY." >&2; exit 1;
+          else exec docs-translate --staged; fi ;;
+          *) echo "[i18n] TRANSLATIONS_ENABLED must be true or false." >&2; exit 1 ;;
+          esac'
         language: system
         files: ^docs/en/.*\.mdx?$
         pass_filenames: false
