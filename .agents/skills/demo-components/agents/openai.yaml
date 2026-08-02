@@ -1,0 +1,4 @@
+interface:
+  display_name: "Demo Components"
+  short_description: "Discover and deploy F5 demo infrastructure"
+  default_prompt: "Use $demo-components to select and deploy infrastructure for my F5 demo."

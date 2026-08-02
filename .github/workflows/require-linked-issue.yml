@@ -20,7 +20,7 @@ jobs:
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN (always available to a called workflow), so passing repository
     # secrets would hand over more than it needs.
-    uses: f5-sales-demo/docs-control/.github/workflows/require-linked-issue.yml@1fdac0c56a9fe211da5b858e480cb1ee854bbdd3
+    uses: f5-sales-demo/docs-control/.github/workflows/require-linked-issue.yml@db1ad6247a857c7b47e5b2cf6cc1046143041fcc
     permissions:
       issues: read # verify that the referenced tracking issue exists
       pull-requests: write # publish the required check result and comment

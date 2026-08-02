@@ -128,6 +128,21 @@ PERSON_FIELD_RE = re.compile(
     r"['\"]?\s*[:=]\s*(?P<quote>['\"`]?)"
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
+LOCALIZATION_BUNDLE_RE = re.compile(
+    r"(?:bundle\.l10n|package\.nls)(?:\.[A-Za-z0-9-]+)?\.json$",
+    re.IGNORECASE,
+)
+VSCODE_WHEN_PROPERTY_RE = re.compile(r'"when"\s*:\s*"(?P<expression>(?:\\.|[^"\\])*)"')
+VSCODE_VIEW_ITEM_TAG_RE = re.compile(
+    r"\bviewItem\s*(?:==|===)\s*"
+    r"(?P<tag>(?P<type>[A-Za-z_][A-Za-z0-9_.-]*):"
+    r"(?P<variant>[A-Za-z_][A-Za-z0-9_.-]*))"
+)
+ENUM_HEADER_RE = re.compile(
+    r"\b(?:const\s+)?enum(?:\s+class)?\s+"
+    r"[A-Za-z_$][A-Za-z0-9_$]*",
+)
+SOURCE_SNIPPET_INDEX_RE = re.compile(r"\$\{[A-Za-z_$][A-Za-z0-9_$]*(?:\+\+|--)?\}")
 IDENTITY_FIELD_RE = re.compile(
     r"(?i)(?P<field_prefix>^|[^A-Za-z0-9_/-])"
     r"(?P<key_open>[*_~`'\"]*)"
@@ -447,6 +462,20 @@ class JqScope:
     argument: int = 0
 
 
+@dataclass(frozen=True)
+class LineScanContext:
+    """Format-aware state shared by the line-oriented detectors."""
+
+    source_code: bool
+    jq_spans: tuple[tuple[int, int], ...]
+    localization_spans: tuple[tuple[int, int], ...]
+    source_structure: str
+    source_brace_depth: int
+    enum_body_depth: int | None
+    yaml_aliases: dict[str, bool]
+    yaml_alias_events: tuple[tuple[int, str, bool], ...]
+
+
 def input_blobs(input_dir: Path) -> Iterator[tuple[str, bytes]]:
     """Read the shell-materialized path/blob pairs in deterministic order."""
 
@@ -530,40 +559,281 @@ def serialization_nesting(text: str) -> int:
     return nesting
 
 
+def balanced_dollar_brace_end(value: str, start: int = 0) -> int | None:
+    """Return the end of one balanced dollar-brace placeholder."""
+    index = start
+    while index < len(value) and value[index] == "\\":
+        index += 1
+    if not value.startswith("${", index):
+        return None
+    depth = 1
+    index += 2
+    while index < len(value):
+        if value.startswith("${", index):
+            depth += 1
+            index += 2
+            continue
+        if value[index] == "{":
+            depth += 1
+        elif value[index] == "}":
+            depth -= 1
+            if not depth:
+                return index + 1
+        index += 1
+    return None
+
+
+def placeholder_token_end(value: str, start: int) -> int | None:
+    """Return the end of a balanced or simple whole placeholder token."""
+    if end := balanced_dollar_brace_end(value, start):
+        return end
+    placeholder = TEMPLATE_PLACEHOLDER_RE.match(value, start)
+    return placeholder.end() if placeholder else None
+
+
+def top_level_character(value: str, target: str) -> int | None:
+    """Locate a character outside nested braces in placeholder content."""
+    depth = 0
+    for index, character in enumerate(value):
+        if character == "{":
+            depth += 1
+        elif character == "}" and depth:
+            depth -= 1
+        elif character == target and not depth:
+            return index
+    return None
+
+
+def vscode_snippet_placeholder_safety(value: str) -> bool | None:
+    """Classify a whole VS Code snippet placeholder and its literal defaults."""
+    candidate = value
+    while candidate.startswith("\\"):
+        candidate = candidate[1:]
+    end = balanced_dollar_brace_end(candidate)
+    result: bool | None = None
+    if end == len(candidate):
+        content = candidate[2:-1]
+        colon = top_level_character(content, ":")
+        choice = top_level_character(content, "|")
+
+        if colon is not None:
+            selector = content[:colon]
+            default = content[colon + 1 :]
+            numeric_selector = bool(re.fullmatch(r"[0-9]+", selector))
+            dynamic_selector = bool(SOURCE_SNIPPET_INDEX_RE.fullmatch(selector))
+            if numeric_selector or dynamic_selector:
+                result = placeholder_value(default)
+        elif choice is not None and content.endswith("|"):
+            selector = content[:choice]
+            if re.fullmatch(r"[0-9]+", selector):
+                choices = content[choice + 1 : -1].split(",")
+                choice_safety = (placeholder_value(item) for item in choices)
+                result = bool(choices) and all(choice_safety)
+        elif re.fullmatch(r"(?:[0-9]+|[A-Z_][A-Z0-9_]*)", content):
+            result = True
+    return result
+
+
+def json_string_end(text: str, start: int) -> int | None:
+    """Return the closing quote for one JSON string token."""
+    index = start + 1
+    while index < len(text):
+        if text[index] == "\\":
+            index += 2
+            continue
+        if text[index] == '"':
+            return index
+        index += 1
+    return None
+
+
+def localization_top_level_string_spans(
+    path: str,
+    text: str,
+) -> dict[int, tuple[tuple[int, int], ...]]:
+    """Return top-level message-string spans in a valid localization bundle."""
+    if not LOCALIZATION_BUNDLE_RE.fullmatch(PurePosixPath(path).name):
+        return {}
+    try:
+        parsed = json.loads(text)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+
+    spans: dict[int, list[tuple[int, int]]] = {}
+    stack: list[str] = []
+    line_number = 1
+    line_start = 0
+    index = 0
+    while index < len(text):
+        character = text[index]
+        if character == "\n":
+            line_number += 1
+            line_start = index + 1
+            index += 1
+            continue
+        if character == '"':
+            string_line = line_number
+            string_start = index + 1
+            previous = index - 1
+            while previous >= 0 and text[previous] in " \t\r\n":
+                previous -= 1
+            top_level_value = stack == ["{"] and previous >= 0 and text[previous] == ":"
+            string_end = json_string_end(text, index)
+            if string_end is None:
+                return {}
+            cursor = string_end + 1
+            while cursor < len(text) and text[cursor] in " \t\r\n":
+                cursor += 1
+            at_top_level = stack == ["{"]
+            top_level_key = at_top_level and cursor < len(text) and text[cursor] == ":"
+            if top_level_key or top_level_value:
+                line_spans = spans.setdefault(string_line, [])
+                line_spans.append((string_start - line_start, string_end - line_start))
+            index = string_end + 1
+            continue
+        if character in "[{":
+            stack.append(character)
+        elif character in "]}":
+            if not stack:
+                return {}
+            stack.pop()
+        index += 1
+    return {line: tuple(items) for line, items in spans.items()}
+
+
+def source_structure_line(
+    line: str,
+    block_comment: bool,
+    quote: str | None,
+) -> tuple[str, bool, str | None]:
+    """Mask source strings and comments while retaining structural columns."""
+    structure = [" "] * len(line)
+    index = 0
+    while index < len(line):
+        if block_comment:
+            closing = line.find("*/", index)
+            if closing < 0:
+                return "".join(structure), True, quote
+            block_comment = False
+            index = closing + 2
+            continue
+        if quote:
+            if line[index] == "\\":
+                index += 2
+                continue
+            if line[index] == quote:
+                quote = None
+            index += 1
+            continue
+        if line.startswith("//", index):
+            break
+        if line.startswith("/*", index):
+            block_comment = True
+            index += 2
+            continue
+        if line[index] in {"'", '"', "`"}:
+            quote = line[index]
+            index += 1
+            continue
+        structure[index] = line[index]
+        index += 1
+    if quote in {"'", '"'}:
+        quote = None
+    return "".join(structure), block_comment, quote
+
+
+def numeric_enum_member(
+    match: re.Match[str],
+    value: str,
+    context: LineScanContext,
+) -> bool:
+    """Return whether a numeric field-shaped assignment is an enum member."""
+    assignment = context.enum_body_depth is not None and match.group("separator") == "="
+    wrapped = any(match.group(group) for group in ("quote", "key_open", "key_close"))
+    if not assignment or wrapped or not NUMERIC_LITERAL_RE.fullmatch(value):
+        return False
+    prefix = context.source_structure[: match.start("key")]
+    depth_at_key = context.source_brace_depth + prefix.count("{") - prefix.count("}")
+    if depth_at_key != context.enum_body_depth:
+        return False
+    boundary = max(prefix.rfind("{"), prefix.rfind(","))
+    if prefix[boundary + 1 :].strip():
+        return False
+    value_end = match.start("value") + len(value)
+    return bool(re.match(r"\s*(?:,|})", context.source_structure[value_end:]))
+
+
+def is_vscode_view_item_context_tag(
+    path: str,
+    line: str,
+    match: re.Match[str],
+) -> bool:
+    """Return whether a field-shaped token is a typed VS Code context tag."""
+    if PurePosixPath(path).name != "package.json" or match.group("separator") != ":":
+        return False
+    for prop in VSCODE_WHEN_PROPERTY_RE.finditer(line):
+        expression_start = prop.start("expression")
+        expression_end = prop.end("expression")
+        if not expression_start <= match.start("key") < expression_end:
+            continue
+        expression = prop.group("expression")
+        for tag in VSCODE_VIEW_ITEM_TAG_RE.finditer(expression):
+            tag_start = expression_start + tag.start("tag")
+            separator = tag_start + len(tag.group("type"))
+            if (
+                match.start("key") == tag_start
+                and match.start("separator") == separator
+                and tag.group("type").lower() == match.group("key").lower()
+            ):
+                return True
+    return False
+
+
+def quoted_structured_field_value(
+    line: str,
+    start: int,
+    quote: str,
+) -> str:
+    """Read a quoted structured value through escapes and YAML quote doubling."""
+    index = start
+    while index < len(line):
+        backslashes = 0
+        before = index - 1
+        while before >= start and line[before] == "\\":
+            backslashes += 1
+            before -= 1
+        yaml_single_quote = quote == "'"
+        next_character_is_quote = index + 1 < len(line) and line[index + 1] == quote
+        doubled_yaml_quote = yaml_single_quote and next_character_is_quote
+        if line[index] == quote and doubled_yaml_quote:
+            index += 2
+            continue
+        if line[index] == quote and backslashes % 2 == 0:
+            return line[start:index]
+        index += 1
+    return line[start:]
+
+
 def structured_field_value(path: str, line: str, match: re.Match[str]) -> str:
     """Read one field value without truncating quoted punctuation or YAML scalars."""
     start = match.start("value")
     quote = match.group("quote")
     if quote:
-        index = start
-        while index < len(line):
-            backslashes = 0
-            before = index - 1
-            while before >= start and line[before] == "\\":
-                backslashes += 1
-                before -= 1
-            yaml_single_quote = quote == "'"
-            next_character_is_quote = index + 1 < len(line) and line[index + 1] == quote
-            doubled_yaml_quote = yaml_single_quote and next_character_is_quote
-            if line[index] == quote and doubled_yaml_quote:
-                index += 2
-                continue
-            if line[index] == quote and backslashes % 2 == 0:
-                return line[start:index]
-            index += 1
-        return line[start:]
+        return quoted_structured_field_value(line, start, quote)
 
     yaml = PurePosixPath(path).suffix.lower() in {".yaml", ".yml"}
     prefix = line[:start]
     flow_context = serialization_nesting(prefix) > 0
-    placeholder = TEMPLATE_PLACEHOLDER_RE.match(line, start)
-    if placeholder:
-        raw_remainder = line[placeholder.end() :]
+    placeholder_end = placeholder_token_end(line, start)
+    if placeholder_end is not None:
+        raw_remainder = line[placeholder_end:]
         remainder = raw_remainder.lstrip()
         whitespace_comment = raw_remainder != remainder and remainder.startswith("#")
         flow_delimiter = bool(remainder) and remainder[0] in ",}]"
         if not remainder or whitespace_comment or (flow_context and flow_delimiter):
-            return placeholder.group()
+            return line[start:placeholder_end]
 
     index = start
     while index < len(line):
@@ -599,6 +869,9 @@ def placeholder_value(value: str) -> bool:
     value = unwrapped_identity_value(value)
     if not value:
         return True
+    snippet_safety = vscode_snippet_placeholder_safety(value)
+    if snippet_safety is not None:
+        return snippet_safety
     lower = value.lower()
     if (
         lower in SCHEMA_SENTINELS
@@ -661,6 +934,8 @@ def is_structured_identity_field(path: str, line: str, match: re.Match[str]) -> 
     if not balanced_wrappers and not whole_inline_field:
         return False
     if match.group("field_prefix") == "." and match.group("separator") != "=":
+        return False
+    if is_vscode_view_item_context_tag(path, line, match):
         return False
     return not is_proven_prose_identity_label(path, line, match)
 
@@ -1375,9 +1650,7 @@ def scan_contacts(
     line: str,
     attribution_context: bool,
     findings: set[Finding],
-    *,
-    source_code: bool,
-    jq_spans: tuple[tuple[int, int], ...],
+    context: LineScanContext,
 ) -> None:
     """Scan one line for contact details, home paths, and person names."""
     if not attribution_context:
@@ -1391,25 +1664,36 @@ def scan_contacts(
                     message="email address does not use a documentation-reserved domain",
                 )
         for match in PERSON_FIELD_RE.finditer(line):
+            if match_is_in_spans(match, context.localization_spans):
+                continue
             value = structured_field_value(path, line, match)
             if NUMERIC_LITERAL_RE.fullmatch(value):
                 continue
             if is_nonliteral_code_expression(
                 line,
                 match,
-                source_code=source_code,
-                jq_spans=jq_spans,
+                source_code=context.source_code,
+                jq_spans=context.jq_spans,
                 value_override=value,
             ):
                 continue
             if not placeholder_value(value):
-                add_finding(
-                    findings,
-                    path=path,
-                    line=line_number,
-                    category="person-name",
-                    message=f"{match.group('key')} contains a literal person name",
-                )
+                if match.group("key").lower() == "display_name":
+                    add_review_finding(
+                        findings,
+                        path=path,
+                        line=line_number,
+                        category="display-name-review",
+                        message="display_name requires manual identity review",
+                    )
+                else:
+                    add_finding(
+                        findings,
+                        path=path,
+                        line=line_number,
+                        category="person-name",
+                        message=f"{match.group('key')} contains a literal person name",
+                    )
 
     for match in HOME_RE.finditer(line):
         user = match.group("user") or match.group("winuser") or ""
@@ -1433,33 +1717,33 @@ def scan_contacts(
             )
 
 
-# pylint: disable-next=too-many-arguments
 def scan_structured_identity(
     path: str,
     line_number: int,
     line: str,
     findings: set[Finding],
-    *,
-    source_code: bool,
-    jq_spans: tuple[tuple[int, int], ...],
-    yaml_aliases: dict[str, bool],
-    yaml_alias_events: tuple[tuple[int, str, bool], ...],
+    context: LineScanContext,
 ) -> None:
     """Scan structured fields for customer identifiers and personal records."""
     for match in IDENTITY_FIELD_RE.finditer(line):
+        if match_is_in_spans(match, context.localization_spans):
+            continue
         if not is_structured_identity_field(path, line, match):
             continue
         value = structured_field_value(path, line, match)
-        jq_literal = match_is_in_spans(match, jq_spans) and not jq_value_is_expression(
+        if numeric_enum_member(match, value, context):
+            continue
+        in_jq_span = match_is_in_spans(match, context.jq_spans)
+        jq_literal = in_jq_span and not jq_value_is_expression(
             line,
             match,
-            jq_spans,
+            context.jq_spans,
         )
         if is_nonliteral_code_expression(
             line,
             match,
-            source_code=source_code,
-            jq_spans=jq_spans,
+            source_code=context.source_code,
+            jq_spans=context.jq_spans,
             value_override=value,
         ):
             continue
@@ -1467,8 +1751,8 @@ def scan_structured_identity(
         if not match.group("quote"):
             alias = re.fullmatch(r"\*([A-Za-z0-9_.-]+)", normalized_value(value))
         if alias:
-            aliases_at_value = yaml_aliases.copy()
-            for position, name, safe in yaml_alias_events:
+            aliases_at_value = context.yaml_aliases.copy()
+            for position, name, safe in context.yaml_alias_events:
                 if position >= match.start("value"):
                     break
                 aliases_at_value[name] = safe
@@ -1489,8 +1773,8 @@ def scan_structured_identity(
         if is_nonliteral_code_expression(
             line,
             match,
-            source_code=source_code,
-            jq_spans=jq_spans,
+            source_code=context.source_code,
+            jq_spans=context.jq_spans,
             value_override=value,
         ):
             continue
@@ -1726,6 +2010,7 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
     suffix = PurePosixPath(path).suffix.lower()
     yaml = suffix in {".yaml", ".yml"}
     aliases: dict[str, bool] = {}
+    localization_strings = localization_top_level_string_spans(path, text)
     scan_yaml_identity_blocks(path, text, findings)
     fence_marker: str | None = None
     fence_language: str | None = None
@@ -1735,6 +2020,11 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
     yaml_block_anchor: str | None = None
     yaml_block_safe = False
     yaml_block_has_content = False
+    source_block_comment = False
+    source_quote: str | None = None
+    source_brace_depth = 0
+    enum_body_depth: int | None = None
+    pending_enum_body = False
     for line_number, raw_line in enumerate(text.splitlines(), 1):
         line = ANSI_ESCAPE_RE.sub("", raw_line)
         line_aliases = aliases.copy()
@@ -1810,6 +2100,47 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
         suffix_is_source = suffix in SOURCE_CODE_SUFFIXES
         fence_is_source = effective_language in SOURCE_FENCE_LANGUAGES
         source_code = suffix_is_source or fence_is_source
+        line_source_brace_depth = source_brace_depth
+        source_structure = ""
+        if source_code:
+            source_state = source_structure_line(
+                line,
+                source_block_comment,
+                source_quote,
+            )
+            source_structure, source_block_comment, source_quote = source_state
+            if enum_body_depth is None:
+                enum_brace: int | None = None
+                if pending_enum_body:
+                    if source_structure.strip():
+                        opening = re.match(r"\s*(?P<brace>\{)", source_structure)
+                        pending_enum_body = False
+                        if opening:
+                            enum_brace = opening.start("brace")
+                else:
+                    header = ENUM_HEADER_RE.search(source_structure)
+                    if header:
+                        tail = source_structure[header.end() :]
+                        opening_offset = tail.find("{")
+                        semicolon_offset = tail.find(";")
+                        brace_precedes_terminator = opening_offset >= 0 and (
+                            semicolon_offset < 0 or opening_offset < semicolon_offset
+                        )
+                        if brace_precedes_terminator:
+                            enum_brace = header.end() + opening_offset
+                        elif not any(character in tail for character in ";={}"):
+                            pending_enum_body = True
+                if enum_brace is not None:
+                    before_brace = source_structure[:enum_brace]
+                    brace_delta = before_brace.count("{") - before_brace.count("}")
+                    enum_body_depth = source_brace_depth + brace_delta + 1
+        else:
+            source_block_comment = False
+            source_quote = None
+            source_brace_depth = 0
+            line_source_brace_depth = 0
+            enum_body_depth = None
+            pending_enum_body = False
         spans: tuple[tuple[int, int], ...]
         if suffix == ".jq" or effective_language == "jq":
             spans = ((0, len(line)),)
@@ -1820,6 +2151,17 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
         else:
             spans, active_jq_quote = jq_filter_spans(line, active_jq_quote)
 
+        context = LineScanContext(
+            source_code=source_code,
+            jq_spans=spans,
+            localization_spans=localization_strings.get(line_number, ()),
+            source_structure=source_structure,
+            source_brace_depth=line_source_brace_depth,
+            enum_body_depth=enum_body_depth,
+            yaml_aliases=line_aliases,
+            yaml_alias_events=yaml_alias_events,
+        )
+
         is_commit_message = path.startswith("<commit:")
         trailer_match = PROVENANCE_TRAILER_RE.match(line)
         provenance_trailer = bool(is_commit_message and trailer_match)
@@ -1829,21 +2171,24 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
             line,
             legal_path or provenance_trailer,
             findings,
-            source_code=source_code,
-            jq_spans=spans,
+            context,
         )
         scan_structured_identity(
             path,
             line_number,
             line,
             findings,
-            source_code=source_code,
-            jq_spans=spans,
-            yaml_aliases=line_aliases,
-            yaml_alias_events=yaml_alias_events,
+            context,
         )
         scan_query_parameters(path, line_number, line, findings)
         scan_public_ips(path, line_number, line, findings)
+
+        if source_code:
+            source_brace_depth += source_structure.count("{")
+            source_brace_depth -= source_structure.count("}")
+            source_brace_depth = max(source_brace_depth, 0)
+            if enum_body_depth is not None and source_brace_depth < enum_body_depth:
+                enum_body_depth = None
 
         if closing_fence:
             fence_marker = None

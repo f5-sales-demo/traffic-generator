@@ -103,6 +103,35 @@ PY
   fi
 }
 
+assert_single_finding() {
+  local label="$1" dir="$2" category="$3" severity="$4"
+  shift 4
+  local rc
+  rc=$(run_scan "$dir" "$@" --format json)
+  if [ "$rc" -ne 1 ]; then
+    echo "[FAIL] $label — expected finding (1), got $rc"
+    sed 's/^/  /' "${WORK}/stdout" "${WORK}/stderr"
+    FAIL=1
+    return
+  fi
+  if python3 - "${WORK}/stdout" "$category" "$severity" <<'PY'; then
+import json
+import sys
+
+findings = json.load(open(sys.argv[1], encoding="utf-8"))["findings"]
+expected = (sys.argv[2], sys.argv[3])
+actual = [(finding["category"], finding["severity"]) for finding in findings]
+if actual != [expected]:
+    raise SystemExit(1)
+PY
+    echo "[OK] $label -> one $severity $category finding"
+  else
+    echo "[FAIL] $label — expected exactly one $severity $category finding"
+    sed 's/^/  /' "${WORK}/stdout" "${WORK}/stderr"
+    FAIL=1
+  fi
+}
+
 assert_error() {
   local label="$1" dir="$2"
   shift 2
@@ -142,6 +171,144 @@ EOF
 git -C "$repo" add fixture.yaml
 git -C "$repo" commit -qm synthetic
 assert_clean "reserved synthetic values" "$repo" --scope head --mode enforce
+
+repo=$(new_repo localization-message-labels)
+mkdir -p "${repo}/l10n"
+cat >"${repo}/l10n/bundle.l10n.json" <<'EOF'
+{
+  "Namespace": "Resource namespace",
+  "Account": "Cloud account",
+  "Namespace unavailable": "Unable to load namespace: {0}"
+}
+EOF
+git -C "$repo" add l10n/bundle.l10n.json
+git -C "$repo" commit -qm localization-labels
+assert_clean "top-level localization source labels are not identity fields" "$repo" --scope head --mode enforce
+
+repo=$(new_repo localization-nested-identity)
+mkdir -p "${repo}/l10n"
+cat >"${repo}/l10n/bundle.l10n.json" <<'EOF'
+{
+  "Message": "Example resource",
+  "configuration": {
+    "namespace": "private-customer"
+  }
+}
+EOF
+git -C "$repo" add l10n/bundle.l10n.json
+git -C "$repo" commit -qm localization-nested-identity
+assert_customer_identifier "nested identity fields remain enforced in localization files" "$repo" --scope head --mode enforce
+
+repo=$(new_repo vscode-context-tag)
+cat >"${repo}/package.json" <<'EOF'
+{
+  "contributes": {
+    "menus": {
+      "view/item/context": [
+        {
+          "when": "view == example.resources && viewItem == namespace:resource"
+        },
+        {
+          "when": "view === example.resources && viewItem === account:resource"
+        }
+      ]
+    }
+  }
+}
+EOF
+git -C "$repo" add package.json
+git -C "$repo" commit -qm vscode-context-tag
+assert_clean "typed VS Code viewItem context tags are not identity fields" "$repo" --scope head --mode enforce
+
+repo=$(new_repo vscode-context-identity)
+cat >"${repo}/package.json" <<'EOF'
+{
+  "contributes": {
+    "menus": {
+      "view/item/context": [
+        {
+          "when": "viewItem == resource && namespace: private-customer"
+        }
+      ]
+    }
+  }
+}
+EOF
+git -C "$repo" add package.json
+git -C "$repo" commit -qm vscode-context-identity
+assert_customer_identifier "identity fields outside viewItem tags remain enforced" "$repo" --scope head --mode enforce
+
+repo=$(new_repo vscode-snippet-placeholders)
+cat >"${repo}/fixture.ts" <<'EOF'
+const direct = `${indent}"namespace": "\${${tabstop++}:demo-app}",`;
+const nested = `${indent}"namespace": "\${${tabstop++}:\${1:demo-app}}",`;
+const choices = `${indent}"namespace": "\${1|demo-app,shared|}",`;
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm vscode-snippet-placeholders
+assert_clean "escaped VS Code snippet placeholders validate safe defaults" "$repo" --scope head --mode enforce
+
+repo=$(new_repo vscode-snippet-literal-default)
+cat >"${repo}/fixture.ts" <<'EOF'
+const nested = `${indent}"namespace": "\${${tabstop++}:\${1:private-customer}}",`;
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm vscode-snippet-literal-default
+assert_customer_identifier "nested VS Code snippet defaults remain enforced" "$repo" --scope head --mode enforce
+
+repo=$(new_repo vscode-simple-snippet-literal-default)
+cat >"${repo}/fixture.json" <<'EOF'
+{"namespace": "${1:private-customer}"}
+EOF
+git -C "$repo" add fixture.json
+git -C "$repo" commit -qm vscode-simple-snippet-literal-default
+assert_customer_identifier "direct VS Code snippet defaults remain enforced" "$repo" --scope head --mode enforce
+
+repo=$(new_repo numeric-enum-members)
+cat >"${repo}/fixture.ts" <<'EOF'
+export enum ResourceKind
+{
+  Namespace = 1,
+  Label = "}",
+  Account = 2,
+}
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm numeric-enum-members
+assert_clean "numeric source enum members are not serialized identifiers" "$repo" --scope head --mode enforce
+
+repo=$(new_repo numeric-identifier-assignment)
+printf 'export const namespace = 987654321;\n' >"${repo}/fixture.ts"
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm numeric-identifier-assignment
+assert_customer_identifier "numeric identifiers outside enum scope remain enforced" "$repo" --scope head --mode enforce
+
+repo=$(new_repo string-shaped-enum-declaration)
+cat >"${repo}/fixture.ts" <<'EOF'
+const source = "enum ResourceKind {";
+const account = 987654321,
+  status = "active";
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm string-shaped-enum-declaration
+assert_customer_identifier "enum-shaped strings cannot exempt numeric identifiers" "$repo" --scope head --mode enforce
+
+repo=$(new_repo ambiguous-display-name)
+cat >"${repo}/fixture.ts" <<'EOF'
+const subscription = { display_name: "Primary subscription" };
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm ambiguous-display-name
+assert_clean "context-free display names do not block enforcement" "$repo" --scope head --mode enforce
+assert_single_finding "context-free display names require audit review" "$repo" display-name-review review --scope head --mode audit
+
+repo=$(new_repo explicit-person-name)
+cat >"${repo}/fixture.ts" <<'EOF'
+const profile = { full_name: "Synthetic Person" };
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm explicit-person-name
+assert_single_finding "explicit person-name fields remain enforced" "$repo" person-name high --scope head --mode enforce
 
 repo=$(new_repo documentation-expressions)
 cat >"${repo}/fixture.mdx" <<'EOF'
@@ -345,6 +512,7 @@ repo=$(new_repo whole-placeholder-identities)
 cat >"${repo}/fixture.yaml" <<'EOF'
 tenant: $TENANT
 customer: ${CUSTOMER}
+tenant_id: ${TENANT:=default}
 account: <account>
 project: {project}
 namespace: {{ namespace }}
