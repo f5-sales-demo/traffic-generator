@@ -7,10 +7,10 @@ This document describes the workflow and rules that all contributors — human a
 This repository is part of a fleet governed by a central hub, **docs-control**. If you are not in
 docs-control, you are in a **downstream** repository.
 
-- **Managed files** — including this `CONTRIBUTING.md` and `CLAUDE.md` — are owned by docs-control
-  and synced to every downstream repo. Do not edit them directly here; a hook blocks it. To change
-  one, open an issue in docs-control: the change is made there and propagates fleet-wide. The
-  authoritative list is `.claude/governance.json`.
+- **Managed files** — including this `CONTRIBUTING.md`, `CLAUDE.md`, `AGENTS.md`, and shared agent
+  skills — are owned by docs-control and synced to every downstream repo. Do not edit them directly
+  here; a hook blocks it. To change one, open an issue in docs-control: the change is made there and
+  propagates fleet-wide. The authoritative list is `.claude/governance.json`.
 - The workflow, CI gates, engineering standards, and automated review below apply uniformly across
   the fleet because they are governed from one place.
 
@@ -48,7 +48,7 @@ this document governs how a change gets reviewed and merged.
 
 Every change follows this path:
 
-```
+```text
 Issue → Branch → PR (linked to issue) → CI passes → auto-merge when green → Branch auto-deleted
 ```
 
