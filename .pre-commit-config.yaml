@@ -104,6 +104,9 @@ repos:
         entry: markdownlint-cli2
         language: system
         types: [markdown]
+        # Parser fixtures intentionally contain noncanonical Markdown so the
+        # renderer's full syntax support remains covered.
+        exclude: ^packages/chat-ui/test/markdown/fixtures/
 
   # ===========================================================================
   # Shell formatting — pinned to Super-Linter's SHELL_SHFMT v3.13.1.
@@ -189,7 +192,7 @@ repos:
         # traversal; when pre-commit passes explicit file paths it is bypassed.
         # Filter translation docs and source catalogs here so their
         # foreign-language words never reach codespell. See issues #579 and #934.
-        exclude: ^(docs/(ar|de|es|fr|hi|it|ja|ko|pt-br|th|zh-cn|zh-tw)/|src/i18n/.*translations)
+        exclude: ^(docs/(ar|de|es|fr|hi|it|ja|ko|pt-br|th|zh-cn|zh-tw)/|README\.(ar|de|es|fr|hi|it|ja|ko|pt-br|th|zh-cn|zh-tw)\.md$|src/i18n/.*translations|research/benchmarks/uat-matrix/corpora/i18n\.yaml$)
 
   # ===========================================================================
   # EditorConfig conformance — config: .editorconfig-checker.json

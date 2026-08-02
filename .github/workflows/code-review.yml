@@ -16,6 +16,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   review:
     # Real agentic review for HUMAN, same-repo PRs. Skipped for genuine automated
@@ -70,8 +72,8 @@ jobs:
         (startsWith(github.head_ref, 'dependabot/') && github.actor == 'dependabot[bot]'))
     uses: f5-sales-demo/docs-control/.github/workflows/claude-review.yml@main
     permissions:
-      contents: read
-      pull-requests: write
+      contents: read # inspect the same-repository pull request
+      pull-requests: write # publish the reusable review result
     secrets:
       F5_GATEWAY_TOKEN: ${{ secrets.F5_GATEWAY_TOKEN }}
       REPO_SETTINGS_TOKEN: ${{ secrets.REPO_SETTINGS_TOKEN }}
@@ -87,6 +89,7 @@ jobs:
   # none did. Both jobs share the gate so the pair stays consistent: whichever way
   # the variable is set, either both run or neither does.
   review-status-automated:
+    name: Mark Automated Review Exemption
     if: >-
       vars.REVIEWER_ENABLED == 'true' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
@@ -103,7 +106,7 @@ jobs:
        (startsWith(github.head_ref, 'dependabot/') && github.actor == 'dependabot[bot]'))
     runs-on: ubuntu-latest
     permissions:
-      statuses: write
+      statuses: write # post the required review context for trusted automation
     steps:
       - name: Post passing review/claude-review status for automated PR
         env:

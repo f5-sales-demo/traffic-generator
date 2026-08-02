@@ -7,9 +7,7 @@ on:
   pull_request:
     types: [opened, reopened, ready_for_review]
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   call:
@@ -20,6 +18,9 @@ jobs:
       github.event.pull_request.draft == false &&
       github.actor != 'dependabot[bot]'
     uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@main
+    permissions:
+      contents: write # fallback GITHUB_TOKEN must be able to complete the merge
+      pull-requests: write # enable auto-merge and update the pull request
     # Least privilege: pass ONLY the secret the reusable needs, not every
     # repository secret (`secrets: inherit`). REPO_SYNC_TOKEN is the PAT that lets
     # an auto-merge trigger downstream workflows; the reusable falls back to
