@@ -19,17 +19,13 @@ PATTERNS=(
   'function\s+langToSlug'
 )
 
-# Directories and files to exclude
-EXCLUDE_DIRS="node_modules|dist|\.git|coverage|\.astro|\.next|out|build"
-EXCLUDE_FILES="locale-lint\.sh|\.test\.|\.spec\."
-
 check_pattern() {
   local pattern="$1"
   local results
-  results=$(grep -rn --include='*.ts' --include='*.js' --include='*.tsx' --include='*.jsx' \
-    -E "$pattern" . 2>/dev/null |
-    grep -vE "($EXCLUDE_DIRS)" |
-    grep -vE "($EXCLUDE_FILES)" |
+  if [ "${#SOURCE_FILES[@]}" -eq 0 ]; then
+    return 0
+  fi
+  results=$(grep -nE "$pattern" -- "${SOURCE_FILES[@]}" 2>/dev/null |
     grep -vE "from\s+['\"]@f5-sales-demo/i18n-core" |
     grep -vE "i18n-core/(src|dist)/" ||
     true)
@@ -49,6 +45,22 @@ if [ -f package.json ] && grep -qE '"name"[[:space:]]*:[[:space:]]*"@f5-sales-de
   echo "Locale lint: this is the i18n-core package itself — its locale definitions are canonical."
   exit 0
 fi
+
+# Search repository files, not the whole working tree. Filtering recursive grep output
+# after the walk still reads every ignored dependency and build artifact first; marketplace
+# measured 98,417 files and more than a minute per pattern that way. `git ls-files` includes
+# tracked edits and staged additions while excluding unrelated untracked files.
+SOURCE_FILES=()
+while IFS= read -r -d '' file; do
+  case "$file" in
+  node_modules/* | */node_modules/* | dist/* | */dist/* | coverage/* | */coverage/* | \
+    .astro/* | */.astro/* | .next/* | */.next/* | out/* | */out/* | build/* | */build/* | \
+    *locale-lint.sh | *.test.* | *.spec.*)
+    continue
+    ;;
+  esac
+  SOURCE_FILES+=("$file")
+done < <(git ls-files -z -- '*.ts' '*.js' '*.tsx' '*.jsx')
 
 echo "Locale lint: checking for hardcoded locale lists..."
 echo ""
