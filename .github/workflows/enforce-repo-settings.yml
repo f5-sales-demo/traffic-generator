@@ -36,6 +36,7 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_SETTINGS_TOKEN }}
           REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
           DOWNSTREAM_SHA: ${{ github.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
           source_sha="$REQUESTED_SOURCE_SHA"
@@ -72,6 +73,41 @@ jobs:
 
           if ! printf '%s' "$DOWNSTREAM_SHA" | grep -qE '^[0-9a-f]{40}$'; then
             echo "::error::Could not resolve the exact downstream caller commit"
+            exit 1
+          fi
+          if [ "$DEFAULT_BRANCH" != "main" ]; then
+            echo "::error::Governance enforcement requires protected main"
+            exit 1
+          fi
+          if ! current_downstream_sha=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/commits/main" --jq '.sha'); then
+            echo "::error::Could not resolve downstream protected main"
+            exit 1
+          fi
+          if ! printf '%s' "$current_downstream_sha" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::Downstream protected main returned an invalid commit"
+            exit 1
+          fi
+          if [ "$DOWNSTREAM_SHA" != "$current_downstream_sha" ]; then
+            if ! downstream_status=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/compare/${DOWNSTREAM_SHA}...${current_downstream_sha}" \
+              --jq '.status'); then
+              echo "::error::Could not prove the downstream receipt is on protected main"
+              exit 1
+            fi
+            if [ "$downstream_status" = "ahead" ]; then
+              if ! gh workflow run enforce-repo-settings.yml \
+                --repo "$GITHUB_REPOSITORY" --ref main \
+                -f source_sha="$current_source_sha"; then
+                echo "::error::Could not enqueue current downstream protected main"
+                exit 1
+              fi
+              echo "::notice::Historical downstream receipt deferred to current protected main"
+              echo "source_sha=$current_source_sha" >>"$GITHUB_OUTPUT"
+              echo "ready=false" >>"$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::Downstream receipt is not an approved protected-main commit"
             exit 1
           fi
           caller_json=$(mktemp)
@@ -215,7 +251,7 @@ jobs:
   enforce-settings:
     needs: resolve-source
     if: needs.resolve-source.outputs.ready == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@db1ad6247a857c7b47e5b2cf6cc1046143041fcc
+    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@2f106729a5e1ae8dd7d29c055f7636bdd331722c
     with:
       source_sha: ${{ needs.resolve-source.outputs.source_sha }}
     secrets:
@@ -224,8 +260,10 @@ jobs:
   sync-files:
     needs: resolve-source
     if: needs.resolve-source.outputs.ready == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@db1ad6247a857c7b47e5b2cf6cc1046143041fcc
+    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@2f106729a5e1ae8dd7d29c055f7636bdd331722c
     with:
       source_sha: ${{ needs.resolve-source.outputs.source_sha }}
+      downstream_sha: ${{ github.sha }}
     secrets:
       repo-sync-token: ${{ secrets.REPO_SYNC_TOKEN }}
+      repo-settings-token: ${{ secrets.REPO_SETTINGS_TOKEN }}
