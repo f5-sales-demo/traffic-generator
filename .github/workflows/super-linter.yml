@@ -16,7 +16,7 @@ jobs:
   lint:
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
-    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@8eaaced5c8800da45934031b152c863ce8ee84c0
+    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@94a0cb518b88f717e7b452a714fe7f97a00d0bbb
     permissions:
       contents: read # checkout repository content in the reusable workflow
       packages: read # pull lint tooling from GitHub Packages
