@@ -172,6 +172,22 @@ git -C "$repo" add fixture.yaml
 git -C "$repo" commit -qm synthetic
 assert_clean "reserved synthetic values" "$repo" --scope head --mode enforce
 
+repo=$(new_repo shell-positional-identities)
+cat >"${repo}/fixture.sh" <<'EOF'
+NAMESPACE=$2
+EOF
+git -C "$repo" add fixture.sh
+git -C "$repo" commit -qm shell-positional-identities
+assert_clean "shell positional identity inputs are dynamic" "$repo" --scope head --mode enforce
+
+repo=$(new_repo shell-literal-identity)
+cat >"${repo}/fixture.sh" <<'EOF'
+NAMESPACE=private-customer
+EOF
+git -C "$repo" add fixture.sh
+git -C "$repo" commit -qm shell-literal-identity
+assert_customer_identifier "unquoted shell identity literals remain enforced" "$repo" --scope head --mode enforce
+
 repo=$(new_repo localization-message-labels)
 mkdir -p "${repo}/l10n"
 cat >"${repo}/l10n/bundle.l10n.json" <<'EOF'
@@ -522,6 +538,54 @@ git -C "$repo" add fixture.yaml
 git -C "$repo" commit -qm whole-placeholders
 assert_clean "whole identity placeholders remain synthetic" "$repo" --scope head --mode enforce
 
+repo=$(new_repo prose-adjacent-placeholders)
+cat >"${repo}/fixture.md" <<'EOF'
+You are connected to tenant: {{context.tenant}}, namespace: {{context.namespace}}.
+EOF
+git -C "$repo" add fixture.md
+git -C "$repo" commit -qm prose-adjacent-placeholders
+assert_clean "adjacent prose identity placeholders remain synthetic" "$repo" --scope head --mode enforce
+
+repo=$(new_repo prose-adjacent-placeholder-literal)
+cat >"${repo}/fixture.md" <<'EOF'
+You are connected to tenant: {{context.tenant}}, namespace: private-customer.
+EOF
+git -C "$repo" add fixture.md
+git -C "$repo" commit -qm prose-adjacent-placeholder-literal
+assert_customer_identifier "a later prose identity literal remains enforced" "$repo" --scope head --mode enforce
+
+repo=$(new_repo prose-wildcard-namespace)
+cat >"${repo}/fixture.md" <<'EOF'
+Use `params: {namespace: "*"}` to query every namespace.
+EOF
+git -C "$repo" add fixture.md
+git -C "$repo" commit -qm prose-wildcard-namespace
+assert_clean "the product wildcard namespace is a schema sentinel" "$repo" --scope head --mode enforce
+
+repo=$(new_repo prose-quoted-namespace-literal)
+cat >"${repo}/fixture.md" <<'EOF'
+Do not use `params: {namespace: "private-customer"}` in published examples.
+EOF
+git -C "$repo" add fixture.md
+git -C "$repo" commit -qm prose-quoted-namespace-literal
+assert_customer_identifier "quoted prose namespace literals remain enforced" "$repo" --scope head --mode enforce
+
+repo=$(new_repo prose-synthetic-terminal-punctuation)
+cat >"${repo}/fixture.md" <<'EOF'
+The configured value is safe (namespace: example-corp).
+EOF
+git -C "$repo" add fixture.md
+git -C "$repo" commit -qm prose-synthetic-terminal-punctuation
+assert_clean "terminal prose punctuation preserves a synthetic identity" "$repo" --scope head --mode enforce
+
+repo=$(new_repo prose-literal-terminal-punctuation)
+cat >"${repo}/fixture.md" <<'EOF'
+The configured value is unsafe (namespace: private-customer).
+EOF
+git -C "$repo" add fixture.md
+git -C "$repo" commit -qm prose-literal-terminal-punctuation
+assert_customer_identifier "terminal prose punctuation cannot hide a literal identity" "$repo" --scope head --mode enforce
+
 repo=$(new_repo placeholder-comma-suffix)
 cat >"${repo}/fixture.yaml" <<'EOF'
 tenant: ${TENANT},private-customer
@@ -687,6 +751,23 @@ EOF
 git -C "$repo" add fixture.mdx
 git -C "$repo" commit -qm jq-options
 assert_clean "jq indentation and option arguments preserve filter context" "$repo" --scope head --mode enforce
+
+repo=$(new_repo jq-person-field-expression)
+cat >"${repo}/fixture.sh" <<'EOF'
+jq -n --arg repo "$repo_name" '{full_name: $repo}'
+EOF
+git -C "$repo" add fixture.sh
+git -C "$repo" commit -qm jq-person-field-expression
+assert_clean "computed person fields inside jq filters do not crash the scanner" "$repo" --scope head --mode enforce
+
+repo=$(new_repo jq-person-field-literal)
+cat >"${repo}/fixture.sh" <<'EOF'
+jq -n '{full_name: "Literal Person"}'
+EOF
+git -C "$repo" add fixture.sh
+git -C "$repo" commit -qm jq-person-field-literal
+assert_single_finding "literal person fields inside jq filters remain enforced" \
+  "$repo" person-name high --scope head --mode enforce
 
 repo=$(new_repo jq-numeric-literal)
 cat >"${repo}/fixture.mdx" <<'EOF'
@@ -2089,6 +2170,28 @@ git -C "$repo" add fixture.ts fixture.cpp
 git -C "$repo" commit -qm expressions
 assert_clean "code types and expressions are not literal identity values" "$repo" --scope head --mode enforce
 
+repo=$(new_repo source-template-and-signature-expressions)
+cat >"${repo}/fixture.ts" <<'EOF'
+if (accountId) identifiers.add(`account:${accountId}`);
+parts.push(`Tenant: ${pageState.tenant ?? "unknown"} (${pageState.environment ?? "unknown"} environment)`);
+const message = `namespace: ${currentNamespace}. Target this namespace for subsequent operations.`;
+#build(manifest: ResourceManifest, namespace: string): Record<string, unknown> {
+  return { manifest, namespace };
+}
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm source-template-and-signature-expressions
+assert_clean "source template expressions and signatures are not YAML data" "$repo" --scope head --mode enforce
+
+repo=$(new_repo source-template-literal-composition)
+cat >"${repo}/fixture.ts" <<'EOF'
+const literal = `tenant:${"private-customer"}`;
+const composed = `namespace:${namespaceName}-customer`;
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm source-template-literal-composition
+assert_violation "template interpolation cannot hide literal identity output" "$repo" --scope head --mode enforce
+
 repo=$(new_repo code-string-literal)
 cat >"${repo}/fixture.ts" <<'EOF'
 const context = { tenant: "real-customer", full_name: "Jane Doe" };
@@ -2184,6 +2287,30 @@ git -C "$repo" commit -qm remove
 assert_clean "removed PII is absent from HEAD" "$repo" --scope head --mode enforce
 assert_violation "reachable historical blob is scanned" "$repo" --scope history --mode enforce
 
+repo=$(new_repo history-path-alias)
+printf 'synthetic pixels\n' >"${repo}/a-safe.txt"
+cp "${repo}/a-safe.txt" "${repo}/z-review.png"
+git -C "$repo" add a-safe.txt z-review.png
+git -C "$repo" commit -qm aliases
+git -C "$repo" rm -q z-review.png
+git -C "$repo" commit -qm remove-media-alias
+assert_clean \
+  "removed media alias is absent from HEAD" \
+  "$repo" --scope head --mode audit
+assert_single_finding \
+  "history scans removed aliases of still-reachable blobs" \
+  "$repo" media-review review --scope history --mode audit
+
+repo=$(new_repo history-tree-ref)
+printf 'synthetic pixels\n' >"${repo}/a-safe.txt"
+cp "${repo}/a-safe.txt" "${repo}/z-review.png"
+git -C "$repo" add a-safe.txt z-review.png
+tree=$(git -C "$repo" write-tree)
+git -C "$repo" update-ref refs/tags/tree-only "$tree"
+assert_single_finding \
+  "history scans every path in a tree-only ref" \
+  "$repo" media-review review --scope history --mode audit
+
 repo=$(new_repo commit-message)
 printf 'change\n' >>"${repo}/README.md"
 git -C "$repo" add README.md
@@ -2230,12 +2357,18 @@ printf 'email: person@customer.local\n' >"${repo}/- odd name.yaml"
 git -C "$repo" add -- '- odd name.yaml'
 git -C "$repo" commit -qm odd
 assert_violation "option-like filename containing spaces" "$repo" --scope head --mode enforce
+assert_violation \
+  "history preserves option-like filenames containing spaces" \
+  "$repo" --scope history --mode enforce
 
 repo=$(new_repo symlink)
 ln -s "/Users/${SYNTHETIC_USER}/private" "${repo}/linked"
 git -C "$repo" add linked
 git -C "$repo" commit -qm symlink
 assert_clean "scanner does not dereference symlinks" "$repo" --scope head --mode enforce
+assert_clean \
+  "history scanner does not dereference symlinks" \
+  "$repo" --scope history --mode enforce
 
 repo=$(new_repo json-output)
 printf 'email: person@customer.local\n' >"${repo}/fixture.yaml"

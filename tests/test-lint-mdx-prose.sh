@@ -209,6 +209,23 @@ else
   bad "pre-commit does not invoke scripts/lint-mdx-prose.sh"
 fi
 
+# Managed-file synchronization writes downstream files through the GitHub
+# contents API, which does not preserve the executable bit. Invoke the script
+# through bash so both hooks remain runnable when the synced file is mode 0644.
+for hook_id in lint-mdx-prose textlint-markdown; do
+  hook_entry=$(
+    awk -v hook_id="$hook_id" '
+      $0 ~ "- id: " hook_id "$" { in_hook = 1; next }
+      in_hook && /entry:/ { print; exit }
+    ' "${REPO_ROOT}/.pre-commit-config.yaml"
+  )
+  if printf '%s' "$hook_entry" | grep -Eq 'entry:[[:space:]]+bash[[:space:]]+scripts/lint-mdx-prose\.sh([[:space:]]|$)'; then
+    ok "pre-commit hook $hook_id tolerates a non-executable managed script"
+  else
+    bad "pre-commit hook $hook_id must invoke the managed script through bash, got: ${hook_entry}"
+  fi
+done
+
 mdx_hook_types=$(awk '/id: lint-mdx-prose$/,/^$/' "${REPO_ROOT}/.pre-commit-config.yaml" | grep -E 'types(_or)?:' || true)
 if printf '%s' "$mdx_hook_types" | grep -q 'mdx'; then
   ok "the pre-commit MDX hook selects mdx files"

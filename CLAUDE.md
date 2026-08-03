@@ -19,7 +19,7 @@ A hook blocks direct edits — open an issue in docs-control instead.
 - **Never sync by overwriting the working tree.** `git checkout <ref> -- .`, `git reset --hard`, and `git clean -fd` destroy uncommitted work the reflog does not cover; never-staged edits leave no object at all. Behind with work in progress? Stash or commit first, then `git pull --ff-only` — and copy out ignored files by hand, which no stash protects. See CONTRIBUTING.md.
 - `main` is protected — never commit or push to it directly.
 - Work on a feature branch and open a pull request.
-- Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, Shell Unit Tests, linked-issue check) → auto-merge when every check is green → remote branch auto-deleted. The Claude Code review is **suspended**, and the translation-freshness audit still runs but no longer gates a merge — see CONTRIBUTING.md.
+- Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, Shell Unit Tests, linked-issue check) → auto-merge when every check is green → remote branch auto-deleted. The Claude and Antigravity CI reviewers, Antigravity translation, and translation-freshness audit are **suspended** — see CONTRIBUTING.md.
 
 ## Two review layers
 
@@ -27,7 +27,7 @@ Reviewing a **spec or plan** is not reviewing a **pull-request diff**. Pick by w
 
 - **Local, pre-PR — advisory, never a gate.** When installed, use `codex:verified-code-review` before a human reviews a spec or plan (`review-doc --kind spec|plan`, its primary use), before a push that opens or updates a PR (`adversarial-review`), and after each round of fixes. When absent, skip it — never substitute a PR-diff reviewer. Confirm findings here before acting; report those you dismissed.
 - **Never** use a PR-diff reviewer for a spec, plan, or local branch. `.claude/settings.json` denies `code-review:code-review` and `pr-review-toolkit:review-pr`; `code-review-f5:code-review` is marked `disable-model-invocation`. The built-ins `/review` and `/security-review` cannot be denied — not selecting them is on you.
-- **CI** — the `review / claude-review` diff reviewer is **suspended**: not running, not required. Do not wait for it, and do not re-enable it outside REVIEWER-SPEC.md.
+- **CI** — both pull-request diff reviewers are **suspended** and not required. Do not wait for Claude or Antigravity review; follow their separate restoration procedures in CONTRIBUTING.md.
 
 ## Worktrees
 

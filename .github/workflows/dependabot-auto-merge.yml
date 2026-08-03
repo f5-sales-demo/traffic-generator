@@ -15,7 +15,7 @@ jobs:
     if: github.actor == 'dependabot[bot]'
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
-    uses: f5-sales-demo/docs-control/.github/workflows/dependabot-auto-merge.yml@db1ad6247a857c7b47e5b2cf6cc1046143041fcc
+    uses: f5-sales-demo/docs-control/.github/workflows/dependabot-auto-merge.yml@8617beb254746f5f1c75fe48b6eee17c5db4df41
     permissions:
       contents: write # merge the validated Dependabot update
       pull-requests: write # approve and enable auto-merge
