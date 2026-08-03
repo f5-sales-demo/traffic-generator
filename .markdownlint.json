@@ -1,5 +1,6 @@
 {
   "MD013": { "line_length": 400 },
   "MD033": false,
+  "MD041": { "front_matter_title": "^\\s*(title|name)\\s*[:=]" },
   "MD060": true
 }

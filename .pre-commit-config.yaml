@@ -125,7 +125,7 @@ repos:
     hooks:
       - id: lint-mdx-prose
         name: MDX prose lint
-        entry: scripts/lint-mdx-prose.sh
+        entry: bash scripts/lint-mdx-prose.sh
         language: system
         types: [mdx]
 
@@ -136,7 +136,7 @@ repos:
       # the two cannot drift apart.
       - id: textlint-markdown
         name: Markdown prose lint (textlint)
-        entry: scripts/lint-mdx-prose.sh --textlint-only
+        entry: bash scripts/lint-mdx-prose.sh --textlint-only
         language: system
         types: [markdown]
 

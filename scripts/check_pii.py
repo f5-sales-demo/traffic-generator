@@ -21,6 +21,7 @@ import argparse
 import hashlib
 import ipaddress
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -32,6 +33,13 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
+    from typing import BinaryIO
+
+GIT_BATCH_FIELD_COUNT = 3
+GIT_MODE_DIGITS = frozenset(b"01234567")
+GIT_MODE_LENGTH = 6
+GIT_OBJECT_ID_DIGITS = frozenset(b"0123456789abcdef")
+GIT_RAW_FIELD_COUNT = 5
 
 EXCLUDED_PATHS = {
     "scripts/check_pii.py",
@@ -125,7 +133,7 @@ PHONE_FIELD_RE = re.compile(
 PERSON_FIELD_RE = re.compile(
     r"(?i)(?:^|[,{\s])['\"]?"
     r"(?P<key>full_name|first_name|last_name|given_name|family_name|display_name)"
-    r"['\"]?\s*[:=]\s*(?P<quote>['\"`]?)"
+    r"['\"]?\s*(?P<separator>[:=])\s*(?P<quote>['\"`]?)"
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
 LOCALIZATION_BUNDLE_RE = re.compile(
@@ -221,7 +229,7 @@ SAFE_BLOCK_PROSE_RE = re.compile(
     re.IGNORECASE,
 )
 TEMPLATE_PLACEHOLDER_RE = re.compile(
-    r"(?:\$[A-Za-z_][A-Za-z0-9_]*|\$\{[^{}\s]+\}|"
+    r"(?:\$(?:[A-Za-z_][A-Za-z0-9_]*|[0-9]+)|\$\{[^{}\s]+\}|"
     r"\{[A-Za-z_][A-Za-z0-9_.-]*\}|<[A-Za-z_][A-Za-z0-9_.-]*>|"
     r"\{\{\s*[^{}\r\n]+?\s*\}\}|\[%\s*[^%\r\n]+?\s*%\])"
 )
@@ -294,6 +302,7 @@ SOURCE_COMMENT_EXPRESSION_RE = re.compile(
     r"(?:[A-Za-z_$][A-Za-z0-9_$]*(?:\.|::|->))+[A-Za-z_$][A-Za-z0-9_$]*"
     r"|[A-Za-z_$][A-Za-z0-9_$]*\s*\([^\r\n]*\)"
 )
+SOURCE_TEMPLATE_STRING_RE = re.compile(r"(?P<quote>['\"])(?P<value>(?:\\.|(?!\1).)*)\1")
 JQ_OPTION_ARITY = {
     "--arg": 2,
     "--argfile": 2,
@@ -407,6 +416,7 @@ SAFE_PERSON_NAMES = {
     "rosario l.",
 }
 SCHEMA_SENTINELS = {
+    "*",
     "0",
     "any",
     "boolean",
@@ -489,6 +499,203 @@ def input_blobs(input_dir: Path) -> Iterator[tuple[str, bytes]]:
             raise OSError(message)
         path = path_file.read_bytes().decode("utf-8", "surrogateescape")
         yield path, blob_file.read_bytes()
+
+
+def nul_records(path: Path) -> Iterator[bytes]:
+    """Yield NUL-delimited records without loading the inventory into memory."""
+    remainder = b""
+    with path.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            records = (remainder + chunk).split(b"\0")
+            remainder = records.pop()
+            yield from records
+    if remainder:
+        message = "history inventory is not NUL-terminated"
+        raise ValueError(message)
+
+
+def valid_object_id(value: bytes) -> bool:
+    """Return whether a Git object ID uses a supported hash format."""
+    return len(value) in {40, 64} and set(value) <= GIT_OBJECT_ID_DIGITS
+
+
+def history_diff_associations(
+    diff_inventory: Path,
+) -> Iterator[tuple[bytes, bytes, bytes]]:
+    """Yield validated mode, object, and path tuples from raw Git diffs."""
+    records = iter(nul_records(diff_inventory))
+    while True:
+        try:
+            metadata = next(records)
+        except StopIteration:
+            break
+        try:
+            path = next(records)
+        except StopIteration as error:
+            message = "history diff inventory is incomplete"
+            raise ValueError(message) from error
+        fields = metadata.split()
+        if len(fields) != GIT_RAW_FIELD_COUNT:
+            message = "history diff inventory is malformed"
+            raise ValueError(message)
+        if not fields[0].startswith(b":") or not fields[4].isalpha():
+            message = "history diff inventory is malformed"
+            raise ValueError(message)
+        old_mode = fields[0][1:]
+        new_mode, old_oid, new_oid = fields[1:4]
+        modes_are_octal = set(old_mode + new_mode) <= GIT_MODE_DIGITS
+        if (
+            len(old_mode) != GIT_MODE_LENGTH
+            or len(new_mode) != GIT_MODE_LENGTH
+            or not modes_are_octal
+            or not valid_object_id(old_oid)
+            or not valid_object_id(new_oid)
+        ):
+            message = "history diff inventory metadata is invalid"
+            raise ValueError(message)
+        yield new_mode, new_oid, path
+
+
+def history_tree_associations(
+    tree_inventory: Path,
+) -> Iterator[tuple[bytes, bytes, bytes]]:
+    """Yield validated mode, object, and path tuples from direct tree refs."""
+    for record in nul_records(tree_inventory):
+        try:
+            metadata, path = record.split(b"\t", 1)
+            mode, object_type, oid = metadata.split()
+        except ValueError as error:
+            message = "history tree inventory is malformed"
+            raise ValueError(message) from error
+        if object_type == b"commit" and mode == b"160000":
+            continue
+        if object_type != b"blob":
+            message = "history tree inventory contains a non-blob entry"
+            raise ValueError(message)
+        yield mode, oid, path
+
+
+def write_history_associations(
+    diff_inventory: Path,
+    tree_inventory: Path,
+    output: Path,
+    requests: Path,
+) -> None:
+    """Deduplicate reachable Git path/blob associations from trusted plumbing."""
+    seen: set[tuple[bytes, bytes]] = set()
+    seen_oids: set[bytes] = set()
+
+    def write_association(
+        stream: BinaryIO,
+        request_stream: BinaryIO,
+        mode: bytes,
+        oid: bytes,
+        path: bytes,
+    ) -> None:
+        if not path or not valid_object_id(oid):
+            message = "history inventory contains an invalid association"
+            raise ValueError(message)
+        if mode in {b"000000", b"120000", b"160000"}:
+            return
+        if mode not in {b"100644", b"100755"}:
+            message = "history inventory contains an unsupported mode"
+            raise ValueError(message)
+        association = (path, oid)
+        if association in seen:
+            return
+        seen.add(association)
+        stream.write(mode + b" " + oid + b"\0" + path + b"\0")
+        if oid not in seen_oids:
+            seen_oids.add(oid)
+            request_stream.write(oid + b"\n")
+
+    with output.open("wb") as stream, requests.open("wb") as request_stream:
+        for new_mode, new_oid, path in history_diff_associations(diff_inventory):
+            write_association(stream, request_stream, new_mode, new_oid, path)
+
+        for mode, oid, path in history_tree_associations(tree_inventory):
+            write_association(stream, request_stream, mode, oid, path)
+
+
+def copy_exact(source: BinaryIO, destination: BinaryIO, size: int) -> None:
+    """Copy exactly one Git batch payload without buffering the full blob."""
+    remaining = size
+    while remaining:
+        chunk = source.read(min(remaining, 1024 * 1024))
+        if not chunk:
+            message = "Git returned a truncated blob payload"
+            raise ValueError(message)
+        destination.write(chunk)
+        remaining -= len(chunk)
+
+
+def materialize_history_objects(
+    requests: Path,
+    batch_output: Path,
+    object_dir: Path,
+) -> dict[bytes, Path]:
+    """Validate and materialize each uniquely requested Git blob."""
+    object_dir.mkdir()
+    objects: dict[bytes, Path] = {}
+    requested_oids = requests.read_bytes().splitlines()
+
+    with batch_output.open("rb") as source:
+        for expected_oid in requested_oids:
+            header = source.readline().rstrip(b"\n")
+            fields = header.split()
+            if (
+                len(fields) != GIT_BATCH_FIELD_COUNT
+                or fields[0] != expected_oid
+                or fields[1] != b"blob"
+                or not fields[2].isdigit()
+            ):
+                message = "Git returned an invalid blob header"
+                raise ValueError(message)
+            object_path = object_dir / expected_oid.decode("ascii")
+            with object_path.open("wb") as destination:
+                copy_exact(source, destination, int(fields[2]))
+            if source.read(1) != b"\n":
+                message = "Git returned an unterminated blob payload"
+                raise ValueError(message)
+            objects[expected_oid] = object_path
+        if source.read(1):
+            message = "Git returned unexpected trailing blob data"
+            raise ValueError(message)
+    return objects
+
+
+def materialize_history_associations(
+    associations: Path,
+    requests: Path,
+    batch_output: Path,
+    input_dir: Path,
+    start_index: int,
+) -> int:
+    """Materialize one validated input per path/blob association."""
+    object_dir = input_dir / "history-objects"
+    objects = materialize_history_objects(requests, batch_output, object_dir)
+
+    index = start_index
+    association_records = iter(nul_records(associations))
+    while True:
+        try:
+            metadata = next(association_records)
+        except StopIteration:
+            break
+        try:
+            path = next(association_records)
+            mode, oid = metadata.split()
+            object_path = objects[oid]
+        except (KeyError, StopIteration, ValueError) as error:
+            message = "validated history association is malformed"
+            raise ValueError(message) from error
+        if mode not in {b"100644", b"100755"} or not path:
+            message = "validated history association metadata is invalid"
+            raise ValueError(message)
+        index += 1
+        (input_dir / f"{index}.path").write_bytes(path)
+        os.link(object_path, input_dir / f"{index}.blob")
+    return index
 
 
 def is_legal_attribution_path(path: str) -> bool:
@@ -816,6 +1023,29 @@ def quoted_structured_field_value(
     return line[start:]
 
 
+def placeholder_terminates_structured_value(
+    path: str,
+    line: str,
+    placeholder_end: int,
+    flow_context: bool,
+) -> bool:
+    """Return whether a placeholder is the complete structured field value."""
+    raw_remainder = line[placeholder_end:]
+    remainder = raw_remainder.lstrip()
+    if not remainder:
+        return True
+    if raw_remainder != remainder and remainder.startswith("#"):
+        return True
+    if flow_context and remainder[0] in ",}]":
+        return True
+
+    prose = PurePosixPath(path).suffix.lower() in PROSE_DOCUMENT_SUFFIXES
+    if prose and re.fullmatch(r"[).;!?]+", remainder):
+        return True
+    following_identity = IDENTITY_FIELD_RE.match(remainder[1:].lstrip())
+    return prose and remainder.startswith(",") and bool(following_identity)
+
+
 def structured_field_value(path: str, line: str, match: re.Match[str]) -> str:
     """Read one field value without truncating quoted punctuation or YAML scalars."""
     start = match.start("value")
@@ -823,17 +1053,19 @@ def structured_field_value(path: str, line: str, match: re.Match[str]) -> str:
     if quote:
         return quoted_structured_field_value(line, start, quote)
 
-    yaml = PurePosixPath(path).suffix.lower() in {".yaml", ".yml"}
+    suffix = PurePosixPath(path).suffix.lower()
+    yaml = suffix in {".yaml", ".yml"}
+    prose = suffix in PROSE_DOCUMENT_SUFFIXES
     prefix = line[:start]
     flow_context = serialization_nesting(prefix) > 0
     placeholder_end = placeholder_token_end(line, start)
-    if placeholder_end is not None:
-        raw_remainder = line[placeholder_end:]
-        remainder = raw_remainder.lstrip()
-        whitespace_comment = raw_remainder != remainder and remainder.startswith("#")
-        flow_delimiter = bool(remainder) and remainder[0] in ",}]"
-        if not remainder or whitespace_comment or (flow_context and flow_delimiter):
-            return line[start:placeholder_end]
+    if placeholder_end is not None and placeholder_terminates_structured_value(
+        path,
+        line,
+        placeholder_end,
+        flow_context,
+    ):
+        return line[start:placeholder_end]
 
     index = start
     while index < len(line):
@@ -843,7 +1075,8 @@ def structured_field_value(path: str, line: str, match: re.Match[str]) -> str:
         if character == "#" and (index == start or line[index - 1].isspace()):
             break
         index += 1
-    return line[start:index]
+    value = line[start:index]
+    return value.rstrip(").;!?") if prose else value
 
 
 def unwrapped_identity_value(value: str) -> str:
@@ -943,6 +1176,11 @@ def is_structured_identity_field(path: str, line: str, match: re.Match[str]) -> 
 def is_source_comment(line: str, match: re.Match[str]) -> bool:
     """Return whether a field-shaped token occurs after a source comment marker."""
     prefix = line[: match.start("key")]
+    prefix = re.sub(
+        r"(^|[\s;])#(?=[A-Za-z_$][A-Za-z0-9_$]*\s*\()",
+        r"\1",
+        prefix,
+    )
     return bool(re.search(r"(?:^|[\s;])(?://|#|/\*|\*)\s*[^\r\n]*$", prefix))
 
 
@@ -1456,6 +1694,54 @@ def jq_value_is_expression(
     return all(placeholder_value(number) for number in fallback_numbers)
 
 
+def source_template_interpolation(line: str, start: int) -> tuple[str, int] | None:
+    """Read one JavaScript-style template interpolation and its closing brace."""
+    if not line.startswith("${", start):
+        return None
+    depth = 1
+    index = start + 2
+    quote: str | None = None
+    while index < len(line):
+        character = line[index]
+        if quote:
+            if character == "\\":
+                index += 2
+                continue
+            if character == quote:
+                quote = None
+        elif character in {"'", '"'}:
+            quote = character
+        elif character == "{":
+            depth += 1
+        elif character == "}":
+            depth -= 1
+            if depth == 0:
+                return line[start + 2 : index], index
+        index += 1
+    return None
+
+
+def source_template_value_is_expression(
+    line: str,
+    match: re.Match[str],
+) -> bool:
+    """Return whether a template field computes a value without literal identity data."""
+    interpolation = source_template_interpolation(line, match.start("value"))
+    if interpolation is None:
+        return False
+    expression, closing = interpolation
+    strings = SOURCE_TEMPLATE_STRING_RE.finditer(expression)
+    if any(not placeholder_value(item.group("value")) for item in strings):
+        return False
+    expression_without_strings = SOURCE_TEMPLATE_STRING_RE.sub("", expression)
+    if not re.search(r"[A-Za-z_$]", expression_without_strings):
+        return False
+    remainder = line[closing + 1 :]
+    closes_template = remainder.startswith("`")
+    starts_sentence = bool(re.match(r"^(?:[.,;!?)]\s|\s+\()", remainder))
+    return closes_template or starts_sentence
+
+
 def is_nonliteral_code_expression(
     line: str,
     match: re.Match[str],
@@ -1483,7 +1769,8 @@ def is_nonliteral_code_expression(
     if whole_inline_field:
         expression = value.rstrip(";").strip()
         named_expression = bool(SOURCE_COMMENT_EXPRESSION_RE.fullmatch(expression))
-        return expression.startswith(".") or named_expression
+        interpolation = source_template_value_is_expression(line, match)
+        return expression.startswith(".") or named_expression or interpolation
     if in_jq_filter:
         return jq_value_is_expression(line, match, jq_spans)
     return source_code and not bool(match.group("quote"))
@@ -2011,7 +2298,8 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
     yaml = suffix in {".yaml", ".yml"}
     aliases: dict[str, bool] = {}
     localization_strings = localization_top_level_string_spans(path, text)
-    scan_yaml_identity_blocks(path, text, findings)
+    if yaml or suffix in PROSE_DOCUMENT_SUFFIXES:
+        scan_yaml_identity_blocks(path, text, findings)
     fence_marker: str | None = None
     fence_language: str | None = None
     fence_close_column: int | None = None

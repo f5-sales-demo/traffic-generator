@@ -6,9 +6,16 @@
     "api-specs": [".ruff.toml", ".python-lint", ".mypy.ini"],
     "api-specs-enriched": [".ruff.toml", ".python-lint", ".mypy.ini", ".github/workflows/github-pages-deploy.yml"],
     "vscode-xcsh": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg", "README.md"],
-    "i18n-core": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
-    "console": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
-    "xcsh-chrome-extension": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"]
+    "i18n-core": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg", "README.md"],
+    "console": [".ruff.toml", ".mypy.ini", ".isort.cfg"],
+    "xcsh-chrome-extension": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg"],
+    "apt-repo": ["README.md"],
+    "code-review": ["README.md"],
+    "demo-resource-template": ["README.md"],
+    "marketplace-claude-code": ["README.md"],
+    "starlight-llms-txt": ["README.md"],
+    "starlight-mega-menu": ["README.md"],
+    "traffic-generator": ["README.md"]
   },
   "protected_files": [
     ".github/workflows/github-pages-deploy.yml",
@@ -21,6 +28,7 @@
     ".github/workflows/workflow-security-audit.yml",
     ".github/workflows/semgrep.yml",
     ".github/workflows/translation-audit.yml",
+    ".github/workflows/antigravity-review.yml",
     ".github/workflows/antigravity-translate.yml",
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/ISSUE_TEMPLATE/bug_report.md",

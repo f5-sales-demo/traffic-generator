@@ -122,31 +122,109 @@ materialize_head() {
 
 materialize_history() {
   local oid object_type commit message object_line type_line path type_oid
-  git rev-list --objects --all >"${WORK}/objects"
-  cut -d ' ' -f 1 "${WORK}/objects" |
-    git cat-file --batch-check='%(objectname) %(objecttype)' >"${WORK}/types"
+  local materialized_count object_count ref target target_type type_count
+  if ! git rev-list --objects --all >"${WORK}/objects"; then
+    echo "PII scan error: cannot enumerate reachable Git objects" >&2
+    exit 2
+  fi
+  if ! cut -d ' ' -f 1 "${WORK}/objects" |
+    git cat-file --batch-check='%(objectname) %(objecttype)' >"${WORK}/types"; then
+    echo "PII scan error: cannot inspect reachable Git objects" >&2
+    exit 2
+  fi
+  object_count=$(wc -l <"${WORK}/objects")
+  type_count=$(wc -l <"${WORK}/types")
+  if [ "$object_count" -ne "$type_count" ]; then
+    echo "PII scan error: Git returned a truncated history inventory" >&2
+    exit 2
+  fi
 
+  : >"${WORK}/commits"
   while IFS= read -r object_line <&3 && IFS= read -r type_line <&4; do
     oid=${object_line%% *}
-    path=${object_line#"$oid"}
-    path=${path# }
     read -r type_oid object_type <<<"$type_line"
     if [ "$type_oid" != "$oid" ]; then
       echo "PII scan error: Git returned a mismatched history inventory" >&2
       exit 2
     fi
-    [ "$object_type" = "blob" ] || continue
-    [ -n "$path" ] || path="<blob:${oid:0:12}>"
-    add_blob "$path" "$oid"
+    if [ "$object_type" = "commit" ]; then
+      printf '%s\n' "$oid" >>"${WORK}/commits"
+    fi
   done 3<"${WORK}/objects" 4<"${WORK}/types"
+
+  if ! git diff-tree --stdin --root -m -r --raw -z --no-renames \
+    --no-commit-id <"${WORK}/commits" >"${WORK}/history-diffs"; then
+    echo "PII scan error: cannot enumerate reachable history changes" >&2
+    exit 2
+  fi
+
+  : >"${WORK}/history-trees"
+  if ! git for-each-ref --format='%(refname)' >"${WORK}/refs"; then
+    echo "PII scan error: cannot enumerate Git refs" >&2
+    exit 2
+  fi
+  while IFS= read -r ref; do
+    if ! target=$(git rev-parse "${ref}^{}"); then
+      echo "PII scan error: cannot resolve a reachable ref" >&2
+      exit 2
+    fi
+    if ! target_type=$(git cat-file -t "$target"); then
+      echo "PII scan error: cannot inspect a reachable ref" >&2
+      exit 2
+    fi
+    case "$target_type" in
+    commit) ;;
+    tree)
+      if ! git ls-tree -r -z --full-tree "$target" >>"${WORK}/history-trees"; then
+        echo "PII scan error: cannot enumerate a reachable tree" >&2
+        exit 2
+      fi
+      ;;
+    blob)
+      printf '100644 blob %s\t<blob:%s>\0' "$target" "${target:0:12}" \
+        >>"${WORK}/history-trees"
+      ;;
+    *)
+      echo "PII scan error: reachable ref has an unsupported object type" >&2
+      exit 2
+      ;;
+    esac
+  done <"${WORK}/refs"
+
+  if ! PYTHONPATH="$SCRIPT_DIR" python3 -c \
+    'import sys; from pathlib import Path; from check_pii import write_history_associations; write_history_associations(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]))' \
+    "${WORK}/history-diffs" "${WORK}/history-trees" \
+    "${WORK}/history-associations" "${WORK}/history-requests"; then
+    echo "PII scan error: cannot validate reachable history associations" >&2
+    exit 2
+  fi
+
+  if ! git cat-file --batch <"${WORK}/history-requests" \
+    >"${WORK}/history-batch"; then
+    echo "PII scan error: cannot read reachable history blobs" >&2
+    exit 2
+  fi
+  if ! materialized_count=$(PYTHONPATH="$SCRIPT_DIR" python3 -c \
+    'import sys; from pathlib import Path; from check_pii import materialize_history_associations; print(materialize_history_associations(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), int(sys.argv[5])))' \
+    "${WORK}/history-associations" "${WORK}/history-requests" \
+    "${WORK}/history-batch" "$WORK" "$COUNT"); then
+    echo "PII scan error: cannot materialize reachable history blobs" >&2
+    exit 2
+  fi
+  COUNT=$materialized_count
 
   # -z terminates each record with NUL; the explicit NUL separates the commit
   # object ID from its possibly-multiline message.
+  if ! git log --no-walk=unsorted --stdin -z --format='%H%x00%B' \
+    <"${WORK}/commits" >"${WORK}/messages"; then
+    echo "PII scan error: cannot enumerate reachable commit messages" >&2
+    exit 2
+  fi
   while IFS= read -r -d '' commit && IFS= read -r -d '' message; do
     COUNT=$((COUNT + 1))
     printf '<commit:%s>' "${commit:0:12}" >"${WORK}/${COUNT}.path"
     printf '%s' "$message" >"${WORK}/${COUNT}.blob"
-  done < <(git log --all -z --format='%H%x00%B')
+  done <"${WORK}/messages"
 }
 
 case "$SCOPE" in
