@@ -9,21 +9,57 @@ on:
 
 permissions: {}
 
+# Keep caller cancellation separate from the reusable workflow's concurrency
+# group; sharing a group lets the called run cancel its own caller.
+concurrency:
+  group: caller-auto-merge-${{ github.repository }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
-  call:
-    # Candidate filter only (non-draft, non-dependabot). The reusable further gates
-    # the actual merge on author write/admin permission, and branch protection +
-    # required checks still gate the merge. Dependabot uses dependabot-auto-merge.yml.
+  # Auto-merge has exactly one credential: the REPO_SYNC_TOKEN PAT. A merge pushed
+  # with the automatic token cannot start the downstream workflows a merge is meant
+  # to start — GitHub blocks that recursion — so a repository without the PAT would
+  # appear to auto-merge while silently breaking release, pages and regeneration
+  # runs. This preflight turns that into a loud configuration failure.
+  #
+  # Fork pull requests are excluded rather than failed: they legitimately receive no
+  # secrets, so an absent token there is not a misconfiguration.
+  require-token:
+    name: Require canonical auto-merge token
+    environment: repository-settings
     if: >-
       github.event.pull_request.draft == false &&
-      github.actor != 'dependabot[bot]'
-    uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@8eaaced5c8800da45934031b152c863ce8ee84c0
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require downstream-triggering token
+        env:
+          REPO_SYNC_TOKEN: ${{ secrets.REPO_SYNC_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${REPO_SYNC_TOKEN:-}" ]; then
+            echo "::error::REPO_SYNC_TOKEN is required for auto-merge. A merge pushed with the automatic token cannot trigger downstream workflows, so auto-merge is refused rather than performed silently."
+            exit 1
+          fi
+          echo "Canonical auto-merge token is present"
+
+  call:
+    # Candidate filter only (non-draft, non-dependabot, same repository). The
+    # reusable further gates the actual merge on author write/admin permission, and
+    # branch protection + required checks still gate the merge. Dependabot uses
+    # dependabot-auto-merge.yml.
+    needs: [require-token]
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@ee62a350312f35a8ddd80e316193535f12fb9152
     permissions:
-      contents: write # fallback GITHUB_TOKEN must be able to complete the merge
+      contents: write # the reusable completes the merge
       pull-requests: write # enable auto-merge and update the pull request
-    # Least privilege: pass ONLY the secret the reusable needs, not every
-    # repository secret (`secrets: inherit`). REPO_SYNC_TOKEN is the PAT that lets
-    # an auto-merge trigger downstream workflows; the reusable falls back to
-    # GITHUB_TOKEN when it is unset, so repos without the PAT still work.
+    # Least privilege: pass ONLY the secret the reusable needs, not every repository
+    # secret (`secrets: inherit`). REPO_SYNC_TOKEN is the PAT that lets an
+    # auto-merge trigger downstream workflows, and the reusable now requires it.
     secrets:
       REPO_SYNC_TOKEN: ${{ secrets.REPO_SYNC_TOKEN }}
