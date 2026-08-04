@@ -1,6 +1,7 @@
 ---
 name: Require Linked Issue
 
+#checkov:skip=CKV_GHA_7:Targeted inputs are exact PR receipts validated before a status is written.
 on:
   schedule:
     - cron: '*/5 * * * *'
