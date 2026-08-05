@@ -120,7 +120,6 @@ if [ "$mode" = code ]; then
     bash scripts/check-pii.sh --scope head --mode enforce
   fi
   target_description="branch range ${base_sha}...${head_sha}"
-  target_instructions="Inspect git diff --find-renames ${base_sha}...${head_sha}, commit messages, and relevant source and tests."
 else
   document_path=$(cd "$(dirname "$document_file")" 2>/dev/null && pwd -P)/$(basename "$document_file") || {
     echo "[review] document not found: $document_file" >&2
@@ -148,6 +147,19 @@ cleanup() {
   rm -rf -- "$work"
 }
 trap cleanup EXIT
+
+if [ "$mode" = code ]; then
+  review_target="$work/code-review-target.txt"
+  {
+    printf 'Review target: committed branch range %s...%s\n\n' "$base_sha" "$head_sha"
+    printf '%s\n' 'Commit metadata (hash and message only):'
+    git log --format='commit %H%n%B' "${base_sha}..${head_sha}"
+    printf '\n%s\n' 'Committed diff:'
+    git --no-pager diff --no-color --find-renames "${base_sha}...${head_sha}"
+  } >"$review_target"
+  relative_review_target=${review_target#"$repo_root"/}
+  target_instructions="Read $relative_review_target completely. It contains the exact committed diff and commit metadata for the review target. Use read-only file inspection for any relevant source and tests. Do not run terminal commands or reconstruct the target with git."
+fi
 
 invoke_agy() {
   local prompt_file=$1 stream_file=$2 result_file=$3

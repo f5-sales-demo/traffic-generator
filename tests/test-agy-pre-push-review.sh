@@ -47,6 +47,13 @@ printf '%s\n' "$count" >"$FAKE_AGY_COUNT"
     "${AGY_REVIEW_ACTIVE:-}" "${AGY_PRE_PUSH_REVIEW_ACTIVE:-}" \
     "${GATEWAY_TOKEN:-}" "${GITHUB_TOKEN:-}"
 } >>"$FAKE_AGY_CALLS"
+if [ -n "${FAKE_AGY_BUNDLE_CAPTURE:-}" ]; then
+  for review_bundle in "$PWD"/.agy-review.*/code-review-target.txt; do
+    if [ -f "$review_bundle" ]; then
+      cp "$review_bundle" "$FAKE_AGY_BUNDLE_CAPTURE"
+    fi
+  done
+fi
 if [ "${FAKE_AGY_MALFORMED_CALL:-0}" -eq "$count" ]; then
   printf 'not-json\n'
 elif [ "${FAKE_AGY_BLOCK_CALL:-0}" -eq "$count" ]; then
@@ -72,7 +79,8 @@ run_review() {
 
 echo "Antigravity local review tests"
 setup_repo
-if run_review "$WORK/bin:$PATH" env GATEWAY_TOKEN=private GITHUB_TOKEN=private &&
+if run_review "$WORK/bin:$PATH" env GATEWAY_TOKEN=private GITHUB_TOKEN=private \
+  FAKE_AGY_BUNDLE_CAPTURE="$WORK/review-bundle" &&
   [ "$(cat "$WORK/count")" -eq 2 ] &&
   [ "$(grep -c -- '--sandbox' "$WORK/calls")" -eq 2 ] &&
   [ "$(grep -c -- 'Gemini 3.6 Flash (High)' "$WORK/calls")" -eq 2 ] &&
@@ -84,8 +92,13 @@ if run_review "$WORK/bin:$PATH" env GATEWAY_TOKEN=private GITHUB_TOKEN=private &
   grep -q 'Do not execute repository test' "$WORK/calls" &&
   grep -q 'consumer_shell_tests.profiles' "$WORK/calls" &&
   grep -q 'second independent Antigravity verifier' "$WORK/calls" &&
+  grep -q 'code-review-target.txt' "$WORK/calls" &&
+  grep -q 'Do not run terminal commands' "$WORK/calls" &&
+  ! grep -q 'Inspect git diff --find-renames' "$WORK/calls" &&
+  grep -q '^commit ' "$WORK/review-bundle" &&
+  grep -q '^+change$' "$WORK/review-bundle" &&
   grep -q 'gate passed' "$WORK/output"; then
-  pass "two schema-validated Flash passes run without inherited credentials"
+  pass "two schema-validated Flash passes review a precomputed bundle without inherited credentials"
 else
   fail "clean branch receives two independent Antigravity passes" "$(cat "$WORK/output")"
 fi
