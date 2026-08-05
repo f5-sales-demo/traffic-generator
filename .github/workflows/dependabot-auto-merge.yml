@@ -2,20 +2,71 @@
 name: Dependabot Auto-Merge
 
 on:
-  # zizmor: ignore[dangerous-triggers] — Dependabot PRs get a read-only token under
-  # `pull_request`, so pull_request_target is required to approve and merge them.
-  # Gated to actor == dependabot[bot]; the caller only dispatches the reusable
-  # workflow — no PR-code checkout or exec.
-  pull_request_target:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
 
 permissions: {}
 
+concurrency:
+  group: dependabot-auto-merge
+  cancel-in-progress: false
+
 jobs:
-  call:
-    if: github.actor == 'dependabot[bot]'
-    # No `secrets:` — least privilege. The reusable uses only the automatic
-    # GITHUB_TOKEN, so passing repository secrets would over-provision it.
-    uses: f5-sales-demo/docs-control/.github/workflows/dependabot-auto-merge.yml@8eaaced5c8800da45934031b152c863ce8ee84c0
+  auto-merge:
+    name: Approve and enable auto-merge
+    runs-on: ubuntu-latest
     permissions:
-      contents: write # merge the validated Dependabot update
-      pull-requests: write # approve and enable auto-merge
+      contents: write # merge validated Dependabot updates
+      pull-requests: write # approve pull requests and enable auto-merge
+    steps:
+      - name: Process open Dependabot pull requests
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const DEPENDABOT_ID = 49699333;
+            const GITHUB_ACTIONS_ID = 41898282;
+            const { owner, repo } = context.repo;
+            const pulls = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: "open",
+              per_page: 100,
+            });
+
+            for (const pull of pulls) {
+              if (pull.user?.id !== DEPENDABOT_ID) continue;
+
+              const reviews = await github.paginate(github.rest.pulls.listReviews, {
+                owner,
+                repo,
+                pull_number: pull.number,
+                per_page: 100,
+              });
+              const headApproved = reviews.some(
+                (review) =>
+                  review.user?.id === GITHUB_ACTIONS_ID &&
+                  review.state === "APPROVED" &&
+                  review.commit_id === pull.head.sha,
+              );
+              if (!headApproved) {
+                await github.rest.pulls.createReview({
+                  owner,
+                  repo,
+                  pull_number: pull.number,
+                  commit_id: pull.head.sha,
+                  event: "APPROVE",
+                });
+              }
+
+              if (pull.auto_merge) continue;
+              await github.graphql(
+                `mutation($pullRequestId: ID!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId,
+                    mergeMethod: SQUASH
+                  }) { pullRequest { number } }
+                }`,
+                { pullRequestId: pull.node_id },
+              );
+            }

@@ -2274,6 +2274,55 @@ git -C "$repo" add fixture.yaml
 assert_clean "HEAD ignores staged-only content" "$repo" --scope head --mode enforce
 assert_violation "staged scope reads the index" "$repo" --scope staged --mode enforce
 
+repo=$(new_repo staged-excludes-unchanged)
+printf 'email: person@customer.local\n' >"${repo}/unchanged.yaml"
+git -C "$repo" add unchanged.yaml
+git -C "$repo" commit -qm existing-finding
+printf 'clean staged content\n' >"${repo}/changed.txt"
+git -C "$repo" add changed.txt
+assert_clean \
+  "staged scope excludes unchanged tracked blobs" \
+  "$repo" --scope staged --mode enforce
+
+repo=$(new_repo staged-modification)
+printf 'clean\n' >"${repo}/modified.yaml"
+git -C "$repo" add modified.yaml
+git -C "$repo" commit -qm clean-fixture
+printf 'email: person@customer.local\n' >"${repo}/modified.yaml"
+git -C "$repo" add modified.yaml
+assert_violation "staged scope reads modified blobs" "$repo" --scope staged --mode enforce
+
+repo=$(new_repo staged-unusual-path)
+unusual_path=$'line\nbreak.yaml'
+printf 'email: person@customer.local\n' >"${repo}/${unusual_path}"
+git -C "$repo" add "$unusual_path"
+assert_violation "staged scope is NUL-safe" "$repo" --scope staged --mode enforce
+
+repo=$(new_repo staged-deletion)
+printf 'email: person@customer.local\n' >"${repo}/deleted.yaml"
+git -C "$repo" add deleted.yaml
+git -C "$repo" commit -qm existing-finding
+git -C "$repo" rm -q deleted.yaml
+assert_clean "staged scope excludes deleted blobs" "$repo" --scope staged --mode enforce
+
+repo=$(new_repo staged-unmerged)
+printf 'base\n' >"${repo}/conflict.txt"
+git -C "$repo" add conflict.txt
+git -C "$repo" commit -qm conflict-base
+git -C "$repo" switch -q -c other
+printf 'other\n' >"${repo}/conflict.txt"
+git -C "$repo" commit -qam conflict-other
+git -C "$repo" switch -q main
+printf 'main\n' >"${repo}/conflict.txt"
+git -C "$repo" commit -qam conflict-main
+git -C "$repo" merge other >/dev/null 2>&1 || true
+assert_error "staged scope rejects an unmerged index" "$repo" --scope staged --mode enforce
+
+repo=$(new_repo staged-gitlink)
+gitlink_oid=$(git -C "$repo" rev-parse HEAD)
+git -C "$repo" update-index --add --cacheinfo "160000,$gitlink_oid,vendor/module"
+assert_clean "staged scope ignores gitlink entries" "$repo" --scope staged --mode enforce
+
 repo=$(new_repo untracked)
 printf 'email: person@customer.local\n' >"${repo}/scratch.yaml"
 assert_clean "untracked files are out of scope" "$repo" --scope staged --mode enforce

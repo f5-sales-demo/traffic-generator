@@ -1,40 +1,40 @@
 ---
-# Governed caller for the Antigravity Gemini PR reviewer. Synced by docs-control managed-files
-# to opted-in repositories only.
-# Invokes the shared reusable reviewer in docs-control at a commit-pinned SHA.
+# Governed exact-head caller. Only the trusted docs-control orchestrator dispatches it.
 name: Antigravity AI Review
+run-name: Antigravity review PR ${{ inputs.pr_number }} @ ${{ inputs.expected_head_sha }}
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number
+        required: true
+        type: string
+      expected_base_sha:
+        description: Exact pull-request base SHA
+        required: true
+        type: string
+      expected_head_sha:
+        description: Exact pull-request head SHA
+        required: true
+        type: string
+
+permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ inputs.pr_number }}-${{ inputs.expected_head_sha }}
   cancel-in-progress: true
 
 jobs:
   review:
-    # SUSPENDED: Gemini Antigravity review is opt-in while its quota is exhausted.
-    # Runs only if explicitly enabled, the PR head repository is the same as the
-    # base repository, and the event is not triggered on an automated branch.
-    if: >-
-      vars.ANTIGRAVITY_REVIEW_ENABLED == 'true' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      !(startsWith(github.head_ref, 'governance/') ||
-        startsWith(github.head_ref, 'sync/') ||
-        startsWith(github.head_ref, 'release/') ||
-        startsWith(github.head_ref, 'openapi-sync/') ||
-        startsWith(github.head_ref, 'plugin-sync/') ||
-        startsWith(github.head_ref, 'deps/') ||
-        startsWith(github.head_ref, 'docs/update-') ||
-        startsWith(github.head_ref, 'auto-regenerate/') ||
-        startsWith(github.head_ref, 'auto-generate/') ||
-        startsWith(github.head_ref, 'autoresearch/') ||
-        (startsWith(github.head_ref, 'dependabot/') && github.actor == 'dependabot[bot]'))
-    uses: f5-sales-demo/docs-control/.github/workflows/antigravity-review.yml@8eaaced5c8800da45934031b152c863ce8ee84c0
+    if: vars.ANTIGRAVITY_REVIEW_ENABLED == 'true'
+    uses: f5-sales-demo/docs-control/.github/workflows/antigravity-review.yml@9f3f0768c01bd3efaf9b27c66f29eea89b094fb6
+    with:
+      pr_number: ${{ inputs.pr_number }}
+      expected_base_sha: ${{ inputs.expected_base_sha }}
+      expected_head_sha: ${{ inputs.expected_head_sha }}
     permissions:
       contents: read
-      pull-requests: write
-      issues: write
+      pull-requests: write # publish an exact-head review comment
     secrets:
       ANTIGRAVITY_TOKEN: ${{ secrets.ANTIGRAVITY_TOKEN }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}

@@ -26,13 +26,12 @@ jobs:
     # protection FIRST (docs-control#867), and that removal was confirmed on every
     # governed repository before this gate landed. Skipping a job while its context
     # is still required makes a check that never reports mandatory, deadlocking
-    # every open pull request — the same trap the suspended reviewer left behind
-    # (see the SUSPENDED note in code-review.yml). To restore, see "Restoring
-    # translations" in CONTRIBUTING.md: set the variable and regenerate BEFORE
-    # re-adding the required context.
+    # every open pull request. To restore, see "Restoring translations" in
+    # CONTRIBUTING.md: set the variable and regenerate BEFORE re-adding the
+    # required context.
     #
     # `vars` is used rather than `env` because the `env` context is not available
     # in a job-level `if:`. An unset variable evaluates false, so this fails safe
     # toward not spending money.
     if: vars.TRANSLATIONS_ENABLED == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/translation-audit.yml@8eaaced5c8800da45934031b152c863ce8ee84c0
+    uses: f5-sales-demo/docs-control/.github/workflows/translation-audit.yml@9f3f0768c01bd3efaf9b27c66f29eea89b094fb6

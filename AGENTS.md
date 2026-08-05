@@ -41,6 +41,8 @@ assistant. It declares protected files, repository-specific opt-outs, and reposi
   Follow `CONTRIBUTING.md` when stashing, recovering ignored files, or retiring worktrees.
 - Use the fleet lifecycle: detailed linked issue, feature branch, pull request, required CI, then
   auto-merge. Never commit or push directly to the protected default branch.
+- Before a PR push, commit and run `bash scripts/agy-pre-push-review.sh`. Antigravity reviews and
+  verifies `origin/main...HEAD`; fix blockers, commit, and rerun. Claude and Codex are not reviewers.
 
 ## Engineering and verification
 
@@ -48,5 +50,10 @@ assistant. It declares protected files, repository-specific opt-outs, and reposi
   implementation conventions. Do not import rules from another assistant or repository.
 - Prefer focused verification for the changed surface, then run the broader read-only checks required
   by the repository. Record pre-existing or environment-related failures before comparing results.
+- Antigravity review is separate from tests. Do not push a HEAD that `agy` has not reviewed.
+- Route spec and plan review through `scripts/agy-review.sh document`; do not use Claude or Codex
+  review commands, skills, subagents, stop hooks, or adversarial-review modes.
+- After opening a PR, return control. Auto-merge and the Antigravity watcher own workflow completion;
+  do not spend a coding-agent session polling GitHub Actions.
 - Before reporting completion, inspect the final diff and provide the commands and outcomes that
   support the claim. Never describe an unrun, interrupted, or failing check as passing.
