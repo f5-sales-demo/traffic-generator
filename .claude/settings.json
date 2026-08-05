@@ -6,6 +6,7 @@
     "deny": [
       "Skill(code-review:code-review)",
       "Skill(pr-review-toolkit:review-pr)",
+      "Skill(verified-review:verified-code-review)",
       "Skill(commit-commands:clean_gone)"
     ]
   },

@@ -276,42 +276,18 @@ repos:
         pass_filenames: false
 
   # ===========================================================================
-  # Translation generation — regenerate locale docs when English changes.
-  # Runs docs-translate --staged (docs-theme) for staged docs/en/*.mdx, which
-  # needs ANTHROPIC_API_KEY and the docs-theme toolchain. Generation is
-  # intentionally local, never in CI.
-  #
-  # SUSPENDED: gated on TRANSLATIONS_ENABLED, which is currently unset, so this
-  # hook does not run. Each changed English file costs one model API call per
-  # locale — twelve per file — and that is not justified while the documentation
-  # is still churning. The `audit / Translation freshness` context was removed
-  # from branch protection first (docs-control#867); stopping generation while
-  # that check was still required would have failed every docs/en pull request.
-  # Existing docs/<locale>/ files stay in place and drift out of date on purpose.
-  # To restore, see "Restoring translations" in CONTRIBUTING.md — set the
-  # variable and regenerate BEFORE re-adding the required context.
-  #
-  # An unset variable is empty, so the default is off: nobody spends money by
-  # accident, and enabling it is an explicit act.
+  # Translation validation — deterministic only. English-only source commits
+  # are allowed through so the governed workflow can generate locale output;
+  # any locale file that is staged locally must already match its English hash
+  # and preserve fence shape, links, imports, and MDX component structure.
   # ===========================================================================
   - repo: local
     hooks:
-      - id: docs-translate
-        name: "i18n: regenerate translations for staged English docs"
-        entry: >-
-          bash -c
-          'case "${TRANSLATIONS_ENABLED:-false}" in
-          false) echo "[i18n] translations suspended — skipping generation; see CONTRIBUTING.md." ;;
-          true)
-          if ! command -v docs-translate >/dev/null 2>&1;
-          then echo "[i18n] TRANSLATIONS_ENABLED=true requires docs-translate." >&2; exit 1;
-          elif [ -z "${ANTHROPIC_API_KEY:-}" ];
-          then echo "[i18n] TRANSLATIONS_ENABLED=true requires ANTHROPIC_API_KEY." >&2; exit 1;
-          else exec docs-translate --staged; fi ;;
-          *) echo "[i18n] TRANSLATIONS_ENABLED must be true or false." >&2; exit 1 ;;
-          esac'
+      - id: validate-translations
+        name: "i18n: validate staged locale output"
+        entry: bash scripts/validate-translations.sh --staged
         language: system
-        files: ^docs/en/.*\.mdx?$
+        files: ^(docs|src/content/docs)/(en|fr|es|de|pt-br|ja|ko|zh-cn|zh-tw|ar|it|hi|th)/.*\.mdx?$
         pass_filenames: false
 
 ci:
@@ -336,4 +312,4 @@ ci:
     - zizmor
     - checkov
     - gitleaks
-    - docs-translate
+    - validate-translations

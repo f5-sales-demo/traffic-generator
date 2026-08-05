@@ -131,7 +131,7 @@ oauth-success.html
 # Lock file preferences (Bun-based repos)
 package-lock.json
 yarn.lock
-bun.lock
+/bun.lock
 
 # Monorepo build
 .turbo/
@@ -212,6 +212,6 @@ packages/coding-agent/src/internal-urls/docs-index.generated.ts
 packages/coding-agent/src/internal-urls/build-info.generated.ts
 packages/typescript-edit-benchmark/runs/
 
-# Verified-review working artifacts (findings and verification evidence).
-# No trailing slash, so a symlink of this name is matched too.
+# Local review working artifacts. No trailing slash, so symlinks match too.
 .codex-review
+.agy-review.*

@@ -90,6 +90,7 @@ COUNT=0
 add_blob() {
   local path=$1 oid=$2 mode=${3:-100644}
   [ "$mode" != "120000" ] || return 0
+  [ "$mode" != "160000" ] || return 0
   COUNT=$((COUNT + 1))
   printf '%s' "$path" >"${WORK}/${COUNT}.path"
   if ! git cat-file blob "$oid" >"${WORK}/${COUNT}.blob"; then
@@ -99,14 +100,36 @@ add_blob() {
 }
 
 materialize_staged() {
-  local record metadata path mode oid stage
-  while IFS= read -r -d '' record; do
-    metadata=${record%%$'\t'*}
-    path=${record#*$'\t'}
-    read -r mode oid stage <<<"$metadata"
-    [ "$stage" = "0" ] || continue
-    add_blob "$path" "$oid" "$mode"
-  done < <(git ls-files -s -z)
+  local found metadata mode oid path record stage
+  local staged_entry="${WORK}/staged-entry"
+  local staged_paths="${WORK}/staged-paths"
+
+  if ! git diff --cached --name-only -z --no-renames --no-ext-diff \
+    --diff-filter=ACMRTUXB -- >"$staged_paths"; then
+    echo "PII scan error: cannot enumerate staged paths" >&2
+    exit 2
+  fi
+
+  while IFS= read -r -d '' path; do
+    if ! git ls-files -s -z -- "$path" >"$staged_entry"; then
+      echo "PII scan error: cannot inspect a staged path" >&2
+      exit 2
+    fi
+
+    found=0
+    while IFS= read -r -d '' record; do
+      metadata=${record%%$'\t'*}
+      read -r mode oid stage <<<"$metadata"
+      [ "$stage" = "0" ] || continue
+      add_blob "$path" "$oid" "$mode"
+      found=$((found + 1))
+    done <"$staged_entry"
+
+    if [ "$found" -ne 1 ]; then
+      echo "PII scan error: a staged path has no sole stage-0 blob" >&2
+      exit 2
+    fi
+  done <"$staged_paths"
 }
 
 materialize_head() {

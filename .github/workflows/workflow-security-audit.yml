@@ -12,8 +12,8 @@ name: Workflow Security Audit
 # `excessive-permissions` findings, invisible until an unrelated PR happened to touch
 # the file. This job closes that blind spot by auditing every workflow on a schedule.
 #
-# The PR-time gate is unchanged and still catches regressions in changed files; this
-# is the backstop for the files nobody is touching.
+# The scheduled gate rejects every finding and refuses both configuration and inline
+# suppressions, so low-severity regressions cannot accumulate between unrelated edits.
 on:
   schedule:
     # Weekly, off-peak, deliberately not on the hour.
@@ -39,26 +39,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      # Full report first (all severities) into the run summary, so low and
-      # informational findings are visible and countable without failing the job.
-      - name: Report all findings
+      - name: Reject every workflow security finding
         run: |
-          set -uo pipefail
-          {
-            echo '## Workflow security audit (zizmor)'
-            echo
-            echo 'Full report — every severity. The job only FAILS on medium or higher.'
-            echo
-            echo '```'
-            pipx run zizmor --config zizmor.yaml .github/workflows/ 2>&1 || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      # Gate on what actually matters. Low/informational findings (e.g. ad-hoc
-      # package installs) are reported above but do not fail the audit, so a repo is
-      # not permanently red over hygiene items. Medium and high — excessive
-      # permissions, template injection, credential persistence — do fail, because
-      # those are exploitable and someone needs to look.
-      - name: Fail on medium or higher
-        run: pipx run zizmor --config zizmor.yaml --min-severity medium .github/workflows/
+          set -euo pipefail
+          shopt -s nullglob
+          targets=(.github/workflows/ workflows/*.yml)
+          pipx run zizmor --no-config --no-ignores --persona=auditor "${targets[@]}"
