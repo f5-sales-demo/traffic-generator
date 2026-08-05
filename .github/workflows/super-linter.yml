@@ -16,7 +16,7 @@ jobs:
   lint:
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
-    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@d815c098dfd7ab13f116f64dd2dc911b2604ba41
+    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@9f85df26bec69406e1872727d1cbd3721c835221
     with:
       classify_xc_minimum_configs: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' }}
     permissions:
