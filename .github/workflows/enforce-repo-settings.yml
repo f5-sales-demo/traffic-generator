@@ -254,7 +254,7 @@ jobs:
   enforce-settings:
     needs: resolve-source
     if: needs.resolve-source.outputs.ready == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@9f85df26bec69406e1872727d1cbd3721c835221
+    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@11f700679cafdf3bb12b9de577065c9bd30366be
     with:
       source_sha: ${{ needs.resolve-source.outputs.source_sha }}
     secrets:
@@ -263,7 +263,7 @@ jobs:
   sync-files:
     needs: resolve-source
     if: needs.resolve-source.outputs.ready == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@9f85df26bec69406e1872727d1cbd3721c835221
+    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@11f700679cafdf3bb12b9de577065c9bd30366be
     with:
       source_sha: ${{ needs.resolve-source.outputs.source_sha }}
       downstream_sha: ${{ github.sha }}
