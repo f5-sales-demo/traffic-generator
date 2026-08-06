@@ -5,6 +5,7 @@ set -euo pipefail
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 PRE_PUSH="$REPO_ROOT/scripts/agy-pre-push-review.sh"
 REVIEW="$REPO_ROOT/scripts/agy-review.sh"
+PROGRESS="$REPO_ROOT/scripts/run-with-progress.sh"
 SCHEMA="$REPO_ROOT/scripts/agy-review-output.schema.json"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -26,7 +27,7 @@ setup_repo() {
   git -C "$WORK/repo" init -q
   git -C "$WORK/repo" config user.email test@example.com
   git -C "$WORK/repo" config user.name Test
-  cp "$REVIEW" "$SCHEMA" "$PRE_PUSH" "$WORK/repo/scripts/"
+  cp "$REVIEW" "$PROGRESS" "$SCHEMA" "$PRE_PUSH" "$WORK/repo/scripts/"
   printf 'base\n' >"$WORK/repo/file.txt"
   git -C "$WORK/repo" add .
   git -C "$WORK/repo" commit -qm base
@@ -54,6 +55,9 @@ if [ -n "${FAKE_AGY_BUNDLE_CAPTURE:-}" ]; then
     fi
   done
 fi
+if [ "${FAKE_AGY_DELAY_CALL:-0}" -eq "$count" ]; then
+  sleep "${FAKE_AGY_DELAY_SECONDS:-2}"
+fi
 if [ "${FAKE_AGY_MALFORMED_CALL:-0}" -eq "$count" ]; then
   printf 'not-json\n'
 elif [ "${FAKE_AGY_BLOCK_CALL:-0}" -eq "$count" ]; then
@@ -78,6 +82,49 @@ run_review() {
 }
 
 echo "Antigravity local review tests"
+
+progress_rc=0
+AGY_PROGRESS_INTERVAL_SECONDS=1 GITHUB_STEP_SUMMARY="$WORK/progress-summary" \
+  bash "$PROGRESS" --phase fixture-review -- bash -c 'sleep 2' \
+  >"$WORK/progress-output" 2>&1 || progress_rc=$?
+if [ "$progress_rc" -eq 0 ] &&
+  grep -Eq '^\[PROGRESS\] component=antigravity phase=fixture-review state=started elapsed_seconds=0 heartbeat_seconds=1 timestamp=[-0-9TZ:]+$' "$WORK/progress-output" &&
+  grep -Eq '^\[PROGRESS\] component=antigravity phase=fixture-review state=running elapsed_seconds=[1-9][0-9]* heartbeat_seconds=1 timestamp=[-0-9TZ:]+$' "$WORK/progress-output" &&
+  grep -Eq '^\[PROGRESS\] component=antigravity phase=fixture-review state=completed elapsed_seconds=[1-9][0-9]* heartbeat_seconds=1 timestamp=[-0-9TZ:]+ exit_code=0$' "$WORK/progress-output" &&
+  grep -q 'fixture-review.*completed.*exit code.*0' "$WORK/progress-summary"; then
+  pass "progress runner emits structured live heartbeats and a durable terminal summary"
+else
+  fail "progress runner emits structured live heartbeats and a durable terminal summary" \
+    "rc=$progress_rc; $(cat "$WORK/progress-output" 2>/dev/null || true)"
+fi
+
+progress_rc=0
+AGY_PROGRESS_INTERVAL_SECONDS=1 bash "$PROGRESS" --phase fixture-failure -- \
+  bash -c 'exit 19' >"$WORK/progress-output" 2>&1 || progress_rc=$?
+if [ "$progress_rc" -eq 19 ] &&
+  grep -Eq 'phase=fixture-failure state=failed .* exit_code=19$' "$WORK/progress-output"; then
+  pass "progress runner preserves failures and reports their terminal state"
+else
+  fail "progress runner preserves failures and reports their terminal state" \
+    "rc=$progress_rc; $(cat "$WORK/progress-output" 2>/dev/null || true)"
+fi
+
+progress_rc=0
+AGY_PROGRESS_INTERVAL_SECONDS=1 bash "$PROGRESS" --phase fixture-interrupt -- \
+  bash -c 'sleep 30' >"$WORK/progress-output" 2>&1 &
+progress_pid=$!
+sleep 1
+kill -TERM "$progress_pid"
+wait "$progress_pid" || progress_rc=$?
+if [ "$progress_rc" -eq 143 ] &&
+  grep -Eq 'phase=fixture-interrupt state=interrupted .* exit_code=143$' \
+    "$WORK/progress-output"; then
+  pass "progress runner reports interruption and preserves the signal exit code"
+else
+  fail "progress runner reports interruption and preserves the signal exit code" \
+    "rc=$progress_rc; $(cat "$WORK/progress-output" 2>/dev/null || true)"
+fi
+
 setup_repo
 if run_review "$WORK/bin:$PATH" env GATEWAY_TOKEN=private GITHUB_TOKEN=private \
   FAKE_AGY_BUNDLE_CAPTURE="$WORK/review-bundle" &&
@@ -101,6 +148,21 @@ if run_review "$WORK/bin:$PATH" env GATEWAY_TOKEN=private GITHUB_TOKEN=private \
   pass "two schema-validated Flash passes review a precomputed bundle without inherited credentials"
 else
   fail "clean branch receives two independent Antigravity passes" "$(cat "$WORK/output")"
+fi
+
+setup_repo
+if run_review "$WORK/bin:$PATH" env FAKE_AGY_DELAY_CALL=1 FAKE_AGY_DELAY_SECONDS=2 \
+  AGY_PROGRESS_INTERVAL_SECONDS=1 &&
+  grep -q 'component=antigravity phase=reviewer state=started' "$WORK/output" &&
+  grep -q 'component=antigravity phase=reviewer state=running' "$WORK/output" &&
+  grep -q 'component=antigravity phase=reviewer state=completed' "$WORK/output" &&
+  grep -q '\[review\] reviewer completed; validating structured output' "$WORK/output" &&
+  grep -q 'component=antigravity phase=verifier state=started' "$WORK/output" &&
+  grep -q 'component=antigravity phase=verifier state=completed' "$WORK/output" &&
+  grep -q '\[review\] verifier completed; validating structured output' "$WORK/output"; then
+  pass "review wrapper emits phase start, heartbeat, and completion progress"
+else
+  fail "review wrapper emits unambiguous progress" "$(cat "$WORK/output")"
 fi
 
 setup_repo
