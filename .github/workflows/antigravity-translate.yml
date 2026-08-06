@@ -27,7 +27,7 @@ concurrency:
 jobs:
   translate:
     if: vars.TRANSLATIONS_ENABLED == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/antigravity-translate.yml@41ef88197c4b7834eb294c798744828c89b90ce5
+    uses: f5-sales-demo/docs-control/.github/workflows/antigravity-translate.yml@3faad5ee03f29b5007c93dc536b8cd6ce1e73fbc
     with:
       pr_number: ${{ inputs.pr_number }}
       expected_base_sha: ${{ inputs.expected_base_sha }}
@@ -38,5 +38,4 @@ jobs:
     secrets:
       ANTIGRAVITY_TOKEN: ${{ secrets.ANTIGRAVITY_TOKEN }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      AUTOMATION_APP_ID: ${{ secrets.AUTOMATION_APP_ID }}
-      AUTOMATION_APP_PRIVATE_KEY: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+      REPO_SYNC_TOKEN: ${{ secrets.REPO_SYNC_TOKEN }}

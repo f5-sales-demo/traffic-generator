@@ -8,9 +8,10 @@ This repository is part of a fleet governed by a central hub, **docs-control**. 
 docs-control, you are in a **downstream** repository.
 
 - **Managed files** — including this `CONTRIBUTING.md`, `CLAUDE.md`, `AGENTS.md`, and shared agent
-  skills — are owned by docs-control and synced to every downstream repo. Do not edit them directly
-  here; a hook blocks it. To change one, open an issue in docs-control: the change is made there and
-  propagates fleet-wide. The authoritative list is `.claude/governance.json`.
+  skills — are owned by docs-control and synced to every downstream repo. Make their changes from a
+  detailed docs-control issue and let the managed-file workflow propagate them fleet-wide. The
+  authoritative list is `.claude/governance.json`, and a hook routes downstream edit attempts back
+  to that source.
 - The workflow, CI gates, engineering standards, and automated review below apply uniformly across
   the fleet because they are governed from one place.
 
@@ -46,23 +47,27 @@ this document governs how a change gets reviewed and merged.
 
 ## Workflow Overview
 
-Every change follows this path:
+Carry every change through this complete path:
 
 ```text
-Issue → Branch → PR (linked to issue) → CI passes → auto-merge when green → Branch auto-deleted
+detailed issue → fresh feature branch → implement and verify → exact-HEAD Antigravity review
+→ linked PR → CI and branch-state repair loop → MERGED → cleanup → fleet convergence
 ```
 
-No exceptions. PRs without a linked issue will be blocked by CI.
+The protected default branch accepts changes through pull requests. The linked-issue check verifies
+the closing reference; reviewers verify that the issue itself contains the problem, scope, and
+objective acceptance criteria.
 
 ## Step 1: Create an Issue
 
-Every change starts with a GitHub issue. Use one of the provided templates:
+Every change starts with a detailed issue. Use one of the provided templates and complete its
+problem, scope, and objective acceptance criteria:
 
 - **Bug Report** — for bugs and unexpected behavior
 - **Feature Request** — for new features and improvements
 - **Documentation** — for docs improvements or missing content
 
-Blank issues are disabled. Pick the template that best fits your change.
+Pick the template that best fits the change; the templates provide the required structure.
 
 ## Step 2: Create a Feature Branch
 
@@ -79,16 +84,16 @@ Format: `<prefix>/<issue-number>-short-description`
 **Start from current.** Sync with the remote and confirm you are not behind before you branch — or
 plan, or edit. This is a rule, not a formality: a stale base does not announce itself. It surfaces
 later as an unrelated CI failure, and the instinct is then to debug the change's content rather than
-its base. Do not infer freshness from a clean working tree; a checkout twenty commits behind is also
-clean.
+its base. Establish freshness from the fetched remote ref because a checkout twenty commits behind
+can also be clean.
 
 ```bash
-git fetch --prune        # if this fails, stop — do not branch from a stale guess
+git fetch --prune        # establishes the current remote base required for branching
 git switch --no-track -c feature/42-add-rate-limiting origin/main
 git push -u origin HEAD  # on your first push — sets the branch's own upstream
 ```
 
-Branch from `origin/main`, not from local `main`. Local `main` can be *ahead* with unpushed commits,
+Branch from `origin/main`. Local `main` can be *ahead* with unpushed commits,
 which a "not behind" check does not catch, and those commits would silently ride along into your PR.
 Branching from the fetched ref also works when `main` is checked out in another worktree — there,
 `git checkout main` fails outright (`fatal: 'main' is already used by worktree at …`), and a pasted
@@ -158,8 +163,10 @@ A long-running session goes stale the same way, since nothing re-checks after st
 before branching a second time, and before creating a git worktree — a worktree inherits whatever
 the cached remote ref says, so it can be born behind (see CLAUDE.md).
 
-If a branch falls behind `main` while its PR is open, use the **Update branch** button on the PR
-(`allow_update_branch` is enabled fleet-wide) rather than merging `main` in by hand.
+If a mergeable PR reports `BEHIND`, use the **Update branch** button or
+`gh pr update-branch <pr>` (`allow_update_branch` is enabled fleet-wide). A `DIRTY` PR needs conflict
+resolution on the feature branch: fetch, merge current `origin/main`, resolve and verify, rerun the
+exact-HEAD Antigravity review, then push the repaired branch.
 
 ## Step 3: Make Changes and Commit
 
@@ -171,47 +178,63 @@ If a branch falls behind `main` while its PR is open, use the **Update branch** 
 
 ## Step 4: Open a Pull Request
 
-1. Push your branch and open a PR against `main`
+1. Push the feature branch and open a PR against `main`
 2. **Link the issue** — use `Closes #42` in the PR description, or link from the sidebar
 3. Fill out the PR template (it loads automatically)
-4. The `Check linked issues`, `Lint Code Base`, and `Shell Unit Tests` CI checks block merge if the issue link, lint, or repository shell tests fail
+4. The `Check linked issues`, `Lint Code Base`, and `Shell Unit Tests` checks enforce the closing
+   issue reference, lint, and repository shell tests
+5. Enable authorized squash auto-merge when absent: `gh pr merge --auto --squash <pr>`
 
 ## Step 5: Review and Merge
 
-- All required CI checks must pass before merge.
-- Merging is automated: once every required check is green, auto-merge squash-merges the PR.
-- The branch is automatically deleted after merge (`delete_branch_on_merge` is enabled); clean up
-  your local branch afterward.
+Keep the coding session active through the terminal PR state while asynchronous waiting runs in the
+background:
+
+1. Start `gh pr checks --watch <pr> &` as a background waiter.
+2. For pending checks, leave the waiter running and continue other in-scope work.
+3. For failed checks, inspect logs, repair the root cause, verify locally, rerun
+   `bash scripts/agy-pre-push-review.sh` against the committed exact HEAD, and push the feature
+   branch. Restart the loop for the new head.
+4. For mergeable `BEHIND`, run `gh pr update-branch <pr>` and follow the new checks. For `DIRTY`,
+   merge current `origin/main` into the feature branch, resolve conflicts, verify, rerun Antigravity
+   review, and push.
+5. When auto-merge is absent, run `gh pr merge --auto --squash <pr>`.
+6. Query `gh pr view <pr> --json state,mergeStateStatus,autoMergeRequest` and repeat until `state` is
+   `MERGED`.
+7. Clean the task worktree and confirmed-merged local branch. For docs-control managed-file changes,
+   compare each changed file's manifest blob SHA across the complete downstream inventory and repair
+   missing files, API errors, or mismatches until fleet convergence is complete.
+
+Pause this loop only for uncertain authorization, destructive-risk approval, an unavailable
+credential, or a product decision that requires the user.
 
 ## Automated code review
 
-Antigravity is the only semantic reviewer. Claude, Codex, and their plugins author and implement
-work but do not review code, specs, plans, pull requests, or CI failures.
+Route semantic review through Antigravity. Coding assistants author, implement, verify, repair, and
+respond to its findings.
 
 | Route | What it reviews | Authority |
 | ----- | --------------- | --------- |
 | **Local document review** | A spec or implementation plan | Antigravity advisory gate |
 | **Local Antigravity review** | The committed branch diff before a PR push | Required workflow step |
-| **CI Antigravity review** | The exact pull-request head | Advisory after the controlled pilot |
+| **CI Antigravity review** | The exact pull-request head | Advisory automation |
 
 ### CI review
 
-The Gemini Antigravity reviewer remains disabled and fail-closed behind
-`ANTIGRAVITY_REVIEW_ENABLED` until docs-control#1016 is resolved.
-It is advisory and must not be added to required status contexts. Automated branches that bypass
-the linked-issue check are reserved for machine-generated work; the authoritative prefix list lives
-in `require-linked-issue.yml` and must never be used for human or agent work.
+The Gemini Antigravity reviewer is fail-closed behind the organisation variable
+`ANTIGRAVITY_REVIEW_ENABLED`. Its immutable runtime, exact-head and workflow receipts, separated
+model and publication credentials, and rejection paths are covered by executable security UAT.
+It remains advisory and outside required status contexts. The linked-issue bypass prefixes in
+`require-linked-issue.yml` are reserved for their machine-generated workflows; human and agent work
+uses a detailed linked issue.
 
-#### Restoring Antigravity review
+#### Operating Antigravity review
 
-Keep the source gate in place. After docs-control#1016 is verified, create the organisation Actions
-variable `ANTIGRAVITY_REVIEW_ENABLED` with value `false`, remove any same-named repository variables,
-and keep the reusable and governed `workflow_dispatch` callers enabled. The scheduled/manual
-docs-control watcher dispatches only exact same-repository heads from trusted default-branch workflow
-definitions. Pilot with selected visibility and the literal value `true`; after a real pull request
-completes safely, expand visibility to every governed repository. Future toggles change only the
-organisation variable, never workflow state. The Antigravity CI review is advisory and must not be
-added to required status contexts.
+Keep the source gate in place, remove any same-named repository variables, and keep the reusable and
+governed `workflow_dispatch` callers enabled. The scheduled/manual docs-control watcher dispatches
+only exact same-repository heads from trusted default-branch workflow definitions. Future toggles
+change only the organisation variable. Keep the Antigravity CI review advisory and outside required
+status contexts.
 
 ### Local review before a pull-request push
 
@@ -223,7 +246,16 @@ bash scripts/agy-review.sh document --kind plan --file path/to/plan.md
 ```
 
 The command runs independent reviewer and verifier sessions, validates structured output, and fails
-closed. Do not substitute Claude, Codex, a model-invocable review skill, or a PR-diff plugin.
+closed. Each phase emits an immediate start marker, a periodic stderr heartbeat, and a completion
+marker so automation can distinguish a live silent model call from a finished review. This managed
+command is the semantic-review route.
+
+Every Antigravity model phase uses `scripts/run-with-progress.sh`. It emits a line-oriented
+`[PROGRESS]` record every 30 seconds with the component, phase, state, elapsed seconds, heartbeat
+interval, and UTC timestamp, followed by a terminal record with the real exit code. GitHub Actions
+streams those records into the live log while retaining the diagnostic log, and appends one terminal
+Markdown record to `GITHUB_STEP_SUMMARY`. Heartbeats report liveness only: the model print timeout
+and the workflow's `timeout-minutes` remain the authoritative execution bounds.
 
 Branch review is mandatory before every push that opens or updates a pull request:
 
@@ -233,38 +265,36 @@ bash scripts/agy-pre-push-review.sh
 
 Commit or stash every working-tree change first. The script binds the review to the current HEAD and
 the merge base with `origin/main`, removes GitHub credentials, and runs `agy` in sandboxed plan mode.
-It neither edits files nor posts comments. The managed command performs its own independent
-Antigravity verification and deterministic gate; the implementation assistant fixes blocking
-findings and reruns it, but never becomes the reviewer. Do not push until the current HEAD completes
-cleanly. The developer environment is responsible for providing an authenticated `agy` executable.
+It leaves files and GitHub unchanged. The managed command performs independent Antigravity
+verification and a deterministic gate; the implementation assistant fixes blocking findings and
+reruns it. Push the feature branch only after the exact current HEAD completes cleanly. The developer
+environment provides an authenticated `agy` executable.
 
 The prompt delegates a dedicated semantic PII review to `agy`: it runs the governed HEAD enforcement
 scan when available, traces affected runtime and repository data surfaces, treats confirmed PII or
 an invalid scan as blocking, and reports only redacted evidence. The deterministic `pii-guard`
-context remains the verifiable CI backstop; local model review does not replace it. This route does
-not replace deterministic CI.
-
-Do not substitute Claude or Codex review commands, skills, plugins, subagents, or stop hooks for
-either route. Required deterministic CI remains an independent merge layer.
+context remains the verifiable CI backstop. Local Antigravity review and deterministic CI remain
+separate required layers.
 
 ## Translations (GitHub Actions controlled)
 
-Local hooks validate translation structure and hashes but do not invoke a model. Translation
-generation belongs to the governed Antigravity workflow so Claude and Codex never generate locale
-content and developer workstations do not duplicate automation work.
+Local hooks perform deterministic translation structure and hash validation. Translation generation
+runs through the governed Antigravity workflow, giving coding assistants and developer workstations
+one consistent automation path.
 
-GitHub Actions translation remains held until the security boundary in docs-control#1016 is fixed.
-Both the governed caller and reusable workflow fail closed unless the organisation variable
-`TRANSLATIONS_ENABLED` is the literal string `true`. The workflow files must remain enabled once the
-security fix lands; the organisation variable is the only runtime switch. Repository variables with
-the same name are forbidden because they override the organisation value.
+GitHub Actions translation is fail-closed unless the organisation variable `TRANSLATIONS_ENABLED`
+is the literal string `true`. Its immutable runtime, exact-head and workflow receipts, isolated model
+credentials, 12-locale validation, allowlisted patch, and guarded publication are covered by
+executable security UAT. The workflow files remain enabled; the organisation variable is the only
+runtime switch. Keep same-named repository variables absent because they override the organisation
+value.
 
 How the translation pipeline operates:
 
 | Part | Where | How it Works |
 | ---- | ----- | ------------ |
-| Local Translation | Pre-commit locale/hash validation | **Deterministic only.** Never invokes a model. |
-| Automated Translation | `.github/workflows/antigravity-translate.yml` — invokes `agy` on a GitHub Actions runner | **Security hold.** After docs-control#1016, the organisation variable controls execution. |
+| Local Translation | Pre-commit locale/hash validation | **Deterministic only.** Model-free. |
+| Automated Translation | `.github/workflows/antigravity-translate.yml` — invokes `agy` on a GitHub Actions runner | The organisation variable controls execution. |
 | Freshness Audit | `.github/workflows/translation-audit.yml` — compares each translation's `i18n.sourceHash` against English source SHA-256 | **Advisory when enabled.** It shares the Actions switch but is not a required context. |
 | Required Context | `audit / Translation freshness` in branch protection | **Not required.** Requiring a check while its job can skip would deadlock pull requests. |
 
@@ -275,10 +305,21 @@ variables. Unset, `false`, or any other value disables the corresponding automat
 literal string `true` enables it.
 
 The implementation uses GitHub Free features only: scheduled/manual Actions, ordinary organisation
-variables, GitHub App tokens, artifacts, pull-request comments, and classic branch protection. Do
-not add organisation rulesets, merge queues, audit-log streaming, or environment required reviewers.
-The `antigravity-automation` environment on the public docs-control repository is only a secret
+variables, the existing `REPO_SETTINGS_TOKEN` and `REPO_SYNC_TOKEN` governance PATs, artifacts,
+pull-request comments, and classic branch protection. It does not require a GitHub App. Keep
+`REPO_SETTINGS_TOKEN` limited to watcher collection/publication and `REPO_SYNC_TOKEN` limited to
+translation publication; Antigravity model jobs receive neither token. Do not add organisation
+rulesets, merge queues, audit-log streaming, or environment required reviewers. The
+`antigravity-automation` environment on the public docs-control repository is only a secret
 boundary; configure no reviewers, wait timer, or deployment rule on it.
+
+GitHub API operations are bounded and resumable. Primary exhaustion uses `GET /rate_limit` or the
+`X-RateLimit-Reset` response header. Secondary limits never poll during cooldown: automation honors
+`Retry-After`, or waits 60 seconds and doubles the delay to a 600-second cap when that header is
+absent. `[WAIT]` messages include the next-attempt timestamp, `[PROGRESS]` messages identify the
+current repository, and an operation exits 84 when its wait budget is exhausted so the scheduled
+watcher can recover the exact head without duplicating comments, dispatches, issues, or pull
+requests.
 
 1. Verify docs-control#1016 in the live workflow bytes, not merely by issue state. The installer must
    be immutable, PR-head content must not execute with model or write credentials, permission bypass
@@ -286,14 +327,15 @@ boundary; configure no reviewers, wait timer, or deployment rule on it.
 
 2. Create the `antigravity-automation` environment in docs-control with no protection rules. Create
    both organisation variables with value `false` and visibility covering every governed repository.
-   Confirm there are no same-named repository variables. Enable the reusable workflows, governed
-   callers, and fleet watcher; do not manually disable these workflows again. From a `docs-control`
+   Confirm there are no same-named repository variables. Enable and keep active the reusable
+   workflows, governed callers, and fleet watcher. From a `docs-control`
    checkout, verify the false/active state with
    `bash scripts/verify-antigravity-controls.sh --workflow-state active`.
 
 3. Set selected visibility for a pilot same-repository documentation pull request. Set each desired
    variable to `true`, then require a completed Antigravity review and 12 validated locale outputs.
-   If the pilot fails, set the relevant variable to `false` before cancelling in-flight runs.
+   Verify the exact pilot scope with `--visibility selected --selected-repo <repository>`. If the
+   pilot fails, set the relevant variable to `false` before cancelling in-flight runs.
 
 4. Expand visibility to all governed repositories after the pilot. Future suspension changes only
    the organisation variable value and cancels any already-running jobs; workflow states remain
@@ -318,7 +360,7 @@ locale through Antigravity-backed same-repository branches. Then:
    job to unconditional. Keep the Antigravity caller and reusable-workflow gates: quota-backed
    Actions automation remains fail-closed even after the audit is unconditional.
 
-   Delete the `if:`, do not merely set the variable. Leaving the condition in place makes organisation
+   Delete the `if:` completely. Leaving the condition in place makes organisation
    variable visibility permanently load-bearing for CI: any repository the variable is not visible to
    silently skips the job, and once the context is required again its pull requests wait forever for a
    check that is never emitted. An unconditional audit removes that whole class of failure — after
@@ -366,7 +408,7 @@ locale through Antigravity-backed same-repository branches. Then:
    `NO RUN SINCE UN-GATING` is the expected result for most repositories, not a fault. The audit
    triggers only on `pull_request` `opened`, `synchronize`, and `reopened`; **merging** the sync pull
    request fires nothing afterwards, so a repository with no later pull-request activity will report it
-   indefinitely. Do not wave that through — provoke a run instead:
+   indefinitely. Provoke a run for each such repository:
 
    ```bash
    # for any repo reading NO RUN SINCE UN-GATING
@@ -400,22 +442,23 @@ Step 2 is the only thing standing between a restore and a fleet-wide outage.
 
 ## Branch Protection Rules
 
-The `main` branch is protected. The following rules are enforced:
+The `main` branch is protected with these enforced rules:
 
-- No direct pushes to `main` — all changes go through PRs
-- No force pushes
-- Required status checks: `Check linked issues`, `Lint Code Base`, and `Shell Unit Tests` must pass, plus any repo-specific contexts. `audit / Translation freshness` still runs but **no longer gates a merge**
+- Every change reaches `main` through a PR
+- Branch history remains immutable; force pushes are blocked
+- Required status checks: `Check linked issues`, `Lint Code Base`, and `Shell Unit Tests` pass, plus
+  any repo-specific contexts. `audit / Translation freshness` remains advisory
 - Admin enforcement enabled — these rules apply to everyone
 
 ## AI Assistant Guidelines
 
 If you are Claude Code, Copilot, or another AI coding assistant, follow these rules:
 
-1. **Always create a GitHub issue before writing code.** No issue = no work.
-2. **Always work on a feature branch.** Never commit directly to `main`.
-3. **Always link the PR to the issue.** Use `Closes #N` in the PR description.
-4. **Use the `/ship` skill** when available — it handles the full Issue → Branch → PR flow.
-5. **Never force push** or attempt to bypass branch protection.
+1. **Start with a detailed GitHub issue** containing the problem, scope, and acceptance criteria.
+2. **Work from a fresh feature branch** based on current `origin/main`.
+3. **Link the PR to the issue** with `Closes #N` in the PR description.
+4. **Use the `/ship` skill** when available to carry the Issue → Branch → PR workflow.
+5. **Preserve protected history** by using the PR repair loop and leaving force push unavailable.
 6. **Fill out the PR template checklist** completely.
 7. **Follow the branch naming convention**: `feature/<issue>-desc`, `fix/<issue>-desc`, `docs/<issue>-desc`.
 8. **Respect CODEOWNERS** — Review the CODEOWNERS file for the default reviewer.
@@ -428,9 +471,8 @@ apply what fits.
 
 ### Detailed issues
 
-- A linked issue is not enough — it must be *detailed*: problem statement, scope, and
-  acceptance criteria.
-- CI blocks any PR with no linked issue; thin or empty issues are rejected in review.
+- Write a *detailed* issue with the problem statement, scope, and objective acceptance criteria.
+- CI enforces a closing issue reference; review enforces the issue's content quality.
 
 ### Specs and task-driven work
 
@@ -438,25 +480,22 @@ apply what fits.
   content affected, and acceptance criteria.
 - Break the spec into an explicit task/todo list and work it item by item.
 - Keep the task list current: generally one item in progress at a time (one per worker
-  when work is fanned out across agents), mark it complete the moment it is genuinely
-  done, add newly-discovered work as new items rather than silently widening an existing
-  one, and remove an item that turns out unnecessary with a note — never silently.
-- Mark a task complete only with verifiable evidence of its result — the command run and
-  its output, a passing test, or a run link — never on inference or "should work" (see
-  "Verify before claiming done").
-- Work the list to completion. Do not defer, punt, or silently leave items incomplete or
-  half-done. If you cannot finish an item, keep it open, mark it blocked, and state
-  exactly what blocks it and what is needed — surface it, do not drop it.
+  when work is fanned out across agents); mark completed work promptly, add newly discovered work
+  as a new item, and annotate removal of an unnecessary item.
+- Mark a task complete with verifiable evidence: the command and output, a passing test, or a run
+  link (see "Verify before claiming done").
+- Work the list to completion. Keep an unfinished item open; when blocked, record the condition and
+  exact resolution needed.
 - For long or unattended runs where finishing matters, set a `/goal` completion condition
   (for example, "every task-list item complete with evidence, or explicitly blocked and
   surfaced") so the session keeps
-  working toward it instead of stopping early. The condition must be checkable from what
-  you have surfaced in the session, since the evaluator cannot run tools.
+  working toward it through completion. Make the condition checkable from evidence surfaced in the
+  session because the evaluator reads that evidence rather than running tools.
 
 ### Test-driven development
 
 - For code changes, write the test first, watch it fail, then write code to make it pass.
-- Automate user-acceptance testing wherever possible instead of relying on manual checks.
+- Automate user-acceptance testing wherever possible and use repeatable checks.
 
 ### Programmatic, idempotent solutions
 
@@ -467,22 +506,19 @@ apply what fits.
 
 ### Verify before claiming done
 
-- Never guess or assume a change works. Substantiate every "it works" / "done" claim with
-  evidence: passing tests, reproducible output, or a workflow run link.
-- Do not assert completion you have not verified.
-- This applies per task-list item, not only at the end: do not mark an item complete
-  without its evidence.
+- Substantiate every "it works" or "done" claim with passing tests, reproducible output, or a
+  workflow run link.
+- Apply verification to every task-list item and its completion evidence.
 - Verify locally before you push: run the tests, then run or exercise the change itself
-  (the dev server, or the actual command path a user hits) and confirm the behavior. CI
-  and the PR are not your test harness — do not push to find out whether it works.
+  (the dev server, or the actual command path a user hits) and confirm the behavior. Push the
+  feature branch after local verification establishes the expected behavior.
 - Every PR must carry that verification evidence in its description (see the PR
   template): the commands you ran and their output, and a link to the green run.
-  Reviewers should not merge a PR whose evidence is missing.
+  Reviewers merge after the evidence is present.
 - Where a change needs human judgment (user-facing behavior, UX, product decisions), get
   explicit human acceptance before merge — green CI alone is not acceptance.
-- When a change triggers GitHub Actions, auto-merge and the governed Antigravity watcher own the
-  asynchronous wait. Coding assistants hand off the pull-request URL and local evidence instead of
-  consuming a Claude or Codex session by polling. A watcher receipt proves the terminal head state.
+- When a change triggers GitHub Actions, use the Step 5 background waiter and active PR repair loop.
+  A watcher receipt and GitHub's `MERGED` state prove the terminal head result.
 - When a change publishes a new version or artifact, close the loop end-to-end: download,
   install, and exercise the published version to confirm the fix is real — not merely
   that the pipeline reported success.
@@ -494,26 +530,21 @@ apply what fits.
   out in one. See "After merge: clean up local branches and worktrees" for the safe
   confirm-then-delete steps.
 
-### No papering over problems
+### Root-cause repairs
 
-- When you find a pre-existing problem, fix the root cause. Never skip, ignore, silence,
-  patch over, or band-aid it.
-- This applies to lint and CI failures specifically: fix them at the source. Do not
-  suppress them with inline-disable comments (for example `# noqa`, `eslint-disable`),
-  skipped tests, relaxed rules, or ignore lists, and do not hand-wave them as unrelated.
-- CI rejects changes that mask problems (disabling checks, swallowing errors,
-  TODO-and-move-on).
-- There is no schedule pressure that justifies a shortcut — take the time to engineer the
-  correct solution.
+- Repair every discovered problem at its source, including pre-existing, lint, and CI failures.
+- Keep each check effective. Resolve its finding through the implementation and tests.
+- Treat a masked problem (a disabled check, swallowed error, or deferred TODO) as unfinished work.
+- Take the time needed to engineer and verify the correct solution.
 
-### Prerelease: no backward compatibility
+### Prerelease clean breaks
 
 - This is prerelease, pre-production code still in development, heading to production.
-- Because nothing depends on a stable release yet, make clean-break changes: remove and replace — no compatibility shims, no deprecated interfaces.
+- Replace deprecated interfaces directly with the current design and remove the superseded path.
 
 ### DRY — reuse first
 
-- Reuse existing code, patterns, and content before adding new. Do not duplicate.
+- Reuse existing code, patterns, and content before adding new material.
 
 ### Documentation content
 
@@ -574,19 +605,15 @@ to scan the index. Empty, malformed, or failed scanner output is an operational 
 
 - A branch is for trial-and-error: guess, probe, refactor, and learn freely while you
   converge on the correct solution.
-- Only the verified, feature-complete result merges. Never open a PR "to see if it
-  works" — open it when it works — and never merge exploratory or trial-and-error code.
-  Iterating in the open with repeated broken PRs pollutes the repo; converge on the
-  branch first, then merge the meaningful change.
-- Never commit broken or experimental code, or speculative work that is not needed
-  (YAGNI). Keep merged history green.
+- Open the PR with the verified, feature-complete result. Converge through trial, probing, and
+  refactoring on the feature branch, then merge the meaningful change.
+- Commit the necessary working solution and keep merged history green (YAGNI).
 
 #### Concurrent sessions on a shared workstation
 
-- Multiple sessions on one workstation authenticate through the same `gh` login, so every
-  branch, PR, and commit is attributed to the same GitHub user — the username cannot tell you
-  which live session produced which artifact. Use the stable per-session
-  `CLAUDE_CODE_SESSION_ID` as the discriminator.
+- Multiple sessions on one workstation authenticate through the same `gh` login, so every branch,
+  PR, and commit has the same GitHub attribution. Use the stable per-session
+  `CLAUDE_CODE_SESSION_ID` to distinguish artifacts.
 - Derive a short slug once per session: `SLUG=$(printf '%.8s' "$CLAUDE_CODE_SESSION_ID")`
   (for example `515f9231`).
 - Isolate each session in its own git worktree so concurrent sessions cannot mutate one shared
@@ -597,10 +624,8 @@ to scan the index. Empty, malformed, or failed scanner output is an operational 
   - `gh pr list --search "head:s-<slug>"` — this session's PRs
   - `git branch --list "s-<slug>/*"` — this session's local branches
 - Composes with the after-merge `[gone]` cleanup below: cleanup is naturally scoped per session.
-  Retiring the branch does **not** remove its worktree — that is a separate, explicit step, and it
-  is the one that gets skipped. Skipped worktrees are how a later session ends up starting new work
-  inside a finished one.
-- Advisory only — a local-workstation concern CI cannot enforce.
+  Retire the worktree and branch as two explicit steps so later sessions start in a fresh worktree.
+- Advisory only — this local-workstation practice sits outside CI enforcement.
 
 #### After merge: clean up local branches and worktrees
 
