@@ -265,17 +265,26 @@ async function requestGitHubApi(endpoint, options = {}) {
   const pages = [];
   let url = startUrl;
   do {
-    const page = await retryGitHub(() => requestPage(url), {
-      operationName: options.operationName ?? `GET ${endpoint}`,
-      maxAttempts: options.maxAttempts,
-      totalWaitBudgetSeconds: options.totalWaitBudgetSeconds,
-      readPrimaryRateLimit: rateLimit,
-      onProgress: options.onProgress,
-      sleepSeconds: options.sleepSeconds,
-      nowSeconds: options.nowSeconds,
-      jitterSeconds: options.jitterSeconds,
-      random: options.random,
-    });
+    const page = await retryGitHub(
+      async ({ attempt, maxAttempts }) => {
+        if (attempt > 1 && typeof options.recover === 'function') {
+          const recovered = await options.recover({ attempt, maxAttempts, url });
+          if (recovered !== undefined) return { data: recovered, link: null };
+        }
+        return requestPage(url);
+      },
+      {
+        operationName: options.operationName ?? `GET ${endpoint}`,
+        maxAttempts: options.maxAttempts,
+        totalWaitBudgetSeconds: options.totalWaitBudgetSeconds,
+        readPrimaryRateLimit: rateLimit,
+        onProgress: options.onProgress,
+        sleepSeconds: options.sleepSeconds,
+        nowSeconds: options.nowSeconds,
+        jitterSeconds: options.jitterSeconds,
+        random: options.random,
+      },
+    );
     pages.push(page.data);
     if (!options.paginate) break;
     const next = /<([^>]+)>;\s*rel="next"/.exec(page.link ?? '');
@@ -285,19 +294,125 @@ async function requestGitHubApi(endpoint, options = {}) {
   return pages.flat();
 }
 
+const ENFORCEMENT_WORKFLOW = 'enforce-repo-settings.yml';
+const ENFORCEMENT_RUN_PREFIX = 'Enforce Repository Settings @ ';
+
+function workflowDispatchTitle(sourceSha) {
+  return `${ENFORCEMENT_RUN_PREFIX}${sourceSha}`;
+}
+
+function validateDispatchIdentity(repository, sourceSha) {
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository ?? '')) {
+    throw new Error('workflow dispatch repository is invalid');
+  }
+  if (!/^[0-9a-f]{40}$/.test(sourceSha ?? '')) {
+    throw new Error('workflow dispatch source SHA is invalid');
+  }
+}
+
+function requestOptions(options, overrides = {}) {
+  return {
+    token: options.token,
+    fetch: options.fetch,
+    maxAttempts: options.maxAttempts,
+    totalWaitBudgetSeconds: options.totalWaitBudgetSeconds,
+    sleepSeconds: options.sleepSeconds,
+    nowSeconds: options.nowSeconds,
+    jitterSeconds: options.jitterSeconds,
+    random: options.random,
+    onProgress: options.onProgress,
+    ...overrides,
+  };
+}
+
+async function findWorkflowDispatchReceipt(options) {
+  const title = workflowDispatchTitle(options.sourceSha);
+  const endpoint =
+    `repos/${options.repository}/actions/workflows/${ENFORCEMENT_WORKFLOW}/runs` +
+    '?event=workflow_dispatch&branch=main&per_page=100';
+  const data = await requestGitHubApi(
+    endpoint,
+    requestOptions(options, {
+      maxAttempts: options.receiptMaxAttempts ?? 2,
+      totalWaitBudgetSeconds: options.receiptWaitBudgetSeconds ?? 60,
+      operationName: `inspect exact-source dispatch receipt for ${options.repository}`,
+    }),
+  );
+  if (!data || !Array.isArray(data.workflow_runs)) {
+    throw new Error(`GitHub returned an invalid workflow-run inventory for ${options.repository}`);
+  }
+  const usable = data.workflow_runs
+    .filter((run) => run?.event === 'workflow_dispatch' && run?.display_title === title)
+    .filter(
+      (run) =>
+        ['queued', 'in_progress', 'waiting', 'requested', 'pending'].includes(run?.status) ||
+        (run?.status === 'completed' && run?.conclusion === 'success'),
+    )
+    .sort((left, right) => Number(right.id ?? 0) - Number(left.id ?? 0));
+  return usable[0];
+}
+
+async function dispatchWorkflow(options = {}) {
+  const repository = options.repository;
+  const sourceSha = options.sourceSha;
+  validateDispatchIdentity(repository, sourceSha);
+  if (!options.token) throw new Error('GitHub API token is required');
+
+  const shared = { ...options, repository, sourceSha };
+  const existing = await findWorkflowDispatchReceipt(shared);
+  if (existing) return { state: 'existing', run: existing };
+
+  let recoveredReceipt;
+  await requestGitHubApi(
+    `repos/${repository}/actions/workflows/${ENFORCEMENT_WORKFLOW}/dispatches`,
+    requestOptions(options, {
+      method: 'POST',
+      body: { ref: 'main', inputs: { source_sha: sourceSha } },
+      operationName: `dispatch exact-source enforcement to ${repository}`,
+      recover: async () => {
+        const receipt = await findWorkflowDispatchReceipt(shared);
+        if (!receipt) return undefined;
+        recoveredReceipt = receipt;
+        return { recovered: true, run: receipt };
+      },
+    }),
+  );
+  if (recoveredReceipt) return { state: 'recovered', run: recoveredReceipt };
+  return { state: 'dispatched' };
+}
+
 module.exports = {
   GitHubRetryDeferredError,
   classifyGitHubError,
   computeWaitSeconds,
+  dispatchWorkflow,
   formatRetryProgress,
   readPrimaryRateLimit,
   requestGitHubApi,
   retryGitHub,
+  workflowDispatchTitle,
 };
 
 async function main(argv) {
+  if (argv[0] === 'dispatch' && argv[1] && argv[2]) {
+    const waitBudget = process.env.DISPATCH_WAIT_BUDGET_SECONDS ?? '900';
+    if (!/^\d+$/.test(waitBudget)) {
+      throw new Error('DISPATCH_WAIT_BUDGET_SECONDS must be a non-negative integer');
+    }
+    const result = await dispatchWorkflow({
+      repository: argv[1],
+      sourceSha: argv[2],
+      token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN,
+      totalWaitBudgetSeconds: Number(waitBudget),
+      onProgress: (event) => console.error(formatRetryProgress(event)),
+    });
+    const marker = result.state === 'dispatched' ? 'OK' : 'SKIP';
+    const receipt = result.run?.html_url ? `; receipt ${result.run.html_url}` : '';
+    console.log(`[${marker}] ${argv[1]} exact-source dispatch ${result.state}${receipt}`);
+    return;
+  }
   if (argv[0] !== 'get' || !argv[1]) {
-    throw new Error('usage: github-api-resilience.cjs get ENDPOINT [--paginate]');
+    throw new Error('usage: github-api-resilience.cjs get ENDPOINT [--paginate] | dispatch OWNER/REPO SOURCE_SHA');
   }
   const data = await requestGitHubApi(argv[1], {
     token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN,

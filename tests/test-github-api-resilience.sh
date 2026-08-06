@@ -13,6 +13,7 @@ const {
   GitHubRetryDeferredError,
   classifyGitHubError,
   computeWaitSeconds,
+  dispatchWorkflow,
   formatRetryProgress,
   readPrimaryRateLimit,
   requestGitHubApi,
@@ -230,6 +231,114 @@ await requestGitHubApi('repos/f5-sales-demo/example', {
 assert.deepEqual(primaryRequestSleeps, [125]);
 assert.equal(primaryUrls.filter((url) => url.endsWith('/rate_limit')).length, 1);
 
+const exactSource = '1'.repeat(40);
+const exactTitle = `Enforce Repository Settings @ ${exactSource}`;
+const dispatchResponses = [
+  response(200, {workflow_runs: [{
+    id: 101,
+    event: 'workflow_dispatch',
+    display_title: exactTitle,
+    status: 'completed',
+    conclusion: 'failure',
+    html_url: 'https://github.example/runs/101',
+  }]}),
+  response(503, {message: 'Service unavailable'}),
+  response(200, {workflow_runs: [{
+    id: 102,
+    event: 'workflow_dispatch',
+    display_title: exactTitle,
+    status: 'in_progress',
+    conclusion: null,
+    html_url: 'https://github.example/runs/102',
+  }]}),
+];
+const dispatchRequests = [];
+const dispatchSleeps = [];
+const recoveredDispatch = await dispatchWorkflow({
+  repository: 'f5-sales-demo/example',
+  sourceSha: exactSource,
+  token: 'synthetic-token',
+  jitterSeconds: 0,
+  sleepSeconds: async (seconds) => dispatchSleeps.push(seconds),
+  onProgress: () => {},
+  fetch: async (url, options) => {
+    dispatchRequests.push({url, options});
+    return dispatchResponses.shift();
+  },
+});
+assert.equal(recoveredDispatch.state, 'recovered');
+assert.equal(recoveredDispatch.run.id, 102);
+assert.deepEqual(dispatchSleeps, [5]);
+assert.deepEqual(dispatchRequests.map(({options}) => options.method), ['GET', 'POST', 'GET']);
+assert.equal(
+  dispatchRequests.filter(({options}) => options.method === 'POST').length,
+  1,
+  'an ambiguous mutation must recover its exact receipt instead of posting twice',
+);
+assert.deepEqual(JSON.parse(dispatchRequests[1].options.body), {
+  ref: 'main',
+  inputs: {source_sha: exactSource},
+});
+
+const existingRequests = [];
+const existingDispatch = await dispatchWorkflow({
+  repository: 'f5-sales-demo/example',
+  sourceSha: exactSource,
+  token: 'synthetic-token',
+  fetch: async (url, options) => {
+    existingRequests.push({url, options});
+    return response(200, {workflow_runs: [{
+      id: 103,
+      event: 'workflow_dispatch',
+      display_title: exactTitle,
+      status: 'completed',
+      conclusion: 'success',
+      html_url: 'https://github.example/runs/103',
+    }]});
+  },
+});
+assert.equal(existingDispatch.state, 'existing');
+assert.equal(existingRequests.length, 1);
+assert.equal(existingRequests[0].options.method, 'GET');
+
+const limitedResponses = [
+  response(200, {workflow_runs: []}),
+  response(403, {message: 'secondary rate limit'}, {'Retry-After': '7'}),
+  response(200, {workflow_runs: []}),
+  response(204, null),
+];
+const limitedRequests = [];
+const limitedSleeps = [];
+const limitedDispatch = await dispatchWorkflow({
+  repository: 'f5-sales-demo/example',
+  sourceSha: exactSource,
+  token: 'synthetic-token',
+  jitterSeconds: 0,
+  sleepSeconds: async (seconds) => limitedSleeps.push(seconds),
+  onProgress: () => {},
+  fetch: async (url, options) => {
+    limitedRequests.push({url, options});
+    return limitedResponses.shift();
+  },
+});
+assert.equal(limitedDispatch.state, 'dispatched');
+assert.deepEqual(limitedSleeps, [7]);
+assert.deepEqual(limitedRequests.map(({options}) => options.method), ['GET', 'POST', 'GET', 'POST']);
+assert.equal(
+  limitedRequests.some(({url}) => url.endsWith('/rate_limit')),
+  false,
+  'secondary dispatch cooldown must not poll GitHub',
+);
+
+await assert.rejects(
+  dispatchWorkflow({
+    repository: 'f5-sales-demo/example',
+    sourceSha: 'not-a-sha',
+    token: 'synthetic-token',
+  }),
+  /source SHA/,
+);
+
 console.log('[OK] GitHub API retry classifications and wait contract');
 })().catch((error) => {
   console.error(error);
@@ -351,6 +460,8 @@ review="$repo_root/.github/workflows/antigravity-review.yml"
 translation="$repo_root/.github/workflows/antigravity-translate.yml"
 translation_caller="$repo_root/workflows/antigravity-translate.yml"
 sync_workflow="$repo_root/.github/workflows/sync-managed-files.yml"
+dispatcher="$repo_root/.github/workflows/dispatch-downstream.yml"
+enforcement_caller="$repo_root/workflows/enforce-repo-settings.yml"
 repo_settings="$repo_root/.github/config/repo-settings.json"
 
 credential_files=("$review" "$translation")
@@ -365,7 +476,7 @@ check 'unconfigured GitHub App credentials are absent' \
   bash -c '! grep -qE '\''AUTOMATION_APP_ID|AUTOMATION_APP_PRIVATE_KEY|create-github-app-token'\'' "$@"' \
   _ "${credential_files[@]}"
 
-if [ -f "$repo_settings" ]; then
+if [ -f "$watcher" ]; then
   for workflow in "$review" "$translation"; do
     check "$(basename "$workflow") loads the governed retry helper" \
       grep -qF 'github-api-resilience.cjs' "$workflow"
@@ -399,6 +510,13 @@ if [ -f "$watcher" ]; then
     grep -qE '\[PROGRESS\].*repository' "$watcher"
   check 'Free-tier contract remains explicit' \
     grep -qF 'GitHub Free-compatible' "$watcher"
+  check 'downstream dispatcher uses receipt-aware bounded API retries' \
+    grep -qF 'github-api-resilience.cjs dispatch' "$dispatcher"
+  check 'downstream dispatcher does not suppress GitHub response diagnostics' \
+    bash -c "! grep -qF '>/dev/null 2>&1' '$dispatcher'"
+  check 'enforcement caller exposes an exact-source dispatch receipt' \
+    grep -qF 'run-name: Enforce Repository Settings @ ${{ inputs.source_sha' \
+    "$enforcement_caller"
 else
   skip_source_contract 'fleet watcher wiring contract'
 fi
@@ -422,7 +540,7 @@ else
   skip_source_contract 'managed-file sync implementation contract'
 fi
 
-if [ -f "$repo_settings" ]; then
+if [ -f "$watcher" ]; then
   check 'retry helper is managed fleet-wide' jq -e \
     '.managed_files.files | any(.src == "scripts/github-api-resilience.cjs" and .dest == "scripts/github-api-resilience.cjs")' \
     "$repo_settings"
@@ -434,14 +552,17 @@ check 'retry helper is governance-protected' jq -e \
   '.protected_files | index("scripts/github-api-resilience.cjs") != null' \
   "$repo_root/.claude/governance.json"
 
-if [ -f "$repo_settings" ]; then
+if [ -f "$watcher" ]; then
   downstream_fixture=$(mktemp -d)
   trap 'rm -rf "$downstream_fixture"' EXIT
   mkdir -p \
     "$downstream_fixture/.claude" \
+    "$downstream_fixture/.github/config" \
     "$downstream_fixture/.github/workflows" \
     "$downstream_fixture/scripts" \
     "$downstream_fixture/tests"
+  printf '{"repository":"downstream-local"}\n' \
+    >"$downstream_fixture/.github/config/repo-settings.json"
   cp "$repo_root/.claude/governance.json" "$downstream_fixture/.claude/governance.json"
   cp "$repo_root/workflows/antigravity-review.yml" \
     "$downstream_fixture/.github/workflows/antigravity-review.yml"
@@ -462,10 +583,10 @@ if [ -f "$repo_settings" ]; then
 
   if downstream_output=$(cd "$downstream_fixture" &&
     bash tests/test-github-api-resilience.sh 2>&1); then
-    printf '[OK] downstream-shaped managed checkout passes\n'
+    printf '[OK] downstream-shaped managed checkout with local repo settings passes\n'
   else
     printf '%s\n' "$downstream_output" >&2
-    printf '[FAIL] downstream-shaped managed checkout passes\n' >&2
+    printf '[FAIL] downstream-shaped managed checkout with local repo settings passes\n' >&2
     fail=1
   fi
 
