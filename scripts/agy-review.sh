@@ -87,6 +87,7 @@ repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
 cd "$repo_root"
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 schema="$script_dir/agy-review-output.schema.json"
+progress_runner="$script_dir/run-with-progress.sh"
 
 for command in agy jq; do
   command -v "$command" >/dev/null 2>&1 || {
@@ -96,6 +97,10 @@ for command in agy jq; do
 done
 [ -f "$schema" ] || {
   echo "[review] output schema is unavailable: $schema" >&2
+  exit 1
+}
+[ -x "$progress_runner" ] || {
+  echo "[review] progress runner is unavailable: $progress_runner" >&2
   exit 1
 }
 
@@ -117,7 +122,8 @@ if [ "$mode" = code ]; then
     exit 0
   fi
   if [ "${AGY_REVIEW_SKIP_LOCAL_PII:-0}" != "1" ] && [ -x scripts/check-pii.sh ]; then
-    bash scripts/check-pii.sh --scope head --mode enforce
+    "$progress_runner" --phase pii-preflight -- \
+      bash scripts/check-pii.sh --scope head --mode enforce
   fi
   target_description="branch range ${base_sha}...${head_sha}"
 else
@@ -162,8 +168,9 @@ if [ "$mode" = code ]; then
 fi
 
 invoke_agy() {
-  local prompt_file=$1 stream_file=$2 result_file=$3
-  if ! env -u GH_TOKEN -u GITHUB_TOKEN -u REPO_SETTINGS_TOKEN -u REPO_SYNC_TOKEN \
+  local phase=$1 prompt_file=$2 stream_file=$3 result_file=$4
+  if ! "$progress_runner" --phase "$phase" -- \
+    env -u GH_TOKEN -u GITHUB_TOKEN -u REPO_SETTINGS_TOKEN -u REPO_SYNC_TOKEN \
     -u GATEWAY_TOKEN -u GATEWAY_URL AGY_REVIEW_ACTIVE=1 \
     agy --new-project --sandbox --mode plan --disable-slash-commands \
     --model "Gemini 3.6 Flash (High)" \
@@ -172,6 +179,7 @@ invoke_agy() {
     echo "[review] Antigravity execution failed" >&2
     return 1
   fi
+  printf '[review] %s completed; validating structured output\n' "$phase" >&2
   if ! jq -s -e '
     [.[] | select(.event == "result")] as $results |
     if ($results | length) != 1 then error("expected one result event")
@@ -197,7 +205,7 @@ Paths in consumer_shell_tests.profiles are resolved under the named downstream r
 
 Review correctness, security, data loss, concurrency, rollback, maintainability, and privacy. Perform a dedicated semantic PII audit over changed inputs, schemas, fixtures, generated files, filenames, media metadata, logs, telemetry, errors, persistence, exports, and deletion. Never repeat a matched personal or infrastructure value; report only category, path, line, and redacted evidence. Classify confirmed PII and reproducible security/correctness defects as high or critical. Report only findings supported by repository evidence. Return only schema-valid JSON.
 EOF
-invoke_agy "$work/reviewer.prompt" "$work/reviewer.stream" "$work/reviewer.json"
+invoke_agy reviewer "$work/reviewer.prompt" "$work/reviewer.stream" "$work/reviewer.json"
 
 cat >"$work/verifier.prompt" <<EOF
 Act as a second independent Antigravity verifier for $target_description.
@@ -209,7 +217,7 @@ Do not execute repository test or lint suites, package builds, network commands,
 
 Paths in consumer_shell_tests.profiles are resolved under the named downstream repository checkout by scripts/run-consumer-shell-tests.sh, not under docs-control. Verify profile ownership and rollout evidence; local absence alone is not a defect.
 EOF
-invoke_agy "$work/verifier.prompt" "$work/verifier.stream" "$work/verifier.json"
+invoke_agy verifier "$work/verifier.prompt" "$work/verifier.stream" "$work/verifier.json"
 
 jq -n --slurpfile reviewer "$work/reviewer.json" --slurpfile verifier "$work/verifier.json" '{
   reviewer: $reviewer[0],
