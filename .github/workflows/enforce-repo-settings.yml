@@ -1,5 +1,6 @@
 ---
 name: Enforce Repository Settings
+run-name: Enforce Repository Settings @ ${{ inputs.source_sha || 'scheduled' }}
 
 #checkov:skip=CKV_GHA_7:Exact source receipts are validated before any governed read or mutation.
 on:
