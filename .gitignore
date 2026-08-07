@@ -194,7 +194,7 @@ tui-debug.log
 *.cpuprofile
 .nyc_output/
 packages/ai/test/.temp-images/
-docs/superpowers/
+superpowers/
 .superpowers/
 !.xcsh/
 .xcsh/plugins/
