@@ -326,19 +326,29 @@ requests.
    must be absent, and exact base/head/workflow receipts and behavioral security tests must pass.
 
 2. Create the `antigravity-automation` environment in docs-control with no protection rules. Create
-   both organisation variables with value `false` and visibility covering every governed repository.
-   Confirm there are no same-named repository variables. Enable and keep active the reusable
-   workflows, governed callers, and fleet watcher. From a `docs-control`
+   or update both organisation variables through the protected-main
+   `Configure Antigravity Controls` workflow's `disabled` phase. It sets both values to `false`
+   with `all` visibility. Confirm there are no same-named repository variables. Enable and keep
+   active the reusable workflows, governed callers, and fleet watcher. From a `docs-control`
    checkout, verify the false/active state with
    `bash scripts/verify-antigravity-controls.sh --workflow-state active`.
 
-3. Set selected visibility for a pilot same-repository documentation pull request. Set each desired
-   variable to `true`, then require a completed Antigravity review and 12 validated locale outputs.
-   Verify the exact pilot scope with `--visibility selected --selected-repo <repository>`. If the
-   pilot fails, set the relevant variable to `false` before cancelling in-flight runs.
+3. Dispatch the control workflow's `pilot` phase. It sets both variables to the literal value
+   `true` with `selected` visibility restricted to docs-control. Create a same-repository
+   documentation pull request, dispatch its exact-head translation, then dispatch review against
+   the translated head. Require both model and publication jobs to succeed, their exact-head
+   artifacts to remain available, the review marker to be published, and one validator-approved
+   output for each of the 12 required locales. Verify the exact pilot scope with
+   `--visibility selected --selected-repo docs-control`. If the pilot fails, dispatch `disabled`
+   before cancelling in-flight runs.
 
-4. Expand visibility to all governed repositories after the pilot. Future suspension changes only
-   the organisation variable value and cancels any already-running jobs; workflow states remain
+4. Expand visibility only through the control workflow's `all` phase. Supply the pilot pull-request
+   number, review and translation run IDs, translated pre-publication head SHA, and reviewed
+   post-publication head SHA. The phase fails before mutation unless GitHub proves both real job
+   pairs succeeded in trusted manual runs, both exact-head artifacts exist, the review marker is
+   published, and the guarded Antigravity commit contains exactly the 12 corresponding locale
+   outputs. The workflow then changes both variables to `all` visibility. Future suspension changes
+   only the organisation variable value and cancels any already-running jobs; workflow states remain
    active. After every change, run the verifier from a `docs-control` checkout with the expected
    boolean values, for example:
 
@@ -349,6 +359,13 @@ requests.
 
    It checks all 38 governed repositories plus `docs-control`, rejects repository-variable shadows,
    and exits 84 without retry amplification when GitHub reports a rate limit.
+
+The control workflow uses the existing `REPO_SETTINGS_TOKEN` from the unprotected
+`antigravity-automation` environment. It runs only the protected default-branch implementation,
+serializes transitions, uses the shared bounded retry helper, and emits 30-second structured
+heartbeats while waiting. An exit status of 84 means the transition deferred without treating the
+old or partially converged state as success; rerun the same idempotent phase after the reported
+cooldown. No GitHub App credentials are involved.
 
 ### Future restoration of the required freshness context
 
