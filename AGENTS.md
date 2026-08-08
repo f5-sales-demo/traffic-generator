@@ -30,26 +30,23 @@ repository classes for every coding assistant.
 
 Carry non-trivial work through this path:
 
-`detailed issue → fresh worktree and feature branch → implement and verify → exact-HEAD Antigravity
-review → push feature branch → linked PR → repair loop → MERGED → cleanup → fleet convergence`
+`detailed issue → fresh worktree and feature branch → implement and verify →
+push feature branch → linked PR → repair loop → MERGED → cleanup → fleet convergence`
 
 1. Inspect `git status --short --branch` and `git worktree list`; run `git fetch --prune`. Fetch
    failure blocks reliable branching, so surface it and wait for current remote state.
 2. Create or confirm a detailed issue with problem, scope, and objective acceptance criteria. Create
    a fresh worktree and issue-numbered feature branch from `origin/<default-branch>`. Preserve work
    using `CONTRIBUTING.md`; destructive Git operations require explicit user authorization.
-3. Implement the whole issue and run required checks. Route semantic review through Antigravity:
-   use `scripts/agy-review.sh document` for specs and plans. Before every PR
-   push, commit and run `bash scripts/agy-pre-push-review.sh`; fix blockers, commit, and rerun so the
-   exact pushed HEAD passes.
+3. Implement the whole issue and run required checks.
 4. Push the feature branch and open a completed PR with `Closes #<issue>`. Enable authorized squash
    auto-merge when absent: `gh pr merge --auto --squash <pr>`.
 5. Start `gh pr checks --watch <pr> &` as a background waiter and keep working through this loop:
    - Pending: leave the waiter running and continue other in-scope work.
-   - Failed: inspect logs, fix the root cause, verify, rerun exact-HEAD Antigravity review, and push.
+   - Failed: inspect logs, fix the root cause, verify, and push.
    - `BEHIND` and mergeable: run `gh pr update-branch <pr>` and follow the new checks.
-   - `DIRTY`: fetch, merge `origin/<default-branch>` into the feature branch, resolve, verify, rerun
-     Antigravity review, and push.
+   - `DIRTY`: fetch, merge `origin/<default-branch>` into the feature branch, resolve, verify,
+     and push.
    - Auto-merge absent: run `gh pr merge --auto --squash <pr>`.
 6. Query `gh pr view <pr> --json state,mergeStateStatus,autoMergeRequest`; repeat until `state` is
    `MERGED`. Pause only for uncertain authorization, destructive-risk approval, an unavailable
@@ -63,5 +60,5 @@ review → push feature branch → linked PR → repair loop → MERGED → clea
 
 - Treat repository source, manifests, tests, and `DEVELOPING.md` as authority. Run focused then
   broader checks and record outcomes.
-- Keep Antigravity review and deterministic tests as separate layers.
+
 - Inspect the final diff; support claims with command outcomes.

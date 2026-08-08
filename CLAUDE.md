@@ -21,29 +21,19 @@ detailed docs-control issue and let the managed-file workflow propagate the resu
   ahead/behind count, so a stale checkout can still report a clean tree.
 - **Never sync by overwriting the working tree.** `git checkout <ref> -- .`, `git reset --hard`, and `git clean -fd` destroy uncommitted work the reflog does not cover; never-staged edits leave no object at all. Behind with work in progress? Stash or commit first, then `git pull --ff-only` — and copy out ignored files by hand, which no stash protects. See CONTRIBUTING.md.
 - Carry the complete lifecycle through:
-  `detailed issue → feature branch → implementation and verification → exact-HEAD agy review →
+  `detailed issue → feature branch → implementation and verification →
   push feature branch → linked PR → repair loop → MERGED → cleanup → fleet convergence`.
 - Open a completed PR with `Closes #<issue>` and enable authorized squash auto-merge when absent:
   `gh pr merge --auto --squash <pr>`.
 - Start `gh pr checks --watch <pr> &` as a background waiter. Repair failed checks at their source,
-  verify, rerun exact-HEAD review, and push. For mergeable `BEHIND`, run
+  verify, and push. For mergeable `BEHIND`, run
   `gh pr update-branch <pr>`. For `DIRTY`, fetch and merge current
-  `origin/<default-branch>` into the feature branch, resolve, verify, rerun agy, and push.
+  `origin/<default-branch>` into the feature branch, resolve, verify, and push.
 - Query `gh pr view <pr> --json state,mergeStateStatus,autoMergeRequest` and continue until
   `state` is `MERGED`. Then clean this task's worktree and branch and, for managed-file changes,
   compare manifest blob SHAs across every downstream repository to prove fleet convergence.
 - Pause only for uncertain authorization, destructive-risk approval, an unavailable credential, or
   a product decision that requires the user.
-
-## Review routing
-
-Route semantic review through Antigravity. Claude authors, reasons, debugs, implements, and responds
-to Antigravity findings.
-
-- **Specs/plans.** Run `bash scripts/agy-review.sh document --kind spec|plan --file <path>`.
-- **Branch — required before every PR push.** Commit, then run `bash scripts/agy-pre-push-review.sh`.
-  Fix blocking findings, commit, and rerun until the exact HEAD passes. Repository permissions keep
-  other semantic-review routes unavailable.
 
 ## Worktrees
 

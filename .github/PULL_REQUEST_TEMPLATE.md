@@ -32,7 +32,7 @@ downstream hash evidence that proves fleet convergence.
 - [ ] Feature-complete and verified — not exploratory or trial-and-error code
 - [ ] Tests written first (TDD) and passing; the issue's acceptance criteria are met
 - [ ] Verified locally by running or exercising the change — evidence pasted above
-- [ ] Feature branch passed exact-HEAD Antigravity review before every PR push
+
 - [ ] Pending, failed, behind, or conflicted states repaired through `MERGED`
 - [ ] Worktree and confirmed-merged branch cleaned; fleet convergence confirmed when applicable
 - [ ] Follows project conventions
