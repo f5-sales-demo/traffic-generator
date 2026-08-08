@@ -163,6 +163,7 @@ docs/specifications/api/
 docs/api-reference/
 .version
 .etag
+.etag_cache
 .github_release
 
 # Autoresearch session artifacts
