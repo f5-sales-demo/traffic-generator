@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "repositories": {
+    "f5-sales-demo/administration": {},
+    "f5-sales-demo/api-protection": {},
+    "f5-sales-demo/api-specs": {},
+    "f5-sales-demo/api-specs-enriched": {},
+    "f5-sales-demo/apt-repo": {},
+    "f5-sales-demo/bot-advanced": {},
+    "f5-sales-demo/bot-standard": {},
+    "f5-sales-demo/cdn": {},
+    "f5-sales-demo/cdn-simulator": {},
+    "f5-sales-demo/console": {},
+    "f5-sales-demo/csd": {},
+    "f5-sales-demo/ddos": {},
+    "f5-sales-demo/demo-resource-template": {},
+    "f5-sales-demo/demo-resources": {},
+    "f5-sales-demo/devcontainer": {},
+    "f5-sales-demo/dns": {},
+    "f5-sales-demo/docs": {},
+    "f5-sales-demo/docs-builder": {},
+    "f5-sales-demo/docs-control": {},
+    "f5-sales-demo/docs-icons": {},
+    "f5-sales-demo/docs-theme": {},
+    "f5-sales-demo/i18n-core": {},
+    "f5-sales-demo/marketplace": {},
+    "f5-sales-demo/marketplace-claude-code": {},
+    "f5-sales-demo/mcn": {},
+    "f5-sales-demo/nginx": {},
+    "f5-sales-demo/observability": {},
+    "f5-sales-demo/origin-server": {},
+    "f5-sales-demo/starlight-llms-txt": {},
+    "f5-sales-demo/starlight-mega-menu": {},
+    "f5-sales-demo/traffic-generator": {},
+    "f5-sales-demo/vscode-xcsh": {},
+    "f5-sales-demo/waf": {},
+    "f5-sales-demo/was": {},
+    "f5-sales-demo/webapp-api-protection": {},
+    "f5-sales-demo/xcsh": {},
+    "f5-sales-demo/xcsh-action": {},
+    "f5-sales-demo/xcsh-chrome-extension": {},
+    "f5-sales-demo/terraform-provider-xcsh": {
+      ".github/workflows/acc-tests.yml": {
+        "real-api-tests": {
+          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh"],
+          "environment": "acceptance-tests",
+          "permissions": { "checks": "write", "contents": "read" },
+          "allowed_secrets": ["XCSH_API_TOKEN", "XCSH_API_URL"],
+          "triggers": {
+            "pull_request": {
+              "branches": ["main"],
+              "paths": [
+                "internal/provider/**",
+                "internal/client/**",
+                "internal/acctest/**",
+                "internal/functions/**",
+                "internal/blindfold/**"
+              ]
+            },
+            "schedule": [{ "cron": "0 2 * * 1" }],
+            "workflow_dispatch": {
+              "inputs": {
+                "mode": {
+                  "default": "full",
+                  "description": "Test mode",
+                  "options": ["mock-only", "real-only", "full", "pr-subset"],
+                  "required": true,
+                  "type": "choice"
+                },
+                "parallel": {
+                  "default": "4",
+                  "description": "Parallelism for mock tests",
+                  "required": false,
+                  "type": "string"
+                },
+                "timeout": {
+                  "default": "10",
+                  "description": "Timeout per test (minutes)",
+                  "required": false,
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "if": "always() &&\ngithub.event_name != 'pull_request' &&\n((github.event_name == 'schedule' &&\n  needs.mock-tests.result == 'success') ||\n (github.event_name == 'workflow_dispatch' &&\n  github.event.inputs.mode == 'full' &&\n  needs.mock-tests.result == 'success') ||\n (github.event_name == 'workflow_dispatch' &&\n  github.event.inputs.mode == 'real-only' &&\n  needs.mock-tests.result == 'skipped'))\n"
+        },
+        "cleanup": {
+          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh"],
+          "environment": "acceptance-tests",
+          "permissions": { "contents": "read" },
+          "allowed_secrets": ["XCSH_API_TOKEN", "XCSH_API_URL"],
+          "triggers": {
+            "pull_request": {
+              "branches": ["main"],
+              "paths": [
+                "internal/provider/**",
+                "internal/client/**",
+                "internal/acctest/**",
+                "internal/functions/**",
+                "internal/blindfold/**"
+              ]
+            },
+            "schedule": [{ "cron": "0 2 * * 1" }],
+            "workflow_dispatch": {
+              "inputs": {
+                "mode": {
+                  "default": "full",
+                  "description": "Test mode",
+                  "options": ["mock-only", "real-only", "full", "pr-subset"],
+                  "required": true,
+                  "type": "choice"
+                },
+                "parallel": {
+                  "default": "4",
+                  "description": "Parallelism for mock tests",
+                  "required": false,
+                  "type": "string"
+                },
+                "timeout": {
+                  "default": "10",
+                  "description": "Timeout per test (minutes)",
+                  "required": false,
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "if": "always() &&\ngithub.event_name != 'pull_request' &&\nneeds.real-api-tests.result != 'skipped'\n"
+        }
+      },
+      ".github/workflows/discover-defaults.yml": {
+        "discover": {
+          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh"],
+          "environment": "default-discovery",
+          "permissions": {},
+          "allowed_secrets": ["REPO_SYNC_TOKEN", "XCSH_API_TOKEN", "XCSH_API_URL"],
+          "triggers": {
+            "schedule": [{ "cron": "0 6 1 * *" }],
+            "workflow_dispatch": {
+              "inputs": {
+                "dry_run": {
+                  "default": false,
+                  "description": "Dry run (no PR creation)",
+                  "required": false,
+                  "type": "boolean"
+                },
+                "mode": {
+                  "default": "discover",
+                  "description": "Discovery mode",
+                  "options": ["discover", "validate", "single"],
+                  "required": true,
+                  "type": "choice"
+                },
+                "resource": {
+                  "default": "",
+                  "description": "Resource name (for single mode only)",
+                  "required": false,
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "if": null
+        }
+      }
+    }
+  }
+}

@@ -2062,10 +2062,12 @@ git -C "$repo" commit -qm path
 assert_violation "personal home path" "$repo" --scope head --mode enforce
 
 repo=$(new_repo placeholder-paths)
-printf 'mac=/Users/you/work ci=/home/runner/work variable=/home/${USERNAME}/work route=/home/%s\n' index >"${repo}/config.ini"
+SYNTHETIC_SERVICE_USER=xcsh
+printf 'mac=/Users/you/work ci=/home/runner/work service=/home/%s/.config variable=/home/${USERNAME}/work route=/home/%s\n' \
+  "$SYNTHETIC_SERVICE_USER" index >"${repo}/config.ini"
 git -C "$repo" add config.ini
 git -C "$repo" commit -qm paths
-assert_clean "placeholder, CI, and variable home paths" "$repo" --scope head --mode enforce
+assert_clean "placeholder, CI, service, and variable home paths" "$repo" --scope head --mode enforce
 
 repo=$(new_repo embedded-home-tokens)
 printf 'keys=Shift+page/%s/%s route=service/%s/%s windows=prefixC:\\%s\\%s\n' home end Users list Users record >"${repo}/config.ini"

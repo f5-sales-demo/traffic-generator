@@ -7,11 +7,13 @@ usage() {
 Usage:
   scripts/validate-translations.sh --staged
   scripts/validate-translations.sh --base <commit> --head <commit>
+  scripts/validate-translations.sh --all
 
 --staged validates only locale files changed in the index, so an English-only
 commit can reach the governed translation workflow. --base/--head validates
 every locale counterpart affected by that exact English source range and
-rejects model changes outside those counterparts.
+rejects model changes outside those counterparts. --all validates the complete
+English/locale corpus for a major-release reconciliation.
 EOF
 }
 
@@ -26,6 +28,14 @@ while [ "$#" -gt 0 ]; do
       exit 2
     }
     mode=staged
+    shift
+    ;;
+  --all)
+    [ -z "$mode" ] || {
+      echo "[i18n] choose exactly one validation mode" >&2
+      exit 2
+    }
+    mode=all
     shift
     ;;
   --base | --head)
@@ -56,6 +66,12 @@ case "$mode" in
 staged)
   [ -z "$base_ref$head_ref" ] || {
     echo "[i18n] --staged does not accept range options" >&2
+    exit 2
+  }
+  ;;
+all)
+  [ -z "$base_ref$head_ref" ] || {
+    echo "[i18n] --all does not accept range options" >&2
     exit 2
   }
   ;;
@@ -294,7 +310,7 @@ if MODE == "staged":
             validate_target(source_raw, target_raw, target)
         except (UnicodeError, ValueError) as exc:
             errors.append(str(exc))
-else:
+elif MODE == "range":
     changed_sources: dict[str, str] = {}
     for status, source in name_status(f"{BASE}...{HEAD}", "--", "docs/en", "src/content/docs/en"):
         if SOURCE_RE.fullmatch(source):
@@ -334,6 +350,41 @@ else:
                 errors.append(f"{target}: missing translation for {source}")
             except (OSError, UnicodeError, ValueError) as exc:
                 errors.append(str(exc))
+else:
+    sources: set[str] = set()
+    for root in (Path("docs/en"), Path("src/content/docs/en")):
+        if root.is_dir():
+            for path in root.rglob("*"):
+                if path.is_file() and path.suffix in (".md", ".mdx"):
+                    sources.add(path.as_posix())
+
+    for source in sorted(sources):
+        try:
+            source_raw = Path(source).read_bytes()
+        except OSError as exc:
+            errors.append(f"{source}: cannot read source: {exc}")
+            continue
+        for target in counterparts(source):
+            try:
+                target_raw = Path(target).read_bytes()
+                validate_target(source_raw, target_raw, target)
+            except FileNotFoundError:
+                errors.append(f"{target}: missing translation for {source}")
+            except (OSError, UnicodeError, ValueError) as exc:
+                errors.append(str(exc))
+
+    for root in (Path("docs"), Path("src/content/docs")):
+        if not root.is_dir():
+            continue
+        for path in root.rglob("*"):
+            target = path.as_posix()
+            match = TARGET_RE.fullmatch(target)
+            if not path.is_file() or not match:
+                continue
+            source_root, _locale, relative = match.groups()
+            source = f"{source_root}/en/{relative}"
+            if source not in sources:
+                errors.append(f"{target}: orphan translation has no English source {source}")
 
 if errors:
     for error in errors:
