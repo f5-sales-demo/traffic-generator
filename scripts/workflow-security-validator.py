@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # ruff: noqa: ANN001, ANN201, D101, D103, EM101, EM102, TRY003
-# pylint: disable=invalid-name,too-many-branches,broad-exception-caught
+# pylint: disable=invalid-name,too-many-branches,broad-exception-caught,import-error
+# fmt: off
 """Fail-closed authorization for Zizmor self-hosted-runner findings."""
 
 import argparse
