@@ -228,5 +228,49 @@ else
   fail "source deletion requires all locale counterparts deleted" "validator rejected complete deletion"
 fi
 
+repo=$(make_repo)
+mkdir -p "$repo/src/content/docs/en"
+printf '%s\n' '---' 'title: Nested' '---' '' 'Nested English source.' \
+  >"$repo/src/content/docs/en/nested.md"
+nested_hash=$(source_hash "$repo/src/content/docs/en/nested.md")
+for locale in "${LOCALES[@]}"; do
+  mkdir -p "$repo/src/content/docs/$locale"
+  printf '%s\n' '---' "title: Nested $locale" 'i18n:' \
+    "  sourceHash: \"$nested_hash\"" '  translator: "machine"' '---' '' \
+    'Nested translated source.' >"$repo/src/content/docs/$locale/nested.md"
+done
+if (cd "$repo" && bash "$SCRIPT" --all); then
+  pass "complete full-corpus reconciliation passes for both English roots"
+else
+  fail "complete full-corpus reconciliation passes for both English roots" \
+    "validator rejected a fresh corpus"
+fi
+
+rm -f "$repo/docs/th/page.mdx"
+if (cd "$repo" && bash "$SCRIPT" --all >/dev/null 2>&1); then
+  fail "full-corpus reconciliation rejects missing locale" "validator returned success"
+else
+  pass "full-corpus reconciliation rejects missing locale"
+fi
+
+hash=$(source_hash "$repo/docs/en/page.mdx")
+write_target "$repo" th "$hash"
+sed -i.bak '/sourceHash:/d' "$repo/docs/fr/page.mdx"
+rm -f "$repo/docs/fr/page.mdx.bak"
+if (cd "$repo" && bash "$SCRIPT" --all >/dev/null 2>&1); then
+  fail "full-corpus reconciliation rejects malformed metadata" "validator returned success"
+else
+  pass "full-corpus reconciliation rejects malformed metadata"
+fi
+write_target "$repo" fr "$hash"
+
+printf '%s\n' '---' 'title: Orphan' 'i18n:' \
+  "  sourceHash: \"$hash\"" '  translator: "machine"' '---' >"$repo/docs/fr/orphan.mdx"
+if (cd "$repo" && bash "$SCRIPT" --all >/dev/null 2>&1); then
+  fail "full-corpus reconciliation rejects orphaned locale" "validator returned success"
+else
+  pass "full-corpus reconciliation rejects orphaned locale"
+fi
+
 printf '\nResults: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

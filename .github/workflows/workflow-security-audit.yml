@@ -23,6 +23,10 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/**'
+      - '.github/config/self-hosted-runner-policy.json'
+      - '.claude/governance.json'
+      - 'scripts/workflow-security-validator.py'
+      - 'workflows/workflow-security-audit.yml'
       - 'zizmor.yaml'
 
 permissions:
@@ -42,9 +46,28 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up pinned Python and uv
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
+        with:
+          version: '0.8.13'
+          python-version: '3.13.7'
+
       - name: Reject every workflow security finding
+        env:
+          AUDITED_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           shopt -s nullglob
           targets=(.github/workflows/ workflows/*.yml)
-          pipx run zizmor --no-config --no-ignores --persona=auditor "${targets[@]}"
+          ZIZMOR_EXIT=0
+          uvx --from 'zizmor==1.29.0' zizmor --no-config --no-ignores --persona=auditor --format=json "${targets[@]}" > zizmor-findings.json 2>zizmor-diagnostics.log || ZIZMOR_EXIT=$?
+          if [ "$ZIZMOR_EXIT" -ne 0 ] && [ "$ZIZMOR_EXIT" -ne 13 ]; then
+            echo "::error::Zizmor execution failed with exit code ${ZIZMOR_EXIT}"
+            exit 1
+          fi
+          uv run --with 'PyYAML==6.0.2' --no-project python scripts/workflow-security-validator.py \
+            --repository "$AUDITED_REPOSITORY" \
+            --policy .github/config/self-hosted-runner-policy.json \
+            --governance .claude/governance.json \
+            --zizmor-exit "$ZIZMOR_EXIT" \
+            zizmor-findings.json

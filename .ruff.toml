@@ -58,6 +58,22 @@ ignore = [
     "T201",
     "INP001",
 ]
+"scripts/manage-github-runners.py" = [
+    "ANN",
+    "D",
+    "EM",
+    "TRY003",
+]
+"tests/test_manage_github_runners.py" = [
+    "INP001",
+    "PT009",
+    "PT027",
+]
+"tests/test_workflow_security_validator.py" = [
+    "INP001",
+    "PT009",
+    "PT027",
+]
 
 [lint.isort]
 split-on-trailing-comma = true

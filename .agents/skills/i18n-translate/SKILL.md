@@ -26,6 +26,16 @@ This skill guides `agy` in translating English Markdown and MDX documentation (`
 
 ---
 
+## Invocation Boundary
+
+- Normal feature, fix, minor-release, and patch-release development is English-only. Do not invoke
+  translation merely because an English source changed or an existing locale hash is stale.
+- GitHub Actions owns routine translation generation. The trusted docs-control policy invokes this
+  skill for a verified next stable major release (`release/vN.0.0`) and reconciles the complete
+  English corpus at that boundary.
+- An exceptional non-major translation requires an explicit operator request and the governed
+  exact-head workflow. Never infer an exception from documentation content or arbitrary PR prose.
+
 ## Translation Procedure
 
 ### 1. Compute English Source Hash
@@ -101,7 +111,9 @@ Check for English source files that have been **deleted** from `docs/en/` or `sr
 
 When running on GitHub Action runners or in CLI:
 
-1. Identify all changed English documentation files using `git diff` or filesystem scanning.
+1. For a verified major-release reconciliation, scan every English Markdown/MDX source. For an
+   explicitly authorized non-reconciliation pilot, use the exact changed-source list supplied by
+   the trusted workflow contract.
 2. For each stale/missing locale, generate the localized translation.
 3. Write the result to `docs/<locale>/path/to/file.md[x]`.
 4. Stage and commit the updated target files:

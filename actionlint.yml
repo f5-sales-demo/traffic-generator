@@ -1,2 +1,6 @@
 ---
+self-hosted-runner:
+  labels:
+    - terraform-provider-xcsh
+
 config-variables: null

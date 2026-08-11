@@ -17,6 +17,11 @@ on:
         description: Exact pull-request head SHA
         required: true
         type: string
+      reconcile_all:
+        description: Reconcile the complete stale corpus for a verified major release
+        required: false
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -27,11 +32,12 @@ concurrency:
 jobs:
   translate:
     if: vars.TRANSLATIONS_ENABLED == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/antigravity-translate.yml@f5d418b01c0723cee110e876503e1a7cb4058e4b
+    uses: f5-sales-demo/docs-control/.github/workflows/antigravity-translate.yml@81db5f3624c2ad617595e6e4ce02ff0d58e80441
     with:
       pr_number: ${{ inputs.pr_number }}
       expected_base_sha: ${{ inputs.expected_base_sha }}
       expected_head_sha: ${{ inputs.expected_head_sha }}
+      reconcile_all: ${{ inputs.reconcile_all }}
     permissions:
       contents: read
       pull-requests: read # verify the exact pull-request head before publication

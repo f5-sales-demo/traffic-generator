@@ -26,6 +26,13 @@ repository classes for every coding assistant.
 - Read task-relevant `CONTRIBUTING.md` and `DEVELOPING.md` sections. A closer `AGENTS.md` may add
   subtree guidance.
 
+## Translations
+
+- Develop documentation in English; do not refresh locales for features, fixes, minor, or patch
+  releases. Expected stale hashes are not a development blocker.
+- GitHub Actions alone reconciles translations on the next stable `release/vN.0.0` major release.
+  Investigate drift only when that release reconciliation fails.
+
 ## Continuous contribution lifecycle
 
 Carry non-trivial work through this path:

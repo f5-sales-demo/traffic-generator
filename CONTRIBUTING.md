@@ -208,9 +208,17 @@ credential, or a product decision that requires the user.
 
 ## Translations (GitHub Actions controlled)
 
-Local hooks perform deterministic translation structure and hash validation. Translation generation
-runs through the governed Antigravity workflow, giving coding assistants and developer workstations
-one consistent automation path.
+Documentation development is English-first. Feature, fix, minor-release, and patch-release work
+updates only `docs/en/` or `src/content/docs/en/`; developers and coding agents do not regenerate
+locale files. Local hooks remain deterministic and model-free, and expected stale hashes between
+major releases do not block development.
+
+GitHub Actions owns translation generation. The fleet watcher selects only an exact next-major
+release branch (`release/vN.0.0`) where `N` is one greater than the highest stable root `vX.Y.Z` tag.
+It dispatches a full-corpus Antigravity reconciliation for every Markdown/MDX English source. Minor
+(`release/vN.M.0` where `M > 0`), patch, ordinary development, repeated-major, and skipped-major
+branches never spend translation quota. A repository with no stable SemVer tags begins at
+`release/v1.0.0`.
 
 GitHub Actions translation is fail-closed unless the organisation variable `TRANSLATIONS_ENABLED`
 is the literal string `true`. Its immutable runtime, exact-head and workflow receipts, isolated model
@@ -223,9 +231,10 @@ How the translation pipeline operates:
 
 | Part | Where | How it Works |
 | ---- | ----- | ------------ |
-| Local Translation | Pre-commit locale/hash validation | **Deterministic only.** Model-free. |
-| Automated Translation | `.github/workflows/antigravity-translate.yml` — invokes `agy` on a GitHub Actions runner | The organisation variable controls execution. |
-| Freshness Audit | `.github/workflows/translation-audit.yml` — compares each translation's `i18n.sourceHash` against English source SHA-256 | **Advisory when enabled.** It shares the Actions switch but is not a required context. |
+| Local validation | Pre-commit locale/hash validation | **Deterministic only.** English-only changes pass without locale generation. |
+| Release policy | `scripts/translation-release-policy.sh` | Verifies the exact next `release/vN.0.0` against stable root SemVer tags. |
+| Automated translation | `.github/workflows/antigravity-translate.yml` — invokes `agy` on a GitHub Actions runner | Full-corpus reconciliation only for the eligible major release; the organisation variable remains the positive runtime switch. |
+| Freshness audit | `.github/workflows/translation-audit.yml` | Returns successful/not-applicable during normal development and validates the complete 12-locale corpus on the eligible major release. |
 | Required Context | `audit / Translation freshness` in branch protection | **Not required.** Requiring a check while its job can skip would deadlock pull requests. |
 
 ### Activating Antigravity Actions
@@ -297,95 +306,26 @@ heartbeats while waiting. An exit status of 84 means the transition deferred wit
 old or partially converged state as success; rerun the same idempotent phase after the reported
 cooldown. No GitHub App credentials are involved.
 
-### Future restoration of the required freshness context
+### Major-release translation operation
 
-This is deliberately separate from enabling generation. First reconcile every missing or stale
-locale through Antigravity-backed same-repository branches. Then:
+1. Leave ordinary development English-only. Do not edit locale files merely because source hashes
+   have drifted.
+2. Use the repository's release automation to create the exact next `release/vN.0.0` pull request.
+   `scripts/translation-release-policy.sh` verifies that `N` increments the highest stable root
+   SemVer tag by exactly one; titles and arbitrary labels are not authority.
+3. When `TRANSLATIONS_ENABLED` is the literal string `true`, the trusted fleet watcher detects the
+   eligible exact head, confirms that the repository has English Markdown/MDX documentation, and
+   dispatches `reconcile_all: true` to the governed caller.
+4. Antigravity generates all missing or stale locale counterparts without write credentials. The
+   publication job validates the complete 12-locale corpus, binds the reconciliation mode into its
+   immutable receipt, and pushes one guarded `chore(i18n)` commit to the same release branch.
+5. The pull-request synchronization reruns the advisory freshness audit. The release is ready only
+   when that full-corpus audit passes on the translated exact head.
 
-1. **Un-gate the audit and let that sync downstream.** In `workflows/translation-audit.yml`, delete the
-   `if: vars.TRANSLATIONS_ENABLED == 'true'` line *and* the `SUSPENDED:` comment block, returning the
-   job to unconditional. Keep the Antigravity caller and reusable-workflow gates: quota-backed
-   Actions automation remains fail-closed even after the audit is unconditional.
-
-   Delete the `if:` completely. Leaving the condition in place makes organisation
-   variable visibility permanently load-bearing for CI: any repository the variable is not visible to
-   silently skips the job, and once the context is required again its pull requests wait forever for a
-   check that is never emitted. An unconditional audit removes that whole class of failure — after
-   this, `TRANSLATIONS_ENABLED` gates only quota-backed Antigravity generation and review remains
-   independently controlled.
-
-   docs-control's `tests/test-translation-suspension.sh` keys section 1 on the `SUSPENDED:` marker,
-   so leaving it in place fails the guard the moment the context comes back.
-2. Confirm the audit actually reports on **every governed repository that receives the workflow**, not
-   on one pull request. Three traps here, all of them load-bearing:
-
-   - **One green PR proves one repo.** During the suspension a five-repository spot check came back
-     clean while **9 of 38** still had the old branch protection, because enforcement fans out in
-     batches of five. Re-adding the context on that evidence would have deadlocked nine repositories.
-   - **An old run proves nothing.** The last conclusion may predate the un-gating in step 1, or come
-     from a repository still running the gated workflow. Confirm the synced file no longer contains the
-     `if:` before trusting a run, and only count runs created after that.
-   - **Some repos never receive this workflow at all.** Anything listed under `skip_files` for
-     `translation-audit.yml` does not have the file — `terraform-provider-xcsh` skips it, and the path
-     returns 404 there. Demanding a report from those repos is impossible, and it is exactly why they
-     carry an `excluded_required_contexts` entry: a required check whose workflow does not exist is a
-     *permanent* deadlock, not a transient one.
-
-   ```bash
-   SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)   # capture AFTER step 1 has synced
-   SKIP=$(jq -r '.skip_files | to_entries[]
-                 | select(any(.value[]; test("translation-audit"))) | .key' .claude/governance.json)
-   while IFS= read -r r; do
-     grep -qxF "$r" <<<"$SKIP" && { printf '%-24s n/a (no workflow)\n' "$r"; continue; }
-     # the synced file must be un-gated, or a green run proves nothing
-     gated=$(gh api "repos/f5-sales-demo/$r/contents/.github/workflows/translation-audit.yml" \
-               -q .content 2>/dev/null | base64 -d 2>/dev/null | grep -c 'TRANSLATIONS_ENABLED')
-     [ "${gated:-1}" -ne 0 ] && { printf '%-24s STILL GATED — wait for sync\n' "$r"; continue; }
-     gh run list -R "f5-sales-demo/$r" --workflow=translation-audit.yml \
-       --created ">$SINCE" --limit 1 --json conclusion \
-       -q '.[0].conclusion // "NO RUN SINCE UN-GATING"' \
-       | xargs printf '%-24s %s\n' "$r"
-   done < <(jq -r '.[]' .github/config/downstream-repos.json)
-   ```
-
-   Every non-skipped repository must read `success`. Anything else — `STILL GATED`, `NO RUN SINCE
-   UN-GATING`, `skipped`, `failure` — means that repository will not emit the check, and re-adding the
-   context would deadlock it.
-
-   `NO RUN SINCE UN-GATING` is the expected result for most repositories, not a fault. The audit
-   triggers only on `pull_request` `opened`, `synchronize`, and `reopened`; **merging** the sync pull
-   request fires nothing afterwards, so a repository with no later pull-request activity will report it
-   indefinitely. Provoke a run for each such repository:
-
-   ```bash
-   # for any repo reading NO RUN SINCE UN-GATING
-   git clone --depth 1 "https://github.com/f5-sales-demo/$r" /tmp/probe-$r
-   cd /tmp/probe-$r && git switch -c "chore/audit-probe" \
-     && printf '\n' >> README.md && git commit -aqm "chore: probe translation audit" \
-     && git push -q -u origin HEAD && gh pr create --fill --base main
-   ```
-
-   Probe **every** repository that reads `NO RUN SINCE UN-GATING`, including those with no `docs/en`.
-   It is tempting to skip them on the grounds that the audit passes trivially there — the reusable
-   workflow exits 0 when `docs/en` is absent — but passing and *reporting* are different things. Once
-   the context is required, such a repository must still emit `audit / Translation freshness`, and it
-   cannot do so if its caller workflow is missing, malformed, or not triggering. That is exactly the
-   deadlock this step exists to catch, and it is invisible until the context is already required.
-
-   Close the probe pull request once the audit reports. Skipping this step is how an operator ends up
-   re-adding the required context on the strength of repositories that were never actually exercised.
-
-3. **Only then** re-add `audit / Translation freshness` to
-   `branch_protection[0].required_status_checks.contexts` — **and re-add
-   `excluded_required_contexts: ["audit / Translation freshness"]` to the
-   `terraform-provider-xcsh` override**, which was removed with the base context because an exclusion
-   that matches no required context silently no-ops. Without it the repository would gain a check
-   whose managed caller it deliberately does not receive.
-
-Re-adding the required context before step 2 makes a check that never reports mandatory, which blocks
-every pull request until an administrator intervenes. The guard test cannot catch this for you: it
-reads files, and no static check can see whether an organisation variable is set in every repository.
-Step 2 is the only thing standing between a restore and a fleet-wide outage.
+Keep `audit / Translation freshness` advisory. It is intentionally conditional on the major-release
+policy and therefore cannot be a globally required context without deadlocking ordinary pull
+requests. Exceptional translation outside a major release requires explicit operator approval and
+a trusted manual exact-head dispatch; it is not inferred from PR prose.
 
 ## Branch Protection Rules
 
