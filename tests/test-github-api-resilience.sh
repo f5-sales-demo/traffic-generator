@@ -431,7 +431,10 @@ for line in input_lines:
     match = re.fullmatch(r"      ([A-Za-z0-9_-]+):\s*", line)
     if match:
         declared_inputs.append(match.group(1))
-if declared_inputs != ["pr_number", "expected_base_sha", "expected_head_sha"]:
+expected_inputs = ["pr_number", "expected_base_sha", "expected_head_sha"]
+if job == "translate":
+    expected_inputs.append("reconcile_all")
+if declared_inputs != expected_inputs:
     reject(f"unexpected workflow_dispatch inputs: {declared_inputs}")
 
 expected_with = {
@@ -439,8 +442,10 @@ expected_with = {
     "expected_base_sha": "${{ inputs.expected_base_sha }}",
     "expected_head_sha": "${{ inputs.expected_head_sha }}",
 }
+if job == "translate":
+    expected_with["reconcile_all"] = "${{ inputs.reconcile_all }}"
 if indented_block("with") != expected_with:
-    reject("job must pass only the three exact pull-request inputs")
+    reject("job must pass only the approved exact pull-request inputs")
 
 expected_permissions = {
     "contents": "read",

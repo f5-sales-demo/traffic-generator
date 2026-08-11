@@ -382,6 +382,7 @@ SURROGATE_ESCAPE_LAST = 0xDCFF
 SAFE_EMAIL_DOMAINS = {"example.com", "example.net", "example.org"}
 PROVENANCE_EMAIL_DOMAINS = {"noreply.github.com", "users.noreply.github.com"}
 SAFE_HOME_USERS = {
+    "xcsh",
     "you",
     "user",
     "users",
