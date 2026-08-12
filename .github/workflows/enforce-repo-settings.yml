@@ -28,7 +28,7 @@ concurrency:
 jobs:
   resolve-source:
     name: Resolve protected governance source
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, "${{ github.event.repository.name }}", ubuntu-24.04]
     environment: repository-settings
     outputs:
       source_sha: ${{ steps.resolve.outputs.source_sha }}
@@ -255,7 +255,7 @@ jobs:
   enforce-settings:
     needs: resolve-source
     if: needs.resolve-source.outputs.ready == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@1c904e731ec7ef505850e9f6cfdba76a692f421b
+    uses: f5-sales-demo/docs-control/.github/workflows/enforce-repo-settings.yml@6aaca252b0fb0816618cb56a4c95b19d1ce91856
     with:
       source_sha: ${{ needs.resolve-source.outputs.source_sha }}
     secrets:
@@ -264,7 +264,7 @@ jobs:
   sync-files:
     needs: resolve-source
     if: needs.resolve-source.outputs.ready == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@1c904e731ec7ef505850e9f6cfdba76a692f421b
+    uses: f5-sales-demo/docs-control/.github/workflows/sync-managed-files.yml@6aaca252b0fb0816618cb56a4c95b19d1ce91856
     with:
       source_sha: ${{ needs.resolve-source.outputs.source_sha }}
       downstream_sha: ${{ github.sha }}
