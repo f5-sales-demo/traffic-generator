@@ -2,5 +2,6 @@
 self-hosted-runner:
   labels:
     - terraform-provider-xcsh
+    - ubuntu-24.04-arm
 
 config-variables: null
