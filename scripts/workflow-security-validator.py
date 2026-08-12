@@ -35,7 +35,12 @@ ALLOWED_PERMISSIONS = {
     "contents": {"read", "none"},
     "checks": {"write", "read", "none"},
 }
-ZIZMOR_FINDINGS_EXIT = 13
+ZIZMOR_EXIT_BY_SEVERITY = {
+    "Informational": 11,
+    "Low": 12,
+    "Medium": 13,
+    "High": 14,
+}
 
 
 class PolicyError(ValueError):
@@ -46,12 +51,29 @@ def validate_zizmor_result(exit_code, findings):
     """Validate Zizmor's documented findings exit contract before authorization."""
     if not isinstance(findings, list):
         raise PolicyError("Zizmor output must be a JSON array")
-    if exit_code == 0 and findings:
+    if not findings:
+        if exit_code != 0:
+            raise PolicyError("Zizmor empty output requires exit 0")
+        return
+    if exit_code == 0:
         raise PolicyError("Zizmor exit 0 requires an empty finding array")
-    if exit_code == ZIZMOR_FINDINGS_EXIT and not findings:
-        raise PolicyError("Zizmor findings exit requires a non-empty finding array")
-    if exit_code not in {0, ZIZMOR_FINDINGS_EXIT}:
-        raise PolicyError(f"unsupported Zizmor exit code: {exit_code}")
+
+    expected_exit = 0
+    for index, finding in enumerate(findings):
+        if not isinstance(finding, dict):
+            raise PolicyError(f"Zizmor finding {index} must be an object")
+        determinations = finding.get("determinations")
+        if not isinstance(determinations, dict):
+            raise PolicyError(f"Zizmor finding {index} determinations must be an object")
+        severity = determinations.get("severity")
+        if severity not in ZIZMOR_EXIT_BY_SEVERITY:
+            raise PolicyError(f"Zizmor finding {index} has invalid severity: {severity!r}")
+        expected_exit = max(expected_exit, ZIZMOR_EXIT_BY_SEVERITY[severity])
+
+    if exit_code != expected_exit:
+        raise PolicyError(
+            f"Zizmor findings require exit {expected_exit}, received {exit_code}"
+        )
 
 
 def strict_object(value, allowed, context):

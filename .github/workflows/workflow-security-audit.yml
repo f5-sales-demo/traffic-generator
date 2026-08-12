@@ -61,10 +61,14 @@ jobs:
           targets=(.github/workflows/ workflows/*.yml)
           ZIZMOR_EXIT=0
           uvx --from 'zizmor==1.29.0' zizmor --no-config --no-ignores --persona=auditor --format=json "${targets[@]}" > zizmor-findings.json 2>zizmor-diagnostics.log || ZIZMOR_EXIT=$?
-          if [ "$ZIZMOR_EXIT" -ne 0 ] && [ "$ZIZMOR_EXIT" -ne 13 ]; then
-            echo "::error::Zizmor execution failed with exit code ${ZIZMOR_EXIT}"
-            exit 1
-          fi
+          case "$ZIZMOR_EXIT" in
+            0|11|12|13|14) ;;
+            *)
+              cat zizmor-diagnostics.log >&2
+              echo "::error::Zizmor execution failed with exit code ${ZIZMOR_EXIT}"
+              exit 1
+              ;;
+          esac
           uv run --with 'PyYAML==6.0.2' --no-project python scripts/workflow-security-validator.py \
             --repository "$AUDITED_REPOSITORY" \
             --policy .github/config/self-hosted-runner-policy.json \
