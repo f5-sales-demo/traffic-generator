@@ -6,6 +6,7 @@ self-hosted-runner:
     - api-specs
     - api-specs-enriched
     - apt-repo
+    - automation
     - bot-advanced
     - bot-standard
     - cdn
