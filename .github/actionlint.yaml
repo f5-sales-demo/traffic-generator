@@ -47,9 +47,14 @@ self-hosted-runner:
 config-variables: null
 
 paths:
-  .github/workflows/**/*.yml:
+  .github/workflows/**/*.{yml,yaml}:
     ignore:
-      - "SC2016:.+"
+      # Embedded workflow shell is also linted by actionlint, which does not
+      # load the repository ShellCheck configuration. Keep style/info findings
+      # in the dedicated shell policy while retaining all error-level checks.
+      - "shellcheck reported issue in this script: SC2002:.+"
+      - "shellcheck reported issue in this script: SC2015:.+"
+      - "shellcheck reported issue in this script: SC2016:.+"
   .github/workflows/enforce-repo-settings.yml:
     ignore:
       - 'property "repo_settings_token" is not defined'
