@@ -1,0 +1,55 @@
+---
+self-hosted-runner:
+  labels:
+    - administration
+    - api-protection
+    - api-specs
+    - api-specs-enriched
+    - apt-repo
+    - bot-advanced
+    - bot-standard
+    - cdn
+    - cdn-simulator
+    - console
+    - container-build
+    - csd
+    - ddos
+    - demo-resource-template
+    - demo-resources
+    - devcontainer
+    - dns
+    - docs
+    - docs-builder
+    - docs-control
+    - docs-icons
+    - docs-theme
+    - fixture
+    - i18n-core
+    - marketplace
+    - marketplace-claude-code
+    - mcn
+    - nginx
+    - observability
+    - origin-server
+    - starlight-llms-txt
+    - starlight-mega-menu
+    - terraform-provider-xcsh
+    - traffic-generator
+    - ubuntu-24.04-arm
+    - vscode-xcsh
+    - waf
+    - was
+    - webapp-api-protection
+    - xcsh
+    - xcsh-action
+    - xcsh-chrome-extension
+
+config-variables: null
+
+paths:
+  .github/workflows/**/*.yml:
+    ignore:
+      - "SC2016:.+"
+  .github/workflows/enforce-repo-settings.yml:
+    ignore:
+      - 'property "repo_settings_token" is not defined'

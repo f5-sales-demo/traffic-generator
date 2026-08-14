@@ -82,6 +82,20 @@ ln -s ../shared.md "${repo}/docs/link.md"
 git -C "$repo" add -A
 assert_clean "relative symlink using ../ that stays inside the repository" "$repo"
 
+# --- lexical segment parsing must handle spaces, duplicate slashes and dots ---
+repo=$(new_repo lexical-segments)
+mkdir -p "${repo}/docs with spaces/nested"
+printf 'shared\n' >"${repo}/shared file.md"
+ln -s '.././..//shared file.md' "${repo}/docs with spaces/nested/link.md"
+git -C "$repo" add -A
+assert_clean "lexical symlink segments stay inside the repository" "$repo"
+
+repo=$(new_repo lexical-escape)
+mkdir -p "${repo}/docs/nested"
+ln -s '../../..//outside' "${repo}/docs/nested/escape"
+git -C "$repo" add -A --force
+assert_violation "lexical symlink segments escaping the repository are rejected" "$repo"
+
 # --- hardcoded home directories ------------------------------------------------
 # acct1234 is synthetic but intentionally not a portable placeholder: these fixtures must exercise
 # rejection of a concrete account segment on every supported platform.

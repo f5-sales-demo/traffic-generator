@@ -461,6 +461,7 @@ PY
 }
 
 watcher="$repo_root/.github/workflows/antigravity-fleet-watcher.yml"
+watcher_collector="$repo_root/scripts/collect-antigravity-fleet-state.sh"
 review="$repo_root/.github/workflows/antigravity-review.yml"
 translation="$repo_root/.github/workflows/antigravity-translate.yml"
 translation_caller="$repo_root/workflows/antigravity-translate.yml"
@@ -504,15 +505,15 @@ if [ -f "$watcher" ]; then
   check 'fleet watcher uses the existing fleet token' \
     grep -qF 'secrets.REPO_SETTINGS_TOKEN' "$watcher"
   check 'antigravity-fleet-watcher.yml loads the governed retry helper' \
-    grep -qF 'github-api-resilience.cjs' "$watcher"
+    grep -qF 'github-api-resilience.cjs' "$watcher_collector"
   check 'antigravity-fleet-watcher.yml uses bounded GitHub retry' \
     grep -qF 'retryGitHub' "$watcher"
   check 'watcher redispatches failed or unpublished exact reviews' \
-    grep -qF 'reviewNeedsRecovery' "$watcher"
+    grep -qF 'reviewNeedsRecovery' "$watcher_collector"
   check 'watcher redispatches failed exact translations' \
-    grep -qF 'translationNeedsRecovery' "$watcher"
+    grep -qF 'translationNeedsRecovery' "$watcher_collector"
   check 'watcher emits per-repository progress heartbeats' \
-    grep -qE '\[PROGRESS\].*repository' "$watcher"
+    grep -qE '\[PROGRESS\].*repository' "$watcher_collector"
   check 'Free-tier contract remains explicit' \
     grep -qF 'GitHub Free-compatible' "$watcher"
   check 'downstream dispatcher uses receipt-aware bounded API retries' \

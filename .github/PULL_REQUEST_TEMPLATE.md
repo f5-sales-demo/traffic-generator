@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-next-line MD041 -->
 ## Summary
 
-Brief description of the verified feature branch change and its outcome.
+Describe the verified feature branch change and its outcome.
 
 ## Related Issue
 
@@ -14,7 +14,7 @@ Closes #
 ## Verification evidence
 
 Provide evidence: paste the commands you ran and their output (tests, local run or dev server,
-lint), and link the green CI run. Verified output makes the PR ready to merge.
+lint), and link the green CI run. Provide verified output to make the PR ready to merge.
 
 -
 
@@ -35,4 +35,4 @@ downstream hash evidence that proves fleet convergence.
 
 - [ ] Pending, failed, behind, or conflicted states repaired through `MERGED`
 - [ ] Worktree and confirmed-merged branch cleaned; fleet convergence confirmed when applicable
-- [ ] Follows project conventions
+- [ ] Follows project conventions and style guides

@@ -7,7 +7,7 @@ This document describes the workflow and rules that all contributors — human a
 This repository is part of a fleet governed by a central hub, **docs-control**. If you are not in
 docs-control, you are in a **downstream** repository.
 
-- **Managed files** — including this `CONTRIBUTING.md`, `CLAUDE.md`, `AGENTS.md`, and shared agent
+- **Managed files** — including this `CONTRIBUTING.md`, `CLAUDE.md`, `AGENTS.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, and shared agent
   skills — are owned by docs-control and synced to every downstream repo. Make their changes from a
   detailed docs-control issue and let the managed-file workflow propagate them fleet-wide. The
   authoritative list is `.claude/governance.json`, and a hook routes downstream edit attempts back
