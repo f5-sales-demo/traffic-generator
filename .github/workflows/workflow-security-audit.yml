@@ -15,6 +15,7 @@ name: Workflow Security Audit
 # The scheduled gate rejects every finding and refuses both configuration and inline
 # suppressions, so low-severity regressions cannot accumulate between unrelated edits.
 on:
+  pull_request:
   schedule:
     # Weekly, off-peak, deliberately not on the hour.
     - cron: '17 6 * * 1'
@@ -38,8 +39,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflow-security-audit:
+    name: Workflow security audit
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pinned Python and uv
+        uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        with:
+          version: '0.8.13'
+          python-version: '3.13.7'
+
+      - name: Reject every workflow security finding
+        env:
+          AUDITED_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          targets=(.github/workflows/ workflows/*.yml)
+          ZIZMOR_EXIT=0
+          uvx --from 'zizmor==1.29.0' zizmor --no-config --no-ignores --persona=auditor --format=json "${targets[@]}" > zizmor-findings.json 2>zizmor-diagnostics.log || ZIZMOR_EXIT=$?
+          case "$ZIZMOR_EXIT" in
+            0|11|12|13|14) ;;
+            *)
+              cat zizmor-diagnostics.log >&2
+              echo "::error::Zizmor execution failed with exit code ${ZIZMOR_EXIT}"
+              exit 1
+              ;;
+          esac
+          uv run --with 'PyYAML==6.0.2' --no-project python scripts/workflow-security-validator.py \
+            --repository "$AUDITED_REPOSITORY" \
+            --policy .github/config/self-hosted-runner-policy.json \
+            --governance .claude/governance.json \
+            --zizmor-exit "$ZIZMOR_EXIT" \
+            zizmor-findings.json
+          uv run --with 'PyYAML==6.0.2' --no-project python scripts/audit-runner-workflows.py \
+            --repository "$AUDITED_REPOSITORY" \
+            --policy .github/config/self-hosted-runner-policy.json
+
   audit:
     name: Audit workflows (zizmor)
+    if: github.event_name != 'pull_request'
     runs-on: [self-hosted, Linux, X64, "${{ github.event.repository.name }}", ubuntu-24.04]
     steps:
       - name: Checkout

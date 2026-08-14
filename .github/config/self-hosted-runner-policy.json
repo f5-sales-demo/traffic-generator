@@ -72,6 +72,20 @@
           "runs_on": "ubuntu-24.04-arm",
           "reason": "native ARM64 smoke test"
         }
+      },
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/docs-control": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
       }
     },
     "f5-sales-demo/vscode-xcsh": {
@@ -83,6 +97,12 @@
         "test-windows": {
           "runs_on": "windows-latest",
           "reason": "native Windows extension test"
+        }
+      },
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
         }
       }
     },
@@ -116,6 +136,12 @@
           "runs_on": "matrix",
           "reason": "Apple code signing requires native macOS"
         }
+      },
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
       }
     },
     "f5-sales-demo/xcsh-action": {
@@ -127,6 +153,284 @@
         "validate-native": {
           "runs_on": "matrix",
           "reason": "manifest validation covers native macOS, Windows, and ARM64"
+        }
+      },
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/administration": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/api-protection": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/api-specs": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/api-specs-enriched": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/apt-repo": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/bot-advanced": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/bot-standard": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/cdn": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/cdn-simulator": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/console": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/csd": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/ddos": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/demo-resource-template": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/demo-resources": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/dns": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/docs": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/docs-builder": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/docs-icons": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/docs-theme": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/i18n-core": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/marketplace": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/marketplace-claude-code": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/mcn": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/nginx": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/observability": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/origin-server": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/starlight-llms-txt": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/starlight-mega-menu": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/traffic-generator": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/waf": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/was": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/webapp-api-protection": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/xcsh-chrome-extension": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/terraform-provider-xcsh": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
         }
       }
     }
