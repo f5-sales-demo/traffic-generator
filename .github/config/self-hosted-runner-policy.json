@@ -1,50 +1,251 @@
 {
-  "schema_version": 1,
+  "schema_version": 3,
+  "docker": {
+    "socket": "/run/docker.sock",
+    "minimum_version": "29.2.1",
+    "target_version": "29.7.2"
+  },
+  "defaults": {
+    "replicas": 1,
+    "profile": "ubuntu-24.04"
+  },
+  "profiles": {
+    "ubuntu-24.04": {
+      "image": "ghcr.io/f5-sales-demo/actions-runner@sha256:3df631f4b2a7d4b90bed868a545932e39067f9ef4a4f4356a80873c18b962a0c",
+      "labels": ["ubuntu-24.04"],
+      "memory": "8g",
+      "cpus": "4",
+      "pids_limit": 4096,
+      "stop_timeout": 300,
+      "network": "bridge",
+      "docker_socket": false
+    },
+    "ubuntu-22.04": {
+      "image": "ghcr.io/f5-sales-demo/actions-runner@sha256:f4b5bd3e7991f2bdc6f594f899a195e5d639d6450fb05b904912ff0ea7424b9a",
+      "labels": ["ubuntu-22.04"],
+      "memory": "8g",
+      "cpus": "4",
+      "pids_limit": 4096,
+      "stop_timeout": 300,
+      "network": "bridge",
+      "docker_socket": false
+    },
+    "container-build": {
+      "image": "ghcr.io/f5-sales-demo/actions-runner-container@sha256:b920382a609097f1f89cf64bfb6c36295cd2f341669aeee3ed8a74f910cc3442",
+      "labels": ["container-build"],
+      "memory": "16g",
+      "cpus": "6",
+      "pids_limit": 8192,
+      "stop_timeout": 300,
+      "network": "bridge",
+      "docker_socket": true
+    }
+  },
+  "hosted_exceptions": {
+    "f5-sales-demo/devcontainer": {
+      ".github/workflows/docker-publish.yml": {
+        "build-arm64": {
+          "runs_on": "ubuntu-24.04-arm",
+          "reason": "native ARM64 image build"
+        },
+        "smoke-test-arm64": {
+          "runs_on": "ubuntu-24.04-arm",
+          "reason": "native ARM64 smoke test"
+        }
+      }
+    },
+    "f5-sales-demo/vscode-xcsh": {
+      ".github/workflows/ci.yml": {
+        "test-macos": {
+          "runs_on": "macos-latest",
+          "reason": "native macOS extension test"
+        },
+        "test-windows": {
+          "runs_on": "windows-latest",
+          "reason": "native Windows extension test"
+        }
+      }
+    },
+    "f5-sales-demo/xcsh": {
+      ".github/workflows/ci.yml": {
+        "setup-zig-native": {
+          "runs_on": "matrix",
+          "reason": "native macOS and Windows toolchain validation"
+        },
+        "native-nonlinux": {
+          "runs_on": "matrix",
+          "reason": "native macOS and Windows release validation"
+        },
+        "build-sign-macos": {
+          "runs_on": "matrix",
+          "reason": "Apple signing and notarization require macOS"
+        },
+        "verify-homebrew-install": {
+          "runs_on": "macos-14",
+          "reason": "Homebrew release verification requires macOS"
+        }
+      },
+      ".github/workflows/container.yml": {
+        "container-build-arm64": {
+          "runs_on": "ubuntu-24.04-arm",
+          "reason": "native ARM64 container validation"
+        }
+      },
+      ".github/workflows/test-codesign.yml": {
+        "test-codesign": {
+          "runs_on": "matrix",
+          "reason": "Apple code signing requires native macOS"
+        }
+      }
+    },
+    "f5-sales-demo/xcsh-action": {
+      ".github/workflows/ci.yml": {
+        "test-native": {
+          "runs_on": "matrix",
+          "reason": "action behavior must be validated on macOS and Windows"
+        },
+        "validate-native": {
+          "runs_on": "matrix",
+          "reason": "manifest validation covers native macOS, Windows, and ARM64"
+        }
+      }
+    }
+  },
   "repositories": {
-    "f5-sales-demo/administration": {},
-    "f5-sales-demo/api-protection": {},
-    "f5-sales-demo/api-specs": {},
-    "f5-sales-demo/api-specs-enriched": {},
-    "f5-sales-demo/apt-repo": {},
-    "f5-sales-demo/bot-advanced": {},
-    "f5-sales-demo/bot-standard": {},
-    "f5-sales-demo/cdn": {},
-    "f5-sales-demo/cdn-simulator": {},
-    "f5-sales-demo/console": {},
-    "f5-sales-demo/csd": {},
-    "f5-sales-demo/ddos": {},
-    "f5-sales-demo/demo-resource-template": {},
-    "f5-sales-demo/demo-resources": {},
-    "f5-sales-demo/devcontainer": {},
-    "f5-sales-demo/dns": {},
-    "f5-sales-demo/docs": {},
-    "f5-sales-demo/docs-builder": {},
-    "f5-sales-demo/docs-control": {},
-    "f5-sales-demo/docs-icons": {},
-    "f5-sales-demo/docs-theme": {},
-    "f5-sales-demo/i18n-core": {},
-    "f5-sales-demo/marketplace": {},
-    "f5-sales-demo/marketplace-claude-code": {},
-    "f5-sales-demo/mcn": {},
-    "f5-sales-demo/nginx": {},
-    "f5-sales-demo/observability": {},
-    "f5-sales-demo/origin-server": {},
-    "f5-sales-demo/starlight-llms-txt": {},
-    "f5-sales-demo/starlight-mega-menu": {},
-    "f5-sales-demo/traffic-generator": {},
-    "f5-sales-demo/vscode-xcsh": {},
-    "f5-sales-demo/waf": {},
-    "f5-sales-demo/was": {},
-    "f5-sales-demo/webapp-api-protection": {},
-    "f5-sales-demo/xcsh": {},
-    "f5-sales-demo/xcsh-action": {},
-    "f5-sales-demo/xcsh-chrome-extension": {},
+    "f5-sales-demo/administration": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/api-protection": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/api-specs": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/api-specs-enriched": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/apt-repo": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/bot-advanced": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/bot-standard": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/cdn": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/cdn-simulator": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/console": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/csd": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/ddos": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/demo-resource-template": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/demo-resources": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/devcontainer": {
+      "runner": {
+        "profiles": ["ubuntu-24.04", "container-build"]
+      }
+    },
+    "f5-sales-demo/dns": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/docs": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/docs-builder": {
+      "runner": {
+        "profiles": ["ubuntu-24.04", "container-build"]
+      }
+    },
+    "f5-sales-demo/docs-control": {
+      "runner": {
+        "profiles": ["ubuntu-24.04", "container-build"]
+      }
+    },
+    "f5-sales-demo/docs-icons": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/docs-theme": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/i18n-core": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/marketplace": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/marketplace-claude-code": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/mcn": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/nginx": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/observability": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/origin-server": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/starlight-llms-txt": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/starlight-mega-menu": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/traffic-generator": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/vscode-xcsh": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/waf": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/was": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/webapp-api-protection": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/xcsh": {
+      "runner": {
+        "profiles": ["ubuntu-24.04", "ubuntu-22.04", "container-build"]
+      }
+    },
+    "f5-sales-demo/xcsh-action": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
+    "f5-sales-demo/xcsh-chrome-extension": {
+      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+    },
     "f5-sales-demo/terraform-provider-xcsh": {
+      "runner": {
+        "profiles": ["ubuntu-24.04", "container-build"]
+      },
       ".github/workflows/acc-tests.yml": {
         "real-api-tests": {
-          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh"],
+          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh", "ubuntu-24.04"],
           "environment": "acceptance-tests",
-          "permissions": { "checks": "write", "contents": "read" },
+          "permissions": {
+            "checks": "write",
+            "contents": "read"
+          },
           "allowed_secrets": ["XCSH_API_TOKEN", "XCSH_API_URL"],
           "triggers": {
             "pull_request": {
@@ -57,7 +258,11 @@
                 "internal/blindfold/**"
               ]
             },
-            "schedule": [{ "cron": "0 2 * * 1" }],
+            "schedule": [
+              {
+                "cron": "0 2 * * 1"
+              }
+            ],
             "workflow_dispatch": {
               "inputs": {
                 "mode": {
@@ -85,9 +290,11 @@
           "if": "always() &&\ngithub.event_name != 'pull_request' &&\n((github.event_name == 'schedule' &&\n  needs.mock-tests.result == 'success') ||\n (github.event_name == 'workflow_dispatch' &&\n  github.event.inputs.mode == 'full' &&\n  needs.mock-tests.result == 'success') ||\n (github.event_name == 'workflow_dispatch' &&\n  github.event.inputs.mode == 'real-only' &&\n  needs.mock-tests.result == 'skipped'))\n"
         },
         "cleanup": {
-          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh"],
+          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh", "ubuntu-24.04"],
           "environment": "acceptance-tests",
-          "permissions": { "contents": "read" },
+          "permissions": {
+            "contents": "read"
+          },
           "allowed_secrets": ["XCSH_API_TOKEN", "XCSH_API_URL"],
           "triggers": {
             "pull_request": {
@@ -100,7 +307,11 @@
                 "internal/blindfold/**"
               ]
             },
-            "schedule": [{ "cron": "0 2 * * 1" }],
+            "schedule": [
+              {
+                "cron": "0 2 * * 1"
+              }
+            ],
             "workflow_dispatch": {
               "inputs": {
                 "mode": {
@@ -130,12 +341,16 @@
       },
       ".github/workflows/discover-defaults.yml": {
         "discover": {
-          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh"],
+          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh", "ubuntu-24.04"],
           "environment": "default-discovery",
           "permissions": {},
           "allowed_secrets": ["REPO_SYNC_TOKEN", "XCSH_API_TOKEN", "XCSH_API_URL"],
           "triggers": {
-            "schedule": [{ "cron": "0 6 1 * *" }],
+            "schedule": [
+              {
+                "cron": "0 6 1 * *"
+              }
+            ],
             "workflow_dispatch": {
               "inputs": {
                 "dry_run": {

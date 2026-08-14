@@ -66,14 +66,30 @@ symlink_escapes() {
   esac
   dir=$(dirname "$link_path")
   [ "$dir" = "." ] && dir=""
-  if [ -n "$dir" ]; then
-    local IFS=/
-    for segment in $dir; do
-      [ -n "$segment" ] && depth=$((depth + 1))
-    done
-  fi
-  local IFS=/
-  for segment in $target; do
+  while [ -n "$dir" ]; do
+    case "$dir" in
+    */*)
+      segment=${dir%%/*}
+      dir=${dir#*/}
+      ;;
+    *)
+      segment=$dir
+      dir=""
+      ;;
+    esac
+    [ -n "$segment" ] && depth=$((depth + 1))
+  done
+  while [ -n "$target" ]; do
+    case "$target" in
+    */*)
+      segment=${target%%/*}
+      target=${target#*/}
+      ;;
+    *)
+      segment=$target
+      target=""
+      ;;
+    esac
     case "$segment" in
     "" | .) ;;
     ..)

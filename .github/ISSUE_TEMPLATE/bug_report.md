@@ -6,7 +6,7 @@ labels: ["bug"]
 
 ## Describe the Bug
 
-A clear and concise description of what the bug is.
+Describe the bug clearly and concisely.
 
 ## Steps to Reproduce
 
@@ -17,11 +17,11 @@ A clear and concise description of what the bug is.
 
 ## Expected Behavior
 
-A clear and concise description of what you expected to happen.
+Describe the expected behavior clearly and concisely.
 
 ## Actual Behavior
 
-A clear and concise description of what actually happened.
+Describe the actual behavior clearly and concisely.
 
 ## Environment
 
@@ -31,11 +31,10 @@ A clear and concise description of what actually happened.
 
 ## Acceptance Criteria
 
-How we will know the bug is fixed — the specific, objectively verifiable conditions,
-ideally a failing test that turns green.
+Provide a checklist of specific, objectively verifiable conditions that demonstrate the work is complete. Each item must be testable, ideally a failing test that turns green.
 
 - [ ]
 
 ## Additional Context
 
-Add any other context, screenshots, or log output about the problem here.
+Provide any other context, references, or log output about the issue here.

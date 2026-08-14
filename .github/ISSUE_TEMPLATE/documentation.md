@@ -16,6 +16,12 @@ Describe the current state of the documentation (missing, incomplete, outdated, 
 
 Describe what the documentation should cover or how it should be improved.
 
+## Acceptance Criteria
+
+Provide a checklist of specific, objectively verifiable conditions that demonstrate the work is complete. Each item must be testable, ideally a failing test that turns green.
+
+- [ ]
+
 ## Additional Context
 
-Add any references, examples, or links that would help with the documentation.
+Provide any other context, references, or log output about the issue here.

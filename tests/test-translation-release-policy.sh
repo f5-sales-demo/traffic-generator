@@ -58,6 +58,7 @@ assert_decision false "leading-zero major is rejected" \
   release/v03.0.0 $'v2.9.0'
 
 WATCHER="$REPO_ROOT/.github/workflows/antigravity-fleet-watcher.yml"
+WATCHER_COLLECTOR="$REPO_ROOT/scripts/collect-antigravity-fleet-state.sh"
 CALLER="$REPO_ROOT/workflows/antigravity-translate.yml"
 TRANSLATE="$REPO_ROOT/.github/workflows/antigravity-translate.yml"
 AUDIT="$REPO_ROOT/.github/workflows/translation-audit.yml"
@@ -172,8 +173,8 @@ assert_exact_audit_route true $'policy\nvalidator:--all' \
 assert_exact_audit_route false 'policy' \
   "policy-rejected exact major candidates do not run the validator"
 
-if grep -qF 'scripts/translation-release-policy.sh' "$WATCHER" &&
-  grep -qF -- '--argjson reconcile_all true' "$WATCHER"; then
+if grep -qF 'scripts/translation-release-policy.sh' "$WATCHER_COLLECTOR" &&
+  grep -qF -- '--argjson reconcile_all true' "$WATCHER_COLLECTOR"; then
   pass "fleet watcher routes only policy-approved full reconciliation"
 else
   fail "fleet watcher routes only policy-approved full reconciliation" \

@@ -6,7 +6,7 @@ labels: ["enhancement"]
 
 ## Feature Description
 
-A clear and concise description of the feature you'd like.
+Describe the requested feature clearly and concisely.
 
 ## Use Case / Motivation
 
@@ -22,11 +22,10 @@ Describe any alternative solutions or features you've considered.
 
 ## Acceptance Criteria
 
-A checklist of specific, objectively verifiable conditions that must all be true for
-this to be considered done. Each item should be testable, not aspirational.
+Provide a checklist of specific, objectively verifiable conditions that demonstrate the work is complete. Each item must be testable, ideally a failing test that turns green.
 
 - [ ]
 
 ## Additional Context
 
-Add any other context, mockups, or references about the feature request here.
+Provide any other context, references, or log output about the issue here.
