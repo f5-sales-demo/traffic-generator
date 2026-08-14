@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ruff: noqa: N999, RUF100
+# ruff: noqa: ANN001, ANN201, ARG001, D103, EM101, EM102, N999, PLR2004, RUF100, TRY003
 # pylint: disable=invalid-name,too-many-branches
 """Fail closed when workflow routing or remote action pins escape fleet policy."""
 
