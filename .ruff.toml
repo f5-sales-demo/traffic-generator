@@ -58,11 +58,52 @@ ignore = [
     "T201",
     "INP001",
 ]
-"scripts/manage-github-runners.py" = [
+"scripts/audit-runner-workflows.py" = [
     "ANN",
     "D",
     "EM",
     "TRY003",
+    "PLR2004",
+    "ARG001",
+]
+"scripts/ephemeral-runner-controller.py" = [
+    "ANN",
+    "D",
+    "EM",
+    "TRY003",
+    "PLR2004",
+    "RUF012",
+    "S108",
+    "S310",
+    "TRY300",
+]
+"scripts/provision-ephemeral-runners.py" = [
+    "ANN",
+    "D",
+    "EM",
+    "TRY003",
+    "PLR2004",
+    "PERF401",
+    "PLW0603",
+    "PTH101",
+    "PTH105",
+    "S603",
+    "TRY300",
+]
+"tests/test_audit_runner_workflows.py" = [
+    "INP001",
+    "PT009",
+    "PT027",
+]
+"tests/test_ephemeral_runner_controller.py" = [
+    "INP001",
+    "PT009",
+    "PT027",
+]
+"tests/test_provision_ephemeral_runners.py" = [
+    "INP001",
+    "PT009",
+    "PT027",
 ]
 "tests/test_manage_github_runners.py" = [
     "INP001",

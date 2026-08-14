@@ -14,7 +14,21 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
-TOP_FIELDS = {"schema_version", "repositories"}
+POLICY_SCHEMA_VERSION = 3
+DOCKER_POLICY = {
+    "socket": "/run/docker.sock",
+    "minimum_version": "29.2.1",
+    "target_version": "29.7.2",
+}
+
+TOP_FIELDS = {
+    "schema_version",
+    "docker",
+    "defaults",
+    "profiles",
+    "hosted_exceptions",
+    "repositories",
+}
 JOB_FIELDS = {
     "runs_on",
     "environment",
@@ -91,18 +105,46 @@ def governed_repositories(path):
         repos = raw["repo_classes"]["repos"]
     except Exception as exc:
         raise PolicyError(f"cannot read governance inventory {path}: {exc}") from exc
-    if (
-        not isinstance(repos, dict)
-        or not repos
-        or not all(
-            isinstance(name, str) and isinstance(repo_class, str)
-            for name, repo_class in repos.items()
-        )
-    ):
+    valid_mapping = isinstance(repos, dict) and bool(repos)
+    valid_entries = valid_mapping and all(
+        isinstance(name, str) and isinstance(repo_class, str)
+        for name, repo_class in repos.items()
+    )
+    if not valid_entries:
         raise PolicyError(
             "governance repo_classes.repos must be a non-empty string mapping"
         )
     return {f"f5-sales-demo/{name}" for name in repos}
+
+
+def repository_runner_profiles(workflows, profiles, default_profile):
+    runner = workflows.get("runner", {})
+    if not isinstance(runner, dict) or set(runner) - {"profiles"}:
+        raise PolicyError("repository runner policy must contain only profiles")
+    allowed = runner.get("profiles", [default_profile])
+    valid_profiles = isinstance(allowed, list) and bool(allowed)
+    known_profiles = valid_profiles and all(
+        isinstance(profile, str) and profile in profiles for profile in allowed
+    )
+    unique_profiles = known_profiles and len(set(allowed)) == len(allowed)
+    required_profiles = unique_profiles and {
+        default_profile,
+        "container-build",
+    }.issubset(allowed)
+    if not required_profiles:
+        raise PolicyError(
+            "repository runner profiles must be a unique array of existing profiles "
+            "that includes the default and container-build"
+        )
+    return allowed
+
+
+def canonical_routes(basename, allowed_profiles):
+    return tuple(
+        ["self-hosted", "Linux", "X64", repository_label, profile]
+        for profile in allowed_profiles
+        for repository_label in (basename, "${{ github.event.repository.name }}")
+    )
 
 
 def permissions_within_ceiling(permissions, context):
@@ -121,8 +163,10 @@ def load_policy(path, governance_path, repository):
     except Exception as exc:
         raise PolicyError(f"cannot read policy {path}: {exc}") from exc
     strict_object(raw, TOP_FIELDS, "policy")
-    if raw.get("schema_version") != 1:
+    if raw.get("schema_version") != POLICY_SCHEMA_VERSION:
         raise PolicyError(f"unsupported schema_version: {raw.get('schema_version')!r}")
+    if raw.get("docker") != DOCKER_POLICY:
+        raise PolicyError(f"policy docker contract must equal {DOCKER_POLICY!r}")
     repositories = raw.get("repositories")
     governed = governed_repositories(governance_path)
     if not isinstance(repositories, dict) or set(repositories) != governed:
@@ -141,11 +185,24 @@ def load_policy(path, governance_path, repository):
         )
     if repository not in repositories:
         raise PolicyError(f"repository {repository!r} is not present in policy")
+    profiles = raw.get("profiles")
+    default_profile = raw.get("defaults", {}).get("profile")
+    if (
+        not isinstance(profiles, dict)
+        or not isinstance(default_profile, str)
+        or default_profile not in profiles
+    ):
+        raise PolicyError("policy default profile must name an existing profile")
     result = {}
     workflows = repositories[repository]
     if not isinstance(workflows, dict):
         raise PolicyError("repository policy must be a workflow object")
+    allowed_profiles = repository_runner_profiles(
+        workflows, profiles, default_profile
+    )
     for workflow, jobs in workflows.items():
+        if workflow == "runner":
+            continue
         if not isinstance(workflow, str) or not workflow.startswith(
             ".github/workflows/"
         ):
@@ -192,7 +249,7 @@ def load_policy(path, governance_path, repository):
                     f"{workflow}/{job_id} has untrusted trigger(s): {sorted(unknown_triggers)}"
                 )
             result[(workflow, job_id)] = spec
-    return result
+    return result, default_profile, allowed_profiles
 
 
 def route_component(item):
@@ -234,8 +291,9 @@ def normalize_location(location):
         raise PolicyError(
             f"finding path is not a safe repository-relative path: {path!r}"
         )
-    if not normalized.startswith(".github/workflows/"):
-        raise PolicyError(f"finding path is outside .github/workflows: {normalized!r}")
+    workflow_roots = (".github/workflows/", "workflows/")
+    if not normalized.startswith(workflow_roots):
+        raise PolicyError(f"finding path is outside governed workflow roots: {normalized!r}")
     return normalized, parts[index + 1], parts
 
 
@@ -359,11 +417,17 @@ def secret_references(text):
     return names
 
 
-def validate_job(repository, workflow, job, spec):
+def validate_job(repository, workflow, job, spec, default_profile):
     errors = []
     basename = repository.split("/", 1)[1]
     runs_on = job.get("runs-on")
-    expected_labels = ["self-hosted", "Linux", "X64", basename]
+    expected_labels = [
+        "self-hosted",
+        "Linux",
+        "X64",
+        basename,
+        default_profile,
+    ]
     if runs_on != spec["runs_on"] or runs_on != expected_labels:
         errors.append(f"runs-on must equal {expected_labels!r}, got {runs_on!r}")
     if job.get("environment") != spec["environment"]:
@@ -425,9 +489,13 @@ def validate_job(repository, workflow, job, spec):
     return errors
 
 
-def inventory(root, repository, policy):
+def inventory(root, repository, policy, default_profile, allowed_profiles):
     actual = {}
-    for path in sorted((root / ".github/workflows").glob("*.y*ml")):
+    paths = (
+        *(root / ".github/workflows").glob("*.y*ml"),
+        *(root / "workflows").glob("*.y*ml"),
+    )
+    for path in sorted(paths):
         relative = path.relative_to(root).as_posix()
         try:
             workflow = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -437,6 +505,7 @@ def inventory(root, repository, policy):
             workflow.get("jobs", {}), dict
         ):
             raise PolicyError(f"malformed workflow {relative}")
+        basename = repository.split("/", 1)[1]
         for job_id, job in workflow.get("jobs", {}).items():
             if not isinstance(job, dict):
                 raise PolicyError(f"malformed job {relative}/{job_id}")
@@ -449,14 +518,21 @@ def inventory(root, repository, policy):
                 )
             if self_hosted:
                 key = (relative, job_id)
-                if key not in policy:
-                    raise PolicyError(f"unlisted self-hosted job {relative}/{job_id}")
-                errors = validate_job(repository, workflow, job, policy[key])
-                if errors:
-                    raise PolicyError(f"{relative}/{job_id}: " + "; ".join(errors))
+                if key in policy:
+                    errors = validate_job(
+                        repository, workflow, job, policy[key], default_profile
+                    )
+                    if errors:
+                        raise PolicyError(
+                            f"{relative}/{job_id}: " + "; ".join(errors)
+                        )
+                elif runs_on not in canonical_routes(basename, allowed_profiles):
+                    raise PolicyError(
+                        f"{relative}/{job_id}: runs-on must use the canonical repository route"
+                    )
                 actual[key] = workflow
-    if set(actual) != set(policy):
-        unused = sorted(set(policy) - set(actual))
+    unused = sorted(set(policy) - set(actual))
+    if unused:
         raise PolicyError(f"unused policy entries: {unused}")
     return set(actual)
 
@@ -464,8 +540,12 @@ def inventory(root, repository, policy):
 def validate(findings, root, repository, policy_path, governance_path):
     if not isinstance(findings, list):
         raise PolicyError("Zizmor output must be a JSON array")
-    policy = load_policy(policy_path, governance_path, repository)
-    actual = inventory(root, repository, policy)
+    policy, default_profile, allowed_profiles = load_policy(
+        policy_path, governance_path, repository
+    )
+    actual = inventory(
+        root, repository, policy, default_profile, allowed_profiles
+    )
     found = []
     routes = []
     for finding in findings:
