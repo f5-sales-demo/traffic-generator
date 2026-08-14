@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: N999, RUF100
 # pylint: disable=invalid-name,too-many-branches
 """Fail closed when workflow routing or remote action pins escape fleet policy."""
 
@@ -86,6 +87,22 @@ def docker_socket_value(profiles, profile):
     return spec.get("docker_socket") if isinstance(spec, dict) else None
 
 
+def profile_for_route(runs_on, profiles):
+    """Resolve one security-equivalent profile for an exact scheduling route."""
+    if not isinstance(runs_on, list) or len(runs_on) != 5:
+        return None
+    candidates = []
+    for name, spec in profiles.items():
+        if runs_on[-1] in spec.get("labels", []):
+            candidates.append((name, spec))
+    if not candidates:
+        return None
+    reference = candidates[0][1]
+    if not all(spec == reference for _, spec in candidates[1:]):
+        return None
+    return candidates[0][0]
+
+
 def exception_for(exceptions, relative, job_id):
     workflow = exceptions.get(relative, {})
     if not isinstance(workflow, dict):
@@ -136,13 +153,7 @@ def audit_docker_route(workflow, job, profiles, profile):
         errors.append("Docker-capable PR job requires the socketless trust-gate")
     trust_gate = workflow.get("jobs", {}).get("trust-gate")
     trust_runs_on = trust_gate.get("runs-on") if isinstance(trust_gate, dict) else None
-    trust_profile = None
-    if isinstance(trust_runs_on, list) and len(trust_runs_on) == 5:
-        candidates = []
-        for name, spec in profiles.items():
-            if trust_runs_on[-1] in spec.get("labels", []):
-                candidates.append(name)
-        trust_profile = candidates[0] if len(candidates) == 1 else None
+    trust_profile = profile_for_route(trust_runs_on, profiles)
     if docker_socket_value(profiles, trust_profile) is not False:
         errors.append("Docker-capable PR job requires a socketless trust-gate job")
     return errors
@@ -216,11 +227,7 @@ def audit_job(  # pylint: disable=too-many-locals
     else:
         profile = default_profile
         if isinstance(runs_on, list) and len(runs_on) == 5:
-            candidates = []
-            for name, spec in profiles.items():
-                if runs_on[-1] in spec.get("labels", []):
-                    candidates.append(name)
-            profile = candidates[0] if len(candidates) == 1 else None
+            profile = profile_for_route(runs_on, profiles)
         try:
             expected = expected_self_hosted_labels(profile, profiles)
         except AuditError as exc:

@@ -11,7 +11,7 @@
   },
   "profiles": {
     "ubuntu-24.04": {
-      "image": "ghcr.io/f5-sales-demo/actions-runner@sha256:3df631f4b2a7d4b90bed868a545932e39067f9ef4a4f4356a80873c18b962a0c",
+      "image": "ghcr.io/f5-sales-demo/actions-runner@sha256:7b1016451a59afd38d165ab72025a96fc9c5cd2303efd670d258bfb9ed4cd269",
       "labels": ["ubuntu-24.04"],
       "memory": "8g",
       "cpus": "4",
@@ -20,8 +20,28 @@
       "network": "bridge",
       "docker_socket": false
     },
+    "ubuntu-24.04-secondary": {
+      "image": "ghcr.io/f5-sales-demo/actions-runner@sha256:7b1016451a59afd38d165ab72025a96fc9c5cd2303efd670d258bfb9ed4cd269",
+      "labels": ["ubuntu-24.04"],
+      "memory": "8g",
+      "cpus": "4",
+      "pids_limit": 4096,
+      "stop_timeout": 300,
+      "network": "bridge",
+      "docker_socket": false
+    },
+    "automation": {
+      "image": "ghcr.io/f5-sales-demo/actions-runner@sha256:7b1016451a59afd38d165ab72025a96fc9c5cd2303efd670d258bfb9ed4cd269",
+      "labels": ["automation"],
+      "memory": "8g",
+      "cpus": "4",
+      "pids_limit": 4096,
+      "stop_timeout": 300,
+      "network": "bridge",
+      "docker_socket": false
+    },
     "ubuntu-22.04": {
-      "image": "ghcr.io/f5-sales-demo/actions-runner@sha256:f4b5bd3e7991f2bdc6f594f899a195e5d639d6450fb05b904912ff0ea7424b9a",
+      "image": "ghcr.io/f5-sales-demo/actions-runner@sha256:0d6fe3f995e6de7e05997c26b17b59106368da5321b7be8777890784e89fae70",
       "labels": ["ubuntu-22.04"],
       "memory": "8g",
       "cpus": "4",
@@ -31,7 +51,7 @@
       "docker_socket": false
     },
     "container-build": {
-      "image": "ghcr.io/f5-sales-demo/actions-runner-container@sha256:b920382a609097f1f89cf64bfb6c36295cd2f341669aeee3ed8a74f910cc3442",
+      "image": "ghcr.io/f5-sales-demo/actions-runner-container@sha256:18bc89e50d73071641706218dcaae8fbba7a2e1628cc59cf7b557ea137ca0ed7",
       "labels": ["container-build"],
       "memory": "16g",
       "cpus": "6",
@@ -172,7 +192,7 @@
     },
     "f5-sales-demo/docs-control": {
       "runner": {
-        "profiles": ["ubuntu-24.04", "container-build"]
+        "profiles": ["ubuntu-24.04", "ubuntu-24.04-secondary", "automation", "container-build"]
       }
     },
     "f5-sales-demo/docs-icons": {

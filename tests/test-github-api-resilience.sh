@@ -539,9 +539,12 @@ check 'operator guidance documents secondary cooldown without polling' \
     grep -qF 'Retry-After' '$repo_root/CONTRIBUTING.md'"
 
 if [ -f "$sync_workflow" ]; then
-  check 'managed-file sync avoids GraphQL content mutations' \
+  check 'managed-file sync isolates the exact auto-merge GraphQL mutation' \
     bash -c "! grep -qE 'gh (issue create|issue close|pr create|pr close|pr merge)' \
-      '$sync_workflow'"
+      '$sync_workflow' && \
+      test \$(grep -c 'enablePullRequestAutoMerge' '$sync_workflow') -eq 2 && \
+      grep -q 'retry_current_json 3.*auto_merge_json' '$sync_workflow' && \
+      grep -q 'graphql --method POST' '$sync_workflow'"
 else
   skip_source_contract 'managed-file sync implementation contract'
 fi
