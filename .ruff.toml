@@ -57,6 +57,7 @@ ignore = [
 "scripts/**" = [
     "T201",
     "INP001",
+    "N999",
 ]
 "scripts/audit-runner-workflows.py" = [
     "ANN",
