@@ -427,6 +427,42 @@
       }
     },
     "f5-sales-demo/terraform-provider-xcsh": {
+      ".github/workflows/_build-test.yml": {
+        "build": {
+          "runs_on": "ubuntu-latest",
+          "reason": "CGO race tests require the hosted compiler toolchain"
+        },
+        "lint": {
+          "runs_on": "ubuntu-latest",
+          "reason": "repository Go lint uses the hosted toolchain"
+        }
+      },
+      ".github/workflows/_generate-docs.yml": {
+        "generate": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only documentation generation uses hosted Terraform tooling"
+        }
+      },
+      ".github/workflows/_generate-provider.yml": {
+        "generate": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only provider generation uses the hosted Go toolchain"
+        }
+      },
+      ".github/workflows/_tag-release.yml": {
+        "preflight": {
+          "runs_on": "ubuntu-latest",
+          "reason": "release reproducibility verification uses isolated hosted tooling"
+        },
+        "publish": {
+          "runs_on": "ubuntu-latest",
+          "reason": "release signing and publication use isolated hosted execution"
+        },
+        "tag": {
+          "runs_on": "ubuntu-latest",
+          "reason": "release tag signing uses isolated hosted execution"
+        }
+      },
       ".github/workflows/workflow-security-audit.yml": {
         "workflow-security-audit": {
           "runs_on": "ubuntu-latest",
