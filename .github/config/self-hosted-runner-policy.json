@@ -90,13 +90,43 @@
     },
     "f5-sales-demo/vscode-xcsh": {
       ".github/workflows/ci.yml": {
-        "test-macos": {
-          "runs_on": "macos-latest",
-          "reason": "native macOS extension test"
+        "spec-delivery": {
+          "runs_on": "ubuntu-latest",
+          "reason": "spec delivery validates the GitHub-hosted release contract"
         },
-        "test-windows": {
-          "runs_on": "windows-latest",
-          "reason": "native Windows extension test"
+        "validate-generation": {
+          "runs_on": "ubuntu-latest",
+          "reason": "generation uses the GitHub-hosted Node toolchain"
+        },
+        "test": {
+          "runs_on": "matrix",
+          "reason": "extension integration tests require native hosted platforms"
+        },
+        "build": {
+          "runs_on": "ubuntu-latest",
+          "reason": "VSIX build uses the GitHub-hosted packaging toolchain"
+        },
+        "security": {
+          "runs_on": "ubuntu-latest",
+          "reason": "dependency audit uses the GitHub-hosted Node toolchain"
+        },
+        "release": {
+          "runs_on": "ubuntu-latest",
+          "reason": "extension publication uses GitHub-hosted release credentials"
+        },
+        "stage-spec-delivery": {
+          "runs_on": "ubuntu-latest",
+          "reason": "spec staging uses GitHub-hosted delivery credentials"
+        },
+        "record-spec-delivery": {
+          "runs_on": "ubuntu-latest",
+          "reason": "delivery recording uses GitHub-hosted publication credentials"
+        }
+      },
+      ".github/workflows/knip.yml": {
+        "knip": {
+          "runs_on": "ubuntu-latest",
+          "reason": "dead-code analysis uses the GitHub-hosted Node toolchain"
         }
       },
       ".github/workflows/workflow-security-audit.yml": {
@@ -108,14 +138,6 @@
     },
     "f5-sales-demo/xcsh": {
       ".github/workflows/ci.yml": {
-        "setup-zig-native": {
-          "runs_on": "matrix",
-          "reason": "native macOS and Windows toolchain validation"
-        },
-        "native-nonlinux": {
-          "runs_on": "matrix",
-          "reason": "native macOS and Windows release validation"
-        },
         "build-sign-macos": {
           "runs_on": "matrix",
           "reason": "Apple signing and notarization require macOS"
@@ -123,12 +145,6 @@
         "verify-homebrew-install": {
           "runs_on": "macos-14",
           "reason": "Homebrew release verification requires macOS"
-        }
-      },
-      ".github/workflows/container.yml": {
-        "container-build-arm64": {
-          "runs_on": "ubuntu-24.04-arm",
-          "reason": "native ARM64 container validation"
         }
       },
       ".github/workflows/test-codesign.yml": {
@@ -179,14 +195,6 @@
       }
     },
     "f5-sales-demo/api-specs": {
-      ".github/workflows/workflow-security-audit.yml": {
-        "workflow-security-audit": {
-          "runs_on": "ubuntu-latest",
-          "reason": "read-only pull request workflow security audit"
-        }
-      }
-    },
-    "f5-sales-demo/api-specs-enriched": {
       ".github/workflows/workflow-security-audit.yml": {
         "workflow-security-audit": {
           "runs_on": "ubuntu-latest",
