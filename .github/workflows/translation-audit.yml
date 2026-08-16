@@ -1,30 +1,22 @@
 ---
-# Managed by docs-control. Verifies that translations stay fresh when
-# English docs change. Generation happens via Antigravity (antigravity-translate.yml);
-# this gate only audits sourceHash freshness (no API calls).
-name: Translation Audit
+# Reusable read-only policy check. Locale generation is suspended until an
+# explicitly authorized production release; English documentation is the only
+# publishable source during the suspension.
+name: English-only Documentation Policy
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
   audit:
-    # Read-only freshness audit — no secrets required.
-    #
-    # Cost-bearing generation and its audit remain positive-gated by the same
-    # organization variable. The reusable audit then applies the deterministic
-    # next-major release policy: ordinary development and minor/patch releases
-    # report successful/not-applicable, while release/vN.0.0 validates the full
-    # reconciled corpus.
-    #
-    # `vars` is used rather than `env` because the `env` context is not available
-    # in a job-level `if:`. An unset variable evaluates false, so this fails safe
-    # toward not spending money. The audit stays advisory because this job can
-    # skip when the runtime switch is disabled.
-    if: vars.TRANSLATIONS_ENABLED == 'true'
-    uses: f5-sales-demo/docs-control/.github/workflows/translation-audit.yml@2062cd557231a7827ad8e732a9c714987295efff
+    name: English-only documentation policy
+    runs-on: [self-hosted, Linux, X64, "${{ github.event.repository.name }}", ubuntu-24.04]
+    steps:
+      - name: Record suspended translation policy
+        run: |
+          set -euo pipefail
+          echo "[i18n] translation generation and locale publication are suspended."
+          echo "[i18n] English documentation remains the governed publishable source."

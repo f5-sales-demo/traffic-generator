@@ -470,7 +470,7 @@ dispatcher="$repo_root/.github/workflows/dispatch-downstream.yml"
 enforcement_caller="$repo_root/workflows/enforce-repo-settings.yml"
 repo_settings="$repo_root/.github/config/repo-settings.json"
 
-credential_files=("$review" "$translation")
+credential_files=("$review")
 if [ -f "$watcher" ]; then
   credential_files+=("$watcher")
 fi
@@ -483,12 +483,10 @@ check 'unconfigured GitHub App credentials are absent' \
   _ "${credential_files[@]}"
 
 if [ -f "$watcher" ]; then
-  for workflow in "$review" "$translation"; do
-    check "$(basename "$workflow") loads the governed retry helper" \
-      grep -qF 'github-api-resilience.cjs' "$workflow"
-    check "$(basename "$workflow") uses bounded GitHub retry" \
-      grep -qF 'retryGitHub' "$workflow"
-  done
+  check 'antigravity-review.yml loads the governed retry helper' \
+    grep -qF 'github-api-resilience.cjs' "$review"
+  check 'antigravity-review.yml uses bounded GitHub retry' \
+    grep -qF 'retryGitHub' "$review"
 
   check 'review receipts are exact-head markers' \
     grep -qE 'antigravity-pr-review:\$\{?[^}]*HEAD|antigravity-pr-review:\$\{report[.]receipt[.]head_sha\}' "$review"
@@ -496,9 +494,6 @@ else
   check 'downstream review caller has an immutable exact least-privilege contract' \
     validate_downstream_caller "$review" review antigravity-review.yml write \
     ANTIGRAVITY_TOKEN GCP_PROJECT_ID
-  check 'downstream translation caller has an immutable exact least-privilege contract' \
-    validate_downstream_caller "$translation" translate antigravity-translate.yml read \
-    ANTIGRAVITY_TOKEN GCP_PROJECT_ID REPO_SYNC_TOKEN
 fi
 
 if [ -f "$watcher" ]; then
@@ -510,8 +505,6 @@ if [ -f "$watcher" ]; then
     grep -qF 'retryGitHub' "$watcher"
   check 'watcher redispatches failed or unpublished exact reviews' \
     grep -qF 'reviewNeedsRecovery' "$watcher_collector"
-  check 'watcher redispatches failed exact translations' \
-    grep -qF 'translationNeedsRecovery' "$watcher_collector"
   check 'watcher emits per-repository progress heartbeats' \
     grep -qE '\[PROGRESS\].*repository' "$watcher_collector"
   check 'Free-tier contract remains explicit' \
@@ -525,13 +518,6 @@ if [ -f "$watcher" ]; then
     "$enforcement_caller"
 else
   skip_source_contract 'fleet watcher wiring contract'
-fi
-
-if [ -f "$translation_caller" ]; then
-  check 'translation caller uses the existing fleet sync token' \
-    grep -qF 'REPO_SYNC_TOKEN: ${{ secrets.REPO_SYNC_TOKEN }}' "$translation_caller"
-else
-  skip_source_contract 'translation source caller contract'
 fi
 
 check 'operator guidance documents secondary cooldown without polling' \
@@ -575,8 +561,6 @@ if [ -f "$watcher" ]; then
   cp "$repo_root/.claude/governance.json" "$downstream_fixture/.claude/governance.json"
   cp "$repo_root/workflows/antigravity-review.yml" \
     "$downstream_fixture/.github/workflows/antigravity-review.yml"
-  cp "$repo_root/workflows/antigravity-translate.yml" \
-    "$downstream_fixture/.github/workflows/antigravity-translate.yml"
   cp "$repo_root/CONTRIBUTING.md" "$downstream_fixture/CONTRIBUTING.md"
   cp "$repo_root/scripts/github-api-resilience.cjs" \
     "$downstream_fixture/scripts/github-api-resilience.cjs"
@@ -586,9 +570,6 @@ if [ -f "$watcher" ]; then
   check 'downstream fixture uses the managed review caller bytes' \
     cmp -s "$repo_root/workflows/antigravity-review.yml" \
     "$downstream_fixture/.github/workflows/antigravity-review.yml"
-  check 'downstream fixture uses the managed translation caller bytes' \
-    cmp -s "$repo_root/workflows/antigravity-translate.yml" \
-    "$downstream_fixture/.github/workflows/antigravity-translate.yml"
 
   if downstream_output=$(cd "$downstream_fixture" &&
     bash tests/test-github-api-resilience.sh 2>&1); then
@@ -624,10 +605,6 @@ replacements = {
         r"      pull-requests: write(?=\s+#)",
         "      pull-requests: admin",
     ),
-    "misbound-secret": (
-        re.escape("      REPO_SYNC_TOKEN: ${{ secrets.REPO_SYNC_TOKEN }}"),
-        "      REPO_SYNC_TOKEN: ${{ secrets.GCP_PROJECT_ID }}",
-    ),
 }
 pattern, replacement = replacements[mutation]
 mutated, count = re.subn(pattern, replacement, text, count=1)
@@ -656,9 +633,6 @@ PY
   assert_downstream_contract_rejects \
     'downstream contract rejects elevated review permissions' \
     '.github/workflows/antigravity-review.yml' elevated-permission
-  assert_downstream_contract_rejects \
-    'downstream contract rejects a misbound translation publication secret' \
-    '.github/workflows/antigravity-translate.yml' misbound-secret
 fi
 
 exit "$fail"
