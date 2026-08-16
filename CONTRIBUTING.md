@@ -206,126 +206,24 @@ background:
 Pause this loop only for uncertain authorization, destructive-risk approval, an unavailable
 credential, or a product decision that requires the user.
 
-## Translations (GitHub Actions controlled)
+## Translations
 
-Documentation development is English-first. Feature, fix, minor-release, and patch-release work
-updates only `docs/en/` or `src/content/docs/en/`; developers and coding agents do not regenerate
-locale files. Local hooks remain deterministic and model-free, and expected stale hashes between
-major releases do not block development.
+The fleet is English-only. Do not invoke, generate, commit, publish, or refresh non-English
+locale content for feature, fix, minor, patch, or release work. Stale locale hashes are expected
+while this policy is active and never block an English-source change.
 
-GitHub Actions owns translation generation. The fleet watcher selects only an exact next-major
-release branch (`release/vN.0.0`) where `N` is one greater than the highest stable root `vX.Y.Z` tag.
-It dispatches a full-corpus Antigravity reconciliation for every Markdown/MDX English source. Minor
-(`release/vN.M.0` where `M > 0`), patch, ordinary development, repeated-major, and skipped-major
-branches never spend translation quota. A repository with no stable SemVer tags begins at
-`release/v1.0.0`.
+The former Antigravity translation workflow, managed caller, watcher recovery path, and translation
+skill are deliberately absent from the governed rollout. The remaining
+`validate-translations.sh` hook is deterministic and model-free: it protects the shape of any
+explicitly supplied locale content but does not generate it.
 
-GitHub Actions translation is fail-closed unless the organisation variable `TRANSLATIONS_ENABLED`
-is the literal string `true`. Its immutable runtime, exact-head and workflow receipts, isolated model
-credentials, 12-locale validation, allowlisted patch, and guarded publication are covered by
-executable security UAT. The workflow files remain enabled; the organisation variable is the only
-runtime switch. Keep same-named repository variables absent because they override the organisation
-value.
+The review watcher honors GitHub API rate limits: Secondary limits never poll during cooldown and
+honor `Retry-After`.
 
-How the translation pipeline operates:
-
-| Part | Where | How it Works |
-| ---- | ----- | ------------ |
-| Local validation | Pre-commit locale/hash validation | **Deterministic only.** English-only changes pass without locale generation. |
-| Release policy | `scripts/translation-release-policy.sh` | Verifies the exact next `release/vN.0.0` against stable root SemVer tags. |
-| Automated translation | `.github/workflows/antigravity-translate.yml` — invokes `agy` on a GitHub Actions runner | Full-corpus reconciliation only for the eligible major release; the organisation variable remains the positive runtime switch. |
-| Freshness audit | `.github/workflows/translation-audit.yml` | Returns successful/not-applicable during normal development and validates the complete 12-locale corpus on the eligible major release. |
-| Required Context | `audit / Translation freshness` in branch protection | **Not required.** Requiring a check while its job can skip would deadlock pull requests. |
-
-### Activating Antigravity Actions
-
-`ANTIGRAVITY_REVIEW_ENABLED` and `TRANSLATIONS_ENABLED` are independent organisation Actions
-variables. Unset, `false`, or any other value disables the corresponding automation; only the
-literal string `true` enables it.
-
-The implementation uses GitHub Free features only: scheduled/manual Actions, ordinary organisation
-variables, the existing `REPO_SETTINGS_TOKEN` and `REPO_SYNC_TOKEN` governance PATs, artifacts,
-pull-request comments, and classic branch protection. It does not require a GitHub App. Keep
-`REPO_SETTINGS_TOKEN` limited to watcher collection/publication and `REPO_SYNC_TOKEN` limited to
-translation publication; Antigravity model jobs receive neither token. Do not add organisation
-rulesets, merge queues, audit-log streaming, or environment required reviewers. The
-`antigravity-automation` environment on the public docs-control repository is only a secret
-boundary; configure no reviewers, wait timer, or deployment rule on it.
-
-GitHub API operations are bounded and resumable. Primary exhaustion uses `GET /rate_limit` or the
-`X-RateLimit-Reset` response header. Secondary limits never poll during cooldown: automation honors
-`Retry-After`, or waits 60 seconds and doubles the delay to a 600-second cap when that header is
-absent. `[WAIT]` messages include the next-attempt timestamp, `[PROGRESS]` messages identify the
-current repository, and an operation exits 84 when its wait budget is exhausted so the scheduled
-watcher can recover the exact head without duplicating comments, dispatches, issues, or pull
-requests.
-
-1. Verify docs-control#1016 in the live workflow bytes, not merely by issue state. The installer must
-   be immutable, PR-head content must not execute with model or write credentials, permission bypass
-   must be absent, and exact base/head/workflow receipts and behavioral security tests must pass.
-
-2. Create the `antigravity-automation` environment in docs-control with no protection rules. Create
-   or update both organisation variables through the protected-main
-   `Configure Antigravity Controls` workflow's `disabled` phase. It sets both values to `false`
-   with `all` visibility. Confirm there are no same-named repository variables. Enable and keep
-   active the reusable workflows, governed callers, and fleet watcher. From a `docs-control`
-   checkout, verify the false/active state with
-   `bash scripts/verify-antigravity-controls.sh --workflow-state active`.
-
-3. Dispatch the control workflow's `pilot` phase. It sets both variables to the literal value
-   `true` with `selected` visibility restricted to docs-control. Create a same-repository
-   documentation pull request, dispatch its exact-head translation, then dispatch review against
-   the translated head. Require both model and publication jobs to succeed, their exact-head
-   artifacts to remain available, the review marker to be published, and one validator-approved
-   output for each of the 12 required locales. Verify the exact pilot scope with
-   `--visibility selected --selected-repo docs-control`. If the pilot fails, dispatch `disabled`
-   before cancelling in-flight runs.
-
-4. Expand visibility only through the control workflow's `all` phase. Supply the pilot pull-request
-   number, review and translation run IDs, translated pre-publication head SHA, and reviewed
-   post-publication head SHA. The phase fails before mutation unless GitHub proves both real job
-   pairs succeeded in trusted manual runs, both exact-head artifacts exist, the review marker is
-   published, and the guarded Antigravity commit contains exactly the 12 corresponding locale
-   outputs. The workflow then changes both variables to `all` visibility. Future suspension changes
-   only the organisation variable value and cancels any already-running jobs; workflow states remain
-   active. After every change, run the verifier from a `docs-control` checkout with the expected
-   boolean values, for example:
-
-   ```bash
-   bash scripts/verify-antigravity-controls.sh \
-     --review-enabled false --translations-enabled false --workflow-state active
-   ```
-
-   It checks all 38 governed repositories plus `docs-control`, rejects repository-variable shadows,
-   and exits 84 without retry amplification when GitHub reports a rate limit.
-
-The control workflow uses the existing `REPO_SETTINGS_TOKEN` from the unprotected
-`antigravity-automation` environment. It runs only the protected default-branch implementation,
-serializes transitions, uses the shared bounded retry helper, and emits 30-second structured
-heartbeats while waiting. An exit status of 84 means the transition deferred without treating the
-old or partially converged state as success; rerun the same idempotent phase after the reported
-cooldown. No GitHub App credentials are involved.
-
-### Major-release translation operation
-
-1. Leave ordinary development English-only. Do not edit locale files merely because source hashes
-   have drifted.
-2. Use the repository's release automation to create the exact next `release/vN.0.0` pull request.
-   `scripts/translation-release-policy.sh` verifies that `N` increments the highest stable root
-   SemVer tag by exactly one; titles and arbitrary labels are not authority.
-3. When `TRANSLATIONS_ENABLED` is the literal string `true`, the trusted fleet watcher detects the
-   eligible exact head, confirms that the repository has English Markdown/MDX documentation, and
-   dispatches `reconcile_all: true` to the governed caller.
-4. Antigravity generates all missing or stale locale counterparts without write credentials. The
-   publication job validates the complete 12-locale corpus, binds the reconciliation mode into its
-   immutable receipt, and pushes one guarded `chore(i18n)` commit to the same release branch.
-5. The pull-request synchronization reruns the advisory freshness audit. The release is ready only
-   when that full-corpus audit passes on the translated exact head.
-
-Keep `audit / Translation freshness` advisory. It is intentionally conditional on the major-release
-policy and therefore cannot be a globally required context without deadlocking ordinary pull
-requests. Exceptional translation outside a major release requires explicit operator approval and
-a trusted manual exact-head dispatch; it is not inferred from PR prose.
+A production-release authorization is required before translation work can resume. That decision
+must explicitly approve a new release-scoped design, credentials, privacy review, deterministic
+receipts, downstream artifact verification, and a separate linked issue and pull request. Do not
+re-enable a retired workflow, restore its secret mapping, or treat a release branch as authorization.
 
 ## Branch Protection Rules
 
