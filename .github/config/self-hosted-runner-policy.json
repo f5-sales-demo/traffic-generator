@@ -610,7 +610,9 @@
       "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
     },
     "f5-sales-demo/api-specs-enriched": {
-      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+      "runner": {
+        "profiles": ["ubuntu-24.04", "ubuntu-24.04-secondary", "container-build"]
+      }
     },
     "f5-sales-demo/apt-repo": {
       "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
