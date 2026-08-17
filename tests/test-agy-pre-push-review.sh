@@ -22,12 +22,29 @@ fail() {
 }
 
 setup_repo() {
-  rm -rf "${WORK:?}/repo" "${WORK:?}/bin" "$WORK/calls" "$WORK/count"
-  mkdir -p "$WORK/repo/scripts" "$WORK/bin"
+  rm -rf "${WORK:?}/repo" "${WORK:?}/bin" "$WORK/calls" "$WORK/count" \
+    "$WORK/scenarios" "$WORK/clock" "$WORK/date-count" "$WORK/sleeps"
+  mkdir -p "$WORK/repo/scripts" "$WORK/bin" "$WORK/calls" "$WORK/scenarios"
+  printf '1000\n' >"$WORK/clock"
   git -C "$WORK/repo" init -q
   git -C "$WORK/repo" config user.email test@example.com
   git -C "$WORK/repo" config user.name Test
   cp "$REVIEW" "$PROGRESS" "$SCHEMA" "$PRE_PUSH" "$WORK/repo/scripts/"
+  cat >"$WORK/repo/scripts/run-with-progress.sh" <<'SH'
+#!/bin/sh
+test "$1" = --phase
+phase=$2
+shift 2
+test "$1" = --
+shift
+printf '[PROGRESS] component=antigravity phase=%s state=started elapsed_seconds=0 heartbeat_seconds=1 timestamp=fixture\n' "$phase" >&2
+"$@"
+rc=$?
+printf '[PROGRESS] component=antigravity phase=%s state=%s elapsed_seconds=0 heartbeat_seconds=1 timestamp=fixture exit_code=%s\n' \
+  "$phase" "$([ "$rc" -eq 0 ] && printf completed || printf failed)" "$rc" >&2
+exit "$rc"
+SH
+  chmod +x "$WORK/repo/scripts/run-with-progress.sh"
   printf 'base\n' >"$WORK/repo/file.txt"
   git -C "$WORK/repo" add .
   git -C "$WORK/repo" commit -qm base
@@ -35,6 +52,27 @@ setup_repo() {
   git -C "$WORK/repo" switch -qc feature
   printf 'change\n' >>"$WORK/repo/file.txt"
   git -C "$WORK/repo" commit -qam change
+  cat >"$WORK/bin/date" <<'SH'
+#!/bin/sh
+count=0
+[ ! -f "$FAKE_DATE_COUNT" ] || count=$(cat "$FAKE_DATE_COUNT")
+count=$((count + 1))
+printf '%s\n' "$count" >"$FAKE_DATE_COUNT"
+if [ -f "$FAKE_DATE_VALUES" ]; then
+  value=$(sed -n "${count}p" "$FAKE_DATE_VALUES")
+fi
+[ -n "${value:-}" ] || value=$(cat "$FAKE_CLOCK")
+case "$*" in
+  *+%s*) printf '%s\n' "$value" ;;
+  *) printf '1970-01-01T00:00:00Z\n' ;;
+esac
+SH
+  cat >"$WORK/bin/sleep" <<'SH'
+#!/bin/sh
+printf '%s\n' "$1" >>"$FAKE_SLEEP_RECEIPTS"
+now=$(cat "$FAKE_CLOCK")
+printf '%s\n' "$((now + $1))" >"$FAKE_CLOCK"
+SH
   cat >"$WORK/bin/agy" <<'SH'
 #!/bin/sh
 count=0
@@ -47,7 +85,11 @@ printf '%s\n' "$count" >"$FAKE_AGY_COUNT"
   printf 'active=%s prepush=%s gateway=%s github=%s\n' \
     "${AGY_REVIEW_ACTIVE:-}" "${AGY_PRE_PUSH_REVIEW_ACTIVE:-}" \
     "${GATEWAY_TOKEN:-}" "${GITHUB_TOKEN:-}"
-} >>"$FAKE_AGY_CALLS"
+} >"$FAKE_AGY_CALLS/$count.args"
+printf 'GH_TOKEN=%s\nGITHUB_TOKEN=%s\nREPO_SETTINGS_TOKEN=%s\nREPO_SYNC_TOKEN=%s\nGATEWAY_TOKEN=%s\nGATEWAY_URL=%s\n' \
+  "${GH_TOKEN:-}" "${GITHUB_TOKEN:-}" "${REPO_SETTINGS_TOKEN:-}" \
+  "${REPO_SYNC_TOKEN:-}" "${GATEWAY_TOKEN:-}" "${GATEWAY_URL:-}" \
+  >"$FAKE_AGY_CALLS/$count.credentials"
 if [ -n "${FAKE_AGY_BUNDLE_CAPTURE:-}" ]; then
   for review_bundle in "$PWD"/.agy-review.*/code-review-target.txt; do
     if [ -f "$review_bundle" ]; then
@@ -55,19 +97,44 @@ if [ -n "${FAKE_AGY_BUNDLE_CAPTURE:-}" ]; then
     fi
   done
 fi
-if [ "${FAKE_AGY_DELAY_CALL:-0}" -eq "$count" ]; then
-  sleep "${FAKE_AGY_DELAY_SECONDS:-2}"
+scenario="$FAKE_AGY_QUEUE/$count"
+if [ -f "$scenario/elapsed" ]; then
+  now=$(cat "$FAKE_CLOCK")
+  elapsed=$(cat "$scenario/elapsed")
+  printf '%s\n' "$((now + elapsed))" >"$FAKE_CLOCK"
 fi
-if [ "${FAKE_AGY_MALFORMED_CALL:-0}" -eq "$count" ]; then
-  printf 'not-json\n'
-elif [ "${FAKE_AGY_BLOCK_CALL:-0}" -eq "$count" ]; then
-  printf '%s\n' '{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"needs-attention","summary":"blocking finding","findings":[{"severity":"high","title":"bug","body":"redacted evidence","file":"file.txt","line_start":1,"line_end":1,"confidence":1,"recommendation":"fix it"}],"next_steps":["fix"]}}}'
+if [ -f "$scenario/stdout" ]; then
+  cat "$scenario/stdout"
 else
   printf '%s\n' '{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"approve","summary":"clean","findings":[],"next_steps":[]}}}'
 fi
+if [ -f "$scenario/async-stderr" ]; then
+  (/bin/sleep 0.2; cat "$scenario/stderr" >&2) &
+elif [ -f "$scenario/stderr" ]; then
+  cat "$scenario/stderr" >&2
+fi
+if [ -f "$scenario/status" ]; then exit "$(cat "$scenario/status")"; fi
 SH
-  chmod +x "$WORK/bin/agy"
+  chmod +x "$WORK/bin/agy" "$WORK/bin/date" "$WORK/bin/sleep"
 }
+
+queue_scenario() {
+  local number=$1 stdout=${2:-} stderr=${3:-} status=${4:-0} elapsed=${5:-0}
+  mkdir -p "$WORK/scenarios/$number"
+  [ -z "$stdout" ] || printf '%s\n' "$stdout" >"$WORK/scenarios/$number/stdout"
+  [ -z "$stderr" ] || printf '%s\n' "$stderr" >"$WORK/scenarios/$number/stderr"
+  printf '%s\n' "$status" >"$WORK/scenarios/$number/status"
+  printf '%s\n' "$elapsed" >"$WORK/scenarios/$number/elapsed"
+}
+
+queue_async_stderr_scenario() {
+  queue_scenario "$@"
+  : >"$WORK/scenarios/$1/async-stderr"
+}
+
+valid_result='{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"approve","summary":"clean","findings":[],"next_steps":[]}}}'
+high_result='{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"needs-attention","summary":"blocking finding","findings":[{"severity":"high","title":"bug","body":"redacted evidence","file":"file.txt","line_start":1,"line_end":1,"confidence":1,"recommendation":"fix it"}],"next_steps":["fix"]}}}'
+critical_result=${high_result/\"high\"/\"critical\"}
 
 run_review() {
   local path=$1 rc=0
@@ -76,7 +143,10 @@ run_review() {
     unset AGY_REVIEW_ACTIVE AGY_PRE_PUSH_REVIEW_ACTIVE
     cd "$WORK/repo"
     PATH="$path" FAKE_AGY_CALLS="$WORK/calls" FAKE_AGY_COUNT="$WORK/count" \
-      AGY_REVIEW_BASE_REF=main "$@" bash scripts/agy-pre-push-review.sh
+      FAKE_AGY_QUEUE="$WORK/scenarios" FAKE_CLOCK="$WORK/clock" \
+      FAKE_DATE_COUNT="$WORK/date-count" FAKE_DATE_VALUES="$WORK/date-values" \
+      FAKE_SLEEP_RECEIPTS="$WORK/sleeps" AGY_REVIEW_BASE_REF=main \
+      "$@" bash scripts/agy-pre-push-review.sh
   ) >"$WORK/output" 2>&1 || rc=$?
   return "$rc"
 }
@@ -126,61 +196,174 @@ else
 fi
 
 setup_repo
-if run_review "$WORK/bin:$PATH" env GATEWAY_TOKEN=private GITHUB_TOKEN=private \
-  FAKE_AGY_BUNDLE_CAPTURE="$WORK/review-bundle" &&
+report="$WORK/report.json"
+if run_review "$WORK/bin:$PATH" env GATEWAY_TOKEN=fixture-secret GITHUB_TOKEN=fixture-secret \
+  FAKE_AGY_BUNDLE_CAPTURE="$WORK/review-bundle" AGY_REVIEW_REPORT_FILE="$report" &&
   [ "$(cat "$WORK/count")" -eq 2 ] &&
-  [ "$(grep -c -- '--sandbox' "$WORK/calls")" -eq 2 ] &&
-  [ "$(grep -c -- 'Gemini 3.6 Flash (High)' "$WORK/calls")" -eq 2 ] &&
-  ! grep -q -- '--effort' "$WORK/calls" &&
-  [ "$(grep -c -- '--json-schema' "$WORK/calls")" -eq 2 ] &&
-  ! grep -q -- '--dangerously-skip-permissions' "$WORK/calls" &&
-  grep -q 'active=1 prepush=1 gateway= github=' "$WORK/calls" &&
-  grep -q 'dedicated semantic PII audit' "$WORK/calls" &&
-  grep -q 'Do not execute repository test' "$WORK/calls" &&
-  grep -q 'consumer_shell_tests.profiles' "$WORK/calls" &&
-  grep -q 'second independent Antigravity verifier' "$WORK/calls" &&
-  grep -q 'code-review-target.txt' "$WORK/calls" &&
-  grep -q 'Do not run terminal commands' "$WORK/calls" &&
-  ! grep -q 'Inspect git diff --find-renames' "$WORK/calls" &&
+  [ "$(grep -Rl -- '--sandbox' "$WORK/calls" | wc -l)" -eq 2 ] &&
+  grep -q 'dedicated semantic PII audit' "$WORK/calls/1.args" &&
+  grep -q 'second independent Antigravity verifier' "$WORK/calls/2.args" &&
+  ! grep -REq '=(fixture-secret|[^[:space:]]+)' "$WORK/calls"/*.credentials &&
   grep -q '^commit ' "$WORK/review-bundle" &&
   grep -q '^+change$' "$WORK/review-bundle" &&
+  jq -e '.attempt_metadata == [
+    {phase:"reviewer",count:1,class:"success",exit_status:0,elapsed_seconds:0},
+    {phase:"verifier",count:1,class:"success",exit_status:0,elapsed_seconds:0}
+  ]' "$report" >/dev/null &&
   grep -q 'gate passed' "$WORK/output"; then
-  pass "two schema-validated Flash passes review a precomputed bundle without inherited credentials"
+  pass "reviewer and verifier succeed first try with isolated prompts and no inherited credentials"
 else
   fail "clean branch receives two independent Antigravity passes" "$(cat "$WORK/output")"
 fi
 
+duplicate_result="$valid_result
+$valid_result"
+for entry in \
+  'malformed JSON|not-json' \
+  'missing result|{"event":"step_update"}' \
+  "duplicate result|$duplicate_result" \
+  'missing structured output|{"event":"result","result":{"status":"SUCCESS"}}' \
+  'schema-invalid output|{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"pass","summary":"clean","findings":[],"next_steps":[]}}}'; do
+  label=${entry%%|*}
+  payload=${entry#*|}
+  setup_repo
+  queue_scenario 1 "$payload"
+  report="$WORK/report.json"
+  if run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
+    [ "$(cat "$WORK/count")" -eq 3 ] && [ "$(cat "$WORK/sleeps")" = 5 ] &&
+    jq -e '.["attempt_metadata"][0].class == "invalid-structured-output" and
+      .attempt_metadata[1].class == "success" and .attempt_metadata[2].phase == "verifier"' "$report" >/dev/null; then
+    pass "$label recovers on the next reviewer attempt"
+  else
+    fail "$label recovery" "$(cat "$WORK/output")"
+  fi
+done
+
+for entry in \
+  'timeout stdout|request timed out||124' \
+  'network stderr||network connection reset|19' \
+  'rate-limit stdout|HTTP 429 rate limit exceeded||19' \
+  'service-unavailable stderr||service unavailable temporarily|19'; do
+  label=${entry%%|*}
+  rest=${entry#*|}
+  stdout=${rest%%|*}
+  rest=${rest#*|}
+  stderr=${rest%%|*}
+  status=${rest##*|}
+  setup_repo
+  queue_scenario 1 "$stdout" "$stderr" "$status"
+  report="$WORK/report.json"
+  if run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
+    [ "$(cat "$WORK/count")" -eq 3 ] && [ "$(cat "$WORK/sleeps")" = 5 ] &&
+    jq -e '.attempt_metadata[0].class == "transient-cli-failure" and .attempt_metadata[1].class == "success"' "$report" >/dev/null; then
+    pass "$label is independently classified and recovered"
+  else
+    fail "$label recovery" "$(cat "$WORK/output")"
+  fi
+done
+
 setup_repo
-if run_review "$WORK/bin:$PATH" env FAKE_AGY_DELAY_CALL=1 FAKE_AGY_DELAY_SECONDS=2 \
-  AGY_PROGRESS_INTERVAL_SECONDS=1 &&
-  grep -q 'component=antigravity phase=reviewer state=started' "$WORK/output" &&
-  grep -q 'component=antigravity phase=reviewer state=running' "$WORK/output" &&
-  grep -q 'component=antigravity phase=reviewer state=completed' "$WORK/output" &&
-  grep -q '\[review\] reviewer completed; validating structured output' "$WORK/output" &&
-  grep -q 'component=antigravity phase=verifier state=started' "$WORK/output" &&
-  grep -q 'component=antigravity phase=verifier state=completed' "$WORK/output" &&
-  grep -q '\[review\] verifier completed; validating structured output' "$WORK/output"; then
-  pass "review wrapper emits phase start, heartbeat, and completion progress"
+queue_async_stderr_scenario 1 "" 'network connection reset after command exit' 19
+report="$WORK/report.json"
+if run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
+  [ "$(cat "$WORK/count")" -eq 3 ] && [ "$(cat "$WORK/sleeps")" = 5 ] &&
+  jq -e '.attempt_metadata[0].class == "transient-cli-failure" and .attempt_metadata[1].class == "success"' "$report" >/dev/null; then
+  pass "delayed stderr is fully captured before retry classification"
 else
-  fail "review wrapper emits unambiguous progress" "$(cat "$WORK/output")"
+  fail "delayed stderr synchronization" "$(cat "$WORK/output")"
 fi
 
 setup_repo
-if run_review "$WORK/bin:$PATH" env FAKE_AGY_BLOCK_CALL=2; then
-  fail "verified high finding blocks" "review returned success"
-elif [ "$?" -eq 3 ] && grep -q 'gate blocked' "$WORK/output"; then
-  pass "critical/high finding from either pass blocks the gate"
+for attempt in 1 2 3; do
+  queue_scenario "$attempt" 'timeout token=TOPSECRET' 'service unavailable password=HUSH' 19
+done
+report="$WORK/report.json" diagnostics="$WORK/diagnostics"
+if run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" AGY_REVIEW_DIAGNOSTIC_DIR="$diagnostics"; then
+  fail "three-attempt exhaustion" "review returned success"
+elif [ "$(cat "$WORK/count")" -eq 3 ] && [ "$(cat "$WORK/sleeps")" = $'5\n15' ] &&
+  jq -e '.reviewer.findings[0].severity == "critical" and
+    ([.attempt_metadata[] | select(.phase == "reviewer" and .class == "transient-cli-failure")] | length == 3)' "$report" >/dev/null &&
+  grep -Rqs '\[REDACTED\]' "$diagnostics" &&
+  ! grep -REq 'TOPSECRET|HUSH' "$report" "$diagnostics" &&
+  [ "$(find "$diagnostics" -type f -size +4096c | wc -l)" -eq 0 ]; then
+  pass "exhaustion records exact 5s/15s backoff and only bounded redacted diagnostics"
 else
-  fail "verified high finding blocks" "$(cat "$WORK/output")"
+  fail "three-attempt exhaustion metadata/redaction" "$(cat "$WORK/output")"
+fi
+
+for entry in 'authentication failed' 'invalid configuration' 'bad input'; do
+  setup_repo
+  queue_scenario 1 "" "$entry token=ONE_SHOT" 19
+  report="$WORK/report.json"
+  if ! run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
+    [ "$(cat "$WORK/count")" -eq 1 ] && [ ! -e "$WORK/sleeps" ] &&
+    jq -e '.attempt_metadata == [{phase:"reviewer",count:1,class:"deterministic-cli-failure",exit_status:19,elapsed_seconds:0}]' "$report" >/dev/null; then
+    pass "$entry terminates after one attempt"
+  else
+    fail "$entry retry policy" "$(cat "$WORK/output")"
+  fi
+done
+
+for phase in reviewer verifier; do
+  setup_repo
+  [ "$phase" = reviewer ] && queue_scenario 1 "$high_result"
+  [ "$phase" = verifier ] && queue_scenario 2 "$critical_result"
+  report="$WORK/report.json"
+  if ! run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
+    [ "$(cat "$WORK/count")" -eq 2 ] && [ ! -e "$WORK/sleeps" ] &&
+    jq -e --arg phase "$phase" '.[$phase].findings[0].severity | . == "high" or . == "critical"' "$report" >/dev/null; then
+    pass "valid $phase blocking finding blocks without retry"
+  else
+    fail "$phase blocking finding" "$(cat "$WORK/output")"
+  fi
+done
+
+setup_repo
+for attempt in 2 3 4; do queue_scenario "$attempt" "" 'network timeout token=VERIFIER_SECRET' 19; done
+report="$WORK/report.json" diagnostics="$WORK/diagnostics"
+if ! run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" AGY_REVIEW_DIAGNOSTIC_DIR="$diagnostics" &&
+  [ "$(cat "$WORK/count")" -eq 4 ] && [ "$(cat "$WORK/sleeps")" = $'5\n15' ] &&
+  jq -e '.reviewer.verdict == "approve" and .verifier.findings[0].severity == "critical" and
+    ([.attempt_metadata[] | select(.phase == "verifier")] | length == 3)' "$report" >/dev/null &&
+  ! grep -REq 'VERIFIER_SECRET' "$report" "$diagnostics"; then
+  pass "verifier exhaustion preserves reviewer report and synthesizes only verifier failure"
+else
+  fail "verifier exhaustion preservation" "$(cat "$WORK/output")"
 fi
 
 setup_repo
-if run_review "$WORK/bin:$PATH" env FAKE_AGY_MALFORMED_CALL=1; then
-  fail "malformed provider output blocks" "review returned success"
-elif grep -q 'malformed or incomplete' "$WORK/output"; then
-  pass "malformed provider output fails closed"
+printf '1000\n3700\n' >"$WORK/date-values"
+report="$WORK/report.json"
+if ! run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" && [ ! -e "$WORK/count" ] &&
+  jq -e '.attempt_metadata[0].class == "budget-exhausted" and .reviewer.findings[0].severity == "critical"' "$report" >/dev/null; then
+  pass "exhausted shared budget blocks without calling agy"
 else
-  fail "malformed provider output fails closed" "$(cat "$WORK/output")"
+  fail "zero shared budget" "$(cat "$WORK/output")"
+fi
+
+setup_repo
+queue_scenario 1 'request timed out' '' 124
+printf '1000\n1000\n1000\n1000\n2260\n' >"$WORK/date-values"
+report="$WORK/report.json"
+if ! run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
+  [ "$(cat "$WORK/count")" -eq 1 ] && [ ! -e "$WORK/sleeps" ] &&
+  jq -e '.attempt_metadata[-1].class == "budget-exhausted" and .attempt_metadata[-1].phase == "reviewer"' "$report" >/dev/null; then
+  pass "reviewer retry is refused when verifier reserve would be consumed"
+else
+  fail "reviewer reserved budget" "$(cat "$WORK/output")"
+fi
+
+setup_repo
+queue_scenario 2 '' 'network timeout' 19
+printf '1000\n1000\n1000\n1000\n1000\n1000\n1000\n2976\n' >"$WORK/date-values"
+report="$WORK/report.json"
+if ! run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
+  [ "$(cat "$WORK/count")" -eq 2 ] && [ ! -e "$WORK/sleeps" ] &&
+  jq -e '.reviewer.verdict == "approve" and .attempt_metadata[-1].class == "budget-exhausted" and
+    .attempt_metadata[-1].phase == "verifier"' "$report" >/dev/null; then
+  pass "verifier retry is refused when its own remaining budget is insufficient"
+else
+  fail "verifier remaining budget" "$(cat "$WORK/output")"
 fi
 
 setup_repo
@@ -215,6 +398,8 @@ rc=0
 (
   cd "$WORK/repo"
   PATH="$WORK/bin:$PATH" FAKE_AGY_CALLS="$WORK/calls" FAKE_AGY_COUNT="$WORK/count" \
+    FAKE_AGY_QUEUE="$WORK/scenarios" FAKE_CLOCK="$WORK/clock" FAKE_DATE_COUNT="$WORK/date-count" \
+    FAKE_DATE_VALUES="$WORK/date-values" FAKE_SLEEP_RECEIPTS="$WORK/sleeps" \
     AGY_REVIEW_ACTIVE=1 bash scripts/agy-pre-push-review.sh
 ) >"$WORK/output" 2>&1 || rc=$?
 if [ "$rc" -ne 0 ] && [ ! -e "$WORK/count" ] && grep -q 'nested.*refused' "$WORK/output"; then
