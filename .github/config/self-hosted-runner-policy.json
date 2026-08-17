@@ -255,6 +255,12 @@
           "reason": "PII enforcement runs in an isolated hosted environment"
         }
       },
+      ".github/workflows/release-npm-backfill.yml": {
+        "backfill": {
+          "runs_on": "ubuntu-22.04",
+          "reason": "npm backfill publication uses the hosted release environment"
+        }
+      },
       ".github/workflows/release-reconcile.yml": {
         "reconcile": {
           "runs_on": "ubuntu-22.04",
