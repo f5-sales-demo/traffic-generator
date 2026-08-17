@@ -2215,6 +2215,22 @@ git -C "$repo" add fixture.ts
 git -C "$repo" commit -qm schema
 assert_clean "escaped serialized key headings are not field values" "$repo" --scope head --mode enforce
 
+repo=$(new_repo escaped-structured-placeholder)
+cat >"${repo}/fixture.mdx" <<'EOF'
+Example: `{NAMESPACE=\"example-namespace"}`
+EOF
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm escaped-structured-placeholder
+assert_clean "escaped structured placeholder remains clean" "$repo" --scope head --mode enforce
+
+repo=$(new_repo escaped-structured-literal)
+cat >"${repo}/fixture.mdx" <<'EOF'
+Example: `{NAMESPACE=\"private-namespace"}`
+EOF
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm escaped-structured-literal
+assert_customer_identifier "escaped structured literal remains enforced" "$repo" --scope head --mode enforce
+
 repo=$(new_repo schematic-identities)
 cat >"${repo}/fixture.yaml" <<'EOF'
 tenant: staging

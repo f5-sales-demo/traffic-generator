@@ -156,7 +156,7 @@ IDENTITY_FIELD_RE = re.compile(
     r"(?P<key_open>[*_~`'\"]*)"
     r"(?P<key>tenant(?:_name|_id)?|customer(?:_name|_id)?|account(?:_name|_id)?|"
     r"subscription(?:_name|_id)|project(?:_name|_id)|namespace)"
-    r"(?P<key_close>[*_~`'\"]*)\s*(?P<separator>[:=])\s*(?P<quote>['\"`]?)"
+    r"(?P<key_close>[*_~`'\"]*)\s*(?P<separator>[:=])\s*(?P<quote>(?:\\['\"`]|['\"`])?)"
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
 PROSE_IDENTITY_QUANTIFIER_RE = re.compile(
@@ -1069,7 +1069,7 @@ def structured_field_value(path: str, line: str, match: re.Match[str]) -> str:
     start = match.start("value")
     quote = match.group("quote")
     if quote:
-        return quoted_structured_field_value(line, start, quote)
+        return quoted_structured_field_value(line, start, quote[-1])
 
     suffix = PurePosixPath(path).suffix.lower()
     yaml = suffix in {".yaml", ".yml"}
