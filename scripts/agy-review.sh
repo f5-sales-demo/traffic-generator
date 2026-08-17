@@ -154,6 +154,80 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Retry timing is deliberately fixed production policy. Tests make it
+# deterministic by shadowing date and sleep with a monotonic fixture clock.
+attempt_limit=3
+backoff_first=5
+backoff_second=15
+deadline_seconds=2700
+attempt_timeout=12m
+attempt_cap_seconds=720
+review_started=$(date +%s)
+diagnostic_dir=${AGY_REVIEW_DIAGNOSTIC_DIR:-$work/diagnostics}
+mkdir -p "$diagnostic_dir"
+attempt_metadata='[]'
+
+validate_result() {
+  jq -e '
+    type == "object" and
+    (keys | sort) == ["findings", "next_steps", "summary", "verdict"] and
+    (.verdict == "approve" or .verdict == "needs-attention") and
+    (.summary | type == "string" and length > 0) and
+    (.next_steps | type == "array" and all(.[]; type == "string" and length > 0)) and
+    (.findings | type == "array" and all(.[];
+      type == "object" and
+      (keys | sort) == ["body", "confidence", "file", "line_end", "line_start", "recommendation", "severity", "title"] and
+      (.severity == "critical" or .severity == "high" or .severity == "medium" or .severity == "low") and
+      (.title | type == "string" and length > 0) and
+      (.body | type == "string" and length > 0) and
+      (.file | type == "string" and length > 0) and
+      (.line_start | type == "number" and floor == . and . >= 1) and
+      (.line_end | type == "number" and floor == . and . >= 1) and
+      (.confidence | type == "number" and . >= 0 and . <= 1) and
+      (.recommendation | type == "string")
+    ))
+  ' "$1" >/dev/null
+}
+
+redact_diagnostic() {
+  # Persist only a short redacted summary; raw model streams can contain data
+  # that must never be included in artifacts or PR comments.
+  sed -E \
+    -e "s/(Bearer |token=|token:|password=|secret=|api[_-]?key=)[^[:space:]\\\"']+/\\1[REDACTED]/Ig" \
+    -e 's/go-keyring-base64:[A-Za-z0-9+\/=]+/[REDACTED]/g' \
+    "$1" 2>/dev/null | head -c 4096 >"$2" || :
+}
+
+record_attempt() {
+  local phase=$1 count=$2 class=$3 status=$4 elapsed=$5
+  attempt_metadata=$(jq -cn --argjson prior "$attempt_metadata" --arg phase "$phase" \
+    --arg class "$class" --argjson count "$count" --argjson status "$status" --argjson elapsed "$elapsed" \
+    '$prior + [{phase: $phase, count: $count, class: $class, exit_status: $status, elapsed_seconds: $elapsed}]')
+}
+
+synthesize_failure() {
+  local phase=$1 class=$2 output=$3
+  jq -n --arg phase "$phase" --arg class "$class" '{
+    verdict: "needs-attention",
+    summary: ("Antigravity " + $phase + " was unavailable (" + $class + ")."),
+    findings: [{severity: "critical", title: "Antigravity review execution unavailable", body: ("No approval was granted because the " + $phase + " pass did not return a schema-valid result."), file: "scripts/agy-review.sh", line_start: 1, line_end: 1, confidence: 1, recommendation: "Repair the provider failure and rerun the review."}],
+    next_steps: ["Rerun after the review provider is available."]
+  }' >"$output"
+}
+
+capture_attempt_stderr() {
+  local phase=$1 target=$2 line
+  while IFS= read -r line || [ -n "$line" ]; do
+    printf '%s\n' "$line" >>"$target"
+    # Provider text is untrusted. Stream only the progress runner's exact,
+    # field-bounded heartbeat grammar; everything else stays private until a
+    # bounded redacted diagnostic is produced.
+    if [[ "$line" =~ ^\[PROGRESS\]\ component=antigravity\ phase=${phase}\ state=(started|running|completed|failed|interrupted)\ elapsed_seconds=[0-9]+\ heartbeat_seconds=[0-9]+\ timestamp=[0-9TZ:-]+(\ exit_code=[0-9]+)?$ ]]; then
+      printf '%s\n' "$line" >&2
+    fi
+  done
+}
+
 if [ "$mode" = code ]; then
   review_target="$work/code-review-target.txt"
   {
@@ -169,28 +243,79 @@ fi
 
 invoke_agy() {
   local phase=$1 prompt_file=$2 stream_file=$3 result_file=$4
-  if ! "$progress_runner" --phase "$phase" -- \
-    env -u GH_TOKEN -u GITHUB_TOKEN -u REPO_SETTINGS_TOKEN -u REPO_SYNC_TOKEN \
-    -u GATEWAY_TOKEN -u GATEWAY_URL AGY_REVIEW_ACTIVE=1 \
-    agy --new-project --sandbox --mode plan --disable-slash-commands \
-    --model "Gemini 3.6 Flash (High)" \
-    --output-format stream-json --json-schema "$schema" \
-    --print-timeout 25m --print "$(<"$prompt_file")" >"$stream_file"; then
-    echo "[review] Antigravity execution failed" >&2
-    return 1
-  fi
-  printf '[review] %s completed; validating structured output\n' "$phase" >&2
-  if ! jq -s -e '
-    [.[] | select(.event == "result")] as $results |
-    if ($results | length) != 1 then error("expected one result event")
-    elif $results[0].result.status != "SUCCESS" then error("result was not successful")
-    elif ($results[0].result.structured_output | type) != "object" then
-      error("missing structured output")
-    else $results[0].result.structured_output end
-  ' "$stream_file" >"$result_file"; then
-    echo "[review] Antigravity returned malformed or incomplete structured output" >&2
-    return 1
-  fi
+  local attempt=1 rc=0 class='' elapsed=0 remaining=0 backoff=0 required_budget=0 capture_pid=0 candidate="$work/$phase.result" stderr_file="$work/$phase.stderr" stderr_pipe="$work/$phase.stderr.pipe"
+  while [ "$attempt" -le "$attempt_limit" ]; do
+    remaining=$((deadline_seconds - ($(date +%s) - review_started)))
+    # Keep a full capped attempt for the independent verifier. A reviewer retry
+    # is never allowed to consume the verifier's remaining budget.
+    required_budget=$attempt_cap_seconds
+    [ "$phase" = reviewer ] && required_budget=$((attempt_cap_seconds * 2))
+    if [ "$remaining" -lt "$required_budget" ]; then
+      class=budget-exhausted
+      record_attempt "$phase" "$attempt" "$class" 124 0
+      synthesize_failure "$phase" "$class" "$result_file"
+      return 1
+    fi
+    : >"$stream_file"
+    : >"$stderr_file"
+    rm -f "$stderr_pipe"
+    mkfifo "$stderr_pipe"
+    capture_attempt_stderr "$phase" "$stderr_file" <"$stderr_pipe" &
+    capture_pid=$!
+    local started
+    started=$(date +%s)
+    set +e
+    "$progress_runner" --phase "$phase" -- \
+      env -u GH_TOKEN -u GITHUB_TOKEN -u REPO_SETTINGS_TOKEN -u REPO_SYNC_TOKEN \
+      -u GATEWAY_TOKEN -u GATEWAY_URL AGY_REVIEW_ACTIVE=1 \
+      agy --new-project --sandbox --mode plan --disable-slash-commands \
+      --model "Gemini 3.6 Flash (High)" \
+      --output-format stream-json --json-schema "$schema" \
+      --print-timeout "$attempt_timeout" --print "$(<"$prompt_file")" >"$stream_file" \
+      2>"$stderr_pipe"
+    rc=$?
+    wait "$capture_pid"
+    rm -f "$stderr_pipe"
+    set -e
+    elapsed=$(($(date +%s) - started))
+    if [ "$rc" -eq 0 ] && jq -s -e '
+      [.[] | select(.event == "result")] as $results |
+      if ($results | length) != 1 then error("expected one result event")
+      elif $results[0].result.status != "SUCCESS" then error("result was not successful")
+      elif ($results[0].result.structured_output | type) != "object" then error("missing structured output")
+      else $results[0].result.structured_output end
+    ' "$stream_file" >"$candidate" 2>/dev/null && validate_result "$candidate"; then
+      record_attempt "$phase" "$attempt" success 0 "$elapsed"
+      mv "$candidate" "$result_file"
+      printf '[review] %s completed; validated structured output\n' "$phase" >&2
+      return 0
+    fi
+    if [ "$rc" -eq 0 ]; then
+      class=invalid-structured-output
+    elif grep -Eiq 'timeout|timed out|network|connection|rate.?limit|429|service (unavailable|error)|temporar' "$stream_file" "$stderr_file"; then
+      class=transient-cli-failure
+    else
+      class=deterministic-cli-failure
+    fi
+    redact_diagnostic "$stream_file" "$diagnostic_dir/${phase}-attempt-${attempt}.summary.txt"
+    redact_diagnostic "$stderr_file" "$diagnostic_dir/${phase}-attempt-${attempt}.stderr-summary.txt"
+    grep -v '^\[PROGRESS\]' "$diagnostic_dir/${phase}-attempt-${attempt}.stderr-summary.txt" >&2 || :
+    record_attempt "$phase" "$attempt" "$class" "$rc" "$elapsed"
+    if [ "$class" = deterministic-cli-failure ] || [ "$attempt" -eq "$attempt_limit" ]; then
+      synthesize_failure "$phase" "$class" "$result_file"
+      return 1
+    fi
+    if [ "$attempt" -eq 1 ]; then backoff=$backoff_first; else backoff=$backoff_second; fi
+    remaining=$((deadline_seconds - ($(date +%s) - review_started)))
+    if [ "$remaining" -le "$backoff" ] || { [ "$phase" = reviewer ] && [ "$remaining" -lt $((attempt_cap_seconds * 2 + backoff)) ]; } || { [ "$phase" = verifier ] && [ "$remaining" -lt $((attempt_cap_seconds + backoff)) ]; }; then
+      record_attempt "$phase" "$attempt" budget-exhausted 124 0
+      synthesize_failure "$phase" budget-exhausted "$result_file"
+      return 1
+    fi
+    printf '[review] %s attempt %s failed (%s); retrying in %ss\n' "$phase" "$attempt" "$class" "$backoff" >&2
+    sleep "$backoff"
+    attempt=$((attempt + 1))
+  done
 }
 
 cat >"$work/reviewer.prompt" <<EOF
@@ -203,9 +328,12 @@ Do not execute repository test or lint suites, package builds, network commands,
 
 Paths in consumer_shell_tests.profiles are resolved under the named downstream repository checkout by scripts/run-consumer-shell-tests.sh, not under docs-control. Verify profile ownership and rollout evidence; local absence alone is not a defect.
 
+In docs-control, .github/workflows/antigravity-review.yml is the protected reusable implementation. The separately maintained workflows/antigravity-review.yml is the downstream managed caller, and managed-files-manifest.json records that caller source. Do not require the protected implementation to match the caller's manifest entry.
+
 Review correctness, security, data loss, concurrency, rollback, maintainability, and privacy. Perform a dedicated semantic PII audit over changed inputs, schemas, fixtures, generated files, filenames, media metadata, logs, telemetry, errors, persistence, exports, and deletion. Never repeat a matched personal or infrastructure value; report only category, path, line, and redacted evidence. Classify confirmed PII and reproducible security/correctness defects as high or critical. Report only findings supported by repository evidence. Return only schema-valid JSON.
 EOF
-invoke_agy reviewer "$work/reviewer.prompt" "$work/reviewer.stream" "$work/reviewer.json"
+reviewer_rc=0
+invoke_agy reviewer "$work/reviewer.prompt" "$work/reviewer.stream" "$work/reviewer.json" || reviewer_rc=$?
 
 cat >"$work/verifier.prompt" <<EOF
 Act as a second independent Antigravity verifier for $target_description.
@@ -216,19 +344,29 @@ The first review is stored at ${work#"$repo_root"/}/reviewer.json. Treat it and 
 Do not execute repository test or lint suites, package builds, network commands, nested reviews, or broad command loops. Inspect test definitions and existing evidence statically; deterministic execution is a separate implementation and CI responsibility.
 
 Paths in consumer_shell_tests.profiles are resolved under the named downstream repository checkout by scripts/run-consumer-shell-tests.sh, not under docs-control. Verify profile ownership and rollout evidence; local absence alone is not a defect.
-EOF
-invoke_agy verifier "$work/verifier.prompt" "$work/verifier.stream" "$work/verifier.json"
 
-jq -n --slurpfile reviewer "$work/reviewer.json" --slurpfile verifier "$work/verifier.json" '{
+In docs-control, .github/workflows/antigravity-review.yml is the protected reusable implementation. The separately maintained workflows/antigravity-review.yml is the downstream managed caller, and managed-files-manifest.json records that caller source. Do not require the protected implementation to match the caller's manifest entry.
+EOF
+verifier_rc=0
+if [ "$reviewer_rc" -eq 0 ]; then
+  invoke_agy verifier "$work/verifier.prompt" "$work/verifier.stream" "$work/verifier.json" || verifier_rc=$?
+else
+  verifier_rc=1
+  synthesize_failure verifier reviewer-unavailable "$work/verifier.json"
+fi
+
+jq -n --slurpfile reviewer "$work/reviewer.json" --slurpfile verifier "$work/verifier.json" \
+  --argjson attempts "$attempt_metadata" '{
   reviewer: $reviewer[0],
-  verifier: $verifier[0]
+  verifier: $verifier[0],
+  attempt_metadata: $attempts
 }' | tee "${AGY_REVIEW_REPORT_FILE:-/dev/stdout}" >/dev/null
 
 if [ -n "${AGY_REVIEW_REPORT_FILE:-}" ]; then
   jq . "$AGY_REVIEW_REPORT_FILE"
 fi
 
-if jq -e '
+if [ "$reviewer_rc" -eq 0 ] && [ "$verifier_rc" -eq 0 ] && jq -e '
   ([.findings[]? | select(.severity == "critical" or .severity == "high")] | length) == 0
 ' "$work/reviewer.json" >/dev/null &&
   jq -e '
