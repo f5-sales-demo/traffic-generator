@@ -98,15 +98,20 @@ if [ -n "${FAKE_AGY_BUNDLE_CAPTURE:-}" ]; then
   done
 fi
 scenario="$FAKE_AGY_QUEUE/$count"
+base_sha=$(git merge-base main HEAD)
+head_sha=$(git rev-parse HEAD)
+target_receipt=$(printf 'agy-review-target-v1\ncode\n%s\n%s\n' "$base_sha" "$head_sha" |
+  sha256sum | awk '{print $1}')
 if [ -f "$scenario/elapsed" ]; then
   now=$(cat "$FAKE_CLOCK")
   elapsed=$(cat "$scenario/elapsed")
   printf '%s\n' "$((now + elapsed))" >"$FAKE_CLOCK"
 fi
 if [ -f "$scenario/stdout" ]; then
-  cat "$scenario/stdout"
+  sed "s/__TARGET_RECEIPT__/$target_receipt/g" "$scenario/stdout"
 else
-  printf '%s\n' '{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"approve","summary":"clean","findings":[],"next_steps":[]}}}'
+  printf '%s\n' '{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"approve","summary":"clean","findings":[],"next_steps":[],"review_target_receipt":"__TARGET_RECEIPT__"}}}' |
+    sed "s/__TARGET_RECEIPT__/$target_receipt/g"
 fi
 if [ -f "$scenario/async-stderr" ]; then
   (/bin/sleep 0.2; cat "$scenario/stderr" >&2) &
@@ -132,8 +137,8 @@ queue_async_stderr_scenario() {
   : >"$WORK/scenarios/$1/async-stderr"
 }
 
-valid_result='{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"approve","summary":"clean","findings":[],"next_steps":[]}}}'
-high_result='{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"needs-attention","summary":"blocking finding","findings":[{"severity":"high","title":"bug","body":"redacted evidence","file":"file.txt","line_start":1,"line_end":1,"confidence":1,"recommendation":"fix it"}],"next_steps":["fix"]}}}'
+valid_result='{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"approve","summary":"clean","findings":[],"next_steps":[],"review_target_receipt":"__TARGET_RECEIPT__"}}}'
+high_result='{"event":"result","result":{"status":"SUCCESS","structured_output":{"verdict":"needs-attention","summary":"blocking finding","findings":[{"severity":"high","title":"bug","body":"redacted evidence","file":"file.txt","line_start":1,"line_end":1,"confidence":1,"recommendation":"fix it"}],"next_steps":["fix"],"review_target_receipt":"__TARGET_RECEIPT__"}}}'
 critical_result=${high_result/\"high\"/\"critical\"}
 
 run_review() {
@@ -203,6 +208,8 @@ if run_review "$WORK/bin:$PATH" env GATEWAY_TOKEN=fixture-secret GITHUB_TOKEN=fi
   [ "$(grep -Rl -- '--sandbox' "$WORK/calls" | wc -l)" -eq 2 ] &&
   grep -q 'dedicated semantic PII audit' "$WORK/calls/1.args" &&
   grep -q 'second independent Antigravity verifier' "$WORK/calls/2.args" &&
+  grep -Eq 'exact target receipt is [0-9a-f]{64}' "$WORK/calls/1.args" &&
+  grep -Eq 'exact target receipt is [0-9a-f]{64}' "$WORK/calls/2.args" &&
   ! grep -REq '=(fixture-secret|[^[:space:]]+)' "$WORK/calls"/*.credentials &&
   grep -q '^commit ' "$WORK/review-bundle" &&
   grep -q '^+change$' "$WORK/review-bundle" &&
@@ -220,6 +227,7 @@ duplicate_result="$valid_result
 $valid_result"
 for entry in \
   'malformed JSON|not-json' \
+  'startup-only provider text|Antigravity is ready. How can I help?' \
   'missing result|{"event":"step_update"}' \
   "duplicate result|$duplicate_result" \
   'missing structured output|{"event":"result","result":{"status":"SUCCESS"}}' \
@@ -231,13 +239,28 @@ for entry in \
   report="$WORK/report.json"
   if run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
     [ "$(cat "$WORK/count")" -eq 3 ] && [ "$(cat "$WORK/sleeps")" = 5 ] &&
-    jq -e '.["attempt_metadata"][0].class == "invalid-structured-output" and
+    jq -e '.["attempt_metadata"][0].class == "invalid-review-receipt" and
       .attempt_metadata[1].class == "success" and .attempt_metadata[2].phase == "verifier"' "$report" >/dev/null; then
     pass "$label recovers on the next reviewer attempt"
   else
     fail "$label recovery" "$(cat "$WORK/output")"
   fi
 done
+
+setup_repo
+wrong_receipt=$(printf '0%.0s' {1..64})
+wrong_result=$(printf '%s' "$valid_result" | sed "s/__TARGET_RECEIPT__/$wrong_receipt/")
+queue_scenario 1 "$wrong_result"
+report="$WORK/report.json"
+if run_review "$WORK/bin:$PATH" env AGY_REVIEW_REPORT_FILE="$report" &&
+  [ "$(cat "$WORK/count")" -eq 3 ] && [ "$(cat "$WORK/sleeps")" = 5 ] &&
+  jq -e '.attempt_metadata[0].class == "invalid-review-receipt" and
+    (.reviewer.review_target_receipt | test("^[0-9a-f]{64}$")) and
+    .verifier.review_target_receipt == .reviewer.review_target_receipt' "$report" >/dev/null; then
+  pass "mismatched target receipt retries and cannot approve the review"
+else
+  fail "mismatched target receipt retries and cannot approve the review" "$(cat "$WORK/output")"
+fi
 
 for entry in \
   'timeout stdout|request timed out||124' \
