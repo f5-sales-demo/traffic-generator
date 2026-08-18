@@ -89,7 +89,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 schema="$script_dir/agy-review-output.schema.json"
 progress_runner="$script_dir/run-with-progress.sh"
 
-for command in agy jq; do
+for command in agy jq sha256sum; do
   command -v "$command" >/dev/null 2>&1 || {
     echo "[review] required command is unavailable: $command" >&2
     exit 1
@@ -121,6 +121,8 @@ if [ "$mode" = code ]; then
     echo "[review] no branch diff to review against $base_ref"
     exit 0
   fi
+  target_receipt=$(printf 'agy-review-target-v1\ncode\n%s\n%s\n' "$base_sha" "$head_sha" |
+    sha256sum | awk '{print $1}')
   if [ "${AGY_REVIEW_SKIP_LOCAL_PII:-0}" != "1" ] && [ -x scripts/check-pii.sh ]; then
     "$progress_runner" --phase pii-preflight -- \
       bash scripts/check-pii.sh --scope head --mode enforce
@@ -145,6 +147,9 @@ else
   relative_document=${document_path#"$repo_root"/}
   target_description="$document_kind document $relative_document"
   target_instructions="Read $relative_document completely and verify material claims against the repository."
+  target_receipt=$(printf 'agy-review-target-v1\ndocument\n%s\n%s\n' \
+    "$document_kind" "$(sha256sum "$document_path" | awk '{print $1}')" |
+    sha256sum | awk '{print $1}')
 fi
 
 work=$(mktemp -d "$repo_root/.agy-review.XXXXXX")
@@ -168,11 +173,12 @@ mkdir -p "$diagnostic_dir"
 attempt_metadata='[]'
 
 validate_result() {
-  jq -e '
+  jq -e --arg receipt "$target_receipt" '
     type == "object" and
-    (keys | sort) == ["findings", "next_steps", "summary", "verdict"] and
+    (keys | sort) == ["findings", "next_steps", "review_target_receipt", "summary", "verdict"] and
     (.verdict == "approve" or .verdict == "needs-attention") and
     (.summary | type == "string" and length > 0) and
+    (.review_target_receipt == $receipt) and
     (.next_steps | type == "array" and all(.[]; type == "string" and length > 0)) and
     (.findings | type == "array" and all(.[];
       type == "object" and
@@ -207,11 +213,12 @@ record_attempt() {
 
 synthesize_failure() {
   local phase=$1 class=$2 output=$3
-  jq -n --arg phase "$phase" --arg class "$class" '{
+  jq -n --arg phase "$phase" --arg class "$class" --arg receipt "$target_receipt" '{
     verdict: "needs-attention",
     summary: ("Antigravity " + $phase + " was unavailable (" + $class + ")."),
     findings: [{severity: "critical", title: "Antigravity review execution unavailable", body: ("No approval was granted because the " + $phase + " pass did not return a schema-valid result."), file: "scripts/agy-review.sh", line_start: 1, line_end: 1, confidence: 1, recommendation: "Repair the provider failure and rerun the review."}],
-    next_steps: ["Rerun after the review provider is available."]
+    next_steps: ["Rerun after the review provider is available."],
+    review_target_receipt: $receipt
   }' >"$output"
 }
 
@@ -226,6 +233,20 @@ capture_attempt_stderr() {
       printf '%s\n' "$line" >&2
     fi
   done
+}
+
+contains_transient_failure() {
+  local stream_file=$1 stderr_file=$2 line
+  grep -Eiq 'timeout|timed out|network|connection|rate.?limit|429|service (unavailable|error)|temporar' "$stderr_file" && return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    # A successful result can contain arbitrary evidence (including a receipt
+    # hash), so only inspect non-result stream records for CLI diagnostics.
+    if printf '%s\n' "$line" | jq -e 'type == "object" and .event == "result"' >/dev/null 2>&1; then
+      continue
+    fi
+    grep -Eiq 'timeout|timed out|network|connection|rate.?limit|429|service (unavailable|error)|temporar' <<<"$line" && return 0
+  done <"$stream_file"
+  return 1
 }
 
 if [ "$mode" = code ]; then
@@ -291,8 +312,8 @@ invoke_agy() {
       return 0
     fi
     if [ "$rc" -eq 0 ]; then
-      class=invalid-structured-output
-    elif grep -Eiq 'timeout|timed out|network|connection|rate.?limit|429|service (unavailable|error)|temporar' "$stream_file" "$stderr_file"; then
+      class=invalid-review-receipt
+    elif contains_transient_failure "$stream_file" "$stderr_file"; then
       class=transient-cli-failure
     else
       class=deterministic-cli-failure
@@ -330,6 +351,8 @@ Paths in consumer_shell_tests.profiles are resolved under the named downstream r
 
 In docs-control, .github/workflows/antigravity-review.yml is the protected reusable implementation. The separately maintained workflows/antigravity-review.yml is the downstream managed caller, and managed-files-manifest.json records that caller source. Do not require the protected implementation to match the caller's manifest entry.
 
+The exact target receipt is $target_receipt. Return it unchanged as the review_target_receipt field. A response without that exact receipt is invalid and cannot approve this review.
+
 Review correctness, security, data loss, concurrency, rollback, maintainability, and privacy. Perform a dedicated semantic PII audit over changed inputs, schemas, fixtures, generated files, filenames, media metadata, logs, telemetry, errors, persistence, exports, and deletion. Never repeat a matched personal or infrastructure value; report only category, path, line, and redacted evidence. Classify confirmed PII and reproducible security/correctness defects as high or critical. Report only findings supported by repository evidence. Return only schema-valid JSON.
 EOF
 reviewer_rc=0
@@ -346,6 +369,8 @@ Do not execute repository test or lint suites, package builds, network commands,
 Paths in consumer_shell_tests.profiles are resolved under the named downstream repository checkout by scripts/run-consumer-shell-tests.sh, not under docs-control. Verify profile ownership and rollout evidence; local absence alone is not a defect.
 
 In docs-control, .github/workflows/antigravity-review.yml is the protected reusable implementation. The separately maintained workflows/antigravity-review.yml is the downstream managed caller, and managed-files-manifest.json records that caller source. Do not require the protected implementation to match the caller's manifest entry.
+
+The exact target receipt is $target_receipt. Return it unchanged as the review_target_receipt field. A response without that exact receipt is invalid and cannot approve this review.
 EOF
 verifier_rc=0
 if [ "$reviewer_rc" -eq 0 ]; then
