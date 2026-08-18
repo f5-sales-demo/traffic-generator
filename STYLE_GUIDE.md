@@ -1,4 +1,4 @@
-# Documentation Style Guide
+# Documentation style guide
 
 Conventions for every piece of published content this fleet produces: blog articles, how-to
 guides, demo guides, lab walkthroughs, product documentation, README files, code comments, and
@@ -179,18 +179,20 @@ log, or audit ledger; record the category and remediation instead.
 
 ### Placeholder convention
 
-Angle brackets, capitals and underscores, one obvious meaning:
+Use angle brackets with uppercase snake_case (`<UPPERCASE_SNAKE_CASE>`) for all code, parameter, URL, and configuration placeholders:
 
 ```text
 <XC_TENANT>
 <XC_API_TOKEN>
 <XC_NAMESPACE>
 <ORIGIN_POOL_NAME>
+<BRANCH>
+<SERVER_NAME>
 ```
 
 This form is searchable, obviously non-functional, and survives a paste into a shell as a visible
 syntax error rather than a silent misconfiguration. Do not use `YOUR_TOKEN_HERE`, `xxxxx`,
-`changeme`, or anything that looks like a real value.
+`changeme`, `foo`, or anything that looks like a real value.
 
 ### Never publish a real-shaped credential
 
@@ -242,27 +244,47 @@ file.
 
 ## Prose and structure
 
-### Voice
+### Voice and tone
 
 - **Second person, present tense, active voice.** "You create an origin pool," not "an origin
   pool is created" and not "we will create."
-- **Imperative for steps.** "Select **Add Item**." Not "You should now select Add Item."
-- State the outcome before the procedure. Lead each section with what the reader gets.
-- Avoid "simply", "just", "easy", and "obviously". If a step is easy the reader will notice; if
-  it is not, the word is an insult.
-- Expand every acronym on first use in each document, including familiar ones. Readers arrive
+- **Imperative for steps with actionable rationale.** "Select **Add Item** to open the
+  configuration modal." Lead each step with an imperative verb and explain why or what happens.
+  Not "You should now select Add Item."
+- **State the outcome before the procedure.** Lead each section with what the reader gets.
+- **Eliminate conversational fillers and condescending language.** Avoid "simply", "just",
+  "easy", and "obviously". If a step is straightforward, the reader will notice; if it is not, the
+  word creates frustration. Adhere to Microsoft Writing Style Guide principles on professional respect.
+- **Spaced em-dashes for parenthetical thought or emphasis.** Use ` — ` (an em-dash surrounded by
+  spaces) rather than hyphens (`-`, `--`) or unspaced em-dashes to maintain clear readability.
+- **Expand every acronym on first use in each document**, including familiar ones. Readers arrive
   from search engines, part-way down the page.
 
 ### Structure
 
-- One level-one heading per document, matching the title. Sentence case for all headings.
-- Numbered lists only for ordered steps. Bulleted lists for everything else.
-- Open every how-to and demo guide with **Prerequisites** — required access, service tier,
+- **One level-one heading per document**, matching the title. Sentence case for all headings
+  (H1 through H6) without mixed title casing.
+- **Numbered lists only for ordered steps.** Bulleted lists for everything else. Bulleted list
+  items that are complete sentences must end with a period; fragments do not.
+- **Open every how-to and demo guide with Prerequisites** — required access, service tier,
   licenses, tool versions, prior setup — and an estimate of how long the walkthrough takes.
-- Close with **Verify**, showing how the reader confirms success and what output to expect, and
-  **Clean up**, showing how to tear the environment down. A demo guide with no teardown section
+- **Close with Verify and Clean up.** Show how the reader confirms success and what output to
+  expect, followed by how to tear the environment down. A demo guide with no teardown section
   leaves billable resources running.
-- One action per step. If a step contains "and", it is two steps.
+- **One action per step.** If a step contains "and", it is two steps.
+
+### Semantic cohesion and DRY principles
+
+- **Do Not Repeat Yourself (DRY).** Avoid repeating conceptual explanations across multiple
+  documents. Reference canonical architecture guides, configuration docs, or specs instead of
+  duplicating prose.
+- **Consolidate comparative details into conceptual tables.** Use Markdown tables to compare
+  options, runtime modes, flags, and matrix dimensions rather than sprawling paragraphs.
+- **Use canonical sequence diagrams.** For multi-component or asynchronous workflows, include
+  clear ASCII or Mermaid sequence diagrams that map message flow and lifecycle states directly to
+  implementation contracts.
+- **Anchor claims with concrete implementation file references.** Link directly to repository files,
+  APIs, and schemas so the documentation stays verifiable against code.
 
 ### Code and commands
 
@@ -287,6 +309,7 @@ file.
 
 ## Pre-publish checklist
 
+- [ ] Heading levels (H1–H6) in sentence case
 - [ ] Every public-facing address is in TEST-NET-1/2/3, `2001:db8::/32`, or `3fff::/20`
 - [ ] Every private address is RFC 1918 and consistent across the document
 - [ ] Every domain is `example.com`, `example.net`, `example.org`, a reserved top-level domain,
@@ -296,8 +319,12 @@ file.
 - [ ] No real person's name, email address, or contact details
 - [ ] No PII in fixtures, snapshots, logs, telemetry, errors, filenames, or commit messages
 - [ ] No credential, token, key, or certificate material — live, expired, or otherwise
+- [ ] Code and parameter placeholders formatted as `<UPPERCASE_SNAKE_CASE>`
 - [ ] No real tenant, namespace, or account identifier
 - [ ] Screenshots checked against the list above and verified flat
+- [ ] Em-dashes formatted with surrounding spaces (` — `)
+- [ ] No conversational filler words (`simply`, `just`, `easy`, `obviously`)
+- [ ] Prose follows DRY principles with conceptual tables and sequence diagrams where appropriate
 - [ ] Managed PII enforcement and audit scans run; every media-review finding inspected
 - [ ] Every command can be copied and run; every fence is language-tagged
 - [ ] Prerequisites, Verify, and Clean up sections present
