@@ -129,9 +129,11 @@ oauth-success.html
 .omx/
 
 # Lock file preferences (Bun-based repos)
-package-lock.json
 yarn.lock
 /bun.lock
+
+# Terraform provider build artifacts
+/terraform-provider-xcsh
 
 # Monorepo build
 .turbo/
