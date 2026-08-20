@@ -92,12 +92,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up pinned Python and uv
-        uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
-        with:
-          version: '0.8.13'
-          python-version: '3.13.7'
-
       - name: Reject every workflow security finding
         env:
           AUDITED_REPOSITORY: ${{ github.repository }}
