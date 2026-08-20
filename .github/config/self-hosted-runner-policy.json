@@ -7,7 +7,8 @@
   },
   "defaults": {
     "replicas": 1,
-    "profile": "ubuntu-24.04"
+    "profile": "ubuntu-24.04",
+    "standby_profiles": ["ubuntu-24.04"]
   },
   "profiles": {
     "ubuntu-24.04": {
