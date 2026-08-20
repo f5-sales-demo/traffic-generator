@@ -1,0 +1,56 @@
+---
+name: Self-hosted Runner Python and uv Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: self-hosted-runner-python-uv-smoke-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  tool-cache-smoke:
+    name: Validate catalogued Python and uv
+    runs-on: [self-hosted, Linux, X64, traffic-generator, ubuntu-24.04]
+    timeout-minutes: 10
+    steps:
+      - name: Assert private cache and immutable image boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${RUNNER_RUNTIME_DIR:?RUNNER_RUNTIME_DIR must be set}"
+          : "${RUNNER_TOOL_CACHE:?RUNNER_TOOL_CACHE must be set}"
+          runtime_dir="$(realpath -m -- "$RUNNER_RUNTIME_DIR")"
+          tool_cache="$(realpath -m -- "$RUNNER_TOOL_CACHE")"
+          test "$tool_cache" = "$runtime_dir/_tool"
+          test -f "$tool_cache/Python/3.13.7/x64.complete"
+          test -f "$tool_cache/uv/0.8.24/x86_64.complete"
+          test -f /opt/hostedtoolcache/Python/3.13.7/x64.complete
+          test -f /opt/hostedtoolcache/uv/0.8.24/x86_64.complete
+          if touch /.self-hosted-runner-python-uv-smoke; then
+            rm -f /.self-hosted-runner-python-uv-smoke
+            echo "the runner root filesystem must be read-only" >&2
+            exit 1
+          fi
+          if touch /opt/hostedtoolcache/.self-hosted-runner-python-uv-smoke; then
+            rm -f /opt/hostedtoolcache/.self-hosted-runner-python-uv-smoke
+            echo "the image tool cache must be read-only" >&2
+            exit 1
+          fi
+
+      - name: Resolve catalogued Python from the private tool cache
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: 3.13.7
+
+      - name: Verify Python and uv versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(python --version)" = "Python 3.13.7"
+          test "$(uv --version)" = "uv 0.8.24"
+          test -f "$RUNNER_TOOL_CACHE/Python/3.13.7/x64.complete"
+          test -f "$RUNNER_TOOL_CACHE/uv/0.8.24/x86_64.complete"
