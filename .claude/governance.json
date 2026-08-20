@@ -30,8 +30,6 @@
     "scripts/audit-runner-workflows.py",
     "scripts/ephemeral-runner-controller.py",
     "scripts/provision-ephemeral-runners.py",
-    "runner-images/Containerfile",
-    ".github/workflows/publish-runner-images.yml",
     ".github/workflows/semgrep.yml",
     ".github/workflows/translation-audit.yml",
     ".github/workflows/antigravity-review.yml",
