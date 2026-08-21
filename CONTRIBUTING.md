@@ -360,7 +360,7 @@ aliases, dual-read logic, deprecated fields, migrations, or compatibility shims.
 Use this sequence for a PII sweep:
 
 1. Create a detailed issue without quoting or attaching the sensitive value.
-2. Run `bash scripts/check-pii.sh --scope head --mode enforce`, then `--mode audit`.
+2. Run `bash scripts/check-pii.sh --scope changed --mode enforce`, then `--mode audit`.
 3. Review inputs, validation, memory, persistence, logging, telemetry, errors, exports, and deletion.
 4. Inspect every reported media file visually and with metadata and OCR tooling.
 5. Replace real data with generated synthetic data at its source, then regenerate derived files.
@@ -383,7 +383,7 @@ authoritative upstream attribution must stay in its original context and must ne
 fixture or example.
 
 The `pii-guard` check requires zero enforcement findings; there is no accepted-findings baseline.
-Run `bun run pii:gate` against tracked `HEAD`, or `bun run pii:gate -- --scope staged` before a commit
+Run `bun run pii:gate` against the current change set, or `bun run pii:gate -- --scope staged` before a commit
 to scan the index. Empty, malformed, or failed scanner output is an operational error, never a pass.
 
 ### Clean branches

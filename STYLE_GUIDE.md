@@ -166,7 +166,7 @@ Use the managed scanner as a first pass; it cannot prove that free-form prose or
 
 ```bash
 bash scripts/check-pii.sh --scope staged --mode enforce
-bash scripts/check-pii.sh --scope head --mode audit
+bash scripts/check-pii.sh --scope changed --mode audit
 bash scripts/check-pii.sh --scope history --mode audit
 ```
 

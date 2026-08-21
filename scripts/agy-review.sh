@@ -125,7 +125,7 @@ if [ "$mode" = code ]; then
     sha256sum | awk '{print $1}')
   if [ "${AGY_REVIEW_SKIP_LOCAL_PII:-0}" != "1" ] && [ -x scripts/check-pii.sh ]; then
     "$progress_runner" --phase pii-preflight -- \
-      bash scripts/check-pii.sh --scope head --mode enforce
+      bash scripts/check-pii.sh --scope changed --mode enforce
   fi
   target_description="branch range ${base_sha}...${head_sha}"
 else
