@@ -40,6 +40,13 @@ jobs:
             const MESSAGE = `${MARKER}\nThis PR must be linked to a GitHub issue. Use 'Closes #123' in the PR description, or link an issue from the sidebar.`;
             const STATUS_CONTEXT = "Check linked issues";
             const { owner, repo } = context.repo;
+            const scheduled = context.eventName === "schedule";
+
+            const hasExhaustedStatusContext = (error) =>
+              error?.status === 422 &&
+              String(error?.response?.data?.errors ?? error?.message ?? "").includes(
+                "This SHA and context has reached the maximum number of statuses",
+              );
 
             const globToRegex = (glob) => {
               const escaped = glob
@@ -83,20 +90,35 @@ jobs:
             for (const pull of pulls) {
               const headSha = pull.head.sha;
               const postStatus = async (state, description) => {
-                await github.rest.repos.createCommitStatus({
-                  owner,
-                  repo,
-                  sha: headSha,
-                  state,
-                  context: STATUS_CONTEXT,
-                  description,
-                });
+                try {
+                  await github.rest.repos.createCommitStatus({
+                    owner,
+                    repo,
+                    sha: headSha,
+                    state,
+                    context: STATUS_CONTEXT,
+                    description,
+                  });
+                  return true;
+                } catch (error) {
+                  if (scheduled && hasExhaustedStatusContext(error)) {
+                    core.warning(
+                      `PR #${pull.number}: skipping historical SHA with exhausted ${STATUS_CONTEXT} status capacity`,
+                    );
+                    return false;
+                  }
+                  throw error;
+                }
               };
 
-              await postStatus("pending", "Checking for a linked issue");
+              if (!(await postStatus("pending", "Checking for a linked issue"))) {
+                continue;
+              }
               try {
                 if (excludedBranches.some((pattern) => pattern.test(pull.head.ref))) {
-                  await postStatus("success", "Automated branch is exempt");
+                  if (!(await postStatus("success", "Automated branch is exempt"))) {
+                    continue;
+                  }
                   continue;
                 }
 
@@ -114,7 +136,9 @@ jobs:
                 if (linked.length > 0) {
                   const refs = linked.map((node) => `#${node.number}`).join(", ");
                   core.info(`PR #${pull.number} links ${refs}`);
-                  await postStatus("success", "Linked issue found");
+                  if (!(await postStatus("success", "Linked issue found"))) {
+                    continue;
+                  }
                   continue;
                 }
 
@@ -132,9 +156,13 @@ jobs:
                     body: MESSAGE,
                   });
                 }
-                await postStatus("failure", "Pull request has no linked issue");
+                if (!(await postStatus("failure", "Pull request has no linked issue"))) {
+                  continue;
+                }
               } catch (error) {
-                await postStatus("failure", "Linked-issue evaluation failed");
+                if (!(await postStatus("failure", "Linked-issue evaluation failed"))) {
+                  continue;
+                }
                 core.error(`PR #${pull.number}: ${error.message}`);
                 evaluationErrors.push(pull.number);
               }
