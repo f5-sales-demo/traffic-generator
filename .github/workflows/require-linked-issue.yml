@@ -35,7 +35,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const EXCLUDE_BRANCHES = "dependabot/**,release/**,changeset-release/**,openapi-sync/**,plugin-sync/**,deps/**,sync/**,docs/update-*";
+            const EXCLUDE_BRANCHES = "dependabot/**,release/**,changeset-release/**,openapi-sync/**,plugin-sync/**,deps/**,sync/**,governance/sync-managed-files-*,docs/update-*";
             const MARKER = "<!-- require-linked-issue -->";
             const MESSAGE = `${MARKER}\nThis PR must be linked to a GitHub issue. Use 'Closes #123' in the PR description, or link an issue from the sidebar.`;
             const STATUS_CONTEXT = "Check linked issues";
