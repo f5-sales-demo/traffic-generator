@@ -2690,8 +2690,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument("--input-dir", required=True, type=Path)
     parser.add_argument(
         "--scope",
-        choices=("staged", "head", "history"),
-        default="head",
+        choices=("changed", "staged", "head", "history"),
+        default="changed",
     )
     parser.add_argument("--mode", choices=("audit", "enforce"), default="audit")
     parser.add_argument("--format", choices=("text", "json"), default="text")

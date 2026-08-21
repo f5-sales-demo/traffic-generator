@@ -4,13 +4,13 @@
 # evaluates repository content as code.
 set -euo pipefail
 
-SCOPE="head"
+SCOPE="changed"
 MODE="audit"
 FORMAT="text"
 
 usage() {
   cat <<'EOF'
-Usage: bash scripts/check-pii.sh [--scope staged|head|history] [--mode audit|enforce] [--format text|json]
+Usage: bash scripts/check-pii.sh [--scope changed|staged|head|history] [--mode audit|enforce] [--format text|json]
 
 Exit 0 = clean, 1 = findings, 2 = the scan could not run.
 EOF
@@ -54,7 +54,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-case "$SCOPE" in staged | head | history) ;; *)
+case "$SCOPE" in changed | staged | head | history) ;; *)
   echo "PII scan error: invalid scope: $SCOPE" >&2
   exit 2
   ;;
@@ -130,6 +130,40 @@ materialize_staged() {
       exit 2
     fi
   done <"$staged_paths"
+}
+
+materialize_changed() {
+  local base_sha record metadata path mode object_type oid
+  local changed_paths="${WORK}/changed-paths"
+
+  if ! git diff --cached --quiet --no-ext-diff; then
+    materialize_staged
+    return
+  fi
+
+  if base_sha=$(git merge-base '@{upstream}' HEAD 2>/dev/null); then
+    :
+  elif base_sha=$(git rev-parse --verify HEAD^ 2>/dev/null); then
+    :
+  else
+    materialize_head
+    return
+  fi
+
+  if ! git diff --name-only -z --no-renames --no-ext-diff \
+    --diff-filter=ACMRTUXB "${base_sha}...HEAD" >"$changed_paths"; then
+    echo "PII scan error: cannot enumerate changed paths" >&2
+    exit 2
+  fi
+
+  while IFS= read -r -d '' path; do
+    while IFS= read -r -d '' record; do
+      metadata=${record%%$'\t'*}
+      read -r mode object_type oid <<<"$metadata"
+      [ "$object_type" = "blob" ] || continue
+      add_blob "$path" "$oid" "$mode"
+    done < <(git ls-tree -z HEAD -- "$path")
+  done <"$changed_paths"
 }
 
 materialize_head() {
@@ -251,6 +285,7 @@ materialize_history() {
 }
 
 case "$SCOPE" in
+changed) materialize_changed ;;
 staged) materialize_staged ;;
 head) materialize_head ;;
 history) materialize_history ;;
