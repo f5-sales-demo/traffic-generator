@@ -4,8 +4,9 @@ name: Self-hosted Runner Python and uv Smoke
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
+# The smoke has no repository/API interaction: it proves only the immutable
+# runner image and its private, per-job tool cache.
+permissions: {}
 
 concurrency:
   group: self-hosted-runner-python-uv-smoke-${{ github.repository }}
@@ -21,10 +22,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          : "${RUNNER_RUNTIME_DIR:?RUNNER_RUNTIME_DIR must be set}"
-          : "${RUNNER_TOOL_CACHE:?RUNNER_TOOL_CACHE must be set}"
-          runtime_dir="$(realpath -m -- "$RUNNER_RUNTIME_DIR")"
-          tool_cache="$(realpath -m -- "$RUNNER_TOOL_CACHE")"
+          runtime_dir="$(realpath -m -- "${RUNNER_RUNTIME_DIR:?RUNNER_RUNTIME_DIR must be set}")"
+          tool_cache="$(realpath -m -- "${RUNNER_TOOL_CACHE:?RUNNER_TOOL_CACHE must be set}")"
           test "$tool_cache" = "$runtime_dir/_tool"
           test -f "$tool_cache/Python/3.13.7/x64.complete"
           test -f "$tool_cache/uv/0.8.24/x86_64.complete"
@@ -41,16 +40,13 @@ jobs:
             exit 1
           fi
 
-      - name: Resolve catalogued Python from the private tool cache
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version: 3.13.7
-
-      - name: Verify Python and uv versions
+      - name: Verify catalogued Python and uv from the private tool cache
         shell: bash
         run: |
           set -euo pipefail
-          test "$(python --version)" = "Python 3.13.7"
-          test "$(uv --version)" = "uv 0.8.24"
-          test -f "$RUNNER_TOOL_CACHE/Python/3.13.7/x64.complete"
-          test -f "$RUNNER_TOOL_CACHE/uv/0.8.24/x86_64.complete"
+          python_root="$RUNNER_TOOL_CACHE/Python/3.13.7/x64"
+          uv_root="$RUNNER_TOOL_CACHE/uv/0.8.24/x86_64"
+          test -x "$python_root/bin/python"
+          test -x "$uv_root/uv"
+          test "$("$python_root/bin/python" --version)" = "Python 3.13.7"
+          test "$("$uv_root/uv" --version)" = "uv 0.8.24"
