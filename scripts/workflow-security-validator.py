@@ -14,16 +14,28 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
-POLICY_SCHEMA_VERSION = 3
+POLICY_SCHEMA_VERSION = 4
 DOCKER_POLICY = {
-    "socket": "/run/docker.sock",
+    "host_socket": "/run/f5-actions-runner/container-build/docker.sock",
+    "runner_socket": "/run/docker.sock",
+    "data_root": "/data/actions-runners/container-build-docker",
+    "cache_max": "20g",
+    "cgroup_parent": "f5-actions-container-build.slice",
     "minimum_version": "29.2.1",
     "target_version": "29.7.2",
+}
+DISPATCHER_POLICY = {
+    "repositories": ["f5-sales-demo/xcsh"],
+    "memory": "32g",
+    "cpus": "14",
+    "standard_runners": 2,
+    "container_build_runners": 1,
 }
 
 TOP_FIELDS = {
     "schema_version",
     "docker",
+    "dispatcher",
     "defaults",
     "profiles",
     "hosted_exceptions",
@@ -167,6 +179,10 @@ def load_policy(path, governance_path, repository):
         raise PolicyError(f"unsupported schema_version: {raw.get('schema_version')!r}")
     if raw.get("docker") != DOCKER_POLICY:
         raise PolicyError(f"policy docker contract must equal {DOCKER_POLICY!r}")
+    if raw.get("dispatcher") != DISPATCHER_POLICY:
+        raise PolicyError(
+            f"policy dispatcher contract must equal {DISPATCHER_POLICY!r}"
+        )
     repositories = raw.get("repositories")
     governed = governed_repositories(governance_path)
     if not isinstance(repositories, dict) or set(repositories) != governed:

@@ -240,6 +240,9 @@ async function requestGitHubApi(endpoint, options = {}) {
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
     const raw = await response.text();
+    if (typeof options.onResponse === 'function') {
+      options.onResponse({ url, status: response.status, headers: response.headers });
+    }
     let data;
     try {
       data = raw ? JSON.parse(raw) : null;
