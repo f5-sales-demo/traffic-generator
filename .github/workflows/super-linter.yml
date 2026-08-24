@@ -14,6 +14,11 @@ concurrency:
 
 jobs:
   lint:
+    # Central reconciliation commits contain only canonical blobs that already
+    # passed docs-control lint and review. The reconciler attests this exact
+    # commit under the two required lint contexts, so do not schedule the
+    # Docker-heavy reusable workflow a second time downstream.
+    if: ${{ !startsWith(github.event.pull_request.head.ref, 'governance/reconcile-') }}
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
     uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@ea6e46327deee603c814af75e3abfc0ffb6bfef3

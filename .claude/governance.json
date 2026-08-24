@@ -1,7 +1,15 @@
 {
   "source_repo": "f5-sales-demo/docs-control",
   "skip_files": {
-    "xcsh": ["biome.json", "LICENSE", ".ruff.toml", ".python-lint", ".mypy.ini", ".github/workflows/super-linter.yml"],
+    "xcsh": [
+      "biome.json",
+      "LICENSE",
+      ".ruff.toml",
+      ".python-lint",
+      ".mypy.ini",
+      ".github/workflows/super-linter.yml",
+      ".github/workflows/require-linked-issue.yml"
+    ],
     "xcsh-action": ["README.md"],
     "terraform-provider-xcsh": [".github/workflows/translation-audit.yml", "scripts/locale-lint.sh"],
     "api-specs": [".ruff.toml", ".python-lint", ".mypy.ini"],
@@ -19,7 +27,8 @@
   },
   "protected_files": [
     ".github/workflows/github-pages-deploy.yml",
-    ".github/workflows/enforce-repo-settings.yml",
+    ".github/workflows/reconcile-fleet-content.yml",
+    ".github/workflows/reconcile-fleet-settings.yml",
     ".github/workflows/require-linked-issue.yml",
     ".github/workflows/super-linter.yml",
     ".github/workflows/dependabot-auto-merge.yml",
@@ -77,6 +86,7 @@
     "scripts/run-with-progress.sh",
     "scripts/collect-antigravity-fleet-state.sh",
     "scripts/github-api-resilience.cjs",
+    "scripts/fleet-reconciler.cjs",
     "scripts/configure-antigravity-controls.cjs",
     "scripts/agy-triage-output.schema.json",
     "scripts/redact_automation_log.py",
@@ -91,6 +101,7 @@
     "tests/test-lint-mdx-prose.sh",
     "tests/test-agy-pre-push-review.sh",
     "tests/test-github-api-resilience.sh",
+    "tests/test-fleet-reconciler.sh",
     "tests/test-translation-release-policy.sh",
     "tests/test-validate-translations.sh",
     "trivy.yaml",

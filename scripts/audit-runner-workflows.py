@@ -46,8 +46,8 @@ def load_policy(path, repository):
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise AuditError(f"cannot read runner policy: {exc}") from exc
-    if raw.get("schema_version") != 3:
-        raise AuditError("runner policy schema_version must be 3")
+    if raw.get("schema_version") != 4:
+        raise AuditError("runner policy schema_version must be 4")
     repositories = raw.get("repositories")
     if not isinstance(repositories, dict) or repository not in repositories:
         raise AuditError(f"repository is not governed: {repository}")
