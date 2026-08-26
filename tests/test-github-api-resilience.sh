@@ -510,12 +510,26 @@ if [ -f "$watcher" ]; then
     grep -qF 'GitHub Free-compatible' "$watcher"
   check 'central content reconciler uses a self-hosted runner' \
     grep -qF 'runs-on: [self-hosted' "$content_reconciler"
-  check 'central settings reconciler uses a self-hosted runner and six-hour schedule' \
-    bash -c "grep -qF 'runs-on: [self-hosted' '$settings_reconciler' && grep -qF '17 */6' '$settings_reconciler'"
+  check 'central content reconciler has an explicit job name' \
+    grep -qF '    name: Reconcile fleet content' "$content_reconciler"
+  check 'central content reconciler binds secrets to the repository-settings environment' \
+    grep -qF '    environment: repository-settings' "$content_reconciler"
+  check 'central settings reconciler remains self-hosted, push-driven, and manually dispatchable without cron' \
+    bash -c "grep -qF 'runs-on: [self-hosted' '$settings_reconciler' && grep -qF 'push:' '$settings_reconciler' && grep -qF 'workflow_dispatch:' '$settings_reconciler' && ! grep -qF 'schedule:' '$settings_reconciler'"
+  check 'central settings reconciler has an explicit job name' \
+    grep -qF '    name: Reconcile fleet settings' "$settings_reconciler"
+  check 'central settings reconciler binds secrets to the repository-settings environment' \
+    grep -qF '    environment: repository-settings' "$settings_reconciler"
   check 'central workflows react to reconciliation engine changes' \
     bash -c "grep -qF -- \"- 'scripts/fleet-reconciler.cjs'\" '$content_reconciler' && grep -qF -- \"- 'scripts/github-api-resilience.cjs'\" '$content_reconciler' && grep -qF -- \"- 'scripts/fleet-reconciler.cjs'\" '$settings_reconciler' && grep -qF -- \"- 'scripts/github-api-resilience.cjs'\" '$settings_reconciler'"
   check 'central reconcilers prefer GitHub App credentials with cutover fallback' \
     bash -c "grep -qF 'create-github-app-token' '$content_reconciler' && grep -qF 'REPO_SETTINGS_TOKEN' '$content_reconciler'"
+  check 'central reconciler app tokens are limited to governed repositories' \
+    bash -c "grep -qF 'repositories: \${{ steps.repository-scope.outputs.repositories }}' '$content_reconciler' && grep -qF 'repositories: \${{ steps.repository-scope.outputs.repositories }}' '$settings_reconciler'"
+  check 'content reconciliation requests only its required app permissions' \
+    bash -c "grep -qF 'permission-contents: write' '$content_reconciler' && grep -qF 'permission-issues: write' '$content_reconciler' && grep -qF 'permission-pull-requests: write' '$content_reconciler' && grep -qF 'permission-statuses: write' '$content_reconciler'"
+  check 'settings reconciliation requests only its required app permissions' \
+    bash -c "grep -qF 'permission-actions: write' '$settings_reconciler' && grep -qF 'permission-administration: write' '$settings_reconciler' && grep -qF 'permission-pull-requests: read' '$settings_reconciler'"
 else
   skip_source_contract 'fleet watcher wiring contract'
 fi

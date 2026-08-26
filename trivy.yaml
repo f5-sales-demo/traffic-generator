@@ -5,10 +5,10 @@
 # This file configures filesystem-scan behavior — specifically,
 # directories that must never be walked.
 
-# Python tool caches create dangling symlinks during the same CI run
-# (mypy's missing_stubs/, ruff's, pytest's). Trivy's fs walker hits
-# those symlinks between mypy-populates and trivy-scans, producing a
-# FATAL "no such file or directory" and aborting the whole scan.
+# Tool-generated trees change during the same CI run. Python linters create
+# dangling cache symlinks, while Rust Clippy replaces objects under target/.
+# Trivy's fs walker can hit those paths between creation and replacement,
+# producing a FATAL "no such file or directory" and aborting the whole scan.
 # Skipping these directories is safe: they contain no production
 # artifacts — only scratch caches regenerated each run.
 #
@@ -17,3 +17,4 @@ skip-dirs:
   - .mypy_cache
   - .ruff_cache
   - .pytest_cache
+  - target

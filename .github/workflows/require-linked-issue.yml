@@ -7,6 +7,10 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: require-linked-issue-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   check-linked-issues:
     # The central reconciler creates and links its issue before it attests this
@@ -17,7 +21,7 @@ jobs:
     name: Check linked issues
     runs-on: [self-hosted, Linux, X64, "${{ github.event.repository.name }}", ubuntu-24.04]
     permissions:
-      pull-requests: read
+      pull-requests: read # inspect linked issues on the current pull request
     steps:
       - name: Check this pull request's linked issues
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

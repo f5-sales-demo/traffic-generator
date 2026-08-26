@@ -2451,11 +2451,9 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
         if fence_marker and fence_container and line.strip():
             blockquote = fence_container.startswith(">")
             indentation = len(line) - len(line.lstrip(" "))
-            in_container = (
-                line.lstrip().startswith(">")
-                if blockquote
-                else indentation >= LIST_FENCE_CONTENT_INDENT
-            )
+            in_container = indentation >= LIST_FENCE_CONTENT_INDENT
+            if blockquote:
+                in_container = line.lstrip().startswith(">")
             if not in_container:
                 fence_marker = fence_language = fence_container = None
                 fence_close_column = None

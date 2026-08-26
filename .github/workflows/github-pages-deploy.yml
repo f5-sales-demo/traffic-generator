@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   docs:
-    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@ea6e46327deee603c814af75e3abfc0ffb6bfef3
+    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@be592883c33ba7202b8bf47ded4efe9f4630573e
     with:
       content-ref: ${{ github.sha }}
     permissions:

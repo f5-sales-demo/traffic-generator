@@ -8,6 +8,11 @@
       ".python-lint",
       ".mypy.ini",
       ".github/workflows/super-linter.yml",
+      ".github/workflows/auto-merge.yml",
+      ".github/workflows/dependabot-auto-merge.yml",
+      ".github/workflows/semgrep.yml",
+      ".github/workflows/translation-audit.yml",
+      ".github/workflows/workflow-security-audit.yml",
       ".github/workflows/require-linked-issue.yml"
     ],
     "xcsh-action": ["README.md"],
