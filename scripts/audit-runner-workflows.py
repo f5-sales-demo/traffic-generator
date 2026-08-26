@@ -33,6 +33,7 @@ DEFAULT_BRANCH_DOCKER_GUARD = (
     "(github.event_name == 'pull_request' && "
     "github.event.pull_request.head.repo.full_name == github.repository)"
 )
+TAG_ONLY_DOCKER_GUARD = "startsWith(github.ref, 'refs/tags/v')"
 
 
 class AuditError(ValueError):
@@ -195,7 +196,46 @@ def trigger_names(workflow):
     raise AuditError("workflow trigger is malformed")
 
 
-def audit_docker_route(workflow, job, profiles, routes, repository, profile):
+def dependency_names(job):
+    needs = job.get("needs") if isinstance(job, dict) else None
+    if isinstance(needs, str):
+        return (needs,)
+    if isinstance(needs, list) and all(isinstance(name, str) for name in needs):
+        return tuple(needs)
+    return ()
+
+
+def transitive_dependencies(workflow, job_id):
+    jobs = workflow.get("jobs")
+    if not isinstance(jobs, dict):
+        return set(), False
+
+    reachable = set()
+    active = {job_id}
+    cycle = False
+
+    def visit(name) -> None:
+        nonlocal cycle
+        if name in active:
+            cycle = True
+            return
+        if name in reachable:
+            return
+        reachable.add(name)
+        dependency_job = jobs.get(name)
+        if not isinstance(dependency_job, dict):
+            return
+        active.add(name)
+        for dependency in dependency_names(dependency_job):
+            visit(dependency)
+        active.remove(name)
+
+    for dependency in dependency_names(jobs.get(job_id)):
+        visit(dependency)
+    return reachable, cycle
+
+
+def audit_docker_route(workflow, job_id, job, profiles, routes, repository, profile):
     errors: list[str] = []
     if profile not in profiles or not profiles[profile].get("docker_socket"):
         return errors
@@ -211,19 +251,22 @@ def audit_docker_route(workflow, job, profiles, routes, repository, profile):
         return errors
     if triggers == {"workflow_dispatch"}:
         return errors
-    if triggers == {"pull_request"}:
-        expected_guard = PULL_REQUEST_GUARD
-    elif "push" in triggers or triggers == {"workflow_call"}:
-        expected_guard = DEFAULT_BRANCH_DOCKER_GUARD
-    else:
-        expected_guard = CALLABLE_DOCKER_GUARD
-    if job.get("if") != expected_guard:
-        errors.append(
-            "Docker-capable PR job requires the complete same-repository guard",
-        )
-    needs = job.get("needs")
-    needs_has_trust_gate = isinstance(needs, list) and "trust-gate" in needs
-    if needs != "trust-gate" and not needs_has_trust_gate:
+    tag_only = job.get("if") == TAG_ONLY_DOCKER_GUARD and "push" in triggers
+    if not tag_only:
+        if triggers == {"pull_request"}:
+            expected_guard = PULL_REQUEST_GUARD
+        elif "push" in triggers or triggers == {"workflow_call"}:
+            expected_guard = DEFAULT_BRANCH_DOCKER_GUARD
+        else:
+            expected_guard = CALLABLE_DOCKER_GUARD
+        if job.get("if") != expected_guard:
+            errors.append(
+                "Docker-capable PR job requires the complete same-repository guard",
+            )
+    dependencies, cycle = transitive_dependencies(workflow, job_id)
+    if cycle:
+        errors.append("Docker-capable job dependency graph must be acyclic")
+    if "trust-gate" not in dependencies:
         errors.append("Docker-capable PR job requires the socketless trust-gate")
     trust_gate = workflow.get("jobs", {}).get("trust-gate")
     trust_runs_on = trust_gate.get("runs-on") if isinstance(trust_gate, dict) else None
@@ -319,6 +362,7 @@ def audit_job(  # noqa: PLR0917
             )
         route_errors = audit_docker_route(
             workflow,
+            job_id,
             job,
             profiles,
             routes,
