@@ -54,7 +54,7 @@ jobs:
       github.event.pull_request.draft == false &&
       github.actor != 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository
-    uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@be592883c33ba7202b8bf47ded4efe9f4630573e
+    uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@b68cf1496e1a695751efee5114ddfe24f7cd9e35
     permissions:
       contents: write # the reusable completes the merge
       pull-requests: write # enable auto-merge and update the pull request

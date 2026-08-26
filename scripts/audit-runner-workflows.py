@@ -14,6 +14,7 @@ from pathlib import Path
 import yaml  # pylint: disable=import-error
 
 SHA_RE = re.compile(r"[0-9a-f]{40}")
+SAFE_RUNNER_LABEL_RE = re.compile(r"[a-z0-9][a-z0-9.-]*")
 CANONICAL_REPOSITORY_LABEL = "${{ github.event.repository.name }}"
 PULL_REQUEST_EVENT = "github.event_name == 'pull_request' && "
 PULL_REQUEST_HEAD_REPO = "github.event.pull_request.head.repo.full_name"
@@ -34,6 +35,54 @@ DEFAULT_BRANCH_DOCKER_GUARD = (
     "github.event.pull_request.head.repo.full_name == github.repository)"
 )
 TAG_ONLY_DOCKER_GUARD = "startsWith(github.ref, 'refs/tags/v')"
+PAGES_DOCKER_GUARD = (
+    "github.event_name == 'workflow_dispatch' || "
+    "(github.event_name == 'push' && "
+    "github.ref == format('refs/heads/{0}', "
+    "github.event.repository.default_branch)) || "
+    "(github.event_name == 'pull_request' && "
+    "github.event.pull_request.head.repo.full_name == github.repository)"
+)
+SOCKETLESS_ROUTE_EXPRESSION = (
+    "${{ inputs.socketless_runner_label || "
+    'fromJSON(format(\'["self-hosted","Linux","X64","{0}",'
+    '"ubuntu-24.04"]\', github.event.repository.name)) }}'
+)
+CONTAINER_ROUTE_EXPRESSION = (
+    "${{ inputs.container_build_runner_label || "
+    'fromJSON(format(\'["self-hosted","Linux","X64","{0}",'
+    '"container-build"]\', github.event.repository.name)) }}'
+)
+REUSABLE_RUNNER_WORKFLOWS = {
+    "f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml",
+    "f5-sales-demo/docs-control/.github/workflows/super-linter.yml",
+}
+REUSABLE_DEFINITION_ROUTES = {
+    (".github/workflows/github-pages-deploy.yml", "trust-gate"): (
+        "ubuntu-24.04",
+        SOCKETLESS_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/github-pages-deploy.yml", "build"): (
+        "container-build",
+        CONTAINER_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/github-pages-deploy.yml", "deploy"): (
+        "ubuntu-24.04",
+        SOCKETLESS_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/super-linter.yml", "trust-gate"): (
+        "ubuntu-24.04",
+        SOCKETLESS_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/super-linter.yml", "lint"): (
+        "container-build",
+        CONTAINER_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/super-linter.yml", "shell-unit-tests"): (
+        "ubuntu-24.04",
+        SOCKETLESS_ROUTE_EXPRESSION,
+    ),
+}
 
 
 class AuditError(ValueError):
@@ -178,6 +227,50 @@ def profile_for_route(runs_on, profiles, routes, repository):
     return None
 
 
+def reusable_definition_profile(repository, relative, job_id, runs_on):
+    """Resolve only the two governed reusable definitions' exact fallback expressions."""
+    if repository != "f5-sales-demo/docs-control":
+        return None
+    expected = REUSABLE_DEFINITION_ROUTES.get((relative, job_id))
+    if expected is None or runs_on != expected[1]:
+        return None
+    return expected[0]
+
+
+def validate_reusable_runner_inputs(job, routes, profiles, default_profile):
+    """Validate runner-label inputs on governed reusable workflow calls."""
+    uses = job.get("uses")
+    target = uses.rsplit("@", 1)[0] if isinstance(uses, str) and "@" in uses else uses
+    if target not in REUSABLE_RUNNER_WORKFLOWS:
+        return
+    inputs = job.get("with", {})
+    if not isinstance(inputs, dict):
+        raise AuditError("reusable workflow with inputs must be an object")
+    names = ("socketless_runner_label", "container_build_runner_label")
+    values = {name: inputs.get(name, "") for name in names}
+    supplied = {name for name, value in values.items() if value not in (None, "")}
+    if supplied and supplied != set(names):
+        raise AuditError("ARC reusable runner labels must be supplied together")
+    if not supplied:
+        if routes["kind"] == "arc":
+            raise AuditError("ARC reusable workflow call requires both runner labels")
+        return
+    if routes["kind"] != "arc":
+        raise AuditError("legacy reusable workflow calls cannot override runner labels")
+    expected_profiles = {
+        "socketless_runner_label": default_profile,
+        "container_build_runner_label": "container-build",
+    }
+    for name, expected_profile in expected_profiles.items():
+        value = values[name]
+        safe_label = isinstance(value, str) and SAFE_RUNNER_LABEL_RE.fullmatch(value)
+        if not safe_label:
+            raise AuditError(f"{name} must be a safe scalar label")
+        resolved = routes["profiles_by_label"].get(value)
+        if resolved != expected_profile or expected_profile not in profiles:
+            raise AuditError(f"{name} does not match its policy-approved profile")
+
+
 def exception_for(exceptions, relative, job_id):
     workflow = exceptions.get(relative, {})
     if not isinstance(workflow, dict):
@@ -235,7 +328,10 @@ def transitive_dependencies(workflow, job_id):
     return reachable, cycle
 
 
-def audit_docker_route(workflow, job_id, job, profiles, routes, repository, profile):
+# pylint: disable-next=too-many-arguments,too-many-locals
+def audit_docker_route(  # noqa: PLR0917
+    workflow, relative, job_id, job, profiles, routes, repository, profile
+):
     errors: list[str] = []
     if profile not in profiles or not profiles[profile].get("docker_socket"):
         return errors
@@ -253,7 +349,13 @@ def audit_docker_route(workflow, job_id, job, profiles, routes, repository, prof
         return errors
     tag_only = job.get("if") == TAG_ONLY_DOCKER_GUARD and "push" in triggers
     if not tag_only:
-        if triggers == {"pull_request"}:
+        pages_build = (
+            relative,
+            job_id,
+        ) == (".github/workflows/github-pages-deploy.yml", "build")
+        if pages_build:
+            expected_guard = PAGES_DOCKER_GUARD
+        elif triggers == {"pull_request"}:
             expected_guard = PULL_REQUEST_GUARD
         elif "push" in triggers or triggers == {"workflow_call"}:
             expected_guard = DEFAULT_BRANCH_DOCKER_GUARD
@@ -271,6 +373,9 @@ def audit_docker_route(workflow, job_id, job, profiles, routes, repository, prof
     trust_gate = workflow.get("jobs", {}).get("trust-gate")
     trust_runs_on = trust_gate.get("runs-on") if isinstance(trust_gate, dict) else None
     trust_profile = profile_for_route(trust_runs_on, profiles, routes, repository)
+    if trust_profile is None:
+        trust_context = repository, relative, "trust-gate", trust_runs_on
+        trust_profile = reusable_definition_profile(*trust_context)
     if docker_socket_value(profiles, trust_profile) is not False:
         errors.append("Docker-capable PR job requires a socketless trust-gate job")
     return errors
@@ -320,6 +425,7 @@ def audit_job(  # noqa: PLR0917
     if "uses" in job:
         try:
             remote_dependency(job["uses"])
+            validate_reusable_runner_inputs(job, routes, profiles, default_profile)
         except AuditError as exc:
             errors.append(f"{relative}/{job_id}: {exc}")
         if "runs-on" in job:
@@ -346,6 +452,9 @@ def audit_job(  # noqa: PLR0917
     else:
         profile = default_profile
         resolved_profile = profile_for_route(runs_on, profiles, routes, repository)
+        if resolved_profile is None:
+            definition_context = repository, relative, job_id, runs_on
+            resolved_profile = reusable_definition_profile(*definition_context)
         if resolved_profile is not None:
             profile = resolved_profile
         valid_route = resolved_profile is not None
@@ -362,6 +471,7 @@ def audit_job(  # noqa: PLR0917
             )
         route_errors = audit_docker_route(
             workflow,
+            relative,
             job_id,
             job,
             profiles,
