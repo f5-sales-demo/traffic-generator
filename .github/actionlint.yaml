@@ -26,6 +26,7 @@ self-hosted-runner:
     - docs-theme
     - fixture
     - i18n-core
+    - macos-15-intel
     - marketplace
     - marketplace-claude-code
     - mcn
@@ -44,6 +45,8 @@ self-hosted-runner:
     - xcsh
     - xcsh-action
     - xcsh-chrome-extension
+    - xcsh-container-build
+    - xcsh-socketless
 
 config-variables: null
 
