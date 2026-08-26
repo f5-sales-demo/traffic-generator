@@ -27,19 +27,13 @@
       "f5-sales-demo/demo-resources",
       "f5-sales-demo/devcontainer",
       "f5-sales-demo/dns",
-      "f5-sales-demo/docs",
-      "f5-sales-demo/docs-builder",
       "f5-sales-demo/docs-control",
-      "f5-sales-demo/docs-icons",
-      "f5-sales-demo/docs-theme",
-      "f5-sales-demo/i18n-core",
       "f5-sales-demo/marketplace",
       "f5-sales-demo/marketplace-claude-code",
       "f5-sales-demo/mcn",
       "f5-sales-demo/nginx",
       "f5-sales-demo/observability",
       "f5-sales-demo/origin-server",
-      "f5-sales-demo/starlight-llms-txt",
       "f5-sales-demo/starlight-mega-menu",
       "f5-sales-demo/terraform-provider-xcsh",
       "f5-sales-demo/traffic-generator",
@@ -647,11 +641,19 @@
       "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
     },
     "f5-sales-demo/docs": {
-      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+      "runner": {
+        "arc_scale_sets": {
+          "socketless": { "label": "docs-socketless", "profile": "ubuntu-24.04" },
+          "container-build": { "label": "docs-container-build", "profile": "container-build" }
+        }
+      }
     },
     "f5-sales-demo/docs-builder": {
       "runner": {
-        "profiles": ["ubuntu-24.04", "container-build"]
+        "arc_scale_sets": {
+          "socketless": { "label": "docs-socketless", "profile": "ubuntu-24.04" },
+          "container-build": { "label": "docs-container-build", "profile": "container-build" }
+        }
       }
     },
     "f5-sales-demo/docs-control": {
@@ -660,13 +662,28 @@
       }
     },
     "f5-sales-demo/docs-icons": {
-      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+      "runner": {
+        "arc_scale_sets": {
+          "socketless": { "label": "docs-socketless", "profile": "ubuntu-24.04" },
+          "container-build": { "label": "docs-container-build", "profile": "container-build" }
+        }
+      }
     },
     "f5-sales-demo/docs-theme": {
-      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+      "runner": {
+        "arc_scale_sets": {
+          "socketless": { "label": "docs-socketless", "profile": "ubuntu-24.04" },
+          "container-build": { "label": "docs-container-build", "profile": "container-build" }
+        }
+      }
     },
     "f5-sales-demo/i18n-core": {
-      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+      "runner": {
+        "arc_scale_sets": {
+          "socketless": { "label": "docs-socketless", "profile": "ubuntu-24.04" },
+          "container-build": { "label": "docs-container-build", "profile": "container-build" }
+        }
+      }
     },
     "f5-sales-demo/marketplace": {
       "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
@@ -687,7 +704,12 @@
       "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
     },
     "f5-sales-demo/starlight-llms-txt": {
-      "runner": { "profiles": ["ubuntu-24.04", "container-build"] }
+      "runner": {
+        "arc_scale_sets": {
+          "socketless": { "label": "docs-socketless", "profile": "ubuntu-24.04" },
+          "container-build": { "label": "docs-container-build", "profile": "container-build" }
+        }
+      }
     },
     "f5-sales-demo/starlight-mega-menu": {
       "runner": { "profiles": ["ubuntu-24.04", "container-build"] }

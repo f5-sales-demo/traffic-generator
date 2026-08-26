@@ -42,19 +42,13 @@ DISPATCHER_POLICY = {
         "f5-sales-demo/demo-resources",
         "f5-sales-demo/devcontainer",
         "f5-sales-demo/dns",
-        "f5-sales-demo/docs",
-        "f5-sales-demo/docs-builder",
         "f5-sales-demo/docs-control",
-        "f5-sales-demo/docs-icons",
-        "f5-sales-demo/docs-theme",
-        "f5-sales-demo/i18n-core",
         "f5-sales-demo/marketplace",
         "f5-sales-demo/marketplace-claude-code",
         "f5-sales-demo/mcn",
         "f5-sales-demo/nginx",
         "f5-sales-demo/observability",
         "f5-sales-demo/origin-server",
-        "f5-sales-demo/starlight-llms-txt",
         "f5-sales-demo/starlight-mega-menu",
         "f5-sales-demo/terraform-provider-xcsh",
         "f5-sales-demo/traffic-generator",
@@ -106,6 +100,46 @@ ZIZMOR_EXIT_BY_SEVERITY = {
     "Low": 12,
     "Medium": 13,
     "High": 14,
+}
+SOCKETLESS_ROUTE_EXPRESSION = (
+    "${{ inputs.socketless_runner_label || "
+    "fromJSON(format('[\"self-hosted\",\"Linux\",\"X64\",\"{0}\","
+    "\"ubuntu-24.04\"]', github.event.repository.name)) }}"
+)
+CONTAINER_ROUTE_EXPRESSION = (
+    "${{ inputs.container_build_runner_label || "
+    "fromJSON(format('[\"self-hosted\",\"Linux\",\"X64\",\"{0}\","
+    "\"container-build\"]', github.event.repository.name)) }}"
+)
+REUSABLE_RUNNER_WORKFLOWS = {
+    "f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml",
+    "f5-sales-demo/docs-control/.github/workflows/super-linter.yml",
+}
+REUSABLE_DEFINITION_ROUTES = {
+    (".github/workflows/github-pages-deploy.yml", "trust-gate"): (
+        "ubuntu-24.04",
+        SOCKETLESS_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/github-pages-deploy.yml", "build"): (
+        "container-build",
+        CONTAINER_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/github-pages-deploy.yml", "deploy"): (
+        "ubuntu-24.04",
+        SOCKETLESS_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/super-linter.yml", "trust-gate"): (
+        "ubuntu-24.04",
+        SOCKETLESS_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/super-linter.yml", "lint"): (
+        "container-build",
+        CONTAINER_ROUTE_EXPRESSION,
+    ),
+    (".github/workflows/super-linter.yml", "shell-unit-tests"): (
+        "ubuntu-24.04",
+        SOCKETLESS_ROUTE_EXPRESSION,
+    ),
 }
 
 
@@ -264,6 +298,49 @@ def resolve_route(runs_on, routes):
 
 def canonical_routes(routes):
     return tuple(routes["profiles_by_route"])
+
+
+def reusable_definition_profile(repository, relative, job_id, runs_on):
+    """Resolve only the governed reusable definitions' exact route expressions."""
+    if repository != "f5-sales-demo/docs-control":
+        return None
+    expected = REUSABLE_DEFINITION_ROUTES.get((relative, job_id))
+    if expected is None or runs_on != expected[1]:
+        return None
+    return expected[0]
+
+
+def validate_reusable_runner_inputs(job, routes, default_profile):
+    """Validate policy-approved scalar labels passed to governed reusable calls."""
+    uses = job.get("uses")
+    target = uses.rsplit("@", 1)[0] if isinstance(uses, str) and "@" in uses else uses
+    if target not in REUSABLE_RUNNER_WORKFLOWS:
+        return
+    inputs = job.get("with", {})
+    if not isinstance(inputs, dict):
+        raise PolicyError("reusable workflow with inputs must be an object")
+    names = ("socketless_runner_label", "container_build_runner_label")
+    values = {name: inputs.get(name, "") for name in names}
+    supplied = {name for name, value in values.items() if value not in (None, "")}
+    if supplied and supplied != set(names):
+        raise PolicyError("ARC reusable runner labels must be supplied together")
+    if not supplied:
+        if routes["kind"] == "arc":
+            raise PolicyError("ARC reusable workflow call requires both runner labels")
+        return
+    if routes["kind"] != "arc":
+        raise PolicyError("legacy reusable workflow calls cannot override runner labels")
+    expected_profiles = {
+        "socketless_runner_label": default_profile,
+        "container_build_runner_label": "container-build",
+    }
+    for name, expected_profile in expected_profiles.items():
+        value = values[name]
+        if not isinstance(value, str) or not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", value):
+            raise PolicyError(f"{name} must be a safe scalar label")
+        if routes["profiles_by_route"].get(value) != expected_profile:
+            raise PolicyError(f"{name} does not match its policy-approved profile")
+
 
 def permissions_within_ceiling(permissions, context):
     if not isinstance(permissions, dict):
@@ -646,8 +723,15 @@ def inventory(root, repository, policy, default_profile, routes):
         for job_id, job in workflow.get("jobs", {}).items():
             if not isinstance(job, dict):
                 raise PolicyError(f"malformed job {relative}/{job_id}")
+            if "uses" in job:
+                validate_reusable_runner_inputs(job, routes, default_profile)
             runs_on = job.get("runs-on")
             resolved_profile = resolve_route(runs_on, routes)
+            internal_profile = reusable_definition_profile(
+                repository, relative, job_id, runs_on
+            )
+            if resolved_profile is None:
+                resolved_profile = internal_profile
             self_hosted = resolved_profile is not None or (
                 isinstance(runs_on, list) and "self-hosted" in runs_on
             )
@@ -685,7 +769,8 @@ def inventory(root, repository, policy, default_profile, routes):
                         raise PolicyError(
                             f"{relative}/{job_id}: " + "; ".join(errors)
                         )
-                actual[key] = workflow
+                if internal_profile is None:
+                    actual[key] = workflow
     unused = sorted(set(policy) - set(actual))
     if unused:
         raise PolicyError(f"unused policy entries: {unused}")
