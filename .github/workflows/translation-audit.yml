@@ -13,7 +13,7 @@ permissions:
 jobs:
   audit:
     name: English-only documentation policy
-    runs-on: [self-hosted, Linux, X64, "${{ github.event.repository.name }}", ubuntu-24.04]
+    runs-on: managed-socketless
     steps:
       - name: Record suspended translation policy
         run: |

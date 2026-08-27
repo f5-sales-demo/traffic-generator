@@ -19,7 +19,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       !startsWith(github.event.pull_request.head.ref, 'governance/reconcile-')
     name: Check linked issues
-    runs-on: [self-hosted, Linux, X64, "${{ github.event.repository.name }}", ubuntu-24.04]
+    runs-on: managed-socketless
     permissions:
       pull-requests: read # inspect linked issues on the current pull request
     steps:

@@ -13,7 +13,8 @@
       ".github/workflows/semgrep.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
-      ".github/workflows/require-linked-issue.yml"
+      ".github/workflows/require-linked-issue.yml",
+      ".github/workflows/github-pages-deploy.yml"
     ],
     "xcsh-action": ["README.md"],
     "terraform-provider-xcsh": [".github/workflows/translation-audit.yml", "scripts/locale-lint.sh"],

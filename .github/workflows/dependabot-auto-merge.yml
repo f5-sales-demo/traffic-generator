@@ -15,7 +15,7 @@ concurrency:
 jobs:
   auto-merge:
     name: Approve and enable auto-merge
-    runs-on: [self-hosted, Linux, X64, "${{ github.event.repository.name }}", ubuntu-24.04]
+    runs-on: managed-socketless
     permissions:
       contents: write # merge validated Dependabot updates
       pull-requests: write # approve pull requests and enable auto-merge

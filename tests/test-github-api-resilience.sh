@@ -508,14 +508,14 @@ if [ -f "$watcher" ]; then
     grep -qE '\[PROGRESS\].*repository' "$watcher_collector"
   check 'Free-tier contract remains explicit' \
     grep -qF 'GitHub Free-compatible' "$watcher"
-  check 'central content reconciler uses a self-hosted runner' \
-    grep -qF 'runs-on: [self-hosted' "$content_reconciler"
+  check 'central content reconciler uses the managed socketless ARC route' \
+    grep -qF 'runs-on: managed-socketless' "$content_reconciler"
   check 'central content reconciler has an explicit job name' \
     grep -qF '    name: Reconcile fleet content' "$content_reconciler"
   check 'central content reconciler binds secrets to the repository-settings environment' \
     grep -qF '    environment: repository-settings' "$content_reconciler"
-  check 'central settings reconciler remains self-hosted, push-driven, and manually dispatchable without cron' \
-    bash -c "grep -qF 'runs-on: [self-hosted' '$settings_reconciler' && grep -qF 'push:' '$settings_reconciler' && grep -qF 'workflow_dispatch:' '$settings_reconciler' && ! grep -qF 'schedule:' '$settings_reconciler'"
+  check 'central settings reconciler remains ARC-routed, push-driven, and manually dispatchable without cron' \
+    bash -c "grep -qF 'runs-on: managed-socketless' '$settings_reconciler' && grep -qF 'push:' '$settings_reconciler' && grep -qF 'workflow_dispatch:' '$settings_reconciler' && ! grep -qF 'schedule:' '$settings_reconciler'"
   check 'central settings reconciler has an explicit job name' \
     grep -qF '    name: Reconcile fleet settings' "$settings_reconciler"
   check 'central settings reconciler binds secrets to the repository-settings environment' \
