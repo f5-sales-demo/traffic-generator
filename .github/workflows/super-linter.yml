@@ -21,9 +21,11 @@ jobs:
     if: ${{ !startsWith(github.event.pull_request.head.ref, 'governance/reconcile-') }}
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
-    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@b68cf1496e1a695751efee5114ddfe24f7cd9e35
+    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@58ce2a9b09aa28f6a37b53c6cce445216bc46670
     with:
       classify_xc_minimum_configs: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' }}
+      socketless_runner_label: managed-socketless
+      container_build_runner_label: managed-container-build
     permissions:
       contents: read # checkout repository content in the reusable workflow
       packages: read # pull lint tooling from GitHub Packages
