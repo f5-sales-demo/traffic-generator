@@ -1066,7 +1066,7 @@
       },
       ".github/workflows/acc-tests.yml": {
         "real-api-tests": {
-          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh", "ubuntu-24.04"],
+          "runs_on": "managed-socketless",
           "environment": "acceptance-tests",
           "permissions": {
             "checks": "write",
@@ -1116,7 +1116,7 @@
           "if": "always() &&\ngithub.event_name != 'pull_request' &&\n((github.event_name == 'schedule' &&\n  needs.mock-tests.result == 'success') ||\n (github.event_name == 'workflow_dispatch' &&\n  github.event.inputs.mode == 'full' &&\n  needs.mock-tests.result == 'success') ||\n (github.event_name == 'workflow_dispatch' &&\n  github.event.inputs.mode == 'real-only' &&\n  needs.mock-tests.result == 'skipped'))\n"
         },
         "cleanup": {
-          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh", "ubuntu-24.04"],
+          "runs_on": "managed-socketless",
           "environment": "acceptance-tests",
           "permissions": {
             "contents": "read"
@@ -1167,7 +1167,7 @@
       },
       ".github/workflows/discover-defaults.yml": {
         "discover": {
-          "runs_on": ["self-hosted", "Linux", "X64", "terraform-provider-xcsh", "ubuntu-24.04"],
+          "runs_on": "managed-socketless",
           "environment": "default-discovery",
           "permissions": {},
           "allowed_secrets": ["REPO_SYNC_TOKEN", "XCSH_API_TOKEN", "XCSH_API_URL"],
