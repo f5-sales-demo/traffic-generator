@@ -12,9 +12,10 @@
 # Skipping these directories is safe: they contain no production
 # artifacts — only scratch caches regenerated each run.
 #
-# See docs-control issue #377.
-skip-dirs:
-  - .mypy_cache
-  - .ruff_cache
-  - .pytest_cache
-  - target
+# See docs-control issues #377 and #1860.
+scan:
+  skip-dirs:
+    - .mypy_cache
+    - .ruff_cache
+    - .pytest_cache
+    - target

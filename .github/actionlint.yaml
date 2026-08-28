@@ -5,6 +5,7 @@ self-hosted-runner:
     - api-protection
     - api-specs
     - api-specs-enriched
+    - api-specs-enriched-compute
     - apt-repo
     - automation
     - bot-advanced
@@ -40,6 +41,7 @@ self-hosted-runner:
     - starlight-llms-txt
     - starlight-mega-menu
     - terraform-provider-xcsh
+    - terraform-provider-xcsh-compute
     - traffic-generator
     - ubuntu-24.04-arm
     - vscode-xcsh
@@ -49,6 +51,7 @@ self-hosted-runner:
     - xcsh
     - xcsh-action
     - xcsh-chrome-extension
+    - xcsh-compute
     - xcsh-container-build
     - xcsh-socketless
 

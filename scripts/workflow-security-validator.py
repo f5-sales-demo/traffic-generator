@@ -78,6 +78,13 @@ CONTAINER_ROUTE_EXPRESSION = (
     "fromJSON(format('[\"self-hosted\",\"Linux\",\"X64\",\"{0}\","
     "\"container-build\"]', github.event.repository.name)) }}"
 )
+ARC_SOCKET_EXPR = "${{ inputs.socketless_runner_label || 'managed-socketless' }}"
+BUILD_EXPR = "${{ inputs.container_build_runner_label || 'managed-container-build' }}"
+CANONICAL_SUPER_LINTER_INPUTS = {
+    "socketless_runner_label": "${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-socketless' || 'managed-socketless' }}",
+    "container_build_runner_label": "${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-container-build' || 'managed-container-build' }}",
+}
+XCSH_REPOSITORY = "f5-sales-demo/xcsh"
 REUSABLE_RUNNER_WORKFLOWS = {
     "f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml",
     "f5-sales-demo/docs-control/.github/workflows/super-linter.yml",
@@ -97,15 +104,15 @@ REUSABLE_DEFINITION_ROUTES = {
     ),
     (".github/workflows/super-linter.yml", "trust-gate"): (
         "ubuntu-24.04",
-        SOCKETLESS_ROUTE_EXPRESSION,
+        ARC_SOCKET_EXPR,
     ),
     (".github/workflows/super-linter.yml", "lint"): (
         "container-build",
-        CONTAINER_ROUTE_EXPRESSION,
+        BUILD_EXPR,
     ),
     (".github/workflows/super-linter.yml", "shell-unit-tests"): (
         "ubuntu-24.04",
-        SOCKETLESS_ROUTE_EXPRESSION,
+        ARC_SOCKET_EXPR,
     ),
 }
 
@@ -127,7 +134,6 @@ MANAGED_ARC_COHORT = frozenset(
         "administration",
         "api-protection",
         "api-specs",
-        "api-specs-enriched",
         "apt-repo",
         "bot-advanced",
         "bot-standard",
@@ -148,7 +154,6 @@ MANAGED_ARC_COHORT = frozenset(
         "observability",
         "origin-server",
         "starlight-mega-menu",
-        "terraform-provider-xcsh",
         "traffic-generator",
         "vscode-xcsh",
         "waf",
@@ -186,6 +191,40 @@ ARC_SHARED_CONTRACTS = (
         },
     ),
     (
+        frozenset({"f5-sales-demo/api-specs-enriched"}),
+        {
+            "socketless": {
+                "label": "managed-socketless",
+                "profile": "ubuntu-24.04",
+            },
+            "container-build": {
+                "label": "managed-container-build",
+                "profile": "container-build",
+            },
+            "compute": {
+                "label": "api-specs-enriched-compute",
+                "profile": "ubuntu-24.04",
+            },
+        },
+    ),
+    (
+        frozenset({"f5-sales-demo/terraform-provider-xcsh"}),
+        {
+            "socketless": {
+                "label": "managed-socketless",
+                "profile": "ubuntu-24.04",
+            },
+            "container-build": {
+                "label": "managed-container-build",
+                "profile": "container-build",
+            },
+            "compute": {
+                "label": "terraform-provider-xcsh-compute",
+                "profile": "ubuntu-24.04",
+            },
+        },
+    ),
+    (
         frozenset({"f5-sales-demo/xcsh"}),
         {
             "socketless": {
@@ -196,16 +235,23 @@ ARC_SHARED_CONTRACTS = (
                 "label": "xcsh-container-build",
                 "profile": "container-build",
             },
+            "compute": {
+                "label": "xcsh-compute",
+                "profile": "ubuntu-24.04",
+            },
         },
     ),
 )
 RESERVED_ARC_LABELS = frozenset(
     {
+        "api-specs-enriched-compute",
         "docs-container-build",
         "docs-socketless",
         "managed-container-build",
         "managed-socketless",
+        "terraform-provider-xcsh-compute",
         "xcsh-container-build",
+        "xcsh-compute",
         "xcsh-socketless",
     }
 )
@@ -364,8 +410,23 @@ def repository_runner_routes(workflows, profiles, default_profile, repository):
     return {"kind": "legacy", "profiles_by_route": profiles_by_route}
 
 
-def resolve_route(runs_on, routes):
+def canonical_caller_label(value, repository):
+    """Resolve the exact governed caller expression for the repository under audit."""
+    for name, expression in CANONICAL_SUPER_LINTER_INPUTS.items():
+        if value != expression:
+            continue
+        prefix = "xcsh" if repository == XCSH_REPOSITORY else "managed"
+        suffix = "container-build"
+        if name == "socketless_runner_label":
+            suffix = "socketless"
+        return f"{prefix}-{suffix}"
+    return value
+
+
+def resolve_route(runs_on, routes, repository=None):
     route = tuple(runs_on) if isinstance(runs_on, list) else runs_on
+    if repository is not None:
+        route = canonical_caller_label(route, repository)
     return routes["profiles_by_route"].get(route)
 
 
@@ -383,7 +444,7 @@ def reusable_definition_profile(repository, relative, job_id, runs_on):
     return expected[0]
 
 
-def validate_reusable_runner_inputs(job, routes, default_profile):
+def validate_reusable_runner_inputs(job, routes, default_profile, repository):
     """Validate policy-approved scalar labels passed to governed reusable calls."""
     uses = job.get("uses")
     target = uses.rsplit("@", 1)[0] if isinstance(uses, str) and "@" in uses else uses
@@ -403,6 +464,16 @@ def validate_reusable_runner_inputs(job, routes, default_profile):
         return
     if routes["kind"] != "arc":
         raise PolicyError("legacy reusable workflow calls cannot override runner labels")
+    conditional = set()
+    for name, value in values.items():
+        if value == CANONICAL_SUPER_LINTER_INPUTS[name]:
+            conditional.add(name)
+    if conditional:
+        if conditional != set(names) or not target.endswith("/super-linter.yml"):
+            message = "conditional ARC runner labels must be supplied together"
+            raise PolicyError(message)
+        for name in names:
+            values[name] = canonical_caller_label(values[name], repository)
     expected_profiles = {
         "socketless_runner_label": default_profile,
         "container_build_runner_label": "container-build",
@@ -697,20 +768,11 @@ def secret_references(text):
 
 
 # pylint: disable-next=too-many-locals
-def validate_job(repository, workflow, job, spec, default_profile, routes):
+def validate_job(_repository, workflow, job, spec, _default_profile, _routes):
     errors = []
-    basename = repository.split("/", 1)[1]
     runs_on = job.get("runs-on")
-    default_routes = [
-        route
-        for route, profile in routes["profiles_by_route"].items()
-        if profile == default_profile
-        and (routes["kind"] == "arc" or route[3] == basename)
-    ]
-    expected_route = default_routes[0] if len(default_routes) == 1 else None
-    if isinstance(expected_route, tuple):
-        expected_route = list(expected_route)
-    if runs_on != spec["runs_on"] or runs_on != expected_route:
+    expected_route = spec["runs_on"]
+    if runs_on != expected_route:
         errors.append(f"runs-on must equal {expected_route!r}, got {runs_on!r}")
     if job.get("environment") != spec["environment"]:
         errors.append(f"environment mismatch: {job.get('environment')!r}")
@@ -797,9 +859,9 @@ def inventory(root, repository, policy, default_profile, routes):
             if not isinstance(job, dict):
                 raise PolicyError(f"malformed job {relative}/{job_id}")
             if "uses" in job:
-                validate_reusable_runner_inputs(job, routes, default_profile)
+                validate_reusable_runner_inputs(job, routes, default_profile, repository)  # fmt: skip
             runs_on = job.get("runs-on")
-            resolved_profile = resolve_route(runs_on, routes)
+            resolved_profile = resolve_route(runs_on, routes, repository)
             internal_profile = reusable_definition_profile(
                 repository, relative, job_id, runs_on
             )
