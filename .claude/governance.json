@@ -7,7 +7,6 @@
       ".ruff.toml",
       ".python-lint",
       ".mypy.ini",
-      ".github/workflows/super-linter.yml",
       ".github/workflows/auto-merge.yml",
       ".github/workflows/dependabot-auto-merge.yml",
       ".github/workflows/semgrep.yml",
