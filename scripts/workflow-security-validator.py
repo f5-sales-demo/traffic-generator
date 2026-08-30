@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ruff: noqa: ANN001, ANN201, D101, D103, EM101, EM102, RUF100, TRY003
-# pylint: disable=invalid-name,too-many-branches,broad-exception-caught,import-error
+# pylint: disable=invalid-name,too-many-branches,broad-exception-caught,import-error,too-many-lines,too-many-locals,too-many-statements,too-many-boolean-expressions
 # fmt: off
 """Fail-closed authorization for self-hosted routes and Zizmor findings."""
 
@@ -14,7 +14,10 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
-POLICY_SCHEMA_VERSION = 4
+POLICY_SCHEMA_VERSION = 5
+IMAGE_DIGEST_RE = re.compile(
+    r"ghcr\.io/f5-sales-demo/self-hosted-runner@sha256:[0-9a-f]{64}"
+)
 DOCKER_POLICY = {
     "host_socket": "/run/f5-actions-runner/container-build/docker.sock",
     "runner_socket": "/run/docker.sock",
@@ -39,6 +42,8 @@ TOP_FIELDS = {
     "dispatcher",
     "defaults",
     "profiles",
+    "arc_attestations",
+    "restricted_routes",
     "hosted_exceptions",
     "repositories",
 }
@@ -85,6 +90,18 @@ CANONICAL_SUPER_LINTER_INPUTS = {
     "container_build_runner_label": "${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-container-build' || 'managed-container-build' }}",
 }
 XCSH_REPOSITORY = "f5-sales-demo/xcsh"
+BENCHMARK_TRUST_GUARD = (
+    "github.event_name == 'pull_request' && "
+    "github.event.action == 'labeled' && "
+    "github.event.label.name == 'compute-benchmark-approved' && "
+    "github.event.pull_request.head.repo.full_name == github.repository"
+)
+TRUSTED_COMPUTE_ROUTE_EXPRESSIONS = {
+    "terraform-provider-xcsh-compute": (
+        "${{ github.event.pull_request.head.repo.full_name == github.repository && "
+        "'terraform-provider-xcsh-compute' || 'ubuntu-latest' }}"
+    ),
+}
 REUSABLE_RUNNER_WORKFLOWS = {
     "f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml",
     "f5-sales-demo/docs-control/.github/workflows/super-linter.yml",
@@ -212,7 +229,7 @@ ARC_SHARED_CONTRACTS = (
         {
             "socketless": {
                 "label": "managed-socketless",
-                "profile": "ubuntu-24.04",
+                "attestation": "terraform-provider-xcsh-d8",
             },
             "container-build": {
                 "label": "managed-container-build",
@@ -220,7 +237,7 @@ ARC_SHARED_CONTRACTS = (
             },
             "compute": {
                 "label": "terraform-provider-xcsh-compute",
-                "profile": "ubuntu-24.04",
+                "attestation": "terraform-provider-xcsh-d16",
             },
         },
     ),
@@ -326,7 +343,78 @@ def governed_repositories(path):
 
 
 # pylint: disable-next=too-many-locals
-def repository_runner_routes(workflows, profiles, default_profile, repository):
+def validate_arc_contract(attestations, restricted_routes):
+    """Validate immutable ARC runtime attestations and exact job grants."""
+    if not isinstance(attestations, dict):
+        raise PolicyError("arc_attestations must be an object")
+    fields = {
+        "label",
+        "runner_profile",
+        "image",
+        "vm_size",
+        "cpu_limit",
+        "memory_limit_bytes",
+        "docker_socket",
+        "repositories",
+    }
+    labels = set()
+    for name, spec in attestations.items():
+        if not isinstance(name, str) or not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", name):
+            raise PolicyError("ARC attestation names must be safe strings")
+        if not isinstance(spec, dict) or set(spec) != fields:
+            raise PolicyError("ARC attestation fields are incomplete or unknown")
+        label = spec["label"]
+        repositories = spec["repositories"]
+        if (
+            not isinstance(label, str)
+            or not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", label)
+            or label in labels
+            or not isinstance(spec["runner_profile"], str)
+            or not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", spec["runner_profile"])
+            or not isinstance(spec["image"], str)
+            or not IMAGE_DIGEST_RE.fullmatch(spec["image"])
+            or not isinstance(spec["vm_size"], str)
+            or not spec["vm_size"].startswith("Standard_")
+            or not isinstance(spec["cpu_limit"], int)
+            or spec["cpu_limit"] <= 0
+            or not isinstance(spec["memory_limit_bytes"], int)
+            or spec["memory_limit_bytes"] <= 0
+            or not isinstance(spec["docker_socket"], bool)
+            or not isinstance(repositories, list)
+            or not repositories
+            or len(repositories) != len(set(repositories))
+            or not all(isinstance(item, str) and item.count("/") == 1 for item in repositories)
+        ):
+            raise PolicyError(f"ARC attestation is malformed: {name}")
+        labels.add(label)
+    if not isinstance(restricted_routes, dict):
+        raise PolicyError("restricted_routes must be an object")
+    grant_fields = {"repository", "workflow", "job"}
+    for label, grants in restricted_routes.items():
+        if label not in labels or not isinstance(grants, list) or not grants:
+            raise PolicyError("restricted route must name an attested label and grants")
+        identities = set()
+        for grant in grants:
+            if not isinstance(grant, dict) or set(grant) != grant_fields:
+                raise PolicyError("restricted route grant fields are invalid")
+            identity = (grant["repository"], grant["workflow"], grant["job"])
+            if (
+                not all(isinstance(item, str) and item for item in identity)
+                or not grant["workflow"].startswith(".github/workflows/")
+                or identity in identities
+            ):
+                raise PolicyError("restricted route grant is malformed or duplicated")
+            identities.add(identity)
+
+
+def repository_runner_routes(
+    workflows,
+    profiles,
+    default_profile,
+    repository,
+    arc_attestations=None,
+    restricted_routes=None,
+):
     """Return one strict route-to-profile model for legacy or ARC runners."""
     runner = workflows.get("runner", {})
     if not isinstance(runner, dict) or set(runner) - {"profiles", "arc_scale_sets"}:
@@ -340,20 +428,36 @@ def repository_runner_routes(workflows, profiles, default_profile, repository):
         if not isinstance(scale_sets, dict) or not scale_sets:
             raise PolicyError("repository ARC scale sets must be a non-empty object")
         profiles_by_label = {}
+        attestations = arc_attestations or {}
+        attestations_by_label = {}
         for name, spec in scale_sets.items():
             if not isinstance(name, str) or not re.fullmatch(
                 r"[a-z0-9][a-z0-9.-]*", name
             ):
                 raise PolicyError("repository ARC scale sets must use safe route names")
-            if not isinstance(spec, dict) or set(spec) != {"label", "profile"}:
-                raise PolicyError("ARC scale set must contain only label and profile")
+            if not isinstance(spec, dict) or set(spec) not in (
+                {"label", "profile"},
+                {"label", "attestation"},
+            ):
+                raise PolicyError("ARC scale set must name one profile or attestation")
             label = spec.get("label")
             profile = spec.get("profile")
             if not isinstance(label, str) or not re.fullmatch(
                 r"[a-z0-9][a-z0-9.-]*", label
             ):
                 raise PolicyError("ARC scale set label must be a safe string")
-            if not isinstance(profile, str) or profile not in profiles:
+            attestation_name = spec.get("attestation")
+            if attestation_name is not None:
+                attestation = attestations.get(attestation_name)
+                if (
+                    not isinstance(attestation, dict)
+                    or attestation.get("label") != label
+                    or repository not in attestation.get("repositories", [])
+                ):
+                    raise PolicyError("ARC scale set attestation does not authorize repository")
+                profile = default_profile
+                attestations_by_label[label] = attestation
+            elif not isinstance(profile, str) or profile not in profiles:
                 raise PolicyError("ARC scale set profile must be defined")
             if label in profiles_by_label:
                 raise PolicyError(f"duplicate ARC scale set label: {label}")
@@ -368,7 +472,19 @@ def repository_runner_routes(workflows, profiles, default_profile, repository):
             if leaked:
                 message = "reserved ARC scale-set label escaped its cohort"
                 raise PolicyError(f"{message}: {sorted(leaked)}")
-        return {"kind": "arc", "profiles_by_route": profiles_by_label}
+        grants_by_label = {
+            label: {
+                (grant["repository"], grant["workflow"], grant["job"])
+                for grant in grants
+            }
+            for label, grants in (restricted_routes or {}).items()
+        }
+        return {
+            "kind": "arc",
+            "profiles_by_route": profiles_by_label,
+            "attestations_by_label": attestations_by_label,
+            "restricted_grants": grants_by_label,
+        }
 
     allowed = runner.get("profiles", [default_profile])
     valid_profiles = isinstance(allowed, list) and bool(allowed)
@@ -423,10 +539,19 @@ def canonical_caller_label(value, repository):
     return value
 
 
+def canonical_route_label(value, repository):
+    value = tuple(value) if isinstance(value, list) else value
+    value = canonical_caller_label(value, repository)
+    for label, expression in TRUSTED_COMPUTE_ROUTE_EXPRESSIONS.items():
+        if value == expression:
+            return label
+    return value
+
+
 def resolve_route(runs_on, routes, repository=None):
     route = tuple(runs_on) if isinstance(runs_on, list) else runs_on
     if repository is not None:
-        route = canonical_caller_label(route, repository)
+        route = canonical_route_label(route, repository)
     return routes["profiles_by_route"].get(route)
 
 
@@ -537,12 +662,18 @@ def load_policy(path, governance_path, repository):
         or default_profile not in profiles
     ):
         raise PolicyError("policy default profile must name an existing profile")
+    validate_arc_contract(raw.get("arc_attestations"), raw.get("restricted_routes"))
     result = {}
     workflows = repositories[repository]
     if not isinstance(workflows, dict):
         raise PolicyError("repository policy must be a workflow object")
     routes = repository_runner_routes(
-        workflows, profiles, default_profile, repository
+        workflows,
+        profiles,
+        default_profile,
+        repository,
+        raw["arc_attestations"],
+        raw["restricted_routes"],
     )
     for workflow, jobs in workflows.items():
         if workflow == "runner":
@@ -861,7 +992,19 @@ def inventory(root, repository, policy, default_profile, routes):
             if "uses" in job:
                 validate_reusable_runner_inputs(job, routes, default_profile, repository)  # fmt: skip
             runs_on = job.get("runs-on")
+            if (
+                any(
+                    (repository, relative, job_id) in grants
+                    for grants in routes.get("restricted_grants", {}).values()
+                )
+                and isinstance(runs_on, str)
+                and ("matrix." in runs_on or "github.event.inputs" in runs_on)
+            ):
+                raise PolicyError(
+                    f"{relative}/{job_id}: restricted-route repositories forbid matrix or dispatch-controlled runs-on"
+                )
             resolved_profile = resolve_route(runs_on, routes, repository)
+            route_label = canonical_route_label(runs_on, repository)
             internal_profile = reusable_definition_profile(
                 repository, relative, job_id, runs_on
             )
@@ -889,6 +1032,17 @@ def inventory(root, repository, policy, default_profile, routes):
                     raise PolicyError(
                         f"{relative}/{job_id}: runs-on must use the canonical repository route"
                     )
+                grants = routes.get("restricted_grants", {}).get(route_label)
+                if grants is not None:
+                    identity = (repository, relative, job_id)
+                    if identity not in grants:
+                        raise PolicyError(
+                            f"{relative}/{job_id}: restricted runner route is not allowlisted"
+                        )
+                    if runs_on == route_label and job.get("if") != BENCHMARK_TRUST_GUARD:
+                        raise PolicyError(
+                            f"{relative}/{job_id}: direct restricted route requires the exact same-repository benchmark guard"
+                        )
                 # The exact repository route is the ordinary-job authorization.
                 # A per-job entry adds stricter permissions, trigger, and secret checks.
                 if key in policy:
