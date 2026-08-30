@@ -154,8 +154,7 @@ SOURCE_SNIPPET_INDEX_RE = re.compile(r"\$\{[A-Za-z_$][A-Za-z0-9_$]*(?:\+\+|--)?\
 IDENTITY_FIELD_RE = re.compile(
     r"(?i)(?P<field_prefix>^|[^A-Za-z0-9_/-])"
     r"(?P<key_open>[*_~`'\"]*)"
-    r"(?P<key>tenant(?:_name|_id)?|customer(?:_name|_id)?|account(?:_name|_id)?|"
-    r"subscription(?:_name|_id)|project(?:_name|_id)|namespace)"
+    r"(?P<key>tenant(?:_name|_id|-name|-id|Name|Id)?|customer(?:_name|_id|-name|-id|Name|Id)?|account(?:_name|_id|-name|-id|Name|Id)?|subscription(?:_name|_id|-name|-id|Name|Id)|project(?:_name|_id|-name|-id|Name|Id)|namespace)"
     r"(?P<key_close>[*_~`'\"]*)\s*(?P<separator>[:=])\s*(?P<quote>(?:\\['\"`]|['\"`])?)"
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
@@ -2158,6 +2157,65 @@ def scan_structured_identity(
             )
 
 
+# fmt: off
+def scan_jq_identity_writes(
+    path: str,
+    line_number: int,
+    line: str,
+    findings: set[Finding],
+    _context: LineScanContext,
+) -> None:
+    """Inspect exact --arg/--argjson values flowing to jq identity object fields."""
+    if not path.endswith(".sh") or "jq" not in line:
+        return
+    bindings = {
+        match.group("name"): match.group("value").strip("'\"")
+        for match in re.finditer(
+            r"(?:--arg|--argjson)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s+(?P<value>[^\s]+)",
+            line,
+        )
+    }
+    key = r"tenant(?:_name|_id|-name|-id|Name|Id)?|customer(?:_name|_id|-name|-id|Name|Id)?|account(?:_name|_id|-name|-id|Name|Id)?|subscription(?:_name|_id|-name|-id|Name|Id)|project(?:_name|_id|-name|-id|Name|Id)|namespace"
+    for field in re.finditer(
+        rf"(?P<key>{key})\s*:\s*\$(?P<name>[A-Za-z_][A-Za-z0-9_]*)", line, re.IGNORECASE
+    ):
+        value = bindings.get(field.group("name"), "")
+        if value and not placeholder_value(value):
+            add_finding(
+                findings,
+                path=path,
+                line=line_number,
+                category="customer-identifier",
+                message=f"{field.group('key')} contains a literal organization identifier",
+            )
+
+# fmt: on
+# fmt: off
+def scan_multiline_identity_fields(
+    path: str, text: str, findings: set[Finding]
+) -> None:
+    """Cover JSON/YAML keys and scalar values separated by physical lines."""
+    key = r"tenant(?:_name|_id|-name|-id|Name|Id)?|customer(?:_name|_id|-name|-id|Name|Id)?|account(?:_name|_id|-name|-id|Name|Id)?|subscription(?:_name|_id|-name|-id|Name|Id)|project(?:_name|_id|-name|-id|Name|Id)|namespace"
+    pattern = re.compile(
+        rf"(?im)^\s*(?:\?\s*)?['\"]?(?P<key>{key})['\"]?\s*\n\s*:\s*(?P<value>[^\r\n]+)"
+    )
+    for match in pattern.finditer(text):
+        value = normalized_value(match.group("value").strip().strip("'\""))
+        if (
+            not value
+            or value.startswith(("|", ">", "{", "["))
+            or placeholder_value(value)
+        ):
+            continue
+        add_finding(
+            findings,
+            path=path,
+            line=text.count("\n", 0, match.start("value")) + 1,
+            category="customer-identifier",
+            message=f"{match.group('key')} contains a literal organization identifier",
+        )
+
+# fmt: on
 def scan_query_parameters(
     path: str,
     line_number: int,
@@ -2383,6 +2441,7 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
     localization_strings = localization_top_level_string_spans(path, text)
     if yaml or suffix in PROSE_DOCUMENT_SUFFIXES:
         scan_yaml_identity_blocks(path, text, findings)
+    scan_multiline_identity_fields(path, text, findings)
     fence_marker: str | None = None
     fence_language: str | None = None
     fence_close_column: int | None = None
@@ -2562,6 +2621,7 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
             findings,
             context,
         )
+        scan_jq_identity_writes(path, line_number, line, findings, context)
         scan_query_parameters(path, line_number, line, findings)
         scan_public_ips(path, line_number, line, findings)
 
