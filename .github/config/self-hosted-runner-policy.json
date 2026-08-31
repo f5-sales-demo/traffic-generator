@@ -24,7 +24,7 @@
   },
   "profiles": {
     "ubuntu-24.04": {
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:8817d93949ce0429b16bbcae686065b81d976b43df22e15e90379b5978c6dc2b",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:2a0243be5404daa0f52bae16384f53dbc04554e31406ed0db45152d92f6187e1",
       "labels": ["ubuntu-24.04"],
       "memory": "8g",
       "cpus": "4",
@@ -34,7 +34,7 @@
       "docker_socket": false
     },
     "ubuntu-24.04-secondary": {
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:8817d93949ce0429b16bbcae686065b81d976b43df22e15e90379b5978c6dc2b",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:2a0243be5404daa0f52bae16384f53dbc04554e31406ed0db45152d92f6187e1",
       "labels": ["ubuntu-24.04"],
       "memory": "8g",
       "cpus": "4",
@@ -44,7 +44,7 @@
       "docker_socket": false
     },
     "automation": {
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:8817d93949ce0429b16bbcae686065b81d976b43df22e15e90379b5978c6dc2b",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:2a0243be5404daa0f52bae16384f53dbc04554e31406ed0db45152d92f6187e1",
       "labels": ["automation"],
       "memory": "8g",
       "cpus": "4",
@@ -64,7 +64,7 @@
       "docker_socket": false
     },
     "container-build": {
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:aafba7db8e905b34789eedfc0e4e3a0cc163a9cfdee3f0e97332f5e07c87788a",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:14d73659768abaa4ace29b44ab9e058b9a789621eb775849223b69e2538b0eca",
       "labels": ["container-build"],
       "memory": "16g",
       "cpus": "6",
@@ -78,7 +78,7 @@
     "terraform-provider-xcsh-d8": {
       "label": "managed-socketless",
       "runner_profile": "socketless",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:8817d93949ce0429b16bbcae686065b81d976b43df22e15e90379b5978c6dc2b",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:2a0243be5404daa0f52bae16384f53dbc04554e31406ed0db45152d92f6187e1",
       "vm_size": "Standard_D8ads_v5",
       "cpu_limit": 7,
       "memory_limit_bytes": 30064771072,
@@ -88,7 +88,7 @@
     "terraform-provider-xcsh-d16": {
       "label": "terraform-provider-xcsh-compute",
       "runner_profile": "compute",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:8817d93949ce0429b16bbcae686065b81d976b43df22e15e90379b5978c6dc2b",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:2a0243be5404daa0f52bae16384f53dbc04554e31406ed0db45152d92f6187e1",
       "vm_size": "Standard_D16ads_v5",
       "cpu_limit": 15,
       "memory_limit_bytes": 60129542144,
