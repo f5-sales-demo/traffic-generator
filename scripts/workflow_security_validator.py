@@ -90,6 +90,9 @@ CANONICAL_SUPER_LINTER_INPUTS = {
     "container_build_runner_label": "${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-container-build' || 'managed-container-build' }}",
 }
 XCSH_REPOSITORY = "f5-sales-demo/xcsh"
+DOCS_ICONS_REPOSITORY = "f5-sales-demo/docs-icons"
+DOCS_SOCKETLESS_ROUTE_EXPRESSION = "${{ github.repository == 'f5-sales-demo/docs-icons' && 'docs-socketless' || 'managed-socketless' }}"  # fmt: skip
+DOCS_SOCKETLESS_ROUTE_LABELS = {DOCS_ICONS_REPOSITORY: "docs-socketless"}
 BENCHMARK_TRUST_GUARD = (
     "github.event_name == 'pull_request' && "
     "github.event.action == 'labeled' && "
@@ -542,6 +545,8 @@ def canonical_caller_label(value, repository):
 def canonical_route_label(value, repository):
     value = tuple(value) if isinstance(value, list) else value
     value = canonical_caller_label(value, repository)
+    if value == DOCS_SOCKETLESS_ROUTE_EXPRESSION:
+        return DOCS_SOCKETLESS_ROUTE_LABELS.get(repository, "managed-socketless")
     for label, expression in TRUSTED_COMPUTE_ROUTE_EXPRESSIONS.items():
         if value == expression:
             return label

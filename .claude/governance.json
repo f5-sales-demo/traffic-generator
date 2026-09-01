@@ -8,7 +8,6 @@
       ".python-lint",
       ".mypy.ini",
       ".github/workflows/auto-merge.yml",
-      ".github/workflows/dependabot-auto-merge.yml",
       ".github/workflows/semgrep.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
@@ -22,7 +21,6 @@
     "vscode-xcsh": [".ruff.toml", ".python-lint", ".mypy.ini", ".isort.cfg", "README.md"],
     "docs": [
       ".github/workflows/auto-merge.yml",
-      ".github/workflows/dependabot-auto-merge.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
       ".github/workflows/require-linked-issue.yml",
@@ -31,7 +29,6 @@
     ],
     "docs-builder": [
       ".github/workflows/auto-merge.yml",
-      ".github/workflows/dependabot-auto-merge.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
       ".github/workflows/require-linked-issue.yml",
@@ -39,17 +36,13 @@
       ".github/workflows/super-linter.yml"
     ],
     "docs-icons": [
-      ".github/workflows/auto-merge.yml",
-      ".github/workflows/dependabot-auto-merge.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
-      ".github/workflows/require-linked-issue.yml",
       ".github/workflows/github-pages-deploy.yml",
       ".github/workflows/super-linter.yml"
     ],
     "docs-theme": [
       ".github/workflows/auto-merge.yml",
-      ".github/workflows/dependabot-auto-merge.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
       ".github/workflows/require-linked-issue.yml",
@@ -62,7 +55,6 @@
       ".isort.cfg",
       "README.md",
       ".github/workflows/auto-merge.yml",
-      ".github/workflows/dependabot-auto-merge.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
       ".github/workflows/require-linked-issue.yml",
@@ -78,7 +70,6 @@
     "starlight-llms-txt": [
       "README.md",
       ".github/workflows/auto-merge.yml",
-      ".github/workflows/dependabot-auto-merge.yml",
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
       ".github/workflows/require-linked-issue.yml",
@@ -94,11 +85,10 @@
     ".github/workflows/reconcile-fleet-settings.yml",
     ".github/workflows/require-linked-issue.yml",
     ".github/workflows/super-linter.yml",
-    ".github/workflows/dependabot-auto-merge.yml",
     ".github/workflows/auto-merge.yml",
     ".github/workflows/workflow-security-audit.yml",
     ".github/config/self-hosted-runner-policy.json",
-    "scripts/workflow-security-validator.py",
+    "scripts/workflow_security_validator.py",
     "scripts/audit-runner-workflows.py",
     "scripts/ephemeral-runner-controller.py",
     "scripts/provision-ephemeral-runners.py",
@@ -112,7 +102,6 @@
     ".github/ISSUE_TEMPLATE/feature_request.md",
     ".github/ISSUE_TEMPLATE/documentation.md",
     ".github/ISSUE_TEMPLATE/config.yml",
-    ".github/dependabot.yml",
     "CONTRIBUTING.md",
     "CLAUDE.md",
     "AGENTS.md",

@@ -45,6 +45,16 @@ project layout, setup, build and test commands, and local gotchas. **When this r
 `DEVELOPING.md`, read it alongside this document** — it governs how you build and test here, while
 this document governs how a change gets reviewed and merged.
 
+### Documentation imports
+
+Pages workflows stage optional repository files listed in `docs/_imports` into the ignored
+`docs/_data/` directory before the documentation build. A legacy line containing
+`path/to/file` stages that file as `_data/file`. Use `path/to/file -> nested/path/file` when
+the published path must preserve directories or distinguish repeated basenames. Empty lines and
+full-line comments are ignored; missing sources are skipped. Both source and destination must be
+safe relative file paths, and duplicate destinations fail the build rather than silently overwriting
+content.
+
 ## Workflow Overview
 
 Carry every change through this complete path:
