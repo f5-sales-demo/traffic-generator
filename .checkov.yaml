@@ -30,7 +30,7 @@ framework:
 # ── Check exclusions ─────────────────────────────────────────────────────────
 skip-check:
   - CKV_GHA_7    # GitHub Actions — allow pinning to branch refs
-  - CKV2_GHA_1   # GitHub Actions — immutable actions (covered by Dependabot)
+  - CKV2_GHA_1   # GitHub Actions — immutable actions (covered by Renovate)
   - CKV_GHA_1    # GitHub Actions — ACTIONS_ALLOW_UNSECURE_COMMANDS not used
   - CKV_GHA_2    # GitHub Actions — managed workflows use controlled inputs
   - CKV_GHA_3    # GitHub Actions — curl with secrets in managed deploy scripts
