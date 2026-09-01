@@ -26,7 +26,7 @@ on:
       - '.github/workflows/**'
       - '.github/config/self-hosted-runner-policy.json'
       - '.claude/governance.json'
-      - 'scripts/workflow-security-validator.py'
+      - 'scripts/workflow_security_validator.py'
       - 'scripts/audit-runner-workflows.py'
       - 'workflows/workflow-security-audit.yml'
       - 'zizmor.yaml'
@@ -72,7 +72,7 @@ jobs:
               exit 1
               ;;
           esac
-          uv run --with 'PyYAML==6.0.2' --no-project python scripts/workflow-security-validator.py \
+          uv run --with 'PyYAML==6.0.2' --no-project python scripts/workflow_security_validator.py \
             --repository "$AUDITED_REPOSITORY" \
             --policy .github/config/self-hosted-runner-policy.json \
             --governance .claude/governance.json \
@@ -109,7 +109,7 @@ jobs:
               exit 1
               ;;
           esac
-          uv run --with 'PyYAML==6.0.2' --no-project python scripts/workflow-security-validator.py \
+          uv run --with 'PyYAML==6.0.2' --no-project python scripts/workflow_security_validator.py \
             --repository "$AUDITED_REPOSITORY" \
             --policy .github/config/self-hosted-runner-policy.json \
             --governance .claude/governance.json \

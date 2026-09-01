@@ -26,11 +26,26 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           RELEASE_AUTOMATION_LOGIN: ${{ vars.RELEASE_AUTOMATION_LOGIN }}
+          RENOVATE_GITHUB_APP_BOT_ID: ${{ vars.RENOVATE_GITHUB_APP_BOT_ID }}
         with:
           script: |
             const { owner, repo } = context.repo;
             const pull = context.payload.pull_request;
             const number = pull.number;
+            const configuredRenovateId = process.env.RENOVATE_GITHUB_APP_BOT_ID;
+            const renovateId = /^[1-9]\d*$/.test(configuredRenovateId ?? "") &&
+              Number.isSafeInteger(Number(configuredRenovateId))
+                ? Number(configuredRenovateId)
+                : null;
+            const authenticatedRenovate =
+              pull.head?.repo?.full_name === `${owner}/${repo}` &&
+              pull.user?.type === "Bot" &&
+              renovateId !== null &&
+              pull.user?.id === renovateId;
+            if (authenticatedRenovate) {
+              core.info(`PR #${number} is authenticated as the configured Renovate App bot ID ${renovateId}; linked-issue policy is satisfied.`);
+              return;
+            }
             const branchMatch = pull.head?.ref?.match(
               /^release\/v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/,
             );
@@ -78,7 +93,7 @@ jobs:
       (github.repository != 'f5-sales-demo/xcsh' || needs.linked-issue.result == 'success')
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
-    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@0fb275d851e2246b0f7b47278183512afd597c24
+    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@de314e9bf3ea45b98c89ccda2aa7a75af1013858
     with:
       rust_edition: ${{ github.repository == 'f5-sales-demo/xcsh' && '2024' || '2021' }}
       classify_xc_minimum_configs: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' }}

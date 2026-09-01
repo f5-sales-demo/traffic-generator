@@ -19,7 +19,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       !startsWith(github.event.pull_request.head.ref, 'governance/reconcile-')
     name: Check linked issues
-    runs-on: managed-socketless
+    runs-on: ${{ github.repository == 'f5-sales-demo/docs-icons' && 'docs-socketless' || 'managed-socketless' }}
     permissions:
       pull-requests: read # inspect linked issues on the current pull request
     steps:
@@ -27,11 +27,26 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           RELEASE_AUTOMATION_LOGIN: ${{ vars.RELEASE_AUTOMATION_LOGIN }}
+          RENOVATE_GITHUB_APP_BOT_ID: ${{ vars.RENOVATE_GITHUB_APP_BOT_ID }}
         with:
           script: |
             const { owner, repo } = context.repo;
             const pull = context.payload.pull_request;
             const number = pull.number;
+            const configuredRenovateId = process.env.RENOVATE_GITHUB_APP_BOT_ID;
+            const renovateId = /^[1-9]\d*$/.test(configuredRenovateId ?? "") &&
+              Number.isSafeInteger(Number(configuredRenovateId))
+                ? Number(configuredRenovateId)
+                : null;
+            const authenticatedRenovate =
+              pull.head?.repo?.full_name === `${owner}/${repo}` &&
+              pull.user?.type === "Bot" &&
+              renovateId !== null &&
+              pull.user?.id === renovateId;
+            if (authenticatedRenovate) {
+              core.info(`PR #${number} is authenticated as the configured Renovate App bot ID ${renovateId}; linked-issue policy is satisfied.`);
+              return;
+            }
             const branchMatch = pull.head?.ref?.match(
               /^release\/v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/,
             );

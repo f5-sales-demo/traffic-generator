@@ -29,9 +29,10 @@ jobs:
     environment: repository-settings
     if: >-
       github.event.pull_request.draft == false &&
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.type == 'User' &&
+      format('{0}', github.event.pull_request.user.id) != vars.RENOVATE_GITHUB_APP_BOT_ID &&
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: managed-socketless
+    runs-on: ${{ github.repository == 'f5-sales-demo/docs-icons' && 'docs-socketless' || 'managed-socketless' }}
     steps:
       - name: Require downstream-triggering token
         env:
@@ -45,16 +46,17 @@ jobs:
           echo "Canonical auto-merge token is present"
 
   call:
-    # Candidate filter only (non-draft, non-dependabot, same repository). The
+    # Candidate filter only (non-draft, human-authored, same repository). The
     # reusable further gates the actual merge on author write/admin permission, and
-    # branch protection + required checks still gate the merge. Dependabot uses
-    # dependabot-auto-merge.yml.
+    # branch protection + required checks still gate the merge. Renovate alone
+    # requests automerge for authenticated Renovate pull requests.
     needs: [require-token]
     if: >-
       github.event.pull_request.draft == false &&
-      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.type == 'User' &&
+      format('{0}', github.event.pull_request.user.id) != vars.RENOVATE_GITHUB_APP_BOT_ID &&
       github.event.pull_request.head.repo.full_name == github.repository
-    uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@0fb275d851e2246b0f7b47278183512afd597c24
+    uses: f5-sales-demo/docs-control/.github/workflows/auto-merge.yml@de314e9bf3ea45b98c89ccda2aa7a75af1013858
     permissions:
       contents: write # the reusable completes the merge
       pull-requests: write # enable auto-merge and update the pull request
