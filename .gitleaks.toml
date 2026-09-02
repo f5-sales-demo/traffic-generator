@@ -2,3 +2,17 @@ title = "Fleet default Gitleaks rules"
 
 [extend]
 useDefault = true
+
+[[rules]]
+id = "azure-subscription-id"
+description = "Azure subscription identifiers must not be committed"
+regex = '''(?i)(?:subscription[_-]?id|azure_subscription_id|--subscription|/subscriptions/)[^0-9a-f]{0,32}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'''
+tags = ["azure", "infrastructure-identifier", "pii"]
+
+[rules.allowlist]
+description = "Documented non-live Azure subscription placeholders"
+regexTarget = "match"
+regexes = [
+  '''00000000-0000-0000-0000-000000000000''',
+  '''00000000-0000-4000-8000-[0-9a-f]{12}''',
+]

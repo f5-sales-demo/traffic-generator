@@ -33,6 +33,7 @@
         "vendor/**",
         "docs/snapshots/**",
         ".github/config/managed-files-manifest.json",
+        ".github/config/backlog-inventory-*.json",
         "**/*.svg"
       ],
       "formatter": {
