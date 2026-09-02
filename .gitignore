@@ -94,7 +94,12 @@ ENV/
 # Test coverage
 .coverage
 htmlcov/
-coverage/
+coverage/*
+# The MCN SMSv2 coverage harness is authored source, not generated coverage output.
+!coverage/smsv2/
+!coverage/smsv2/**
+coverage/smsv2/**/*.tfstate
+coverage/smsv2/**/*.tfstate.*
 
 # Build artifacts
 reports/
