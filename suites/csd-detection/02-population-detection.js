@@ -207,7 +207,9 @@ async function session(idx) {
     eventBeaconCount: evented,
     ...result,
   };
-  console.log(`[CSD population] DONE: ${N} sessions, sensor_ok=${ok}, event_beacon=${evented}, script=${result.classification}`);
+  console.log(
+    `[CSD population] DONE: ${N} sessions, sensor_ok=${ok}, event_beacon=${evented}, script=${result.classification}`,
+  );
   console.log(`CSD_RESULT=${JSON.stringify(machineResult)}`);
   if (ok === 0) {
     console.error('FAIL: CSD sensor never injected — CSD not enabled/propagated on the LB for this path.');
