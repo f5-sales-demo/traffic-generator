@@ -29,6 +29,8 @@
 //   HEADFUL=1     headed real Chrome (channel:chrome) — REQUIRED for actual detections
 //   SESSIONS=8    number of distinct-fingerprint sessions (default 8)
 //   TARGET_PATH=/csd-demo/   page to drive (default /csd-demo/)
+//   EXPECT_SCRIPT=loaded|blocked   required outcome for every session (default loaded)
+//   EXPECTED_SCRIPT_URL=http://cdn-simulator-rmordasiewicz.eastus2.cloudapp.azure.com/csd-demo/checkout.js
 
 const TARGET_FQDN = process.argv[2];
 if (!TARGET_FQDN) {
@@ -37,9 +39,14 @@ if (!TARGET_FQDN) {
 }
 const PROTO = process.env.TARGET_PROTOCOL || 'http';
 const TARGET_PATH = process.env.TARGET_PATH || '/csd-demo/';
-const URL = `${PROTO}://${TARGET_FQDN}${TARGET_PATH}`;
+const TARGET_URL = `${PROTO}://${TARGET_FQDN}${TARGET_PATH}`;
 const N = parseInt(process.env.SESSIONS || '8', 10);
 const HEADFUL = process.env.HEADFUL === '1';
+const EXPECT_SCRIPT = process.env.EXPECT_SCRIPT || 'loaded';
+const EXPECTED_SCRIPT_URL =
+  process.env.EXPECTED_SCRIPT_URL ||
+  'http://cdn-simulator-rmordasiewicz.eastus2.cloudapp.azure.com/csd-demo/checkout.js';
+const { classifyPopulationResult, sameScriptUrl } = require('./population-result.cjs');
 
 // Prefer the full playwright package (bundled chromium); fall back to playwright-core + system Chrome.
 let chromium;
@@ -99,10 +106,16 @@ async function session(idx) {
 
   let sensor = false;
   const beacons = [];
+  let scriptState = 'unknown';
+  const isExpectedScript = (candidate) => sameScriptUrl(candidate, EXPECTED_SCRIPT_URL);
   page.on('response', (r) => {
     const u = r.url();
     if (/__imp_apg__\/js\//.test(u)) sensor = true;
     if (/__imp_apg__\/api\/dip/.test(u)) beacons.push(r.status());
+    if (isExpectedScript(u)) scriptState = r.status() >= 200 && r.status() < 400 ? 'loaded' : 'blocked';
+  });
+  page.on('requestfailed', (request) => {
+    if (isExpectedScript(request.url())) scriptState = 'blocked';
   });
 
   // Hard per-session cap so a stuck page can never stall the whole population.
@@ -110,7 +123,7 @@ async function session(idx) {
     throw new Error('session timeout 60s');
   });
   const run = (async () => {
-    await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await sleep(rnd(1500, 3000));
     for (let i = 0; i < rnd(3, 5); i++) {
       await page.mouse.move(rnd(60, 1100), rnd(80, 680), { steps: rnd(4, 9) });
@@ -151,32 +164,53 @@ async function session(idx) {
     await sleep(rnd(6000, 9000)); // dwell for the event beacon + script telemetry
   })();
 
+  let completed = false;
   try {
     await Promise.race([run, guard]);
+    completed = true;
     console.log(
-      `[pop ${idx}] ua=${ua.slice(12, 20)} sensor=${sensor} dip=${beacons.length}${beacons.length >= 2 ? ' (event beacon ✓)' : ''}`,
+      `[pop ${idx}] ua=${ua.slice(12, 20)} sensor=${sensor} dip=${beacons.length} script=${scriptState}${beacons.length >= 2 ? ' (event beacon ✓)' : ''}`,
     );
   } catch (e) {
     console.log(`[pop ${idx}] ${e.message.split('\n')[0]} (sensor=${sensor} dip=${beacons.length})`);
   } finally {
     await browser.close().catch(() => {});
   }
-  return { sensor, twoBeacon: beacons.length >= 2 };
+  return { completed, sensor, twoBeacon: beacons.length >= 2, scriptState };
 }
 
 (async () => {
   console.log(
-    `[CSD population] ${N} distinct-fingerprint sessions vs ${URL} — mode=${HEADFUL ? 'headed(real-chrome)' : 'headless(liveness)'}`,
+    `[CSD population] ${N} distinct-fingerprint sessions vs ${TARGET_URL} — mode=${HEADFUL ? 'headed(real-chrome)' : 'headless(liveness)'}`,
   );
   let ok = 0;
   let evented = 0;
+  const sessions = [];
   for (let i = 0; i < N; i++) {
     const r = await session(i);
+    sessions.push(r);
     if (r.sensor) ok++;
     if (r.twoBeacon) evented++;
     await sleep(rnd(800, 1800));
   }
-  console.log(`[CSD population] DONE: ${N} sessions, sensor_ok=${ok}, event_beacon=${evented}`);
+  let result;
+  try {
+    result = classifyPopulationResult(EXPECT_SCRIPT, sessions);
+  } catch (error) {
+    console.error(`FAIL: ${error.message}`);
+    process.exit(2);
+  }
+  const machineResult = {
+    target: TARGET_URL,
+    expectedScriptUrl: EXPECTED_SCRIPT_URL,
+    sensorCount: ok,
+    eventBeaconCount: evented,
+    ...result,
+  };
+  console.log(
+    `[CSD population] DONE: ${N} sessions, sensor_ok=${ok}, event_beacon=${evented}, script=${result.classification}`,
+  );
+  console.log(`CSD_RESULT=${JSON.stringify(machineResult)}`);
   if (ok === 0) {
     console.error('FAIL: CSD sensor never injected — CSD not enabled/propagated on the LB for this path.');
     process.exit(1);
@@ -193,6 +227,10 @@ async function session(idx) {
     console.log(
       `PASS: ${evented}/${N} sessions fired the event beacon — detection signal sent; verify via csd-verify.sh (~20min aggregation).`,
     );
+  }
+  if (!result.passed) {
+    console.error(`FAIL: expected script ${EXPECT_SCRIPT}, observed ${result.classification}`);
+    process.exit(1);
   }
   process.exit(0);
 })();
