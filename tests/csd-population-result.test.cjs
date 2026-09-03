@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
-const { classifyPopulationResult } = require('../suites/csd-detection/population-result.cjs');
+const { classifyPopulationResult, sameScriptUrl } = require('../suites/csd-detection/population-result.cjs');
 
 const session = (scriptState, overrides = {}) => ({
   completed: true,
@@ -45,4 +45,11 @@ test('incomplete sessions are not silently discarded', () => {
 
 test('invalid expectations are rejected', () => {
   assert.throws(() => classifyPopulationResult('maybe', []), /EXPECT_SCRIPT/);
+});
+
+test('script URL matching is exact and tolerates URL normalization', () => {
+  const expected = 'http://cdn.example.test/csd-demo/checkout.js';
+  assert.equal(sameScriptUrl(expected, expected), true);
+  assert.equal(sameScriptUrl(`${expected}?cache=1`, expected), false);
+  assert.equal(sameScriptUrl('http://other.example.test/csd-demo/checkout.js', expected), false);
 });

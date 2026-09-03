@@ -32,4 +32,12 @@ function classifyPopulationResult(expectation, sessions) {
   };
 }
 
-module.exports = { classifyPopulationResult };
+function sameScriptUrl(candidate, expected) {
+  try {
+    return new URL(candidate).href === new URL(expected).href;
+  } catch {
+    return false;
+  }
+}
+
+module.exports = { classifyPopulationResult, sameScriptUrl };

@@ -39,14 +39,14 @@ if (!TARGET_FQDN) {
 }
 const PROTO = process.env.TARGET_PROTOCOL || 'http';
 const TARGET_PATH = process.env.TARGET_PATH || '/csd-demo/';
-const URL = `${PROTO}://${TARGET_FQDN}${TARGET_PATH}`;
+const TARGET_URL = `${PROTO}://${TARGET_FQDN}${TARGET_PATH}`;
 const N = parseInt(process.env.SESSIONS || '8', 10);
 const HEADFUL = process.env.HEADFUL === '1';
 const EXPECT_SCRIPT = process.env.EXPECT_SCRIPT || 'loaded';
 const EXPECTED_SCRIPT_URL =
   process.env.EXPECTED_SCRIPT_URL ||
   'http://cdn-simulator-rmordasiewicz.eastus2.cloudapp.azure.com/csd-demo/checkout.js';
-const { classifyPopulationResult } = require('./population-result.cjs');
+const { classifyPopulationResult, sameScriptUrl } = require('./population-result.cjs');
 
 // Prefer the full playwright package (bundled chromium); fall back to playwright-core + system Chrome.
 let chromium;
@@ -107,13 +107,7 @@ async function session(idx) {
   let sensor = false;
   const beacons = [];
   let scriptState = 'unknown';
-  const isExpectedScript = (candidate) => {
-    try {
-      return new URL(candidate).href === new URL(EXPECTED_SCRIPT_URL).href;
-    } catch {
-      return false;
-    }
-  };
+  const isExpectedScript = (candidate) => sameScriptUrl(candidate, EXPECTED_SCRIPT_URL);
   page.on('response', (r) => {
     const u = r.url();
     if (/__imp_apg__\/js\//.test(u)) sensor = true;
@@ -129,7 +123,7 @@ async function session(idx) {
     throw new Error('session timeout 60s');
   });
   const run = (async () => {
-    await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await sleep(rnd(1500, 3000));
     for (let i = 0; i < rnd(3, 5); i++) {
       await page.mouse.move(rnd(60, 1100), rnd(80, 680), { steps: rnd(4, 9) });
@@ -187,7 +181,7 @@ async function session(idx) {
 
 (async () => {
   console.log(
-    `[CSD population] ${N} distinct-fingerprint sessions vs ${URL} — mode=${HEADFUL ? 'headed(real-chrome)' : 'headless(liveness)'}`,
+    `[CSD population] ${N} distinct-fingerprint sessions vs ${TARGET_URL} — mode=${HEADFUL ? 'headed(real-chrome)' : 'headless(liveness)'}`,
   );
   let ok = 0;
   let evented = 0;
@@ -207,7 +201,7 @@ async function session(idx) {
     process.exit(2);
   }
   const machineResult = {
-    target: URL,
+    target: TARGET_URL,
     expectedScriptUrl: EXPECTED_SCRIPT_URL,
     sensorCount: ok,
     eventBeaconCount: evented,
