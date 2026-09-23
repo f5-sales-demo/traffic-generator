@@ -1,73 +1,158 @@
 ---
 title: Teardown
-description: "terraform destroy to remove all Azure resources, verify resource group deletion with az CLI, and clean local state files"
+description: "Independent guarded teardown procedures for Azure and AWS traffic-generator deployments"
 sidebar:
   order: 8
 ---
 
-When the lab session is complete, destroy all Azure resources to stop billing.
+import { Aside } from "@astrojs/starlight/components";
 
-## Terraform Destroy
+## Keep State Boundaries Intact
 
-From the `terraform/` directory:
+Azure `terraform/` and AWS `terraform/aws/` are independent deployments. Run destroy from only the root that owns the resources. Never move state, target another root's resources, or perform cross-state deletes.
 
-```bash
-cd terraform/
+## AWS Guarded Destroy
 
-terraform plan -destroy
+The public-subnet EC2 worker has API termination protection enabled by default. The source evidence,
+cross-region replica, primary S3 access-log, and replica-region S3 access-log buckets are versioned and use
+`force_destroy = false`. Terraform refuses to delete any non-empty bucket; current objects, noncurrent
+versions, and delete markers remain until an authenticated operator explicitly approves each bucket purge.
 
-terraform destroy
-```
-
-Terraform will prompt for confirmation. Type `yes` to proceed.
-
-## Verify Cleanup
-
-Confirm all resources have been removed:
-
-```bash
-RG_NAME=$(terraform output -raw resource_group_name)
-
-az group show --name "${RG_NAME}" 2>&1 | grep -q "ResourceGroupNotFound" \
-  && echo "Resource group deleted" \
-  || echo "Resource group still exists"
-
-az resource list --resource-group "${RG_NAME}" -o table 2>/dev/null
-```
-
-## Clean Up Local State
-
-Remove Terraform state and cached files:
+1. Stop new SSH and Systems Manager submissions and confirm no scenario run is active.
+2. Review retention requirements and export source evidence, replicas, and both regional access logs that must be retained. Do not publish any bucket or object.
+3. Authenticate with AWS profile `Users-280469140135`; verify account `280469140135`, primary region `us-east-1`, replica region `us-east-2`, state key `f5-sales-demo/traffic-generator-aws.tfstate`, and the five outputs used below.
+4. Inventory every version and delete marker in all four buckets. Use each bucket's owning region and keep AWS CLI pagination enabled.
+5. Obtain four separate human approvals: one for each exact bucket. Purge only a bucket whose approval string matches its name.
+6. For each approved bucket, repeatedly list the complete version inventory, delete batches of no more than 1,000 identifiers, and re-list because deletion or concurrent delivery can leave or create delete markers. Stop at the bounded pass limit.
+7. Verify version inventories and current-object listings are empty in all four buckets before planning destroy. Disable or quiesce writers first if access logging or replication continues to create objects.
+8. Create a private `.plans` directory. Using an untracked CLI variable, create and inspect a saved update plan that only sets `termination_protection_enabled=false`. Record its SHA-256 digest and obtain explicit human approval for that exact plan.
+9. Apply only the approved disablement plan, then verify `termination_protection_enabled = false`. Do not edit `main.tf`.
+10. Create and inspect a new saved destroy plan with the same untracked CLI variable. Record its SHA-256 digest and obtain separate explicit human approval for that exact destroy plan.
+11. Apply only the approved saved destroy plan. Do not generate replacement plans at apply time.
+12. Verify the worker, direct Elastic IP, EC2 key pair, four buckets, replication configuration, all S3 EventBridge notifications, VPC Flow Log, default and worker security groups, networking, runtime logs, both KMS keys, and other owned resources are gone or intentionally retained. Confirm there is no NAT Gateway or private worker subnet.
 
 ```bash
-rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+set -euo pipefail
+cd terraform/aws
+
+export AWS_PROFILE=Users-280469140135
+export AWS_REGION=us-east-1
+export AWS_REPLICA_REGION=us-east-2
+PROFILE=${AWS_PROFILE}
+EXPECTED_ACCOUNT=280469140135
+ACTUAL_ACCOUNT=$(aws --profile "${PROFILE}" sts get-caller-identity \
+  --query Account --output text)
+test "${ACTUAL_ACCOUNT}" = "${EXPECTED_ACCOUNT}"
+
+terraform output -raw termination_protection_enabled
+SOURCE_BUCKET=$(terraform output -raw evidence_bucket_name)
+REPLICA_BUCKET=$(terraform output -raw evidence_replica_bucket_name)
+ACCESS_LOG_BUCKET=$(terraform output -raw evidence_access_log_bucket_name)
+REPLICA_ACCESS_LOG_BUCKET=$(terraform output -raw evidence_replica_access_log_bucket_name)
+test -n "${SOURCE_BUCKET}"
+test -n "${REPLICA_BUCKET}"
+test -n "${ACCESS_LOG_BUCKET}"
+test -n "${REPLICA_ACCESS_LOG_BUCKET}"
+
+# Review every complete, auto-paginated inventory before requesting approvals.
+aws --profile "${PROFILE}" --region "${AWS_REGION}" s3api list-object-versions --bucket "${SOURCE_BUCKET}"
+aws --profile "${PROFILE}" --region "${AWS_REPLICA_REGION}" s3api list-object-versions --bucket "${REPLICA_BUCKET}"
+aws --profile "${PROFILE}" --region "${AWS_REGION}" s3api list-object-versions --bucket "${ACCESS_LOG_BUCKET}"
+aws --profile "${PROFILE}" --region "${AWS_REPLICA_REGION}" s3api list-object-versions --bucket "${REPLICA_ACCESS_LOG_BUCKET}"
+
+# STOP: preserve required data and obtain one explicit approval for each exact bucket.
+PURGE_SOURCE_APPROVED='NO'
+PURGE_REPLICA_APPROVED='NO'
+PURGE_ACCESS_LOG_APPROVED='NO'
+PURGE_REPLICA_ACCESS_LOG_APPROVED='NO'
+test "${PURGE_SOURCE_APPROVED}" = "PURGE ${SOURCE_BUCKET}"
+test "${PURGE_REPLICA_APPROVED}" = "PURGE ${REPLICA_BUCKET}"
+test "${PURGE_ACCESS_LOG_APPROVED}" = "PURGE ${ACCESS_LOG_BUCKET}"
+test "${PURGE_REPLICA_ACCESS_LOG_APPROVED}" = "PURGE ${REPLICA_ACCESS_LOG_BUCKET}"
+
+MAX_DELETE_PASSES=20
+PURGE_WORK=$(mktemp -d)
+trap 'rm -rf "${PURGE_WORK}"' EXIT
+
+purge_versioned_bucket() {
+  bucket=$1
+  region=$2
+  delete_passes=0
+  while :; do
+    inventory_file="${PURGE_WORK}/${bucket}-${delete_passes}.json"
+    aws --profile "${PROFILE}" --region "${region}" s3api list-object-versions \
+      --bucket "${bucket}" --output json >"${inventory_file}"
+    identifier_count=$(jq '([.Versions[]?] + [.DeleteMarkers[]?]) | length' "${inventory_file}")
+    test "${identifier_count}" -gt 0 || break
+    test "${delete_passes}" -lt "${MAX_DELETE_PASSES}"
+
+    batch_number=0
+    while IFS= read -r delete_batch; do
+      batch_file="${PURGE_WORK}/${bucket}-${delete_passes}-${batch_number}.json"
+      printf '%s\n' "${delete_batch}" >"${batch_file}"
+      delete_result=$(aws --profile "${PROFILE}" --region "${region}" s3api delete-objects \
+        --bucket "${bucket}" --delete "file://${batch_file}" --output json)
+      printf '%s\n' "${delete_result}" | jq -e '(.Errors // []) | length == 0' >/dev/null
+      batch_number=$((batch_number + 1))
+    done < <(
+      jq -c '([.Versions[]? | {Key,VersionId}] + [.DeleteMarkers[]? | {Key,VersionId}]) as $all | range(0; $all|length; 1000) as $i | {Objects:$all[$i:$i+1000],Quiet:true}' "${inventory_file}"
+    )
+    delete_passes=$((delete_passes + 1))
+  done
+
+  test "$(aws --profile "${PROFILE}" --region "${region}" s3api list-object-versions \
+    --bucket "${bucket}" --query 'sum([length(Versions || `[]`), length(DeleteMarkers || `[]`)])' --output text)" = 0
+  test "$(aws --profile "${PROFILE}" --region "${region}" s3api list-objects-v2 \
+    --bucket "${bucket}" --query KeyCount --output text)" = 0
+}
+
+purge_versioned_bucket "${SOURCE_BUCKET}" "${AWS_REGION}"
+purge_versioned_bucket "${REPLICA_BUCKET}" "${AWS_REPLICA_REGION}"
+purge_versioned_bucket "${ACCESS_LOG_BUCKET}" "${AWS_REGION}"
+purge_versioned_bucket "${REPLICA_ACCESS_LOG_BUCKET}" "${AWS_REPLICA_REGION}"
+
+install -d -m 700 .plans
+terraform plan -var='termination_protection_enabled=false' \
+  -out=.plans/disable-termination-protection.tfplan
+terraform show .plans/disable-termination-protection.tfplan
+shasum -a 256 .plans/disable-termination-protection.tfplan
+# STOP: obtain explicit approval for the reviewed disablement-plan digest.
+terraform apply .plans/disable-termination-protection.tfplan
+test "$(terraform output -raw termination_protection_enabled)" = false
+
+terraform plan -destroy -var='termination_protection_enabled=false' \
+  -out=.plans/destroy.tfplan
+terraform show .plans/destroy.tfplan
+shasum -a 256 .plans/destroy.tfplan
+# STOP: obtain separate explicit approval for the reviewed destroy-plan digest.
+terraform apply .plans/destroy.tfplan
 ```
 
-## Preserve Results (Optional)
+If a bounded purge reaches its pass limit or any emptiness check fails, do not plan destroy. Re-run the complete auto-paginated inventory in the bucket's owning region, investigate active writers or deletion failures, and obtain new explicit approval for that exact bucket before another bounded purge. Do not set `force_destroy = true` merely to bypass review.
 
-If you want to keep the traffic suite results before destroying the VM, copy them locally:
+<Aside type="caution">
+  Source-evidence purge, replica purge, primary access-log purge, replica access-log purge,
+  termination-disablement, and destroy approvals are six separate destructive checkpoints.
+  Deployment, PR, or apply approval authorizes none of them.
+</Aside>
+
+## Azure Destroy
+
+The existing Azure deployment remains managed from `terraform/`:
 
 ```bash
-TGEN_IP=$(terraform output -raw public_ip)
-
-# Copy all results to local machine
-scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/ ./traffic-results/
-
-# Or copy just the latest run
-LATEST=$(ssh azureuser@${TGEN_IP} 'ls -t /opt/traffic-generator/results/ | head -1')
-scp -r azureuser@${TGEN_IP}:/opt/traffic-generator/results/${LATEST} ./traffic-results/
+set -euo pipefail
+cd terraform
+terraform plan -destroy -out=destroy.tfplan
+terraform apply destroy.tfplan
 ```
 
-## F5 XC Cleanup
+Capture `resource_group_name` before destroy if it is needed for later verification. Confirm the resource group no longer exists using the Azure account and subscription that own the Azure state. Preserve required `/opt/traffic-generator/results/` content before destroying the VM; Azure result files are not stored in the AWS evidence bucket automatically.
 
-If you also want to remove the F5 XC configuration that the traffic generator was targeting:
+## F5 Distributed Cloud Cleanup
 
-1. Delete the HTTP load balancer
-2. Delete the origin pool
-3. Delete any WAF policies, Bot Defense configurations, API Security policies, or CSD configurations created for testing
+Traffic-generator teardown does not own or automatically remove the F5 Distributed Cloud HTTP load balancer, origin pool, Client-Side Defense configuration, or the origin application. Remove those only through their respective source of truth and approval process. Do not infer ownership from target visibility or from a successful traffic run.
 
-These F5 XC resources do not incur Azure costs but should be cleaned up when the demo environment is no longer needed.
+## Local Artifacts
 
-:::tip
-For recurring demo use, consider scripting the full lifecycle: `cd terraform && terraform apply` before a demo, run suites, then `terraform destroy` afterward. The standard tier provisions in 15-20 minutes, making same-day setup and teardown practical.
-:::
+Saved plans, local state caches, browser profiles, screenshots, receipts, downloads, and logs must remain outside Git. Delete local artifacts only after confirming required evidence was retained and no recovery or audit workflow still depends on them. Do not delete committed provider lock files; they are dependency integrity records for their respective Terraform roots.

@@ -1,11 +1,67 @@
 ---
 title: Deploy
-description: "Terraform IaC deployment of the traffic generator Azure VM — F-series compute-optimized VM with Ubuntu 24.04, kernel tuning, 50+ security tools, and 19 traffic suites provisioned via cloud-init. All configuration files are in the terraform/ directory."
+description: "Choose the independent Azure or AWS Terraform deployment path and keep its state, access model, and verification steps isolated"
 sidebar:
   order: 3
 ---
 
-All Terraform files are in the [`terraform/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform) directory. Clone the repository and deploy directly:
+## Choose a Deployment
+
+- **Azure:** use the existing [`terraform/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform) root and the Azure procedure below.
+- **AWS:** use the independent [`terraform/aws/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform/aws) root and its [operator README](https://github.com/f5-sales-demo/traffic-generator/blob/main/terraform/aws/README.md).
+
+Do not copy state, variable files, plans, lock files, or access instructions between these roots.
+
+## AWS: Source and Runtime Inputs
+
+Before planning, authenticate profile `Users-280469140135` and verify that it resolves to account `280469140135` in `us-east-1`. The AWS Terraform guards also validate the target domain. Authentication failure is a hard stop.
+
+Set every required plan-time input using values obtained through the approved discovery and release process:
+the exact AMI ID, instance type, 40-character source commit, deployment-manifest version and digest,
+pinned Node 22 archive URL and SHA-256, pinned Chrome for Testing archive URL and SHA-256,
+`operator_ssh_cidr`, and `ssh_public_key_path`. Never guess an image or artifact digest and never
+commit credentials, key material, or local variable files.
+
+The currently observed jumpbox public address is `142.127.218.190/32`; revalidate it immediately before every plan or apply because it is not permanent. On `robin@192.168.2.240`, the untracked public key path may be `/home/robin/.ssh/id_ed25519.pub`. Terraform reads that public key, while its private counterpart remains outside configuration and state.
+
+The worker clones the exact source commit and verifies runtime archives before installation. Client-Side Defense browser scenarios run with headed Chrome under Xvfb.
+
+They capture a sanitized screenshot after every primitive step and a final screenshot, plus a sanitized execution receipt outside Git. Successful execution and screenshots do not guarantee that F5 Distributed Cloud produced a detection; correlate the run window with tenant telemetry.
+
+Headed Chrome and screenshot validation are AWS-runtime operations only. The normal developer command,
+`node --test tests/csd-violations.test.mjs`, executes contract tests without launching a browser and
+prints an explicit AWS-only skip reason. During AWS provisioning, `csd-worker-health.service` must
+pass the gated browser integration against the deployed source commit, Chrome, Playwright, Xvfb
+display, status identity, and runtime output directory before the worker is healthy.
+
+## AWS: Plan and Apply
+
+Run Terraform only from `terraform/aws/`. Its S3 backend uses bucket `terraform-tfstate-xc`, key `f5-sales-demo/traffic-generator-aws.tfstate`, region `us-east-1`, native state locking, and encryption. It is independent of Azure state.
+
+1. Confirm AWS authentication and the guarded account, profile, primary region, replication region, and target domain.
+2. On the jumpbox, revalidate its current public IPv4 and set `operator_ssh_cidr` to that exact `/32`; do not assume the documented example is still current.
+3. Confirm `ssh_public_key_path` names an existing untracked public key file and contains no private key material.
+4. Initialize the AWS root and review the generated dependency lock file.
+5. Validate the configuration and create a saved plan.
+6. Inspect the saved plan for the public-subnet EC2 worker, direct primary-ENI Elastic IP, restricted SSH, deny-all default security group, public route, service endpoints, encrypted runtime and VPC Flow Logs, EventBridge notifications on all four S3 buckets, primary and replica server access logging, KMS-encrypted/versioned source and replica buckets, and SSE-S3 terminal log sinks in each region.
+7. Confirm the plan contains no NAT Gateway, private worker subnet, separate Elastic IP association resource, broad SSH ingress, automatic public-IP assignment, committed key material, or broad Checkov skip.
+8. Review S3 lifecycle, replica-region KMS and replication IAM permissions, the narrow AWS-required SSE-S3 sink exemptions, plus ongoing CloudWatch, KMS, access-log, replication-transfer, and replica-storage costs.
+9. Obtain explicit operator approval for that exact saved plan before applying it.
+10. Apply only the reviewed plan; do not replace it with an unreviewed plan at apply time.
+11. Use the `ssh_command` output for direct administration. Retain Systems Manager Session Manager and Run Command for recovery and constrained scenario execution.
+
+After apply, verify SSH from the authorized jumpbox, Systems Manager connectivity, cloud-init/runtime
+status, exact checked-out source commit, runtime provenance, service health, evidence upload, EventBridge
+notification configuration on all four buckets, VPC Flow Log delivery, and S3 access-log delivery in both
+regions. Then verify required source object versions report completed cross-region replication and use the
+replica KMS key; replication is asynchronous and source upload success alone is insufficient. Run the
+approved scenario and correlate its timestamps with F5 Distributed Cloud telemetry. Follow the AWS README
+for guarded destroy; retained source, replica, primary-log, and replica-log versions must be handled
+deliberately.
+
+## Azure: Clone and Configure
+
+All Azure Terraform files remain in the [`terraform/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform) directory. Clone the repository and deploy directly:
 
 ```bash
 git clone https://github.com/f5-sales-demo/traffic-generator.git
@@ -14,7 +70,7 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your Azure subscription ID and target FQDN
 ```
 
-## Terraform Configuration
+## Azure Terraform Configuration
 
 ### Terraform File Structure
 
@@ -35,11 +91,13 @@ The terraform directory contains 9 files following the Demo Resource Standard:
 `main.tf` configures the Azure provider:
 
 ```hcl file=../_data/main.tf
+
 ```
 
 `variables.tf` defines all configurable parameters. The `vm_size` default is `Standard_F16s_v2` (16 vCPU compute-optimized) -- see [VM Sizing](#vm-sizing) for scaling guidance:
 
 ```hcl file=../_data/variables.tf
+
 ```
 
 ### Network Infrastructure
@@ -47,6 +105,7 @@ The terraform directory contains 9 files following the Demo Resource Standard:
 `network.tf` creates the VNet, subnet, public IP, NSG (port 22 SSH), and NIC:
 
 ```hcl file=../_data/network.tf
+
 ```
 
 ### Virtual Machine with Cloud-Init
@@ -54,6 +113,7 @@ The terraform directory contains 9 files following the Demo Resource Standard:
 `vm.tf` creates the Ubuntu 24.04 VM and passes the cloud-init template with target and tooling variables:
 
 ```hcl file=../_data/vm.tf
+
 ```
 
 ### Cloud-Init Provisioning
@@ -74,6 +134,7 @@ The terraform directory contains 9 files following the Demo Resource Standard:
 The cloud-init uses Terraform template variables: `${target_fqdn}`, `${target_origin_ip}`, and `${tool_tier}`. Shell variables like `$NPROC` are escaped as `$$NPROC` in the Terraform templatefile.
 
 ```yaml file=../_data/cloud-init.yaml
+
 ```
 
 ### Outputs
@@ -81,6 +142,7 @@ The cloud-init uses Terraform template variables: `${target_fqdn}`, `${target_or
 `outputs.tf` exposes 17 outputs including public/private IP, SSH command, resource identifiers, and component-specific values (target_fqdn, status_check):
 
 ```hcl file=../_data/outputs.tf
+
 ```
 
 ### Example Variables File
@@ -88,11 +150,12 @@ The cloud-init uses Terraform template variables: `${target_fqdn}`, `${target_or
 Copy `terraform.tfvars.example` to `terraform.tfvars` and fill in your values. The `.gitignore` excludes `terraform.tfvars` to prevent committing credentials:
 
 ```hcl file=../_data/terraform.tfvars.example
+
 ```
 
 Replace `subscription_id` with your Azure subscription ID (from `az account show --query id -o tsv`) and `target_fqdn` with your F5 XC load balancer domain.
 
-## Deploy
+## Azure Deploy
 
 ```bash
 terraform init
@@ -108,19 +171,19 @@ Terraform outputs the public IP, SSH command, and target FQDN after successful d
 
 The F-series compute-optimized VMs are recommended for this CPU-bound traffic generation workload. The cloud-init kernel tuning and tool concurrency scale automatically with vCPU count.
 
-| VM SKU | vCPU | RAM | Network | Use Case |
-| --- | --- | --- | --- | --- |
-| Standard_F4s_v2 | 4 | 8 GiB | 10 Gbps | Light lab/demo |
-| Standard_F8s_v2 | 8 | 16 GiB | 12.5 Gbps | Standard demos |
-| Standard_F16s_v2 | 16 | 32 GiB | 12.5 Gbps | Load testing (default) |
-| Standard_F32s_v2 | 32 | 64 GiB | 16 Gbps | Heavy benchmarking |
-| Standard_D16s_v3 | 16 | 64 GiB | 12.5 Gbps | RAM-heavy workloads |
+| VM SKU           | vCPU | RAM    | Network   | Use Case               |
+| ---------------- | ---- | ------ | --------- | ---------------------- |
+| Standard_F4s_v2  | 4    | 8 GiB  | 10 Gbps   | Light lab/demo         |
+| Standard_F8s_v2  | 8    | 16 GiB | 12.5 Gbps | Standard demos         |
+| Standard_F16s_v2 | 16   | 32 GiB | 12.5 Gbps | Load testing (default) |
+| Standard_F32s_v2 | 32   | 64 GiB | 16 Gbps   | Heavy benchmarking     |
+| Standard_D16s_v3 | 16   | 64 GiB | 12.5 Gbps | RAM-heavy workloads    |
 
 :::tip
 F16s_v2 was validated as the optimal price-performance option by A/B/C/D benchmark testing against CDN F16s_v2 and F32s_v2 targets. See [benchmarks/](https://github.com/f5-sales-demo/traffic-generator/tree/main/benchmarks) for full results.
 :::
 
-## Post-Deploy Verification
+## Azure Post-Deploy Verification
 
 Cloud-init provisioning takes **15-20 minutes for standard tier** and **approximately 25 minutes for full tier**. The VM is accessible via SSH immediately, but tools are still being installed until cloud-init completes.
 
@@ -187,27 +250,27 @@ ls /opt/traffic-generator/suites/*/
 /opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
 ```
 
-## Terraform Outputs
+## Azure Terraform Outputs
 
-| Output | Description | Example |
-| --- | --- | --- |
-| `deployer` | Resolved deployer identifier | `jsmith` |
-| `public_ip` | Public IP address of the traffic generator VM | `20.12.78.200` |
-| `private_ip` | Private IP address of the VM | `10.201.0.4` |
-| `ssh_command` | SSH command to connect to the VM | `ssh azureuser@20.12.78.200` |
-| `resource_group_name` | Resource group name | `rg-traffic-generator-dev-jsmith` |
-| `resource_group_id` | Resource group Azure resource ID | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith` |
-| `vm_name` | Virtual machine name | `vm-traffic-generator-dev-jsmith` |
-| `vm_id` | Virtual machine Azure resource ID | `/subscriptions/.../virtualMachines/vm-traffic-generator-dev-jsmith` |
-| `nsg_name` | Network security group name | `nsg-traffic-generator-dev-jsmith` |
-| `nsg_id` | Network security group Azure resource ID | `/subscriptions/.../networkSecurityGroups/nsg-traffic-generator-dev-jsmith` |
-| `vnet_name` | Virtual network name | `vnet-traffic-generator-dev-jsmith` |
-| `subnet_id` | Subnet Azure resource ID | `/subscriptions/.../subnets/snet-traffic-generator-dev-jsmith` |
-| `component` | Component identifier | `traffic-generator` |
-| `environment` | Deployment environment | `dev` |
-| `location` | Azure region | `eastus2` |
-| `target_fqdn` | Configured target FQDN for traffic suites | `demo.example.com` |
-| `status_check` | Command to check provisioning status | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json` |
+| Output                | Description                                   | Example                                                                     |
+| --------------------- | --------------------------------------------- | --------------------------------------------------------------------------- |
+| `deployer`            | Resolved deployer identifier                  | `jsmith`                                                                    |
+| `public_ip`           | Public IP address of the traffic generator VM | `20.12.78.200`                                                              |
+| `private_ip`          | Private IP address of the VM                  | `10.201.0.4`                                                                |
+| `ssh_command`         | SSH command to connect to the VM              | `ssh azureuser@20.12.78.200`                                                |
+| `resource_group_name` | Resource group name                           | `rg-traffic-generator-dev-jsmith`                                           |
+| `resource_group_id`   | Resource group Azure resource ID              | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith`         |
+| `vm_name`             | Virtual machine name                          | `vm-traffic-generator-dev-jsmith`                                           |
+| `vm_id`               | Virtual machine Azure resource ID             | `/subscriptions/.../virtualMachines/vm-traffic-generator-dev-jsmith`        |
+| `nsg_name`            | Network security group name                   | `nsg-traffic-generator-dev-jsmith`                                          |
+| `nsg_id`              | Network security group Azure resource ID      | `/subscriptions/.../networkSecurityGroups/nsg-traffic-generator-dev-jsmith` |
+| `vnet_name`           | Virtual network name                          | `vnet-traffic-generator-dev-jsmith`                                         |
+| `subnet_id`           | Subnet Azure resource ID                      | `/subscriptions/.../subnets/snet-traffic-generator-dev-jsmith`              |
+| `component`           | Component identifier                          | `traffic-generator`                                                         |
+| `environment`         | Deployment environment                        | `dev`                                                                       |
+| `location`            | Azure region                                  | `eastus2`                                                                   |
+| `target_fqdn`         | Configured target FQDN for traffic suites     | `demo.example.com`                                                          |
+| `status_check`        | Command to check provisioning status          | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json`         |
 
 Retrieve any output:
 
@@ -229,9 +292,9 @@ target_origin_ip = "$(cd ../../origin-server/terraform && terraform output -raw 
 EOF
 ```
 
-| Required Variable | Source | Description |
-| --- | --- | --- |
-| `target_fqdn` | F5 XC console | FQDN of the HTTP load balancer protecting the origin server |
-| `target_origin_ip` | Origin server `public_ip` output | Direct origin IP for bypass testing (optional) |
+| Required Variable  | Source                           | Description                                                 |
+| ------------------ | -------------------------------- | ----------------------------------------------------------- |
+| `target_fqdn`      | F5 XC console                    | FQDN of the HTTP load balancer protecting the origin server |
+| `target_origin_ip` | Origin server `public_ip` output | Direct origin IP for bypass testing (optional)              |
 
 Proceed to [Tool Catalog](../04-tool-catalog/) for the full tool reference or [Suites](../05-suites/) to start generating traffic.

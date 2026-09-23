@@ -1,3 +1,5 @@
+# Traffic Generator
+
 🌐 English |
 [日本語](https://f5-sales-demo.github.io/traffic-generator/ja/) |
 [한국어](https://f5-sales-demo.github.io/traffic-generator/ko/) |
@@ -12,15 +14,16 @@
 [हिन्दी](https://f5-sales-demo.github.io/traffic-generator/hi/) |
 [ไทย](https://f5-sales-demo.github.io/traffic-generator/th/)
 
-# Traffic Generator
-
 [![GitHub Pages Deploy](https://github.com/f5-sales-demo/traffic-generator/actions/workflows/github-pages-deploy.yml/badge.svg)](https://github.com/f5-sales-demo/traffic-generator/actions/workflows/github-pages-deploy.yml)
 [![Repository Settings](https://github.com/f5-sales-demo/traffic-generator/actions/workflows/enforce-repo-settings.yml/badge.svg)](https://github.com/f5-sales-demo/traffic-generator/actions/workflows/enforce-repo-settings.yml)
 [![License](https://img.shields.io/github/license/f5-sales-demo/traffic-generator)](LICENSE)
 
-Azure traffic generator with 150+ security testing scripts across 17 suites for F5 XC demo environments
+Deploy the Traffic Generator on Azure or AWS to run security-testing suites against F5 Distributed Cloud demo environments. Each cloud has an independent Terraform root and state; choose one deployment path and do not mix their commands or state.
 
-## Documentation
+## Deployment choices
+
+- **Azure:** existing deployment in [`terraform/`](terraform/)
+- **AWS:** public-subnet worker with an Elastic IP attached directly to its primary network interface, jumpbox-restricted SSH, Systems Manager recovery, deny-all default security group, encrypted VPC Flow Logs, S3 EventBridge notifications, server access logging, and a cross-region evidence replica in [`terraform/aws/`](terraform/aws/)
 
 Full documentation is available at **[https://f5-sales-demo.github.io/traffic-generator/](https://f5-sales-demo.github.io/traffic-generator/)**.
 

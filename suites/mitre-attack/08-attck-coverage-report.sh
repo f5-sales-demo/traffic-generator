@@ -1,7 +1,7 @@
 #!/bin/bash
 # MITRE ATT&CK Coverage Report
-# Maps all traffic-generator suites to ATT&CK techniques
-# Produces a structured report showing tactic/technique coverage
+# Reports assessed ATT&CK mappings and separately labels candidate lab behaviors
+# Produces a structured report without treating simulation as technique coverage
 set -uo pipefail
 
 TARGET="${1:-N/A}"
@@ -37,7 +37,7 @@ TA0001 Initial Access
 TA0002 Execution
                           T1059.004 Unix Shell               dvwa-exploits/02-command-injection.sh     COVERED
                           T1059.007 JavaScript               juice-shop-exploits/03-xss-dom.sh         COVERED
-                          T1203 Client Execution             csd-demo-attacks/*.js                     COVERED
+                          ATT&CK mapping not assessed         csd-violations/obfuscated-loader          SIMULATED
 
 TA0003 Persistence
                           T1505.003 Web Shell                dvwa-exploits/05-file-upload.sh           COVERED
@@ -75,11 +75,10 @@ TA0009 Collection
                           T1005 Data from Local System       dvwa-exploits/04-file-inclusion.sh        COVERED
                           T1119 Automated Collection         mitre-attack/06-collection-exfiltration   COVERED
                           T1530 Cloud Storage Objects        juice-shop-exploits/07-sensitive-data.sh  COVERED
-                          T1185 Browser Session Hijack       csd-demo-attacks/05-dom-hijack.js         COVERED
+                          ATT&CK mapping not assessed         csd-violations/form-overlay               SIMULATED
 
 TA0010 Exfiltration
-                          T1567 Over Web Service             csd-demo-attacks/01-skimmer.js            COVERED
-                          T1048 Over Alternative Protocol    javascript-exploits/03-exfiltration.js    COVERED
+                          ATT&CK mapping not assessed         csd-violations/multi-channel-exfiltration SIMULATED
 
 TA0040 Impact
                           T1498 Network DoS                  traffic-generation/02-slowloris.sh        COVERED
@@ -90,10 +89,12 @@ TA0040 Impact
 ========================= ================================== ========================================= ======
 REPORT
 
+echo "  CSD violation scenarios are candidate lab behaviors with structural evidence;"
+echo "  they are simulated and are not assessed as ATT&CK technique coverage."
 echo ""
 echo "SUMMARY"
 echo "  Tactics covered:    11 / 14 (79%)"
-echo "  Techniques covered: 42+"
+echo "  Covered mappings:   41"
 echo "  Suites involved:    12"
 echo "  Scripts total:      90+"
 echo ""

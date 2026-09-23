@@ -1,14 +1,24 @@
 {
   "customSets": [
     {
-      "label": "Deployment",
-      "description": "Traffic Generator Terraform deployment — requires subscription_id and target_fqdn of the F5 XC load balancer",
-      "paths": ["02-prerequisites*", "03-deploy*", "08-teardown*"]
+      "label": "Azure Deployment",
+      "description": "Existing Azure traffic-generator deployment and lifecycle",
+      "paths": ["01-architecture*", "02-prerequisites*", "03-deploy*", "08-teardown*"]
+    },
+    {
+      "label": "AWS Deployment",
+      "description": "Public-subnet AWS traffic-generator deployment with Elastic IP, jumpbox-restricted SSH, Systems Manager recovery, evidence handling, and teardown",
+      "paths": ["01-architecture*", "02-prerequisites*", "03-deploy*", "06-runner*", "08-teardown*"]
     },
     {
       "label": "Traffic Suites",
       "description": "Attack traffic suite scripts and runner usage",
       "paths": ["05-suites*", "06-runner*"]
+    },
+    {
+      "label": "CSD Violations",
+      "description": "Canonical Client-Side Defense browser scenarios, per-step screenshots, sanitized receipts, and claim boundaries",
+      "paths": ["05-suites*", "06-runner*", "07-integrate*"]
     },
     {
       "label": "Tool Catalog",
@@ -21,6 +31,15 @@
       "paths": ["07-integrate*"]
     }
   ],
-  "promote": ["index*", "01-architecture*", "03-deploy*", "05-suites*", "06-runner*"],
-  "demote": ["08-teardown*"]
+  "promote": [
+    "index*",
+    "01-architecture*",
+    "02-prerequisites*",
+    "03-deploy*",
+    "05-suites*",
+    "06-runner*",
+    "07-integrate*",
+    "08-teardown*"
+  ],
+  "demote": []
 }
