@@ -1,11 +1,15 @@
 ---
 title: Prerequisites
-description: "Azure subscription with Contributor role, Terraform >= 1.5, SSH key pair (Ed25519 recommended), Azure CLI for subscription_id lookup, and outbound HTTPS for tool downloads during cloud-init provisioning"
+description: "Choose Azure or AWS prerequisites without mixing credentials, state, access methods, or deployment instructions"
 sidebar:
   order: 2
 ---
 
-## Required
+## Choose a Cloud
+
+Complete only the prerequisites for the selected Terraform root. Azure uses `terraform/`; AWS uses `terraform/aws/`. Each path has independent state and operational access.
+
+## Azure Requirements
 
 ### Azure Subscription
 
@@ -67,6 +71,71 @@ The Traffic Generator VM requires outbound HTTPS access during provisioning to d
 
 If your Azure subscription enforces outbound firewall rules or NSG restrictions, ensure HTTPS (port 443) to these sources is allowed during the initial provisioning window (15-25 minutes).
 
+## AWS Requirements
+
+### Execution Context and Authentication
+
+The AWS path is constrained to account `280469140135`, named profile `Users-280469140135`, and region `us-east-1`. Authenticate that profile before initialization or planning. If authentication is expired or the caller identity cannot be verified, stop: do not plan, apply, or substitute another profile.
+
+The Terraform preflight validates the account, profile, region, and configured target domain. These guards are deployment boundaries, not defaults to override.
+
+### Terraform and State Isolation
+
+Use Terraform `>= 1.14, < 2.0` and AWS provider `>= 6, < 7`. The AWS root uses an independent S3 backend:
+
+- Bucket: `terraform-tfstate-xc`
+- Key: `f5-sales-demo/traffic-generator-aws.tfstate`
+- Region: `us-east-1`
+- Native lockfile and encryption enabled
+
+Never initialize the AWS root against the Azure state or run AWS commands from `terraform/`. The dependency lock file is generated and committed only after authenticated initialization.
+
+### Required Immutable and Operator Inputs
+
+Provide the exact values required by `terraform/aws/`; do not discover or select them from examples:
+
+- AMI ID and instance type validated for the target account and region
+- Exact 40-character repository source commit
+- Pinned Node 22 archive URL and SHA-256 digest
+- Pinned Chrome for Testing archive URL and SHA-256 digest
+- Versioned deployment-manifest metadata and SHA-256 digest
+- Approved F5 Distributed Cloud target domain
+- Current jumpbox public IPv4 as `operator_ssh_cidr`, exactly one `/32`
+- Path to an existing public key as `ssh_public_key_path`
+
+The observed jumpbox public address was `142.127.218.190/32` when these instructions were revised. It is an example, not a permanent allowlist. Revalidate the jumpbox's current public IPv4 immediately before every plan or apply and update the input when it changes.
+
+On jumpbox `robin@192.168.2.240`, an existing public key may be supplied as `/home/robin/.ssh/id_ed25519.pub`. Do not generate keys as part of deployment, commit public key bytes, or expose the private key to Terraform. Terraform reads the public key file and creates the EC2 key pair; the private key remains untracked on the jumpbox.
+
+Do not place credentials, AMIs, plan hashes, browser data, public key material, private key paths, or other live identifiers in Git.
+
+### SSH, Systems Manager, Logging, and Evidence
+
+AWS operators require direct network reachability from the current jumpbox public IPv4 to the worker Elastic
+IP. The address is attached directly to the worker's primary network interface. The worker security group
+permits TCP/22 only from `operator_ssh_cidr`; `0.0.0.0/0`, non-`/32` sources, and stale addresses are invalid.
+The managed VPC default security group permits no traffic. The Ubuntu SSH username is `ubuntu`. Systems Manager
+Session Manager and Run Command remain available for recovery and constrained scenario execution.
+
+Browser execution uses Xvfb and headed Chrome. Every primitive scenario step and final scenario captures a
+screenshot; screenshots and receipts must be sanitized, stored outside Git, and uploaded only to the protected
+evidence location. The evidence bucket publishes object events to EventBridge, sends S3 server access records
+to a dedicated same-region bucket, and replicates versions asynchronously to the configured secondary region.
+After apply, verify VPC Flow Log delivery and verify each required evidence object's replication status; do not
+infer completion merely because the source upload succeeded. Browser success proves execution, not a guaranteed
+F5 Distributed Cloud detection.
+
+### Cost Awareness
+
+The AWS design creates billable EC2, one Elastic IP, Systems Manager interface endpoints, KMS-encrypted
+CloudWatch Runtime and VPC Flow Logs, KMS, EventBridge event ingestion when consumed, S3 requests, a same-region
+access-log bucket, inter-region replication transfer, and cross-region replica storage. Retention and noncurrent
+versions continue to incur storage cost after the worker stops. It does not create a NAT Gateway or private
+worker subnet. Review the saved plan and current AWS pricing before approval, then use the guarded teardown
+process when the lab is no longer required.
+
+## Shared Target Prerequisites
+
 ### Pre-deployed Components
 
 Before deploying the Traffic Generator, you should have:
@@ -77,9 +146,13 @@ Before deploying the Traffic Generator, you should have:
 
 The `target_fqdn` Terraform variable should be set to the F5 XC load balancer's public domain.
 
+### Azure Cost Tip
+
 :::tip
 Use `terraform destroy` when the lab is not in use to avoid ongoing charges. See [Teardown](../08-teardown/) for the procedure.
 :::
+
+### Azure Sizing Note
 
 :::note
 Standard_F16s_v2 (32 GiB RAM) is the default because several tools run concurrently during suite execution. Browser automation (Playwright, Puppeteer) with headless Chromium is the primary memory consumer. Smaller F-series SKUs will work for non-browser suites but may be tight when running bot-simulation.

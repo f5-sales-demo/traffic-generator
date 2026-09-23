@@ -1,0 +1,40 @@
+# Replace every placeholder with values captured from reviewed live discovery.
+# Do not commit generated AMI IDs, instance selections, or archive digests.
+availability_zone = "<DISCOVERED_US_EAST_1_AZ>"
+ami_id            = "<DISCOVERED_AMI_ID>"
+instance_type      = "<DISCOVERED_INSTANCE_TYPE>"
+
+# You must revalidate this exact jumpbox public IPv4 immediately before every plan and apply.
+operator_ssh_cidr   = "142.127.218.190/32"
+ssh_public_key_path = "/home/robin/.ssh/id_ed25519.pub"
+
+# Exact 40-character commit deployed to the worker.
+source_commit = "<40_CHARACTER_SOURCE_COMMIT>"
+
+# Pin the exact AWS CLI v2 Linux x86_64 archive and Amazon CloudWatch agent Ubuntu amd64 package.
+aws_cli_version                 = "<EXACT_AWS_CLI_V2_VERSION>"
+aws_cli_archive_url             = "<PINNED_AWS_CLI_V2_LINUX_X86_64_ARCHIVE_URL>"
+aws_cli_archive_sha256          = "<PINNED_AWS_CLI_ARCHIVE_SHA256>"
+cloudwatch_agent_version        = "<EXACT_CLOUDWATCH_AGENT_VERSION>"
+cloudwatch_agent_package_url    = "<PINNED_CLOUDWATCH_AGENT_UBUNTU_AMD64_PACKAGE_URL>"
+cloudwatch_agent_package_sha256 = "<PINNED_CLOUDWATCH_AGENT_PACKAGE_SHA256>"
+
+# Pin reviewed Node.js 22 and Chrome for Testing archives and their published SHA-256 values.
+# Select an exact stable playwright-core release compatible with that pinned Chrome build.
+node_archive_url        = "<PINNED_NODE_22_LINUX_X64_ARCHIVE_URL>"
+node_archive_sha256     = "<PINNED_NODE_ARCHIVE_SHA256>"
+chrome_archive_url      = "<PINNED_CHROME_FOR_TESTING_LINUX64_ARCHIVE_URL>"
+chrome_archive_sha256   = "<PINNED_CHROME_ARCHIVE_SHA256>"
+playwright_core_version = "<EXACT_PLAYWRIGHT_CORE_VERSION>"
+deployment_manifest_version = "<SEMANTIC_MANIFEST_VERSION>"
+deployment_manifest_sha256  = "<DEPLOYMENT_MANIFEST_SHA256>"
+
+# Guarded deployment boundary. These values are intentionally exact.
+aws_account_id = "280469140135"
+aws_profile    = "Users-280469140135"
+aws_region     = "us-east-1"
+replication_region = "us-east-2"
+target_url     = "https://client-side-defense.f5-sales-demo.com"
+
+# Keep true except for the separately approved protection-disable plan immediately before teardown.
+termination_protection_enabled = true

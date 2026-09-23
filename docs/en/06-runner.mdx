@@ -1,11 +1,18 @@
 ---
 title: Runner
-description: "Usage guide for runner.sh suite orchestrator: execution modes, config.env configuration, environment variable overrides, dry-run mode, results directory structure, meta.json format, standalone script execution, and remote SSH invocation"
+description: "Separate Azure shell-runner and AWS Systems Manager browser-worker execution, evidence, and status workflows"
 sidebar:
   order: 6
 ---
 
-import { Steps, Aside } from '@astrojs/starlight/components';
+import { Steps, Aside } from "@astrojs/starlight/components";
+
+## Choose the Runner
+
+- **Azure:** the existing `/opt/traffic-generator/suites/runner.sh` interface below remains supported over SSH.
+- **AWS:** use the Terraform `ssh_command` output from the authorized jumpbox for direct administration, or submit allowlisted `csd-violations` runs through the Systems Manager command document. Systems Manager remains the recovery path.
+
+The two runners have separate hosts, result stores, and Terraform state. Do not use Azure output names or credentials with the AWS deployment.
 
 ## Overview
 
@@ -19,10 +26,10 @@ runner.sh <suite-name> [--dry-run]
 
 **Arguments:**
 
-| Argument | Required | Description |
-| --- | --- | --- |
-| `suite-name` | Yes | Name of the suite directory (e.g., `web-app-attacks`, `api-attacks`) |
-| `--dry-run` | No | Print what would execute without running any scripts |
+| Argument     | Required | Description                                                          |
+| ------------ | -------- | -------------------------------------------------------------------- |
+| `suite-name` | Yes      | Name of the suite directory (e.g., `web-app-attacks`, `api-attacks`) |
+| `--dry-run`  | No       | Print what would execute without running any scripts                 |
 
 **Examples:**
 
@@ -142,19 +149,21 @@ The `meta.json` file records suite execution metadata:
 }
 ```
 
-| Field | Description |
-| --- | --- |
-| `suite` | Suite name |
-| `target` | Target FQDN used for the run |
-| `started` | UTC timestamp when the suite started |
-| `completed` | UTC timestamp when the suite finished |
-| `status` | `running` during execution, `completed` when done |
-| `passed` | Number of scripts that exited with code 0 |
-| `failed` | Number of scripts that exited with non-zero code |
-| `skipped` | Number of scripts skipped (not executable or dry-run) |
+| Field       | Description                                           |
+| ----------- | ----------------------------------------------------- |
+| `suite`     | Suite name                                            |
+| `target`    | Target FQDN used for the run                          |
+| `started`   | UTC timestamp when the suite started                  |
+| `completed` | UTC timestamp when the suite finished                 |
+| `status`    | `running` during execution, `completed` when done     |
+| `passed`    | Number of scripts that exited with code 0             |
+| `failed`    | Number of scripts that exited with non-zero code      |
+| `skipped`   | Number of scripts skipped (not executable or dry-run) |
 
 <Aside type="tip">
-A non-zero exit code from a script does not necessarily mean the suite failed. Many security tools exit non-zero when they find vulnerabilities, which is the expected behavior during attack traffic generation.
+  A non-zero exit code from a script does not necessarily mean the suite failed.
+  Many security tools exit non-zero when they find vulnerabilities, which is the
+  expected behavior during attack traffic generation.
 </Aside>
 
 ## Running Individual Scripts
@@ -176,7 +185,7 @@ Scripts accept the target FQDN as the first positional argument. They do not rea
 To run every suite back-to-back:
 
 ```bash
-for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning javascript-exploits traffic-generation; do
+for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning traffic-generation; do
   echo "========================================="
   echo "Starting suite: ${suite}"
   echo "========================================="
@@ -185,7 +194,7 @@ for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scann
 done
 ```
 
-This generates comprehensive traffic across all F5 XC security features. Expect the full run to take 45-80 minutes depending on the target's response times.
+This runs the selected Azure shell suites back-to-back. Duration and security telemetry depend on the target and enabled policies; verify actual results rather than assuming coverage from execution alone.
 
 ## Remote Execution via SSH
 
@@ -232,3 +241,208 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 5. **Record results** -- Updates `meta.json` with completion timestamp and pass/fail/skip counts.
 
 </Steps>
+
+## Browser Test Boundary
+
+Developer workstations run only the unit, fake-CDP, and runner-contract portions of
+`node --test tests/csd-violations.test.mjs`. The headed-Chrome case is reported as skipped unless the
+deployed worker explicitly sets `CSD_AWS_RUNTIME=1`; no local fixture certificate, local Chrome path,
+or developer screenshot directory is supported.
+
+On AWS, scenario execution is fail-closed. It requires Linux, `/opt/traffic-generator/status.json` with
+`status: ready`, `runtime: aws`, and the exact `SOURCE_COMMIT`, executable `/opt/chrome/chrome`,
+readable `/opt/traffic-generator/node_modules/playwright-core`, a live Xvfb display socket, a safe
+`RUN_ID`, and `CSD_AWS_OUTPUT_DIR` exactly equal to
+`/opt/traffic-generator/runtime/results/<run-id>`. The first-boot `csd-worker-health.service` performs
+only a headed Chrome smoke navigation to local `about:blank`; it executes no CSD scenario and does
+not validate application reachability or detection.
+
+## AWS SSH Access
+
+Revalidate `operator_ssh_cidr` immediately before plan or apply, then connect from that jumpbox using the Terraform output:
+
+```bash
+cd terraform/aws
+terraform output -raw ssh_command
+$(terraform output -raw ssh_command)
+```
+
+The command uses Ubuntu user `ubuntu`, the worker Elastic IP, and a key-path hint. It works only from the exact current `/32` allowed by the worker security group. Do not broaden TCP/22 to `0.0.0.0/0`. If SSH is unavailable, use Systems Manager for recovery and verify whether the jumpbox public address changed.
+
+## AWS Systems Manager Run Flow
+
+Use the non-sensitive `ssm_document_name` and `instance_id` outputs from `terraform/aws`. The
+document accepts one case-sensitive `Scenario` string from the 11-name allowlist and uses the
+configured authorized target. It does not accept shell fragments, credentials, synthetic values,
+or arbitrary URLs.
+
+```bash
+cd terraform/aws
+COMMAND_DOCUMENT=$(terraform output -raw ssm_document_name)
+INSTANCE_ID=$(terraform output -raw instance_id)
+
+COMMAND_ID=$(aws ssm send-command \
+  --profile Users-280469140135 \
+  --region us-east-1 \
+  --document-name "${COMMAND_DOCUMENT}" \
+  --instance-ids "${INSTANCE_ID}" \
+  --parameters 'Scenario=login-credential-skimmer' \
+  --query 'Command.CommandId' \
+  --output text)
+```
+
+To submit all 11 scenarios, run them serially because the worker rejects overlapping runs. Retain
+each command ID and poll for at most 1,860 seconds per command. This covers the document's
+1,800-second command timeout plus a bounded status-propagation margin; the default
+`command-executed` waiter can expire after roughly 100 seconds while a valid scenario is still
+running.
+
+```bash
+for scenario in \
+  login-credential-skimmer \
+  registration-harvester \
+  payment-overlay-card-skimmer \
+  obfuscated-loader \
+  multi-cdn-injection \
+  tag-manager-hijack \
+  multi-channel-exfiltration \
+  high-volume-domain-exfiltration \
+  form-overlay \
+  keylogger-simulation \
+  maximum-detection
+do
+  command_id=$(aws ssm send-command \
+    --profile Users-280469140135 \
+    --region us-east-1 \
+    --document-name "${COMMAND_DOCUMENT}" \
+    --instance-ids "${INSTANCE_ID}" \
+    --parameters "Scenario=${scenario}" \
+    --query 'Command.CommandId' \
+    --output text)
+  printf '%s %s\n' "${scenario}" "${command_id}"
+
+  deadline=$((SECONDS + 1860))
+  while :; do
+    status=$(aws ssm get-command-invocation \
+      --profile Users-280469140135 \
+      --region us-east-1 \
+      --command-id "${command_id}" \
+      --instance-id "${INSTANCE_ID}" \
+      --query Status --output text)
+    case "${status}" in
+      Success) break ;;
+      Pending|InProgress|Delayed)
+        if (( SECONDS >= deadline )); then
+          printf 'Timed out polling %s after 1860 seconds\n' "${command_id}" >&2
+          exit 1
+        fi
+        sleep 15
+        ;;
+      Cancelled|Cancelling|TimedOut|Failed)
+        printf 'Command %s ended with status %s\n' "${command_id}" "${status}" >&2
+        exit 1
+        ;;
+      *)
+        printf 'Unexpected command status %s for %s\n' "${status}" "${command_id}" >&2
+        exit 1
+        ;;
+    esac
+  done
+done
+```
+
+Inspect each invocation by command ID. The worker rejects overlapping runs with a lock, creates a unique run ID, and prints only sanitized status. Retry interrupted work only after determining whether the previous run is active, complete, failed, or still uploading.
+
+### AWS Evidence Contract
+
+Each invocation writes evidence under
+`/opt/traffic-generator/runtime/results/<run-id>/<scenario>/` and uploads that directory to
+`s3://<evidence_bucket_name>/runs/<run-id>/<scenario>/`. The runner receives the run root, appends
+the allowlisted scenario exactly once, and rejects unsafe run identifiers; therefore local relative
+paths and receipt object keys map one-to-one without scenario double nesting. Every setup, action,
+assertion, and explicit cleanup manifest step has an ordinal, scenario, and step-name PNG; each scenario
+also has an ordinal `final` PNG. The full suite produces 45 step PNGs plus 11 final PNGs, for 56 total.
+Missing step, cleanup, or final screenshots make the scenario fail.
+
+Each scenario's last manifest operation is `cleanup`. It removes run-scoped scripts, links, images,
+overlays, listeners, timers, and synthetic controls as applicable, then asserts zero remaining artifacts,
+populated controls, sensitive display values, and tracked timers, plus no attached key listener. The runner
+screenshots that asserted cleanup state. Its `finally` cleanup is a safety net and runs before the separate
+final screenshot. Browser-observed network request objects remain sanitized receipt evidence and do not
+represent DOM artifacts.
+
+`receipt.json` contains `schemaVersion`, `runId`, its own S3 `objectKey`, sanitized target protocol
+and host, `startedAt`, `completedAt`, aggregate `counts`, `discarded`, `discardReasons`, `scenarios`,
+`cleanup`, and a detection caveat. Scenario entries contain timestamps, status, steps, sanitized network
+outcomes, instrumentation counts, and a final screenshot. Step entries contain timestamps, operation,
+status, assertion checks, optional navigation status or structured evidence, and screenshot metadata.
+Screenshot metadata contains capture status, relative path, exact object key, `uploadStatus`, SHA-256,
+and masked-input count.
+
+The suite captures each PNG to a temporary file and atomically renames it. Screenshot
+`uploadStatus` remains `pending` in the immutable `receipt.json`; it describes the captured object's
+state at evidence freeze time and is never rewritten after hashing. Finalization writes
+`run-status.json`, `upload-manifest.json`, and `SHA256SUMS`, validates every local hash, uploads every
+ordinary object, then uploads the manifest and checksum set. Every upload supplies user metadata
+`sha256=<local-digest>` and deliberately omits SSE flags because the private evidence bucket applies
+its default customer-managed KMS key.
+
+`upload-commit.json` is the single authoritative commit object and is uploaded last. It contains the
+exact SHA-256 digests of `upload-manifest.json` and `SHA256SUMS` and records `status: committed`.
+Consumers must treat all other uploaded objects as pending unless that exact commit object exists and
+its referenced hashes validate. The commit file and local `.finalization-failed.json` marker are not
+members of `SHA256SUMS`, so recording success or failure never mutates hashed evidence.
+
+Any ordinary-object, metadata, checksum, or commit upload failure leaves the local failure marker and
+exits nonzero. Retry from the worker without rerunning Chrome:
+
+```bash
+sudo -u tgen env RUNTIME_ENV=/etc/traffic-generator/runtime.env \
+  /bin/bash /opt/traffic-generator/source/suites/csd-violations/run.sh \
+  --retry-upload /opt/traffic-generator/runtime/results/<run-id>/<scenario>
+```
+
+Retry revalidates the frozen local checksum set and exact run/scenario key prefix. For every expected
+key it calls `s3api head-object`: HTTP 404/Not Found means the object is missing and may be uploaded;
+authorization, transport, and other errors fail closed. An existing object is skipped only when its
+case-normalized `Metadata.sha256` value exactly matches the frozen local digest. Missing checksum
+metadata or a mismatch fails rather than overwriting a versioned key. Zero-byte files use the same
+SHA-256 metadata contract. This also makes partial retries and an already committed retry idempotent:
+matching objects, including `upload-commit.json`, are not uploaded again, while the commit remains last.
+Before any tenant correlation, retrieve `upload-commit.json` from that exact prefix, require
+`status: committed` and its exact expected object key, validate its recorded `upload-manifest.json` and
+`SHA256SUMS` digests, and then validate the checksum set. Retrieve evidence through authenticated S3
+or Systems Manager access; never create persistent public URLs. The bucket is private, encrypted,
+versioned, lifecycle-managed, and configured with `force_destroy = false`.
+
+The evidence bucket also emits object events to EventBridge and records S3 server access requests in a
+dedicated same-region sink. Each source object version is eligible for asynchronous cross-region replication.
+Before treating a replica as durable evidence, inspect the source version's replication status and require
+completion; the successful upload and `upload-commit.json` contract do not prove that replication has finished.
+Source, replica, and access-log versions remain private and lifecycle-managed, and each may independently block
+guarded teardown until its retention decision and purge approval are complete.
+
+Receipts omit form and key values, cookies, authorization material, storage values, headers,
+request/response bodies, and sensitive URL components. Screenshots must not be treated as safe
+merely because receipts are sanitized; inspect them before customer use.
+
+### Browser and Detection Boundaries
+
+A passed browser receipt means the headed Chrome/Xvfb setup, action, assertion, and explicit cleanup
+steps executed, cleanup assertions passed, every step and final screenshot was captured, and browser/context
+cleanup completed without recorded errors. The Systems Manager command succeeds only when the browser run
+and subsequent S3 upload both succeed. Neither result proves that F5 Distributed Cloud generated a CSD detection.
+
+Record browser-observed sensor and `__imp_apg__/api/dip` requests separately from optional read-only tenant correlation. Report tenant correlation as `OBSERVED`, `NOT_OBSERVED`, `PENDING`, or `ERROR`; pending or absent telemetry does not turn a successful browser run into a failure.
+
+After the exact-prefix `upload-commit.json` and its referenced evidence digests validate, convert receipt
+`startedAt` and `completedAt` ISO timestamps to epoch seconds. The operator must then use the structured
+`xcsh_api` method/path/params/payload workflow in
+[Integrate](./07-integrate/#operator-side-post-receipt-correlation):
+`GET /api/shape/csd/namespaces/{namespace}/detected_domains`,
+`POST /api/shape/csd/namespaces/{namespace}/scripts` with snake_case `start_time` and `end_time`, and
+`GET /api/shape/csd/namespaces/{namespace}/formFields` with those query parameters. Compare exact
+receipt-derived reviewed hosts only for `detected_domains` and `scripts`. Treat `formFields` as an optional
+aggregate receipt-window observation: record only count and `OBSERVED` or `PENDING` classification, never
+attribution to a specific generated field identifier. Store normalized endpoint results separately; never
+rewrite the browser receipt or change its result.

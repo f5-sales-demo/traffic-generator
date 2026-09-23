@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
-set -uo pipefail
+set -euo pipefail
 
 # Traffic Generator Post-Boot Smoke Test Suite
-# Deterministic validation of all components after deployment or reboot.
-# This VM has NO HTTP endpoints -- all tests use SSH.
+# Deterministic validation of the existing Azure VM after deployment or reboot.
+# AWS remains a separate Terraform root. --aws-contract performs local static checks for
+# direct EIP attachment, deny-all default security group, encrypted VPC Flow Logs, S3
+# EventBridge notifications, access logging, and cross-region evidence replication.
 # Usage: ./smoke-test.sh <public-ip> [--user <ssh-user>]
+#        ./smoke-test.sh --aws-contract
 # Exit codes: 0 = all pass, 1 = failures detected
 
-IP="${1:?Usage: $0 <public-ip> [--user <ssh-user>]}"
+REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+if [ "${1:-}" = "--aws-contract" ]; then
+  exec bash "${REPO_ROOT}/tests/test-runtime-identity.sh"
+fi
+
+IP="${1:?Usage: $0 <public-ip> [--user <ssh-user>] | $0 --aws-contract}"
 SSH_USER="azureuser"
 shift || true
 while [ $# -gt 0 ]; do
@@ -172,7 +180,7 @@ check "mitmproxy-installed" "true" "$([ -n "$MITMPROXY_VER" ] && echo true || ec
 echo "── Test Suites ──"
 
 SUITE_COUNT=$(ssh_cmd "find /opt/traffic-generator/suites/ -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l" || echo "0")
-check "suite-count-17" "17" "$SUITE_COUNT"
+check "suite-count-16" "16" "$SUITE_COUNT"
 
 RUNNER_EXEC=$(ssh_cmd "test -x /opt/traffic-generator/suites/runner.sh && echo yes || echo no")
 check "runner-sh-executable" "yes" "$RUNNER_EXEC"

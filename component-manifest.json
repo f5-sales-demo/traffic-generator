@@ -4,7 +4,7 @@
   "display_name": "Traffic Generator",
   "role": "Attack traffic and legitimate traffic generation VM",
   "category": "lab-infrastructure",
-  "summary": "Azure Ubuntu 24.04 VM with 50+ security testing tools and 19 pre-built attack suites for generating WAF, API, bot, reconnaissance, SSL, JavaScript exploit, and multi-layer encoding evasion traffic against F5 Distributed Cloud protected applications",
+  "summary": "Azure Ubuntu 24.04 VM deployment with 50+ security testing tools and pre-built attack suites; the independent AWS Client-Side Defense deployment uses a public-subnet Elastic IP worker, jumpbox-restricted SSH, and Systems Manager recovery under terraform/aws because this schema exposes one Azure-shaped Terraform contract and no validated deployment-variant field",
 
   "provides": [
     "attack-traffic",
@@ -15,7 +15,7 @@
     "waf-evasion-testing"
   ],
   "pairs_with": ["origin-server", "cdn-simulator"],
-  "demos": ["waf", "api-security", "bot-standard", "bot-advanced", "ddos", "was"],
+  "demos": ["waf", "api-security", "bot-standard", "bot-advanced", "ddos", "was", "client-side-defense"],
 
   "terraform": {
     "required_inputs": {

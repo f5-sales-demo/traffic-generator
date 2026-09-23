@@ -1,186 +1,211 @@
 ---
 title: Integrate
-description: "Integration guide for the traffic generator with origin-server, F5 XC HTTP load balancer, CSD demo, and CDN simulator: architecture diagrams, targeting configuration, direct vs LB traffic comparison, and multi-component deployment"
+description: "Connect the independent Azure or AWS traffic-generator deployment to authorized F5 Distributed Cloud and origin-server demos"
 sidebar:
   order: 7
 ---
 
-## Full Architecture
+import { Aside } from "@astrojs/starlight/components";
 
-The traffic generator is one component in a multi-layer demo environment. The complete architecture when all components are deployed:
+## Deployment Boundaries
+
+The repository supports two parallel deployments:
+
+- **Azure `terraform/`:** the existing public VM, SSH workflow, broad suite catalog, and Azure-shaped outputs remain supported.
+- **AWS `terraform/aws/`:** a public-subnet EC2 worker for the canonical `csd-violations` browser suite, with jumpbox-restricted SSH and Systems Manager recovery.
+
+Each root owns independent state and resources. Never copy state, plans, variable files, output assumptions, or destroy commands between them.
+
+## AWS Client-Side Defense Integration
 
 ```text
-Traffic Generator -> F5 XC HTTP LB (WAF/Bot/API/CSD) -> Origin Server
-                         |
-               CDN Simulator (optional)
+GitHub jumpbox -> restricted SSH /32 -> Elastic IP -> public AWS worker
+                                      |
+                                      +-> F5 XC HTTP LB -> AWS Juice Shop origin
+                                      +-> SSM recovery and constrained runs
+                                      +-> encrypted S3 evidence
+                                      +-> encrypted CloudWatch logs
 ```
 
-```mermaid
-graph LR
-    TG[Traffic Generator VM] -->|Attack Traffic<br/>HTTPS| XCHLB[F5 XC HTTP LB]
-    XCHLB -->|WAF / Bot / API / CSD| ORIGIN[Origin Server VM<br/>Juice Shop, DVWA,<br/>VAmPI, httpbin, whoami]
-    CDN[CDN Simulator<br/>optional] -->|Cached Requests| XCHLB
-    TG -.->|Direct Baseline<br/>HTTP optional| ORIGIN
-```
+The AWS worker targets the exact authorized URL `https://client-side-defense.f5-sales-demo.com`. It runs headed Chrome under Xvfb without exposing Chrome DevTools. Terraform assigns an explicit Elastic IP while keeping `associate_public_ip_address = false`, and permits TCP/22 only from the revalidated `operator_ssh_cidr`. The private SSH key remains outside Terraform state.
 
-Each component is independently deployed and configured via Terraform. The traffic generator targets the F5 XC load balancer FQDN, not the origin server directly.
+After applying the independently reviewed AWS saved plan, use these exact non-sensitive Terraform outputs:
 
-## Origin Server Integration
+| Output | Integration use |
+| --- | --- |
+| `instance_id` | Target for Systems Manager Run Command and status inspection |
+| `public_ip` | Explicit worker Elastic IP |
+| `ssh_command` | Ubuntu SSH command with the operator key-path hint |
+| `ssm_document_name` | Submit one of the 11 stable scenario names through `Scenario` |
+| `evidence_bucket_name` | Retrieve private screenshots, `receipt.json`, and `SHA256SUMS` |
+| `runtime_log_group_name` | Diagnose sanitized bootstrap and worker status |
+| `public_subnet_id` | Confirm the worker's public-subnet placement |
+| `worker_security_group_id` | Confirm TCP/22 is restricted to the current jumpbox `/32` |
+| `target_url` | Verify the exact authorized browser target |
+| `source_commit` | Verify immutable runtime provenance |
+| `termination_protection_enabled` | Confirm the destroy safeguard remains enabled |
 
-The [origin server](https://f5-sales-demo.github.io/origin-server/) provides the backend applications that the traffic generator's attack suites target:
+Use only the AWS outputs from `terraform/aws`; do not substitute Azure state or output values.
 
-| Traffic Suite | Origin Application | Path |
-| --- | --- | --- |
-| api-attacks | VAmPI | `/vampi/` |
-| bot-simulation | All applications | All paths |
-| cdn-load-testing | CDN Simulator | CDN endpoint |
-| crapi-exploits | crAPI | `/crapi/` |
-| csd-demo-attacks | CSD Demo | `/csd-demo/` |
-| dvga-exploits | DVGA | `/dvga/` |
-| dvwa-exploits | DVWA | `/dvwa/` |
-| javascript-exploits | CSD Demo | `/csd-demo/` |
-| juice-shop-exploits | Juice Shop | `/juice-shop/` |
-| mitre-attack | All applications | All paths |
-| owasp-scanning | All applications | All paths |
-| performance-testing | All applications | All paths |
-| reconnaissance | All applications | All paths |
-| restaurant-exploits | Restaurant API | `/restaurant/` |
-| ssl-scanning | F5 XC LB (not origin directly) | N/A |
-| traffic-generation | All applications | All paths |
-| web-app-attacks | Juice Shop, DVWA | `/juice-shop/`, `/dvwa/` |
+### CSD Observation Boundary
 
-### Deployment Order
+The browser receipt records immediate execution evidence: run, scenario, and step timestamps;
+assertion checks; terminal network states; screenshot capture status, relative path, intended
+object key, pending upload status, SHA-256, and masked-input count; CSD sensor and
+`__imp_apg__/api/dip` request counts; and cleanup status. The worker creates `SHA256SUMS` before
+upload. Upload success is represented by the Systems Manager command result, not by a rewritten
+receipt field. A separate read-only F5 Distributed Cloud observation may correlate telemetry by
+protected host and run window.
 
-1. Deploy the **origin server** first -- it provides the backend applications
-2. Configure the **F5 XC HTTP load balancer** with the origin server as the origin pool
-3. Attach **WAF, Bot Defense, API Security, and CSD policies** to the load balancer
-4. Deploy the **traffic generator** with `target_fqdn` set to the F5 XC LB domain
+That correlation is not proof of causation. AWS datacenter reputation, browser automation signals, population thresholds, aggregation, and filtering can prevent or delay detection. Report only the observed status—`OBSERVED`, `NOT_OBSERVED`, `PENDING`, or `ERROR`—and never promise a detection, fixed delay, or risk classification.
 
-### Targeting Configuration
+### Operator-side post-receipt correlation
 
-The traffic generator's `config.env` connects it to the rest of the architecture:
+Perform correlation only after retrieving and validating the exact committed S3 prefix. The authoritative
+`upload-commit.json` must exist at that prefix, name that exact prefix in its `objectKey`, record
+`status: committed`, and contain SHA-256 digests that match the retrieved `upload-manifest.json` and
+`SHA256SUMS`. Then validate `SHA256SUMS`, read `receipt.json`, and record `runId`, `target.host`,
+`startedAt`, and `completedAt`. Build the host comparison allowlist only from that receipt: the protected
+`target.host` and hosts in sanitized browser network outcomes that were actually observed. Use this exact
+host allowlist only for `detected_domains` and `scripts`. The receipt stores no generated form-field
+identifiers, so `formFields` is an optional aggregate observation for the receipt time window only. Do not
+attribute its records to a generated field or infer a field name from a scenario name or synthetic value.
+
+Retrieve one exact run/scenario prefix and fail closed before correlation:
 
 ```bash
-# Target the F5 XC load balancer (traffic passes through security policies)
-TARGET_FQDN=demo.example.com
+set -euo pipefail
 
-# Optional: target the origin server directly (bypasses F5 XC)
+export AWS_PROFILE=Users-280469140135
+export AWS_REGION=us-east-1
+EVIDENCE_BUCKET='<terraform-output-evidence_bucket_name>'
+RUN_ID='<receipt-run-id>'
+SCENARIO='<allowlisted-scenario>'
+PREFIX="runs/${RUN_ID}/${SCENARIO}"
+WORK_DIR=$(mktemp -d)
+trap 'rm -rf "${WORK_DIR}"' EXIT
+
+aws s3 cp "s3://${EVIDENCE_BUCKET}/${PREFIX}/upload-commit.json" "${WORK_DIR}/upload-commit.json"
+jq -e --arg object_key "${PREFIX}/upload-commit.json" \
+  '.status == "committed" and .objectKey == $object_key' \
+  "${WORK_DIR}/upload-commit.json" >/dev/null
+
+aws s3 cp "s3://${EVIDENCE_BUCKET}/${PREFIX}/" "${WORK_DIR}/" --recursive
+jq -e --arg object_key "${PREFIX}/upload-commit.json" \
+  '.status == "committed" and .objectKey == $object_key' \
+  "${WORK_DIR}/upload-commit.json" >/dev/null
+
+test "$(shasum -a 256 "${WORK_DIR}/upload-manifest.json" | awk '{print $1}')" = \
+  "$(jq -r '.uploadManifest.sha256' "${WORK_DIR}/upload-commit.json")"
+test "$(shasum -a 256 "${WORK_DIR}/SHA256SUMS" | awk '{print $1}')" = \
+  "$(jq -r '.checksumSet.sha256' "${WORK_DIR}/upload-commit.json")"
+(
+  cd "${WORK_DIR}"
+  shasum -a 256 -c SHA256SUMS
+)
+
+START_TIME=$(jq -r '.startedAt | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601' "${WORK_DIR}/receipt.json")
+END_TIME=$(jq -r '.completedAt | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601' "${WORK_DIR}/receipt.json")
+test "${START_TIME}" -le "${END_TIME}"
+```
+
+Run the following requests from an authenticated operator context with the supported `xcsh_api` tool. These blocks describe tool inputs; they are not shell commands. Replace the placeholders with the validated receipt values, epoch-second variables, and intended F5 Distributed Cloud namespace.
+
+```yaml
+method: GET
+path: /api/shape/csd/namespaces/{namespace}/detected_domains
+params:
+  namespace: <namespace>
+```
+
+```yaml
+method: POST
+path: /api/shape/csd/namespaces/{namespace}/scripts
+params:
+  namespace: <namespace>
+payload:
+  start_time: <START_TIME>
+  end_time: <END_TIME>
+```
+
+```yaml
+method: GET
+path: /api/shape/csd/namespaces/{namespace}/formFields
+params:
+  namespace: <namespace>
+  start_time: <START_TIME>
+  end_time: <END_TIME>
+```
+
+Response schemas can differ across these endpoints. Treat arrays nested beneath response objects as
+candidate records. For `detected_domains` and `scripts`, count evidence only when a candidate's
+normalized host/domain exactly matches the receipt-derived host allowlist. For `formFields`, record
+only the aggregate record count and endpoint classification for the receipt time window; never record
+or claim a match to a specific generated field identifier. Preserve the raw operator response in the
+separately controlled correlation record; do not copy it into or rewrite `receipt.json`.
+
+Normalize one status for each endpoint:
+
+| Status | Deterministic meaning |
+| --- | --- |
+| `OBSERVED` | `detected_domains` or `scripts` succeeded and returned at least one exact receipt-derived host match; or `formFields` succeeded and returned a non-zero aggregate count for the receipt window. |
+| `NOT_OBSERVED` | `detected_domains` or `scripts` succeeded, no reviewed host matched, and the operator explicitly closed the observation review as final. This is absence in the queried response, not proof that detection cannot occur later. Do not use this status for `formFields`. |
+| `PENDING` | `detected_domains` or `scripts` succeeded with no host match while review remains open or processing is incomplete; or `formFields` succeeded with a zero aggregate count or incomplete processing. No fixed waiting period is implied. |
+| `ERROR` | The request failed, returned a non-success status, or could not be interpreted without guessing its schema. |
+
+For a successful `formFields` response, classification is therefore only `OBSERVED` or `PENDING`; transport or uninterpretable-schema failures remain `ERROR`.
+
+Record a separate correlation table; one row per endpoint and observation attempt:
+
+| Run ID | Receipt window (UTC) | Endpoint | Reviewed comparison keys | Status | Observed result | Observation time (UTC) | Error/notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `<runId>` | `<startedAt>`–`<completedAt>` | `detected_domains` or `scripts` | Exact receipt-derived hosts | `OBSERVED` / `NOT_OBSERVED` / `PENDING` / `ERROR` | Returned non-secret host/domain identifiers only | Operator query time | Schema/transport detail without credentials |
+| `<runId>` | `<startedAt>`–`<completedAt>` | `formFields` | Aggregate receipt-window observation only | `OBSERVED` / `PENDING` / `ERROR` | Count and endpoint classification only | Operator query time | Schema/transport detail without credentials |
+
+Complete the checklist deterministically:
+
+1. Retrieve `upload-commit.json` from the exact run/scenario prefix and require `status: committed` plus its exact expected `objectKey`.
+2. Validate its `upload-manifest.json` and `SHA256SUMS` digests, then validate every object in `SHA256SUMS` and freeze the browser receipt as execution evidence.
+3. Convert the receipt UTC timestamps to epoch seconds and extract the reviewed host allowlist from the receipt only.
+4. Submit all three operator-side requests with the exact namespace and epoch-second receipt window where specified.
+5. Compare exact normalized hosts for `detected_domains` and `scripts`; ignore all unrelated records. For `formFields`, record only aggregate count and classification without field attribution.
+6. Assign statuses using the deterministic endpoint-specific rules above and preserve errors rather than converting them to absence.
+7. Store the correlation table separately. Never change the browser scenario status, counts, receipt, or checksum set based on tenant telemetry.
+
+<Aside type="caution">
+  Selecting the traffic generator from an external catalog does not
+  automatically trigger Client-Side Defense detections. The protected page must
+  have working CSD instrumentation, the scenario must actually execute, and any
+  tenant evidence must be observed separately.
+</Aside>
+
+## Azure Integration
+
+The Azure deployment continues to target an F5 Distributed Cloud HTTP load balancer through `TARGET_FQDN`; `TARGET_ORIGIN_IP` remains an optional direct-origin baseline.
+
+```text
+Azure Traffic Generator -> F5 XC HTTP LB -> Azure Origin Server
+              |                         |
+              +-> SSH runner            +-> WAF / Bot / API / CSD policies
+```
+
+The [origin server](https://f5-sales-demo.github.io/origin-server/) supplies the application paths used by the existing Azure suites, including Juice Shop, DVWA, VAmPI, crAPI, DVGA, Restaurant API, and the CSD demo. Configure the Azure runner in `/opt/traffic-generator/config.env`:
+
+```bash
+TARGET_FQDN=demo.example.com
 TARGET_ORIGIN_IP=20.10.5.100
 ```
 
-When `TARGET_FQDN` is set, all suite scripts send traffic to `https://<TARGET_FQDN>/...`. The F5 XC load balancer receives the requests, applies security policies, and forwards allowed traffic to the origin server.
+Run the existing Azure suites over SSH as documented in [Runner](./06-runner/). Direct-origin comparison is optional and valid only when the origin owner has authorized it. A script exit count is execution evidence, not proof that an attack succeeded or a security control detected it; verify application and F5 Distributed Cloud telemetry independently.
 
-## CSD Demo Integration
+## Deployment Order
 
-The `javascript-exploits` suite is specifically designed for the Client-Side Defense demo on the origin server. This suite validates CSD Phase 2 functionality:
+1. Deploy the chosen origin and verify application health.
+2. Configure the F5 Distributed Cloud origin pool and HTTP load balancer.
+3. Enable and verify the security capability required by the selected demo.
+4. Deploy **one** traffic-generator root—Azure or AWS—with its own state.
+5. Verify the runner access paths: source-restricted SSH and Systems Manager recovery for AWS, or SSH for Azure.
+6. Execute `csd-violations` on AWS, or an applicable shell suite on Azure, and preserve its evidence outside Git.
+7. Correlate platform telemetry only after browser or shell execution is proven.
 
-**Phase 2 flow:**
-
-1. The origin server hosts the CSD demo page at `/csd-demo/`
-2. F5 XC CSD injects its monitoring JavaScript into the page
-3. The traffic generator's javascript-exploits suite attempts:
-   - Injecting inline scripts that mimic Magecart skimmers
-   - Modifying DOM elements to redirect form submissions
-   - Loading unauthorized third-party JavaScript
-4. F5 XC CSD detects these modifications and reports them in the CSD dashboard
-
-To use the javascript-exploits suite:
-
-```bash
-# Ensure CSD is enabled on the F5 XC HTTP LB for the /csd-demo/ path
-# Then run the suite
-/opt/traffic-generator/suites/runner.sh javascript-exploits
-```
-
-## CDN Simulator Integration
-
-When the CDN Simulator is deployed, the architecture adds a caching layer:
-
-```text
-Traffic Generator -> CDN Simulator -> F5 XC HTTP LB -> Origin Server
-```
-
-The CDN Simulator sits in front of the F5 XC load balancer, caching responses and adding CDN-like headers. To target traffic through the CDN:
-
-```bash
-# Set TARGET_FQDN to the CDN Simulator's endpoint instead of F5 XC directly
-TARGET_FQDN=cdn.demo.example.com
-```
-
-This is useful for demonstrating how F5 XC handles traffic that arrives through a CDN, including:
-
-- Identifying the true client IP behind CDN proxy headers
-- Applying WAF rules to requests that may have been modified by the CDN
-- Bot Defense classification when the CDN modifies browser fingerprints
-
-## Direct vs LB Traffic Comparison
-
-The traffic generator supports sending traffic both through F5 XC and directly to the origin. This comparison demonstrates the value of F5 XC security features:
-
-### Through F5 XC (default)
-
-```bash
-# Traffic goes: Generator -> F5 XC LB -> Origin
-TARGET_FQDN=demo.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
-```
-
-Expected: WAF blocks SQL injection, XSS, and command injection payloads. Security Events dashboard shows blocked requests with violation details.
-
-### Direct to Origin (baseline)
-
-```bash
-# Traffic goes: Generator -> Origin (no security layer)
-TARGET_FQDN=20.10.5.100 /opt/traffic-generator/suites/runner.sh web-app-attacks
-```
-
-Expected: All payloads reach the origin applications unfiltered. Juice Shop and DVWA process the attack payloads. This demonstrates what happens without F5 XC protection.
-
-### Side-by-Side Demo Flow
-
-For a compelling demo, run the same suite both ways:
-
-1. Run `web-app-attacks` directly against the origin -- show that attacks succeed
-2. Run `web-app-attacks` through F5 XC -- show that attacks are blocked
-3. Open the F5 XC Security Events dashboard to display the blocked requests
-4. Compare the suite `meta.json` results: direct runs show more "passed" (attacks succeeded), LB runs show more "failed" (attacks blocked)
-
-```bash
-TGEN_IP=$(terraform output -raw public_ip)
-ORIGIN_IP="20.10.5.100"
-LB_FQDN="demo.example.com"
-
-# Run 1: Direct (baseline)
-ssh azureuser@${TGEN_IP} "TARGET_FQDN=${ORIGIN_IP} /opt/traffic-generator/suites/runner.sh web-app-attacks"
-
-# Run 2: Through F5 XC
-ssh azureuser@${TGEN_IP} "TARGET_FQDN=${LB_FQDN} /opt/traffic-generator/suites/runner.sh web-app-attacks"
-
-# Compare results
-ssh azureuser@${TGEN_IP} 'for d in $(ls -t /opt/traffic-generator/results/ | head -2); do echo "=== $d ==="; cat /opt/traffic-generator/results/$d/meta.json; echo; done'
-```
-
-## Multi-Component Terraform Deployment
-
-When deploying the full lab environment, use separate Terraform workspaces or directories for each component:
-
-```bash
-# 1. Deploy origin server
-cd origin-server
-terraform apply -var="subscription_id=YOUR_SUB_ID"
-ORIGIN_IP=$(terraform output -raw public_ip)
-
-# 2. Configure F5 XC (manual or via separate Terraform)
-# Create origin pool -> HTTP LB -> attach WAF/Bot/API/CSD policies
-# LB_FQDN=demo.example.com
-
-# 3. Deploy traffic generator targeting the F5 XC LB
-cd ../traffic-generator
-terraform apply \
-  -var="subscription_id=YOUR_SUB_ID" \
-  -var="target_fqdn=demo.example.com" \
-  -var="target_origin_ip=${ORIGIN_IP}"
-
-# 4. Generate traffic
-TGEN_IP=$(terraform output -raw public_ip)
-ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
-```
+The origin, F5 Distributed Cloud configuration, Azure traffic generator, and AWS traffic generator may have separate owners and state. Teardown one component only from its owning configuration; never use one state to delete another component's resources.

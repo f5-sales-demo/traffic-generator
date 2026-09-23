@@ -7,3 +7,16 @@ terraform/vm.tf
 terraform/outputs.tf
 terraform/cloud-init.yaml
 terraform/terraform.tfvars.example
+
+# AWS Terraform files use explicit destinations to avoid collisions with Azure basenames
+terraform/aws/versions.tf -> terraform/aws/versions.tf
+terraform/aws/variables.tf -> terraform/aws/variables.tf
+terraform/aws/main.tf -> terraform/aws/main.tf
+terraform/aws/cloud-init.tftpl -> terraform/aws/cloud-init.tftpl
+terraform/aws/terraform.tfvars.example -> terraform/aws/terraform.tfvars.example
+terraform/aws/outputs.tf -> terraform/aws/outputs.tf
+terraform/aws/tests/stack.tftest.hcl -> terraform/aws/tests/stack.tftest.hcl
+
+# Canonical CSD violation suite source and runner
+suites/csd-violations/scenarios.mjs -> suites/csd-violations/scenarios.mjs
+suites/csd-violations/run.mjs -> suites/csd-violations/run.mjs
