@@ -97,6 +97,29 @@ locals {
 
   operator_public_key = trimspace(var.ssh_public_key_path != null ? file(pathexpand(var.ssh_public_key_path)) : coalesce(var.ssh_public_key, ""))
 
+  worker_cloud_init = templatefile("${path.module}/cloud-init.tftpl", {
+    aws_region                      = var.aws_region
+    ami_id                          = var.ami_id
+    evidence_bucket                 = aws_s3_bucket.evidence.id
+    log_group_name                  = aws_cloudwatch_log_group.runtime.name
+    source_commit                   = var.source_commit
+    source_repository_url           = var.source_repository_url
+    aws_cli_version                 = var.aws_cli_version
+    aws_cli_archive_url             = var.aws_cli_archive_url
+    aws_cli_archive_sha256          = var.aws_cli_archive_sha256
+    cloudwatch_agent_version        = var.cloudwatch_agent_version
+    cloudwatch_agent_package_url    = var.cloudwatch_agent_package_url
+    cloudwatch_agent_package_sha256 = var.cloudwatch_agent_package_sha256
+    node_archive_url                = var.node_archive_url
+    node_archive_sha256             = var.node_archive_sha256
+    chrome_archive_url              = var.chrome_archive_url
+    chrome_archive_sha256           = var.chrome_archive_sha256
+    playwright_core_version         = var.playwright_core_version
+    deployment_manifest_version     = var.deployment_manifest_version
+    deployment_manifest_sha256      = var.deployment_manifest_sha256
+    target_url                      = var.target_url
+  })
+
   scenario_names = [
     "login-credential-skimmer",
     "registration-harvester",
@@ -496,28 +519,7 @@ resource "aws_instance" "worker" {
   disable_api_termination              = var.termination_protection_enabled
   instance_initiated_shutdown_behavior = "stop"
   user_data_replace_on_change          = true
-  user_data = templatefile("${path.module}/cloud-init.tftpl", {
-    aws_region                      = var.aws_region
-    ami_id                          = var.ami_id
-    evidence_bucket                 = aws_s3_bucket.evidence.id
-    log_group_name                  = aws_cloudwatch_log_group.runtime.name
-    source_commit                   = var.source_commit
-    source_repository_url           = var.source_repository_url
-    aws_cli_version                 = var.aws_cli_version
-    aws_cli_archive_url             = var.aws_cli_archive_url
-    aws_cli_archive_sha256          = var.aws_cli_archive_sha256
-    cloudwatch_agent_version        = var.cloudwatch_agent_version
-    cloudwatch_agent_package_url    = var.cloudwatch_agent_package_url
-    cloudwatch_agent_package_sha256 = var.cloudwatch_agent_package_sha256
-    node_archive_url                = var.node_archive_url
-    node_archive_sha256             = var.node_archive_sha256
-    chrome_archive_url              = var.chrome_archive_url
-    chrome_archive_sha256           = var.chrome_archive_sha256
-    playwright_core_version         = var.playwright_core_version
-    deployment_manifest_version     = var.deployment_manifest_version
-    deployment_manifest_sha256      = var.deployment_manifest_sha256
-    target_url                      = var.target_url
-  })
+  user_data_base64                     = base64gzip(local.worker_cloud_init)
 
   metadata_options {
     http_endpoint               = "enabled"

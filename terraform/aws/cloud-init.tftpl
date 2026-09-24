@@ -1,11 +1,8 @@
 #cloud-config
 package_update: false
 package_upgrade: false
-
 disable_root: true
 ssh_pwauth: false
-
-
 users:
   - default
   - name: tgen
@@ -14,7 +11,6 @@ users:
     homedir: /opt/traffic-generator
     no_create_home: true
     lock_passwd: true
-
 write_files:
   - path: /etc/traffic-generator/runtime.env
     owner: root:root
@@ -33,27 +29,16 @@ write_files:
       AMI_ID=${ami_id}
       DEPLOYMENT_MANIFEST_VERSION=${deployment_manifest_version}
       DEPLOYMENT_MANIFEST_SHA256=${deployment_manifest_sha256}
-
   - path: /etc/amazon-cloudwatch-agent.json
     owner: root:root
     permissions: '0644'
     content: |
-      {
-        "agent": { "run_as_user": "root" },
-        "logs": {
-          "logs_collected": {
-            "files": {
-              "collect_list": [
-                { "file_path": "/var/log/cloud-init-output.log", "log_group_name": "${log_group_name}", "log_stream_name": "{instance_id}/cloud-init-output", "timezone": "UTC" },
-                { "file_path": "/var/log/csd-worker-health.log", "log_group_name": "${log_group_name}", "log_stream_name": "{instance_id}/worker-health", "timezone": "UTC" },
-                { "file_path": "/var/log/csd-xvfb.log", "log_group_name": "${log_group_name}", "log_stream_name": "{instance_id}/xvfb", "timezone": "UTC" },
-                { "file_path": "/var/log/csd-scenario.log", "log_group_name": "${log_group_name}", "log_stream_name": "{instance_id}/scenario", "timezone": "UTC" }
-              ]
-            }
-          }
-        }
-      }
-
+      {"agent":{"run_as_user":"root"},"logs":{"logs_collected":{"files":{"collect_list":[
+        {"file_path":"/var/log/cloud-init-output.log","log_group_name":"${log_group_name}","log_stream_name":"{instance_id}/cloud-init-output","timezone":"UTC"},
+        {"file_path":"/var/log/csd-worker-health.log","log_group_name":"${log_group_name}","log_stream_name":"{instance_id}/worker-health","timezone":"UTC"},
+        {"file_path":"/var/log/csd-xvfb.log","log_group_name":"${log_group_name}","log_stream_name":"{instance_id}/xvfb","timezone":"UTC"},
+        {"file_path":"/var/log/csd-scenario.log","log_group_name":"${log_group_name}","log_stream_name":"{instance_id}/scenario","timezone":"UTC"}
+      ]}}}}
   - path: /etc/systemd/system/csd-xvfb.service
     owner: root:root
     permissions: '0644'
@@ -61,7 +46,6 @@ write_files:
       [Unit]
       Description=Private Xvfb display for CSD traffic generation
       After=network.target
-
       [Service]
       Type=simple
       User=tgen
@@ -75,11 +59,8 @@ write_files:
       ProtectSystem=strict
       ProtectHome=true
       ReadWritePaths=/opt/traffic-generator /tmp /var/log/csd-xvfb.log
-
       [Install]
       WantedBy=multi-user.target
-
-
   - path: /usr/local/bin/csd-log-event
     owner: root:root
     permissions: '0755'
@@ -92,7 +73,6 @@ write_files:
       aws logs create-log-stream --region "$AWS_REGION" --log-group-name "$LOG_GROUP_NAME" --log-stream-name "$stream" >/dev/null 2>&1 || true
       event=$(jq -cn --arg message "$message" --argjson timestamp "$(date +%s%3N)" '[{timestamp:$timestamp,message:$message}]')
       aws logs put-log-events --region "$AWS_REGION" --log-group-name "$LOG_GROUP_NAME" --log-stream-name "$stream" --log-events "$event" >/dev/null
-
   - path: /usr/local/bin/csd-run
     owner: root:root
     permissions: '0755'
@@ -108,24 +88,19 @@ write_files:
         login-credential-skimmer|registration-harvester|payment-overlay-card-skimmer|obfuscated-loader|multi-cdn-injection|tag-manager-hijack|multi-channel-exfiltration|high-volume-domain-exfiltration|form-overlay|keylogger-simulation|maximum-detection) ;;
         *) echo "ERROR: invalid scenario" >&2; exit 64 ;;
       esac
-
       imds_token="$(curl --fail --silent --show-error --request PUT --header 'X-aws-ec2-metadata-token-ttl-seconds: 60' http://169.254.169.254/latest/api/token)"
       INSTANCE_ID="$(curl --fail --silent --show-error --header "X-aws-ec2-metadata-token: $imds_token" http://169.254.169.254/latest/meta-data/instance-id)"
       [[ "$INSTANCE_ID" =~ ^i-[0-9a-f]+$ ]] || { echo "ERROR: IMDSv2 returned an invalid instance ID" >&2; exit 69; }
       unset imds_token
       export INSTANCE_ID
-
       exec 9>/run/lock/csd-traffic-generator.lock
       flock -n 9 || { echo "ERROR: another CSD run is active" >&2; exit 75; }
-
       run_id="$(date -u +%Y%m%dt%H%M%Sz)-$(cat /proc/sys/kernel/random/uuid)"
       trap 'rc=$?; /usr/local/bin/csd-log-event "run=$run_id scenario=$scenario exit=$rc" || true' EXIT
       /usr/local/bin/csd-log-event "run=$run_id scenario=$scenario status=started" || true
-
       export RUN_ID="$run_id"
       export CSD_SCENARIO="$scenario"
       export DISPLAY=:100
-
       set +e
       sudo -u tgen --preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY \
         env PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
@@ -133,7 +108,6 @@ write_files:
       rc=$?
       set -e
       exit "$rc"
-
   - path: /usr/local/bin/csd-worker-health-check
     owner: root:root
     permissions: '0755'
@@ -161,20 +135,12 @@ write_files:
       node_version=$(/opt/node/bin/node --version)
       chrome_version=$(/opt/chrome/chrome --version)
       write_status() {
-        local status=$1
-        jq -n \
-          --arg status "$status" \
-          --arg repository "$SOURCE_REPOSITORY_URL" \
-          --arg source_commit "$SOURCE_COMMIT" \
-          --arg chrome_version "$chrome_version" \
-          --arg node_version "$node_version" \
-          --arg ami_id "$AMI_ID" \
-          --arg instance_id "$INSTANCE_ID" \
-          --arg region "$AWS_REGION" \
-          --arg manifest_version "$DEPLOYMENT_MANIFEST_VERSION" \
+        jq -nc --arg status "$1" --arg repository "$SOURCE_REPOSITORY_URL" --arg source_commit "$SOURCE_COMMIT" \
+          --arg chrome_version "$chrome_version" --arg node_version "$node_version" --arg ami_id "$AMI_ID" \
+          --arg instance_id "$INSTANCE_ID" --arg region "$AWS_REGION" --arg manifest_version "$DEPLOYMENT_MANIFEST_VERSION" \
           --arg manifest_sha256 "$DEPLOYMENT_MANIFEST_SHA256" \
           '{status:$status,runtime:"aws",repository:$repository,source_commit:$source_commit,chrome_version:$chrome_version,node_version:$node_version,ami_id:$ami_id,instance_id:$instance_id,region:$region,manifest:{version:$manifest_version,sha256:$manifest_sha256}}' \
-          > /opt/traffic-generator/status.json
+          >/opt/traffic-generator/status.json
         chown tgen:tgen /opt/traffic-generator/status.json
         chmod 0600 /opt/traffic-generator/status.json
       }
@@ -182,7 +148,6 @@ write_files:
       sudo -u tgen env DISPLAY=:99 NODE_PATH=/opt/traffic-generator/node_modules \
         /opt/node/bin/node -e 'const { chromium } = require("playwright-core"); (async () => { const browser = await chromium.launch({ headless: false, executablePath: "/opt/chrome/chrome", args: ["--disable-dev-shm-usage"] }); const page = await browser.newPage(); await page.goto("about:blank"); if (page.url() !== "about:blank") throw new Error("unexpected health URL"); await browser.close(); })().catch(error => { console.error(error); process.exit(1); });'
       write_status ready
-
   - path: /etc/systemd/system/csd-worker-health.service
     owner: root:root
     permissions: '0644'
@@ -191,7 +156,6 @@ write_files:
       Description=Verify CSD traffic generator runtime
       Requires=csd-xvfb.service
       After=csd-xvfb.service network-online.target
-
       [Service]
       Type=oneshot
       User=root
@@ -200,95 +164,106 @@ write_files:
       StandardOutput=append:/var/log/csd-worker-health.log
       StandardError=inherit
       ExecStart=/usr/local/bin/csd-worker-health-check
-
       [Install]
       WantedBy=multi-user.target
-
-runcmd:
-  - - /bin/bash
-    - -c
-    - |
-      set -euo pipefail
+  - path: /usr/local/sbin/csd-bootstrap
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -Eeuo pipefail
+      umask 027
+      status_file=/opt/traffic-generator/status.json
+      stage=initializing
+      write_status() {
+        install -d -o tgen -g tgen -m 0750 /opt/traffic-generator
+        printf '{"status":"%s","stage":"%s","error_stage":"%s"}\n' "$1" "$stage" "$${2:-}" >"$status_file.tmp"
+        chown tgen:tgen "$status_file.tmp"
+        chmod 0600 "$status_file.tmp"
+        mv -f "$status_file.tmp" "$status_file"
+      }
+      fail_bootstrap() {
+        local rc=$?
+        trap - ERR
+        set +e
+        write_status failed "$stage"
+        /usr/local/bin/csd-log-event "bootstrap status=failed stage=$stage exit=$rc" || true
+        exit "$rc"
+      }
+      trap fail_bootstrap ERR
+      fetch() { curl -fSL --retry 4 -o "$3" "$1"; echo "$2  $3" | sha256sum -c; }
+      write_status provisioning
+      systemctl disable --now csd-worker-health.service csd-xvfb.service >/dev/null 2>&1 || true
+      stage=apt-sources
       sources=/etc/apt/sources.list.d/ubuntu.sources
       test -f "$sources"
       sed -i -E \
-        -e 's#http://([a-z0-9-]+\\.)?ec2\\.archive\\.ubuntu\\.com/ubuntu/?#https://\1ec2.archive.ubuntu.com/ubuntu/#g' \
-        -e 's#http://(archive|security)\\.ubuntu\\.com/ubuntu/?#https://\1.ubuntu.com/ubuntu/#g' \
+        -e 's#http://([[:alnum:].-]*ec2\.archive\.ubuntu\.com)/ubuntu/?#https://\1/ubuntu/#g' \
+        -e 's#http://(archive|security)\.ubuntu\.com/ubuntu/?#https://\1.ubuntu.com/ubuntu/#g' \
         "$sources"
-      if grep -Eq 'URIs:[[:space:]]+http://' "$sources"; then
+      if grep -Eq 'URIs:[[:space:]].*http://' "$sources"; then
         echo 'ERROR: Ubuntu APT sources still contain plaintext HTTP URIs' >&2
-        exit 1
+        false
       fi
+      stage=prerequisites
       apt-get update
       DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         ca-certificates curl git inotify-tools jq libasound2t64 libatk-bridge2.0-0 \
         libatk1.0-0 libcups2 libdrm2 libgbm1 libgtk-3-0 libnss3 libx11-xcb1 \
         libxcomposite1 libxdamage1 libxfixes3 libxkbcommon0 libxrandr2 sudo unzip xauth xvfb xz-utils
       rm -rf /var/lib/apt/lists/*
-  - install -o root -g root -m 0640 /dev/null /var/log/csd-worker-health.log
-  - install -o tgen -g tgen -m 0640 /dev/null /var/log/csd-xvfb.log
-  - install -o root -g root -m 0640 /dev/null /var/log/csd-scenario.log
-  - - /bin/bash
-    - -c
-    - |
-      set -euo pipefail
-      umask 027
-      curl --fail --show-error --location --retry 4 --retry-all-errors --output /tmp/awscliv2.zip '${aws_cli_archive_url}'
-      echo '${aws_cli_archive_sha256}  /tmp/awscliv2.zip' | sha256sum --check --strict
-      rm -rf /tmp/aws-cli-install
-      unzip -q /tmp/awscliv2.zip -d /tmp/aws-cli-install
-      /tmp/aws-cli-install/aws/install --install-dir /opt/aws-cli --bin-dir /usr/local/bin
+      install -o root -g root -m 0640 /dev/null /var/log/csd-worker-health.log
+      install -o tgen -g tgen -m 0640 /dev/null /var/log/csd-xvfb.log
+      install -o root -g root -m 0640 /dev/null /var/log/csd-scenario.log
+      install -d -o tgen -g tgen -m 0750 /opt/traffic-generator /opt/traffic-generator/runtime/results /opt/traffic-generator/browser-profile
+      install -d -o root -g root -m 0755 /opt/{node,chrome}
+      stage=aws-cli
+      if ! command -v aws >/dev/null 2>&1 || test "$(aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" != '${aws_cli_version}'; then
+        rm -rf /tmp/aws{.zip,-install} /opt/aws-cli
+        fetch '${aws_cli_archive_url}' '${aws_cli_archive_sha256}' /tmp/aws.zip
+        unzip -q /tmp/aws.zip -d /tmp/aws-install
+        /tmp/aws-install/aws/install -i /opt/aws-cli -b /usr/local/bin --update
+        rm -rf /tmp/aws{.zip,-install}
+      fi
       test "$(aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = '${aws_cli_version}'
-      rm -rf /tmp/awscliv2.zip /tmp/aws-cli-install
-  - - /bin/bash
-    - -c
-    - |
-      set -euo pipefail
-      umask 027
-      curl --fail --show-error --location --retry 4 --retry-all-errors --output /tmp/amazon-cloudwatch-agent.deb '${cloudwatch_agent_package_url}'
-      echo '${cloudwatch_agent_package_sha256}  /tmp/amazon-cloudwatch-agent.deb' | sha256sum --check --strict
-      dpkg --install /tmp/amazon-cloudwatch-agent.deb
-      test "$(dpkg-query --show --showformat='$${Version}' amazon-cloudwatch-agent)" = '${cloudwatch_agent_version}'
-      rm -f /tmp/amazon-cloudwatch-agent.deb
-
-  - install -d -o tgen -g tgen -m 0750 /opt/traffic-generator /opt/traffic-generator/runtime /opt/traffic-generator/runtime/results /opt/traffic-generator/browser-profile
-  - install -d -o root -g root -m 0755 /opt/node /opt/chrome
-  - - /bin/bash
-    - -c
-    - |
-      set -euo pipefail
-      umask 027
-      curl --fail --show-error --location --retry 4 --retry-all-errors --output /tmp/node.tar.xz '${node_archive_url}'
-      echo '${node_archive_sha256}  /tmp/node.tar.xz' | sha256sum --check --strict
-      tar --extract --xz --file /tmp/node.tar.xz --strip-components=1 --directory /opt/node
-      test "$(/opt/node/bin/node --version | cut -d. -f1)" = "v22"
-      rm -f /tmp/node.tar.xz
-  - - /bin/bash
-    - -c
-    - |
-      set -euo pipefail
+      stage=cloudwatch-agent
+      if test "$(dpkg-query -W -f='$${Version}' amazon-cloudwatch-agent 2>/dev/null || true)" != '${cloudwatch_agent_version}'; then
+        fetch '${cloudwatch_agent_package_url}' '${cloudwatch_agent_package_sha256}' /tmp/cw.deb
+        dpkg -i /tmp/cw.deb
+        rm /tmp/cw.deb
+      fi
+      test "$(dpkg-query -W -f='$${Version}' amazon-cloudwatch-agent)" = '${cloudwatch_agent_version}'
+      stage=node
+      if ! test -x /opt/node/bin/node || test "$(/opt/node/bin/node --version | cut -d. -f1)" != v22; then
+        rm -rf /opt/node /tmp/node.xz
+        install -d -m 0755 /opt/node
+        fetch '${node_archive_url}' '${node_archive_sha256}' /tmp/node.xz
+        tar -xJf /tmp/node.xz --strip-components=1 -C /opt/node
+        rm -f /tmp/node.xz
+      fi
+      test "$(/opt/node/bin/node --version | cut -d. -f1)" = v22
+      stage=npm
       cd /opt/traffic-generator
-      sudo -u tgen env PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /opt/node/bin/npm init --yes >/dev/null
-      sudo -u tgen env PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /opt/node/bin/npm install --ignore-scripts --omit=dev --save-exact 'playwright-core@${playwright_core_version}'
-      test "$(sudo -u tgen env PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /opt/node/bin/node -p \"require('/opt/traffic-generator/node_modules/playwright-core/package.json').version\")" = '${playwright_core_version}'
-  - - /bin/bash
-    - -c
-    - |
-      set -euo pipefail
-      umask 027
-      curl --fail --show-error --location --retry 4 --retry-all-errors --output /tmp/chrome.zip '${chrome_archive_url}'
-      echo '${chrome_archive_sha256}  /tmp/chrome.zip' | sha256sum --check --strict
-      unzip -q /tmp/chrome.zip -d /tmp/chrome-extract
-      cp -a /tmp/chrome-extract/chrome-linux64/. /opt/chrome/
-      test -x /opt/chrome/chrome
-      chown root:root /opt/chrome/chrome_sandbox
+      npm_env=(env PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
+      test -f package.json || sudo -u tgen "$${npm_env[@]}" /opt/node/bin/npm init --yes >/dev/null
+      if ! test -f node_modules/playwright-core/package.json || test "$(jq -r .version node_modules/playwright-core/package.json)" != '${playwright_core_version}'; then
+        sudo -u tgen "$${npm_env[@]}" /opt/node/bin/npm install --ignore-scripts --omit=dev --save-exact 'playwright-core@${playwright_core_version}'
+      fi
+      test "$(jq -r .version node_modules/playwright-core/package.json)" = '${playwright_core_version}'
+      stage=chrome
+      if ! test -x /opt/chrome/chrome || test "$(cat /opt/chrome/.archive-sha256 2>/dev/null || true)" != '${chrome_archive_sha256}'; then
+        rm -rf /tmp/chrome.zip /tmp/chrome /opt/chrome
+        install -d -m 0755 /opt/chrome
+        fetch '${chrome_archive_url}' '${chrome_archive_sha256}' /tmp/chrome.zip
+        unzip -q /tmp/chrome.zip -d /tmp/chrome
+        cp -a /tmp/chrome/chrome-linux64/. /opt/chrome/
+        echo '${chrome_archive_sha256}' >/opt/chrome/.archive-sha256
+        rm -rf /tmp/chrome{.zip,-extract}
+      fi
+      chown root:root /opt/chrome/{chrome_sandbox,.archive-sha256}
       chmod 4755 /opt/chrome/chrome_sandbox
-      test -u /opt/chrome/chrome_sandbox
-      rm -rf /tmp/chrome.zip /tmp/chrome-extract
-  - - /bin/bash
-    - -c
-    - |
-      set -euo pipefail
+      test -x /opt/chrome/chrome && test -u /opt/chrome/chrome_sandbox
+      stage=source
       dst=/opt/traffic-generator/source
       tmp=/opt/traffic-generator/source.tmp
       manifest=suites/csd-violations/scenarios.mjs
@@ -296,51 +271,52 @@ runcmd:
       digest='${deployment_manifest_sha256}'
       valid() {
         test -d "$1/.git" && test -f "$1/$manifest" &&
-          test "$(git -C "$1" rev-parse --verify HEAD 2>/dev/null)" = "$commit" &&
+          test "$(git -C "$1" rev-parse HEAD 2>/dev/null)" = "$commit" &&
           test "$(sha256sum "$1/$manifest" | cut -d' ' -f1)" = "$digest"
       }
-
       if ! valid "$dst"; then
         rm -rf "$dst" "$tmp"
+        fetched=false
         for attempt in 1 2 3 4; do
           rm -rf "$tmp"
-          git init --quiet "$tmp"
+          git init -q "$tmp"
           git -C "$tmp" remote add origin '${source_repository_url}'
-          if git -C "$tmp" fetch --quiet --depth=1 origin "$commit" &&
-            git -C "$tmp" checkout --quiet --detach FETCH_HEAD && valid "$tmp"; then
+          if git -C "$tmp" fetch -q --depth=1 origin "$commit" && git -C "$tmp" checkout -q --detach FETCH_HEAD && valid "$tmp"; then
             fetched=true
             break
           fi
           sleep "$attempt"
         done
-        test "$${fetched:-false}" = true
+        test "$fetched" = true
         git -C "$tmp" remote remove origin
         mv "$tmp" "$dst"
       fi
-
       valid "$dst"
       chown -R root:root "$dst"
       find "$dst" -type d -exec chmod 0555 {} +
       find "$dst" -type f -exec chmod 0444 {} +
       test -r "$dst/suites/csd-violations/run.mjs"
-      test "$(stat -c '%a' "$dst/suites/csd-violations/run.mjs")" = "444"
-  - - /bin/bash
-    - -c
-    - |
-      set -euo pipefail
+      test "$(stat -c '%a' "$dst/suites/csd-violations/run.mjs")" = 444
+      stage=ssh
       cat >/etc/ssh/sshd_config.d/60-csd-operator.conf <<'EOF'
       PasswordAuthentication no
       KbdInteractiveAuthentication no
       PermitRootLogin no
       PubkeyAuthentication yes
       EOF
+      install -d -m 0755 /run/sshd
       sshd -t
       systemctl reload ssh
-
-  - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/amazon-cloudwatch-agent.json
-  - systemctl daemon-reload
-  - systemctl enable --now csd-xvfb.service
-  - systemctl enable --now csd-worker-health.service
-  - /usr/local/bin/csd-log-event 'bootstrap status=ready' || true
-
-final_message: "CSD traffic generator bootstrap completed"
+      stage=cloudwatch-config
+      /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/amazon-cloudwatch-agent.json
+      stage=services
+      systemctl daemon-reload
+      systemctl enable --now csd-xvfb.service
+      systemctl enable --now csd-worker-health.service
+      test "$(jq -r .status "$status_file")" = ready
+      stage=ready
+      trap - ERR
+      /usr/local/bin/csd-log-event 'bootstrap status=ready' || true
+runcmd:
+  - /usr/local/sbin/csd-bootstrap
+final_message: "CSD traffic generator cloud-init finished; inspect /opt/traffic-generator/status.json for authoritative state"

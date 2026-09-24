@@ -88,6 +88,12 @@ require_pattern 'headless: false' "${AWS_ROOT}/cloud-init.tftpl" "boot health la
 require_pattern 'page\.goto\("about:blank"\)' "${AWS_ROOT}/cloud-init.tftpl" "boot health navigates only to local about:blank"
 reject_pattern 'AWS headed Chrome captures|--test-name-pattern|CSD_AWS_ALLOW_VERIFYING_STATUS|health_run_root' "${AWS_ROOT}/cloud-init.tftpl" "boot health never executes a CSD scenario integration"
 require_pattern '/opt/traffic-generator/runtime/results' "${AWS_ROOT}/cloud-init.tftpl" "cloud-init uses canonical AWS evidence runtime root"
+require_pattern 'path: /usr/local/sbin/csd-bootstrap' "${AWS_ROOT}/cloud-init.tftpl" "cloud-init writes one root-owned bootstrap program"
+require_pattern '^  - /usr/local/sbin/csd-bootstrap$' "${AWS_ROOT}/cloud-init.tftpl" "cloud-init invokes only the bootstrap program"
+require_pattern 'trap fail_bootstrap ERR' "${AWS_ROOT}/cloud-init.tftpl" "bootstrap records the failing stage through an ERR trap"
+require_pattern 'write_status failed "\$stage"' "${AWS_ROOT}/cloud-init.tftpl" "bootstrap writes authoritative failed state"
+require_pattern 'install -d -m 0755 /run/sshd' "${AWS_ROOT}/cloud-init.tftpl" "bootstrap creates the sshd runtime directory before validation"
+require_pattern 'jq -r \.version node_modules/playwright-core/package\.json' "${AWS_ROOT}/cloud-init.tftpl" "bootstrap verifies npm package version without nested JavaScript quoting"
 reject_pattern '/opt/traffic-generator/results' "${AWS_ROOT}/cloud-init.tftpl" "cloud-init contains no obsolete AWS evidence root"
 require_pattern "type: 'png'" "${CSD_ROOT}/run.mjs" "screenshots explicitly use PNG before atomic rename"
 require_pattern 'await rm\(temporaryPath, \{ force: true \}\)' "${CSD_ROOT}/run.mjs" "failed screenshot capture removes partial temporary file"
@@ -428,16 +434,15 @@ if [ -d "${AWS_ROOT}" ]; then
   require_pattern 'chmod 0555' "${AWS_ROOT}/cloud-init.tftpl" "deployed source directories are read-only"
   require_pattern 'chmod 0444' "${AWS_ROOT}/cloud-init.tftpl" "deployed source files are read-only"
 fi
-bash_runcmd_count=$(grep -Ec '^  - - /bin/bash$' "${AWS_ROOT}/cloud-init.tftpl")
-bash_flag_count=$(grep -Ec '^    - -c$' "${AWS_ROOT}/cloud-init.tftpl")
-strict_block_count=$(grep -Ec '^      set -euo pipefail$' "${AWS_ROOT}/cloud-init.tftpl")
-if [ "${bash_runcmd_count}" -gt 0 ] &&
-  [ "${bash_runcmd_count}" -eq "${bash_flag_count}" ] &&
-  [ "${strict_block_count}" -ge "${bash_runcmd_count}" ] &&
-  ! grep -Eq '^  - \|$' "${AWS_ROOT}/cloud-init.tftpl"; then
-  pass "every multiline cloud-init runcmd block executes explicitly with Bash"
+bootstrap_path_count=$(grep -Ec '^  - path: /usr/local/sbin/csd-bootstrap$' "${AWS_ROOT}/cloud-init.tftpl" || true)
+bootstrap_runcmd_count=$(grep -Ec '^  - /usr/local/sbin/csd-bootstrap$' "${AWS_ROOT}/cloud-init.tftpl" || true)
+legacy_runcmd_count=$(grep -Ec '^  - - /bin/bash$' "${AWS_ROOT}/cloud-init.tftpl" || true)
+if [ "${bootstrap_path_count}" -eq 1 ] &&
+  [ "${bootstrap_runcmd_count}" -eq 1 ] &&
+  [ "${legacy_runcmd_count}" -eq 0 ]; then
+  pass "cloud-init executes one root-owned fail-fast bootstrap script"
 else
-  fail "every multiline cloud-init runcmd block executes explicitly with Bash"
+  fail "cloud-init executes one root-owned fail-fast bootstrap script"
 fi
 require_pattern 'actions[[:space:]]*=[[:space:]]*\["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey"\]' "${AWS_ROOT}/main.tf" "worker runtime key permissions include scoped KMS decrypt"
 require_pattern 'sid[[:space:]]*=[[:space:]]*"ReadRunEvidence"' "${AWS_ROOT}/main.tf" "worker has an explicit evidence-read statement"

@@ -59,6 +59,14 @@ approved scenario and correlate its timestamps with F5 Distributed Cloud telemet
 for guarded destroy; retained source, replica, primary-log, and replica-log versions must be handled
 deliberately.
 
+## AWS: Recover a Failed Worker
+
+A failed bootstrap that requires worker replacement uses two separately approved saved plans. First plan only `-var='termination_protection_enabled=false'`; require an in-place `disable_api_termination` change, no replacement, and no unrelated changes. Inspect and hash that plan. Obtain explicit approval for its exact digest, apply only it, and verify the output is `false`.
+
+After correcting the reviewed bootstrap input or source, create a second saved plan with `-var='termination_protection_enabled=true'` and the approved replacement trigger, such as `-replace=aws_instance.worker`. Require `disable_api_termination = true` on the new worker.
+
+Inspect and hash the replacement plan. Obtain separate approval for its exact digest, then apply only that plan. Do not combine disablement and replacement, change the default, or leave the replacement unprotected. Recovery completes only when the new worker reports `ready` and passes AWS runtime verification.
+
 ## Azure: Clone and Configure
 
 All Azure Terraform files remain in the [`terraform/`](https://github.com/f5-sales-demo/traffic-generator/tree/main/terraform) directory. Clone the repository and deploy directly:

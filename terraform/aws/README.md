@@ -17,7 +17,9 @@ text. It never reads, generates, or stores the private key. Systems Manager rema
 path. IMDSv2, KMS-encrypted gp3 storage, detailed monitoring, API termination protection, SSM
 endpoints, and encrypted evidence/log storage remain required.
 
-Run evidence is written beneath `runs/<run-id>/<scenario>/`. Status metadata records the repository, source commit, Chrome and Node versions, AMI, instance, region, deployment-manifest version, and deployment-manifest SHA-256. Do not place credentials, session tokens, private keys, customer data, or unsanitized browser artifacts in source, variables, Terraform state, logs, screenshots, or receipts.
+Run evidence is written beneath `runs/<run-id>/<scenario>/`. Status metadata records the repository, source commit, Chrome and Node versions, AMI, instance, region, deployment-manifest version, and deployment-manifest SHA-256.
+
+Do not place credentials, session tokens, private keys, customer data, or unsanitized browser artifacts in source, variables, Terraform state, logs, screenshots, or receipts.
 Evidence files remain immutable after `SHA256SUMS` is written. Their embedded upload state stays
 `pending`; successful remote finalization is represented only by `upload-commit.json`, uploaded last
 after every object, manifest, and checksum succeeds. Every upload records user metadata
@@ -198,6 +200,17 @@ for `detected_domains` and `scripts`. Record `formFields` only as an optional ag
 `OBSERVED` or `PENDING` classification for the receipt window, without attribution to specific generated
 field identifiers. Correlation never changes the browser receipt or scenario result, and the worker
 contains no tenant token or raw HTTP API client.
+
+## Worker replacement recovery
+
+A bootstrap failure does not authorize replacement while API termination protection is enabled. Recovery requires two independently saved, reviewed, and approved plans; do not change the variable default or combine the changes.
+
+1. Create a saved plan with only `-var='termination_protection_enabled=false'`. It must show an in-place update of `aws_instance.worker.disable_api_termination` from `true` to `false`, no worker replacement, and no unrelated changes. Inspect it and record its SHA-256. Obtain explicit approval for that exact digest, apply only that plan, and verify the output is `false`.
+2. Correct the reviewed bootstrap input or source. Create a new saved replacement plan with `-var='termination_protection_enabled=true'` and the approved replacement trigger, such as `-replace=aws_instance.worker`. It must restore `disable_api_termination = true` on the new worker.
+3. Inspect the replacement plan and record its different SHA-256. Obtain separate explicit approval for that exact digest, then apply only that plan.
+4. Verify the replacement reports `ready`, termination protection is restored, and runtime, Systems Manager, SSH, logging, and evidence checks pass. Apply success alone is not recovery proof.
+
+Never disable protection and request replacement in the same plan. Never leave the replacement worker unprotected.
 
 ## Guarded destroy
 

@@ -316,13 +316,18 @@ run "verify_public_worker_and_storage" {
 
 }
 
-run "verify_separately_approved_teardown_toggle" {
+run "verify_separately_approved_protection_toggle" {
   command = plan
   variables { termination_protection_enabled = false }
 
   assert {
-    condition     = aws_instance.worker.disable_api_termination == false
-    error_message = "An explicitly reviewed teardown plan must be able to disable API termination protection."
+    condition     = aws_instance.worker.disable_api_termination == var.termination_protection_enabled && aws_instance.worker.disable_api_termination == false
+    error_message = "The separately approved protection-disable plan must wire false directly to the worker API termination setting."
+  }
+
+  assert {
+    condition     = aws_instance.worker.ami == var.ami_id && aws_instance.worker.instance_type == var.instance_type && aws_instance.worker.user_data_base64 == base64gzip(local.worker_cloud_init)
+    error_message = "Disabling termination protection must leave worker identity and bootstrap inputs unchanged so the reviewed plan is an in-place setting update, not a replacement request."
   }
 }
 
@@ -335,18 +340,36 @@ run "verify_scoped_execution_contract" {
   }
 
   assert {
-    condition     = strcontains(aws_instance.worker.user_data, var.source_commit) && strcontains(aws_instance.worker.user_data, var.deployment_manifest_sha256) && strcontains(aws_instance.worker.user_data, "chrome_sandbox") && !strcontains(aws_instance.worker.user_data, "--no-sandbox") && strcontains(aws_instance.worker.user_data, "PasswordAuthentication no")
+    condition     = strcontains(local.worker_cloud_init, var.source_commit) && strcontains(local.worker_cloud_init, var.deployment_manifest_sha256) && strcontains(local.worker_cloud_init, "chrome_sandbox") && !strcontains(local.worker_cloud_init, "--no-sandbox") && strcontains(local.worker_cloud_init, "PasswordAuthentication no")
     error_message = "Bootstrap must record provenance, verify the Chrome sandbox, omit sandbox bypasses, and disable SSH passwords."
   }
 
   assert {
-    condition     = strcontains(aws_instance.worker.user_data, "package_update: false") && strcontains(aws_instance.worker.user_data, "ec2.archive.ubuntu.com/ubuntu/") && strcontains(aws_instance.worker.user_data, "https://\\1.ubuntu.com/ubuntu/") && strcontains(aws_instance.worker.user_data, "apt-get update") && strcontains(aws_instance.worker.user_data, "apt-get install -y --no-install-recommends") && !strcontains(aws_instance.worker.user_data, "awscli ca-certificates")
+    condition = (
+      strcontains(local.worker_cloud_init, "package_update: false") &&
+      strcontains(local.worker_cloud_init, "http://([[:alnum:].-]*ec2\\.archive\\.ubuntu\\.com)/ubuntu/?") &&
+      strcontains(local.worker_cloud_init, "https://\\1/ubuntu/") &&
+      strcontains(local.worker_cloud_init, "apt-get update") &&
+      strcontains(local.worker_cloud_init, "apt-get install -y --no-install-recommends") &&
+      !strcontains(local.worker_cloud_init, "awscli ca-certificates")
+    )
     error_message = "Bootstrap must rewrite regional, archive, and security Ubuntu APT sources to HTTPS before installing packages without the distro AWS CLI."
   }
 
   assert {
-    condition     = length(regexall("(?m)^  - - /bin/bash\\s*$", aws_instance.worker.user_data)) == 8 && length(regexall("(?m)^    - -c\\s*$", aws_instance.worker.user_data)) == 8 && !strcontains(aws_instance.worker.user_data, "runcmd:\n  - |")
-    error_message = "Every multiline cloud-init runcmd entry must invoke Bash explicitly so pipefail and Bash syntax are interpreted by Bash."
+    condition     = length(regexall("(?m)^runcmd:\\s*\\n  - /usr/local/sbin/csd-bootstrap\\s*$", local.worker_cloud_init)) == 1 && length(regexall("(?m)^  - - /bin/bash\\s*$", local.worker_cloud_init)) == 0
+    error_message = "Cloud-init must invoke exactly one root-owned fail-fast bootstrap script rather than independent runcmd fragments."
+  }
+
+  assert {
+    condition = (
+      strcontains(local.worker_cloud_init, "trap fail_bootstrap ERR") &&
+      strcontains(local.worker_cloud_init, "write_status failed \"$stage\"") &&
+      strcontains(local.worker_cloud_init, "install -d -m 0755 /run/sshd") &&
+      strcontains(local.worker_cloud_init, "jq -r .version node_modules/playwright-core/package.json") &&
+      length(regexall("(?s)stage=cloudwatch-config.*stage=services", local.worker_cloud_init)) == 1
+    )
+    error_message = "Bootstrap must atomically report failed stages, safely verify npm, prepare sshd runtime state, and start services only after configuration completes."
   }
 
   assert {
@@ -360,17 +383,17 @@ run "verify_scoped_execution_contract" {
   }
 
   assert {
-    condition     = strcontains(aws_instance.worker.user_data, var.aws_cli_archive_url) && strcontains(aws_instance.worker.user_data, var.aws_cli_archive_sha256) && strcontains(aws_instance.worker.user_data, "aws --version") && strcontains(aws_instance.worker.user_data, var.cloudwatch_agent_package_url) && strcontains(aws_instance.worker.user_data, var.cloudwatch_agent_package_sha256) && strcontains(aws_instance.worker.user_data, "amazon-cloudwatch-agent-ctl")
+    condition     = strcontains(local.worker_cloud_init, var.aws_cli_archive_url) && strcontains(local.worker_cloud_init, var.aws_cli_archive_sha256) && strcontains(local.worker_cloud_init, "aws --version") && strcontains(local.worker_cloud_init, var.cloudwatch_agent_package_url) && strcontains(local.worker_cloud_init, var.cloudwatch_agent_package_sha256) && strcontains(local.worker_cloud_init, "amazon-cloudwatch-agent-ctl")
     error_message = "Bootstrap must checksum and install the exact pinned AWS CLI v2 and CloudWatch agent artifacts."
   }
 
   assert {
-    condition     = strcontains(aws_instance.worker.user_data, "sudo -u tgen env PATH=/opt/node/bin:") && length(regexall("/opt/node/bin/npm", aws_instance.worker.user_data)) == 2
+    condition     = strcontains(local.worker_cloud_init, "sudo -u tgen \"$${npm_env[@]}\"") && length(regexall("/opt/node/bin/npm", local.worker_cloud_init)) == 2
     error_message = "Every npm invocation must run as tgen with the pinned Node path explicitly exported."
   }
 
   assert {
-    condition     = strcontains(aws_instance.worker.user_data, "/var/log/cloud-init-output.log") && strcontains(aws_instance.worker.user_data, "/var/log/csd-worker-health.log") && strcontains(aws_instance.worker.user_data, "/var/log/csd-xvfb.log") && strcontains(aws_instance.worker.user_data, "/var/log/csd-scenario.log") && !strcontains(aws_instance.worker.user_data, "/opt/aws/amazon-cloudwatch-agent/logs")
+    condition     = strcontains(local.worker_cloud_init, "/var/log/cloud-init-output.log") && strcontains(local.worker_cloud_init, "/var/log/csd-worker-health.log") && strcontains(local.worker_cloud_init, "/var/log/csd-xvfb.log") && strcontains(local.worker_cloud_init, "/var/log/csd-scenario.log") && !strcontains(local.worker_cloud_init, "/opt/aws/amazon-cloudwatch-agent/logs")
     error_message = "CloudWatch agent must persist bootstrap, health, Xvfb, and scenario logs without collecting its own logs recursively."
   }
 
@@ -381,48 +404,48 @@ run "verify_scoped_execution_contract" {
 
   assert {
     condition = (
-      length(regexall("X-aws-ec2-metadata-token-ttl-seconds: 60", aws_instance.worker.user_data)) == 2 &&
-      length(regexall("latest/meta-data/instance-id", aws_instance.worker.user_data)) == 2 &&
-      length(regexall("export INSTANCE_ID", aws_instance.worker.user_data)) == 2 &&
-      strcontains(aws_instance.worker.user_data, "--preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY") &&
-      strcontains(aws_instance.worker.user_data, "--arg instance_id \"$INSTANCE_ID\"") &&
-      strcontains(aws_instance.worker.user_data, "IMDSv2 returned an invalid instance ID")
+      length(regexall("X-aws-ec2-metadata-token-ttl-seconds: 60", local.worker_cloud_init)) == 2 &&
+      length(regexall("latest/meta-data/instance-id", local.worker_cloud_init)) == 2 &&
+      length(regexall("export INSTANCE_ID", local.worker_cloud_init)) == 2 &&
+      strcontains(local.worker_cloud_init, "--preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY") &&
+      strcontains(local.worker_cloud_init, "--arg instance_id \"$INSTANCE_ID\"") &&
+      strcontains(local.worker_cloud_init, "IMDSv2 returned an invalid instance ID")
     )
     error_message = "SSM execution and first-boot health must fail closed on IMDSv2 identity while the canonical suite wrapper loads immutable provenance from runtime.env."
   }
 
   assert {
     condition = (
-      strcontains(aws_instance.worker.user_data, "/bin/bash /opt/traffic-generator/source/suites/csd-violations/run.sh") &&
-      !strcontains(aws_instance.worker.user_data, "/opt/node/bin/node /opt/traffic-generator/source/suites/csd-violations/run.mjs") &&
-      !strcontains(aws_instance.worker.user_data, "stdbuf -oL -eL tee") &&
-      strcontains(aws_instance.worker.user_data, "rc=$?") &&
-      strcontains(aws_instance.worker.user_data, "exit \"$rc\"")
+      strcontains(local.worker_cloud_init, "/bin/bash /opt/traffic-generator/source/suites/csd-violations/run.sh") &&
+      !strcontains(local.worker_cloud_init, "/opt/node/bin/node /opt/traffic-generator/source/suites/csd-violations/run.mjs") &&
+      !strcontains(local.worker_cloud_init, "stdbuf -oL -eL tee") &&
+      strcontains(local.worker_cloud_init, "rc=$?") &&
+      strcontains(local.worker_cloud_init, "exit \"$rc\"")
     )
     error_message = "The SSM entry point must preserve the canonical run.sh exit and must not duplicate browser, logging, checksum, or upload orchestration."
   }
 
   assert {
     condition = (
-      strcontains(aws_instance.worker.user_data, "headless: false") &&
-      strcontains(aws_instance.worker.user_data, "page.goto(\"about:blank\")") &&
-      !strcontains(aws_instance.worker.user_data, "AWS headed Chrome captures") &&
-      !strcontains(aws_instance.worker.user_data, "--test-name-pattern") &&
-      !strcontains(aws_instance.worker.user_data, "CSD_AWS_ALLOW_VERIFYING_STATUS")
+      strcontains(local.worker_cloud_init, "headless: false") &&
+      strcontains(local.worker_cloud_init, "page.goto(\"about:blank\")") &&
+      !strcontains(local.worker_cloud_init, "AWS headed Chrome captures") &&
+      !strcontains(local.worker_cloud_init, "--test-name-pattern") &&
+      !strcontains(local.worker_cloud_init, "CSD_AWS_ALLOW_VERIFYING_STATUS")
     )
     error_message = "Boot health must use a local headed about:blank Chrome/Xvfb smoke and never execute scenario integration or capture production evidence."
   }
 
   assert {
     condition = (
-      strcontains(aws_instance.worker.user_data, "tmp=/opt/traffic-generator/source.tmp") &&
-      strcontains(aws_instance.worker.user_data, "for attempt in 1 2 3 4") &&
-      strcontains(aws_instance.worker.user_data, "git -C \"$tmp\" fetch --quiet --depth=1 origin \"$commit\"") &&
-      strcontains(aws_instance.worker.user_data, "valid \"$dst\"") &&
-      strcontains(aws_instance.worker.user_data, "sha256sum \"$1/$manifest\"") &&
-      strcontains(aws_instance.worker.user_data, "= \"$digest\"") &&
-      strcontains(aws_instance.worker.user_data, "mv \"$tmp\" \"$dst\"") &&
-      !strcontains(aws_instance.worker.user_data, "git -C /opt/traffic-generator/source remote add")
+      strcontains(local.worker_cloud_init, "tmp=/opt/traffic-generator/source.tmp") &&
+      strcontains(local.worker_cloud_init, "for attempt in 1 2 3 4") &&
+      strcontains(local.worker_cloud_init, "git -C \"$tmp\" fetch -q --depth=1 origin \"$commit\"") &&
+      strcontains(local.worker_cloud_init, "valid \"$dst\"") &&
+      strcontains(local.worker_cloud_init, "sha256sum \"$1/$manifest\"") &&
+      strcontains(local.worker_cloud_init, "= \"$digest\"") &&
+      strcontains(local.worker_cloud_init, "mv \"$tmp\" \"$dst\"") &&
+      !strcontains(local.worker_cloud_init, "git -C /opt/traffic-generator/source remote add")
     )
     error_message = "Source installation must retry into clean staging, verify the exact commit and canonical scenario-manifest digest, reuse only a matching checkout, and rename atomically."
   }
@@ -430,12 +453,12 @@ run "verify_scoped_execution_contract" {
 
 
   assert {
-    condition     = strcontains(aws_instance.worker.user_data, "chown -R root:root \"$dst\"") && strcontains(aws_instance.worker.user_data, "find \"$dst\" -type d -exec chmod 0555") && strcontains(aws_instance.worker.user_data, "find \"$dst\" -type f -exec chmod 0444")
+    condition     = strcontains(local.worker_cloud_init, "chown -R root:root \"$dst\"") && strcontains(local.worker_cloud_init, "find \"$dst\" -type d -exec chmod 0555") && strcontains(local.worker_cloud_init, "find \"$dst\" -type f -exec chmod 0444")
     error_message = "Installed source must be root-owned and read-only so tgen can execute but cannot mutate it."
   }
 
   assert {
-    condition     = strcontains(aws_instance.worker.user_data, "export RUN_ID=\"$run_id\"") && strcontains(aws_instance.worker.user_data, "export CSD_SCENARIO=\"$scenario\"") && strcontains(aws_instance.worker.user_data, "/opt/traffic-generator/source/suites/csd-violations/run.sh") && !strcontains(aws_instance.worker.user_data, "/opt/traffic-generator/results") && !strcontains(aws_instance.worker.user_data, "$scenario/$scenario")
+    condition     = strcontains(local.worker_cloud_init, "export RUN_ID=\"$run_id\"") && strcontains(local.worker_cloud_init, "export CSD_SCENARIO=\"$scenario\"") && strcontains(local.worker_cloud_init, "/opt/traffic-generator/source/suites/csd-violations/run.sh") && !strcontains(local.worker_cloud_init, "/opt/traffic-generator/results") && !strcontains(local.worker_cloud_init, "$scenario/$scenario")
     error_message = "The worker must provide one run/scenario identity to canonical run.sh, which owns the matching local evidence and S3 prefix."
   }
 
