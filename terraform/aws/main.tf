@@ -1020,8 +1020,13 @@ resource "aws_s3_bucket_replication_configuration" "evidence" {
   bucket = aws_s3_bucket.evidence.id
 
   rule {
-    id     = "replicate-all-evidence"
-    status = "Enabled"
+    id       = "replicate-all-evidence"
+    priority = 1
+    status   = "Enabled"
+
+    delete_marker_replication {
+      status = "Disabled"
+    }
 
     filter {}
 
