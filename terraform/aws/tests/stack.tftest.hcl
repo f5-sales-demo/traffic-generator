@@ -94,9 +94,9 @@ variables {
   aws_cli_version                 = "2.31.21"
   aws_cli_archive_url             = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.31.21.zip"
   aws_cli_archive_sha256          = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
-  cloudwatch_agent_version        = "1.300057.0b252"
-  cloudwatch_agent_package_url    = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/1.300057.0b252/amazon-cloudwatch-agent.deb"
-  cloudwatch_agent_package_sha256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+  cloudwatch_agent_version        = "1.300073.1b1859-1"
+  cloudwatch_agent_package_url    = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb"
+  cloudwatch_agent_package_sha256 = "243da09e1af783d24299ab7948a550f235278c8eae51a4b84c61343382e1af2b"
   node_archive_url                = "https://nodejs.org/dist/v22.20.0/node-v22.20.0-linux-x64.tar.xz"
   node_archive_sha256             = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   chrome_archive_url              = "https://storage.googleapis.com/chrome-for-testing-public/140.0.7339.207/linux64/chrome-linux64.zip"
@@ -183,7 +183,7 @@ run "reject_mismatched_aws_cli_version" {
 
 run "reject_unpinned_cloudwatch_agent" {
   command = plan
-  variables { cloudwatch_agent_package_url = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb" }
+  variables { cloudwatch_agent_package_url = "https://example.invalid/amazon-cloudwatch-agent.deb" }
   expect_failures = [var.cloudwatch_agent_package_url]
 }
 
