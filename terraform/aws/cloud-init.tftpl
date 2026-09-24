@@ -122,7 +122,7 @@ write_files:
       test "$(stat -c '%U:%G:%a' /opt/traffic-generator/source/suites/csd-violations/run.mjs)" = "root:root:444"
       /opt/node/bin/node --version | grep -q '^v22\.'
       test "$(/opt/node/bin/node -p 'require("/opt/traffic-generator/node_modules/playwright-core/package.json").version')" = "${playwright_core_version}"
-      test -x /opt/chrome/chrome
+      sudo -u tgen test -x /opt/chrome/chrome
       test -u /opt/chrome/chrome_sandbox
       test "$(stat -c '%a' /opt/chrome/chrome_sandbox)" = "4755"
       systemctl is-active --quiet csd-xvfb.service
@@ -251,6 +251,15 @@ write_files:
       fi
       test "$(jq -r .version node_modules/playwright-core/package.json)" = '${playwright_core_version}'
       stage=chrome
+      normalize_chrome_permissions() {
+        local chrome_root=$1
+        chown -R root:root "$chrome_root"
+        find "$chrome_root" -type d -exec chmod 0755 {} +
+        find "$chrome_root" -type f -perm /u=x -exec chmod 0755 {} +
+        find "$chrome_root" -type f ! -perm /u=x -exec chmod 0644 {} +
+        chmod 0755 "$chrome_root/chrome"
+        chmod 4755 "$chrome_root/chrome_sandbox"
+      }
       if ! test -x /opt/chrome/chrome || test "$(cat /opt/chrome/.archive-sha256 2>/dev/null || true)" != '${chrome_archive_sha256}'; then
         rm -rf /tmp/chrome.zip /tmp/chrome /opt/chrome
         install -d -m 0755 /opt/chrome
@@ -260,9 +269,11 @@ write_files:
         echo '${chrome_archive_sha256}' >/opt/chrome/.archive-sha256
         rm -rf /tmp/chrome{.zip,-extract}
       fi
-      chown root:root /opt/chrome/{chrome_sandbox,.archive-sha256}
-      chmod 4755 /opt/chrome/chrome_sandbox
-      test -x /opt/chrome/chrome && test -u /opt/chrome/chrome_sandbox
+      normalize_chrome_permissions /opt/chrome
+      test "$(stat -c '%U:%G:%a' /opt/chrome)" = "root:root:755"
+      test "$(stat -c '%U:%G:%a' /opt/chrome/chrome)" = "root:root:755"
+      test "$(stat -c '%U:%G:%a' /opt/chrome/chrome_sandbox)" = "root:root:4755"
+      sudo -u tgen test -x /opt/chrome/chrome
       stage=source
       dst=/opt/traffic-generator/source
       tmp=/opt/traffic-generator/source.tmp
