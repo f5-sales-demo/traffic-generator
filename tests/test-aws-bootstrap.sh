@@ -93,28 +93,32 @@ awk '
   body { print }
   body && /^\}$/ { exit }
 ' "$TMP/csd-bootstrap" >"$TMP/chrome-permissions-function"
+grep -Fqx '  chown -R root:root "$chrome_root"' "$TMP/chrome-permissions-function"
+grep -Fqx '  chmod 4755 "$chrome_root/chrome_sandbox"' "$TMP/chrome-permissions-function"
 cat >"$TMP/chrome-permissions-regression" <<EOF
 #!/usr/bin/env bash
 set -Eeuo pipefail
 umask 027
 $(cat "$TMP/chrome-permissions-function")
+chown() { :; }
 chrome_root="$TMP/chrome-fixture"
 install -d -m 0750 "\$chrome_root/nested/resources"
 install -m 0750 /dev/null "\$chrome_root/chrome"
 install -m 0750 /dev/null "\$chrome_root/chrome_sandbox"
 install -m 0640 /dev/null "\$chrome_root/nested/resources/data.pak"
+fixture_owner="\$(id -u):\$(id -g)"
 normalize_chrome_permissions "\$chrome_root"
-test "\$(stat -c '%U:%G:%a' "\$chrome_root")" = "root:root:755"
-test "\$(stat -c '%U:%G:%a' "\$chrome_root/nested/resources")" = "root:root:755"
-test "\$(stat -c '%U:%G:%a' "\$chrome_root/chrome")" = "root:root:755"
-test "\$(stat -c '%U:%G:%a' "\$chrome_root/chrome_sandbox")" = "root:root:4755"
-test "\$(stat -c '%U:%G:%a' "\$chrome_root/nested/resources/data.pak")" = "root:root:644"
+test "\$(stat -c '%u:%g:%a' "\$chrome_root")" = "\$fixture_owner:755"
+test "\$(stat -c '%u:%g:%a' "\$chrome_root/nested/resources")" = "\$fixture_owner:755"
+test "\$(stat -c '%u:%g:%a' "\$chrome_root/chrome")" = "\$fixture_owner:755"
+test "\$(stat -c '%u:%g:%a' "\$chrome_root/chrome_sandbox")" = "\$fixture_owner:4755"
+test "\$(stat -c '%u:%g:%a' "\$chrome_root/nested/resources/data.pak")" = "\$fixture_owner:644"
 test -x "\$chrome_root/chrome"
 if find "\$chrome_root" -perm /0002 -print -quit | grep -q .; then exit 1; fi
 rm -rf "\$chrome_root"
 EOF
 chmod +x "$TMP/chrome-permissions-regression"
-sudo "$TMP/chrome-permissions-regression"
+"$TMP/chrome-permissions-regression"
 
 awk '
   /^      install -d -m 0755 \/run\/sshd$/ { body=1 }
