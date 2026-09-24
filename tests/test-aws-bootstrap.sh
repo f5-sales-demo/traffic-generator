@@ -121,6 +121,45 @@ chmod +x "$TMP/chrome-permissions-regression"
 "$TMP/chrome-permissions-regression"
 
 awk '
+  /^normalize_aws_cli_permissions\(\) \{$/ { body=1 }
+  body { print }
+  body && /^\}$/ { exit }
+' "$TMP/csd-bootstrap" >"$TMP/aws-cli-permissions-function"
+grep -Fqx '  find -P "$aws_cli_root" -type d -exec chown "$owner:$group" {} + -exec chmod 0750 {} +' "$TMP/aws-cli-permissions-function"
+grep -Fqx '  find -P "$aws_cli_root" -type f -perm /u=x -exec chmod 0750 {} +' "$TMP/aws-cli-permissions-function"
+grep -Fqx '  find -P "$aws_cli_root" -type f ! -perm /u=x -exec chmod 0640 {} +' "$TMP/aws-cli-permissions-function"
+cat >"$TMP/aws-cli-permissions-regression" <<EOF
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 027
+$(cat "$TMP/aws-cli-permissions-function")
+chown() {
+  local owner_group=\$1
+  shift
+  command chown "\$(id -u):\$(id -g)" "\$@"
+  test "\$owner_group" = "\$(id -un):\$(id -gn)"
+}
+aws_cli_root="$TMP/aws-cli-fixture"
+install -d -m 0777 "\$aws_cli_root/v2/current/bin"
+install -m 0777 /dev/null "\$aws_cli_root/v2/current/bin/aws"
+install -m 0666 /dev/null "\$aws_cli_root/v2/current/data"
+ln -s v2/current/bin/aws "\$aws_cli_root/aws"
+link_target="\$(readlink "\$aws_cli_root/aws")"
+normalize_aws_cli_permissions "\$aws_cli_root" "\$(id -un)" "\$(id -gn)"
+fixture_owner="\$(id -u):\$(id -g)"
+test "\$(stat -c '%u:%g:%a' "\$aws_cli_root")" = "\$fixture_owner:750"
+test "\$(stat -c '%u:%g:%a' "\$aws_cli_root/v2/current/bin")" = "\$fixture_owner:750"
+test "\$(stat -c '%u:%g:%a' "\$aws_cli_root/v2/current/bin/aws")" = "\$fixture_owner:750"
+test "\$(stat -c '%u:%g:%a' "\$aws_cli_root/v2/current/data")" = "\$fixture_owner:640"
+test "\$(readlink "\$aws_cli_root/aws")" = "\$link_target"
+test -x "\$aws_cli_root/aws"
+if find -P "\$aws_cli_root" \( -type d -o -type f \) -perm /0007 -print -quit | grep -q .; then exit 1; fi
+rm -rf "\$aws_cli_root"
+EOF
+chmod +x "$TMP/aws-cli-permissions-regression"
+"$TMP/aws-cli-permissions-regression"
+
+awk '
   /^      install -d -m 0755 \/run\/sshd$/ { body=1 }
   body && /^      stage=cloudwatch-config$/ { exit }
   body { sub(/^      /, ""); print }
