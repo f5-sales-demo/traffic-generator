@@ -124,8 +124,8 @@ write_files:
       test "$(stat -c '%U:%G:%a' /opt/traffic-generator/source/suites/csd-violations/run.mjs)" = "root:root:444"
       /opt/node/bin/node --version | grep -q '^v22\.'
       test "$(/opt/node/bin/node -p 'require("/opt/traffic-generator/node_modules/playwright-core/package.json").version')" = "${playwright_core_version}"
-      test -x "$AWS_CLI_BIN"
-      test "$("$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = "$AWS_CLI_VERSION"
+      sudo -u tgen test -x "$AWS_CLI_BIN"
+      test "$(sudo -u tgen "$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = "$AWS_CLI_VERSION"
       sudo -u tgen test -x /opt/chrome/chrome
       test -u /opt/chrome/chrome_sandbox
       test "$(stat -c '%a' /opt/chrome/chrome_sandbox)" = "4755"
@@ -196,6 +196,13 @@ write_files:
       }
       trap fail_bootstrap ERR
       fetch() { curl -fSL --retry 4 -o "$3" "$1"; echo "$2  $3" | sha256sum -c; }
+      normalize_aws_cli_permissions() {
+        local aws_cli_root=$1 owner=$${2:-root} group=$${3:-tgen}
+        find -P "$aws_cli_root" -type d -exec chown "$owner:$group" {} + -exec chmod 0750 {} +
+        find -P "$aws_cli_root" -type f -exec chown "$owner:$group" {} +
+        find -P "$aws_cli_root" -type f -perm /u=x -exec chmod 0750 {} +
+        find -P "$aws_cli_root" -type f ! -perm /u=x -exec chmod 0640 {} +
+      }
       write_status provisioning
       systemctl disable --now csd-worker-health.service csd-xvfb.service >/dev/null 2>&1 || true
       stage=apt-sources
@@ -229,7 +236,10 @@ write_files:
         /tmp/aws-install/aws/install -i /opt/aws-cli -b /usr/local/bin --update
         rm -rf /tmp/aws{.zip,-install}
       fi
-      test "$(/usr/local/bin/aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = '${aws_cli_version}'
+      normalize_aws_cli_permissions /opt/aws-cli
+      test -L /usr/local/bin/aws
+      sudo -u tgen test -x /usr/local/bin/aws
+      test "$(sudo -u tgen /usr/local/bin/aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = '${aws_cli_version}'
       stage=cloudwatch-agent
       if test "$(dpkg-query -W -f='$${Version}' amazon-cloudwatch-agent 2>/dev/null || true)" != '${cloudwatch_agent_version}'; then
         fetch '${cloudwatch_agent_package_url}' '${cloudwatch_agent_package_sha256}' /tmp/cw.deb

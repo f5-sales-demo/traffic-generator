@@ -405,13 +405,20 @@ run "verify_scoped_execution_contract" {
       strcontains(local.worker_cloud_init, var.aws_cli_archive_sha256) &&
       strcontains(local.worker_cloud_init, "AWS_CLI_BIN=/usr/local/bin/aws") &&
       strcontains(local.worker_cloud_init, "AWS_CLI_VERSION=${var.aws_cli_version}") &&
-      strcontains(local.worker_cloud_init, "/usr/local/bin/aws --version 2>&1") &&
-      strcontains(local.worker_cloud_init, "\"$AWS_CLI_BIN\" --version 2>&1") &&
+      strcontains(local.worker_cloud_init, "normalize_aws_cli_permissions /opt/aws-cli") &&
+      strcontains(local.worker_cloud_init, "owner=$${2:-root} group=$${3:-tgen}") &&
+      strcontains(local.worker_cloud_init, "find -P \"$aws_cli_root\" -type d -exec chown \"$owner:$group\" {} + -exec chmod 0750 {} +") &&
+      strcontains(local.worker_cloud_init, "find -P \"$aws_cli_root\" -type f -perm /u=x -exec chmod 0750 {} +") &&
+      strcontains(local.worker_cloud_init, "find -P \"$aws_cli_root\" -type f ! -perm /u=x -exec chmod 0640 {} +") &&
+      strcontains(local.worker_cloud_init, "test -L /usr/local/bin/aws") &&
+      strcontains(local.worker_cloud_init, "sudo -u tgen test -x /usr/local/bin/aws") &&
+      strcontains(local.worker_cloud_init, "sudo -u tgen /usr/local/bin/aws --version 2>&1") &&
+      strcontains(local.worker_cloud_init, "sudo -u tgen \"$AWS_CLI_BIN\" --version 2>&1") &&
       strcontains(local.worker_cloud_init, var.cloudwatch_agent_package_url) &&
       strcontains(local.worker_cloud_init, var.cloudwatch_agent_package_sha256) &&
       strcontains(local.worker_cloud_init, "amazon-cloudwatch-agent-ctl")
     )
-    error_message = "Bootstrap and runtime health must checksum, install, and verify the exact pinned AWS CLI v2 binary and CloudWatch agent artifacts."
+    error_message = "Bootstrap must normalize the pinned AWS CLI tree to root:tgen with no world access, preserve executable files and symlinks, and verify the exact version as tgen; runtime health must repeat the tgen version gate."
   }
 
   assert {
