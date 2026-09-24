@@ -425,6 +425,12 @@ test('shell wrapper uses an immutable retryable upload commit protocol', async (
   assert.match(source, /source "\$RUNTIME_ENV"/);
   assert.match(source, /CHROME_PATH=\/opt\/chrome\/chrome/);
   assert.doesNotMatch(source, /google-chrome|chromium-browser|command -v "\$candidate"/);
+  assert.match(source, /AWS_CLI_BIN="\$\{AWS_CLI_BIN:\?AWS_CLI_BIN is required\}"/);
+  assert.match(source, /AWS_CLI_VERSION="\$\{AWS_CLI_VERSION:\?AWS_CLI_VERSION is required\}"/);
+  assert.match(source, /"\$AWS_CLI_BIN" --version 2>&1/);
+  assert.match(source, /"\$AWS_CLI_BIN" s3api head-object/);
+  assert.match(source, /"\$AWS_CLI_BIN" s3 cp/);
+  assert.doesNotMatch(source, /command -v aws|(^|[^A-Z_])aws s3(api)? /m);
   assert.match(source, /trap 'on_signal TERM 143' TERM/);
   assert.match(source, /trap 'on_signal INT 130' INT/);
 });

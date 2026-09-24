@@ -79,7 +79,7 @@ write_failure_marker() {
 remote_object_sha256() {
   local key=$1 response error_file rc
   error_file=$(mktemp) || return
-  if response=$(aws s3api head-object \
+  if response=$("$AWS_CLI_BIN" s3api head-object \
     --bucket "$EVIDENCE_BUCKET" --key "$key" --output json 2>"$error_file"); then
     rm -f "$error_file"
     jq -er '
@@ -114,7 +114,7 @@ upload_if_missing() {
     rc=$?
   fi
   [[ "$rc" -eq 44 ]] || return "$rc"
-  aws s3 cp "$file" "s3://${EVIDENCE_BUCKET}/${key}" \
+  "$AWS_CLI_BIN" s3 cp "$file" "s3://${EVIDENCE_BUCKET}/${key}" \
     --metadata "sha256=${expected}" --only-show-errors
 }
 
@@ -241,7 +241,17 @@ if [[ "${1:-}" == "--retry-upload" ]]; then
   source "$RUNTIME_ENV"
   set +a
   EVIDENCE_BUCKET="${EVIDENCE_BUCKET:?EVIDENCE_BUCKET is required}"
-  for command in aws jq sha256sum; do command -v "$command" >/dev/null 2>&1 || {
+  AWS_CLI_BIN="${AWS_CLI_BIN:?AWS_CLI_BIN is required}"
+  AWS_CLI_VERSION="${AWS_CLI_VERSION:?AWS_CLI_VERSION is required}"
+  [[ -x "$AWS_CLI_BIN" ]] || {
+    echo "ERROR: reviewed AWS CLI is not executable: ${AWS_CLI_BIN}" >&2
+    exit 69
+  }
+  [[ "$("$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" == "$AWS_CLI_VERSION" ]] || {
+    echo "ERROR: reviewed AWS CLI version does not match ${AWS_CLI_VERSION}" >&2
+    exit 69
+  }
+  for command in jq sha256sum; do command -v "$command" >/dev/null 2>&1 || {
     echo "ERROR: required command not found: ${command}" >&2
     exit 69
   }; done
@@ -288,6 +298,8 @@ AWS_REGION="${AWS_REGION:?AWS_REGION is required}"
 AMI_ID="${AMI_ID:?AMI_ID is required}"
 DEPLOYMENT_MANIFEST_VERSION="${DEPLOYMENT_MANIFEST_VERSION:?DEPLOYMENT_MANIFEST_VERSION is required}"
 DEPLOYMENT_MANIFEST_SHA256="${DEPLOYMENT_MANIFEST_SHA256:?DEPLOYMENT_MANIFEST_SHA256 is required}"
+AWS_CLI_BIN="${AWS_CLI_BIN:?AWS_CLI_BIN is required}"
+AWS_CLI_VERSION="${AWS_CLI_VERSION:?AWS_CLI_VERSION is required}"
 [[ "${CSD_AWS_RUNTIME:-}" == "1" ]] || {
   echo 'ERROR: CSD_AWS_RUNTIME must equal 1' >&2
   exit 78
@@ -346,7 +358,15 @@ esac
   echo 'ERROR: /opt/chrome/chrome is not executable' >&2
   exit 69
 }
-for command in node Xvfb aws jq sha256sum; do command -v "$command" >/dev/null 2>&1 || {
+[[ -x "$AWS_CLI_BIN" ]] || {
+  echo "ERROR: reviewed AWS CLI is not executable: ${AWS_CLI_BIN}" >&2
+  exit 69
+}
+[[ "$("$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" == "$AWS_CLI_VERSION" ]] || {
+  echo "ERROR: reviewed AWS CLI version does not match ${AWS_CLI_VERSION}" >&2
+  exit 69
+}
+for command in node Xvfb jq sha256sum; do command -v "$command" >/dev/null 2>&1 || {
   echo "ERROR: required command not found: ${command}" >&2
   exit 69
 }; done

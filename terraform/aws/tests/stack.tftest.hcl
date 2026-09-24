@@ -400,8 +400,18 @@ run "verify_scoped_execution_contract" {
   }
 
   assert {
-    condition     = strcontains(local.worker_cloud_init, var.aws_cli_archive_url) && strcontains(local.worker_cloud_init, var.aws_cli_archive_sha256) && strcontains(local.worker_cloud_init, "aws --version") && strcontains(local.worker_cloud_init, var.cloudwatch_agent_package_url) && strcontains(local.worker_cloud_init, var.cloudwatch_agent_package_sha256) && strcontains(local.worker_cloud_init, "amazon-cloudwatch-agent-ctl")
-    error_message = "Bootstrap must checksum and install the exact pinned AWS CLI v2 and CloudWatch agent artifacts."
+    condition = (
+      strcontains(local.worker_cloud_init, var.aws_cli_archive_url) &&
+      strcontains(local.worker_cloud_init, var.aws_cli_archive_sha256) &&
+      strcontains(local.worker_cloud_init, "AWS_CLI_BIN=/usr/local/bin/aws") &&
+      strcontains(local.worker_cloud_init, "AWS_CLI_VERSION=${var.aws_cli_version}") &&
+      strcontains(local.worker_cloud_init, "/usr/local/bin/aws --version 2>&1") &&
+      strcontains(local.worker_cloud_init, "\"$AWS_CLI_BIN\" --version 2>&1") &&
+      strcontains(local.worker_cloud_init, var.cloudwatch_agent_package_url) &&
+      strcontains(local.worker_cloud_init, var.cloudwatch_agent_package_sha256) &&
+      strcontains(local.worker_cloud_init, "amazon-cloudwatch-agent-ctl")
+    )
+    error_message = "Bootstrap and runtime health must checksum, install, and verify the exact pinned AWS CLI v2 binary and CloudWatch agent artifacts."
   }
 
   assert {
@@ -424,11 +434,12 @@ run "verify_scoped_execution_contract" {
       length(regexall("X-aws-ec2-metadata-token-ttl-seconds: 60", local.worker_cloud_init)) == 2 &&
       length(regexall("latest/meta-data/instance-id", local.worker_cloud_init)) == 2 &&
       length(regexall("export INSTANCE_ID", local.worker_cloud_init)) == 2 &&
-      strcontains(local.worker_cloud_init, "--preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY") &&
+      strcontains(local.worker_cloud_init, "--preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY,AWS_CLI_BIN,AWS_CLI_VERSION") &&
+      strcontains(local.worker_cloud_init, "PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") &&
       strcontains(local.worker_cloud_init, "--arg instance_id \"$INSTANCE_ID\"") &&
       strcontains(local.worker_cloud_init, "IMDSv2 returned an invalid instance ID")
     )
-    error_message = "SSM execution and first-boot health must fail closed on IMDSv2 identity while the canonical suite wrapper loads immutable provenance from runtime.env."
+    error_message = "SSM execution and first-boot health must fail closed on IMDSv2 identity while preserving the exact AWS CLI contract for the unprivileged canonical wrapper."
   }
 
   assert {

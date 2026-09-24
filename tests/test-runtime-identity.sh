@@ -101,6 +101,15 @@ require_pattern 'source "\$RUNTIME_ENV"' "${CSD_ROOT}/run.sh" "suite wrapper sou
 require_pattern 'CALLER_DISPLAY=\$\{DISPLAY-\}' "${CSD_ROOT}/run.sh" "suite wrapper captures the explicit per-run display before runtime.env"
 require_pattern 'DISPLAY="\$\{CALLER_DISPLAY:-:100\}"' "${CSD_ROOT}/run.sh" "suite wrapper preserves the per-run display and never falls back to health display :99"
 reject_pattern 'DISPLAY="\$\{DISPLAY:-:99\}"' "${CSD_ROOT}/run.sh" "suite wrapper does not collide with persistent health Xvfb"
+require_pattern '^      AWS_CLI_BIN=/usr/local/bin/aws$' "${AWS_ROOT}/cloud-init.tftpl" "runtime environment pins the reviewed AWS CLI install path"
+require_pattern '^      AWS_CLI_VERSION=\$\{aws_cli_version\}$' "${AWS_ROOT}/cloud-init.tftpl" "runtime environment records the reviewed AWS CLI version"
+require_pattern 'preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY,AWS_CLI_BIN,AWS_CLI_VERSION' "${AWS_ROOT}/cloud-init.tftpl" "unprivileged wrapper preserves the reviewed AWS CLI contract"
+require_pattern 'PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' "${AWS_ROOT}/cloud-init.tftpl" "unprivileged wrapper includes the reviewed install directory in its exact PATH"
+require_pattern 'test -x "\$AWS_CLI_BIN"' "${AWS_ROOT}/cloud-init.tftpl" "worker health requires the reviewed AWS CLI binary"
+require_pattern '"\$AWS_CLI_BIN" --version 2>&1' "${AWS_ROOT}/cloud-init.tftpl" "worker health checks the reviewed AWS CLI version including stderr output"
+require_pattern '"\$AWS_CLI_BIN" s3api head-object' "${CSD_ROOT}/run.sh" "suite wrapper uses the reviewed AWS CLI for object checks"
+require_pattern '"\$AWS_CLI_BIN" s3 cp' "${CSD_ROOT}/run.sh" "suite wrapper uses the reviewed AWS CLI for evidence uploads"
+reject_pattern 'command -v aws|(^|[^A-Z_])aws s3(api)? ' "${CSD_ROOT}/run.sh" "suite wrapper never resolves AWS CLI through PATH"
 require_pattern 'AbortController' "${CSD_ROOT}/run.mjs" "terminal fetch uses abortable bounded requests"
 require_pattern 'clearTimeout\(timer\)' "${CSD_ROOT}/run.mjs" "terminal fetch cleans its timeout"
 require_pattern 'waitForSelector' "${CSD_ROOT}/run.mjs" "SPA route preconditions wait before evaluation"
@@ -160,10 +169,13 @@ MOCK_STATE="${MOCK_ROOT}/state"
 mkdir -p "$MOCK_BIN" "$MOCK_REMOTE" "$MOCK_METADATA"
 cat >"${MOCK_ROOT}/runtime.env" <<EOF
 EVIDENCE_BUCKET=fixture-bucket
+AWS_CLI_BIN=${MOCK_BIN}/aws
+AWS_CLI_VERSION=2.31.4
 EOF
 cat >"${MOCK_BIN}/aws" <<'MOCKAWS'
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ "$1" == --version ]]; then printf 'aws-cli/2.31.4 Python/3.13.7 Linux/6.8.0 exe/x86_64.ubuntu.24\n' >&2; exit 0; fi
 if [[ "$1" == s3api && "$2" == head-object ]]; then
   key=
   while [[ $# -gt 0 ]]; do [[ "$1" == --key ]] && { key=$2; break; }; shift; done

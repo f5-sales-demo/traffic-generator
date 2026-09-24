@@ -18,6 +18,8 @@ write_files:
     content: |
       AWS_REGION=${aws_region}
       EVIDENCE_BUCKET=${evidence_bucket}
+      AWS_CLI_BIN=/usr/local/bin/aws
+      AWS_CLI_VERSION=${aws_cli_version}
       LOG_GROUP_NAME=${log_group_name}
       SOURCE_COMMIT=${source_commit}
       TARGET_URL=${target_url}
@@ -70,9 +72,9 @@ write_files:
       source /etc/traffic-generator/runtime.env
       message="$1"
       stream="worker-$(cat /sys/class/dmi/id/product_uuid | tr '[:upper:]' '[:lower:]')"
-      aws logs create-log-stream --region "$AWS_REGION" --log-group-name "$LOG_GROUP_NAME" --log-stream-name "$stream" >/dev/null 2>&1 || true
+      "$AWS_CLI_BIN" logs create-log-stream --region "$AWS_REGION" --log-group-name "$LOG_GROUP_NAME" --log-stream-name "$stream" >/dev/null 2>&1 || true
       event=$(jq -cn --arg message "$message" --argjson timestamp "$(date +%s%3N)" '[{timestamp:$timestamp,message:$message}]')
-      aws logs put-log-events --region "$AWS_REGION" --log-group-name "$LOG_GROUP_NAME" --log-stream-name "$stream" --log-events "$event" >/dev/null
+      "$AWS_CLI_BIN" logs put-log-events --region "$AWS_REGION" --log-group-name "$LOG_GROUP_NAME" --log-stream-name "$stream" --log-events "$event" >/dev/null
   - path: /usr/local/bin/csd-run
     owner: root:root
     permissions: '0755'
@@ -102,7 +104,7 @@ write_files:
       export CSD_SCENARIO="$scenario"
       export DISPLAY=:100
       set +e
-      sudo -u tgen --preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY \
+      sudo -u tgen --preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY,AWS_CLI_BIN,AWS_CLI_VERSION \
         env PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
         /bin/bash /opt/traffic-generator/source/suites/csd-violations/run.sh
       rc=$?
@@ -122,6 +124,8 @@ write_files:
       test "$(stat -c '%U:%G:%a' /opt/traffic-generator/source/suites/csd-violations/run.mjs)" = "root:root:444"
       /opt/node/bin/node --version | grep -q '^v22\.'
       test "$(/opt/node/bin/node -p 'require("/opt/traffic-generator/node_modules/playwright-core/package.json").version')" = "${playwright_core_version}"
+      test -x "$AWS_CLI_BIN"
+      test "$("$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = "$AWS_CLI_VERSION"
       sudo -u tgen test -x /opt/chrome/chrome
       test -u /opt/chrome/chrome_sandbox
       test "$(stat -c '%a' /opt/chrome/chrome_sandbox)" = "4755"
@@ -218,14 +222,14 @@ write_files:
       install -d -o tgen -g tgen -m 0750 /opt/traffic-generator /opt/traffic-generator/runtime/results /opt/traffic-generator/browser-profile
       install -d -o root -g root -m 0755 /opt/{node,chrome}
       stage=aws-cli
-      if ! command -v aws >/dev/null 2>&1 || test "$(aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" != '${aws_cli_version}'; then
+      if ! test -x /usr/local/bin/aws || test "$(/usr/local/bin/aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" != '${aws_cli_version}'; then
         rm -rf /tmp/aws{.zip,-install} /opt/aws-cli
         fetch '${aws_cli_archive_url}' '${aws_cli_archive_sha256}' /tmp/aws.zip
         unzip -q /tmp/aws.zip -d /tmp/aws-install
         /tmp/aws-install/aws/install -i /opt/aws-cli -b /usr/local/bin --update
         rm -rf /tmp/aws{.zip,-install}
       fi
-      test "$(aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = '${aws_cli_version}'
+      test "$(/usr/local/bin/aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = '${aws_cli_version}'
       stage=cloudwatch-agent
       if test "$(dpkg-query -W -f='$${Version}' amazon-cloudwatch-agent 2>/dev/null || true)" != '${cloudwatch_agent_version}'; then
         fetch '${cloudwatch_agent_package_url}' '${cloudwatch_agent_package_sha256}' /tmp/cw.deb
