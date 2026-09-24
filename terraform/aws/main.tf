@@ -762,6 +762,32 @@ resource "aws_s3_bucket_notification" "evidence_replica" {
   eventbridge = true
 }
 
+data "aws_iam_policy_document" "evidence_replica" {
+  provider = aws.replica
+
+  statement {
+    sid    = "DenyInsecureTransport"
+    effect = "Deny"
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions   = ["s3:*"]
+    resources = [aws_s3_bucket.evidence_replica.arn, "${aws_s3_bucket.evidence_replica.arn}/*"]
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "evidence_replica" {
+  provider = aws.replica
+  bucket   = aws_s3_bucket.evidence_replica.id
+  policy   = data.aws_iam_policy_document.evidence_replica.json
+}
+
 resource "aws_s3_bucket" "replica_access_logs" {
   provider = aws.replica
   #checkov:skip=CKV_AWS_18:This bucket is the terminal cross-region S3 access-log destination; enabling self-logging would recurse indefinitely.
