@@ -302,6 +302,12 @@ run "verify_public_worker_and_storage" {
     )
     error_message = "Replica storage must publish EventBridge events and log to a retained, SSE-S3 terminal sink that also publishes EventBridge events."
   }
+
+  assert {
+    condition     = aws_s3_bucket_policy.evidence_replica.bucket == aws_s3_bucket.evidence_replica.id && data.aws_iam_policy_document.evidence_replica.statement[0].sid == "DenyInsecureTransport" && length([for condition in data.aws_iam_policy_document.evidence_replica.statement[0].condition : condition if condition.variable == "aws:SecureTransport" && contains(condition.values, "false")]) == 1
+    error_message = "The cross-region evidence replica bucket must deny insecure transport."
+  }
+
 }
 
 run "verify_separately_approved_teardown_toggle" {
