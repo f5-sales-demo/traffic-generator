@@ -59,9 +59,13 @@ test('manifest contains the exact stable eleven patterns and assertion contracts
   assert.ok(
     SCENARIOS.every((scenario) => {
       const fields = scenario.steps.at(-1).assertions.map(({ field }) => field);
-      return ['artifactCount', 'controlValueCount', 'sensitiveValueCount', 'timerCount', 'listenerAttached'].every(
-        (field) => fields.includes(field),
-      );
+      return [
+        'artifactCount',
+        'managedControlValueCount',
+        'sensitiveValueCount',
+        'timerCount',
+        'listenerAttached',
+      ].every((field) => fields.includes(field));
     }),
   );
   assert.deepEqual(
@@ -241,7 +245,7 @@ test('runner records atomic receipt and screenshot evidence fields', async () =>
   assert.match(source, /data-csd-synthetic/);
   assert.match(source, /step\.op === 'evaluate' \|\| step\.op === 'cleanup'/);
   assert.match(source, /artifactCount/);
-  assert.match(source, /controlValueCount/);
+  assert.match(source, /managedControlValueCount/);
   assert.match(source, /sensitiveValueCount/);
   for (const field of [
     'startedAt',
@@ -279,11 +283,122 @@ test('terminal fetch times out even when fetch ignores abort and removes its tim
     pageHelpers({ terminalTimeoutMs: 5 });
     const evidence = await globalThis.window.__csdSim.counterPost('https://www.httpbin.org/post', { count: 1 });
     assert.equal(evidence.terminal, 'timed-out');
-    assert.equal(globalThis.window.__csdSim.cleanupPage().timerCount, 0);
+    assert.equal((await globalThis.window.__csdSim.cleanupPage()).timerCount, 0);
   } finally {
     globalThis.window = originalWindow;
     globalThis.document = originalDocument;
     globalThis.fetch = originalFetch;
+  }
+});
+
+test('cleanup clears only run-and-scenario managed controls after framework settlement', async () => {
+  const globals = {
+    window: globalThis.window,
+    document: globalThis.document,
+    HTMLInputElement: globalThis.HTMLInputElement,
+    HTMLTextAreaElement: globalThis.HTMLTextAreaElement,
+    HTMLSelectElement: globalThis.HTMLSelectElement,
+    Event: globalThis.Event,
+  };
+  class FakeControl {
+    constructor(type = 'text', value = '') {
+      this.type = type;
+      this.value = value;
+      this.attributes = new Map();
+      this.events = [];
+    }
+    setAttribute(name, value) {
+      this.attributes.set(name, value);
+    }
+    getAttribute(name) {
+      return this.attributes.get(name) ?? null;
+    }
+    removeAttribute(name) {
+      this.attributes.delete(name);
+    }
+    dispatchEvent(event) {
+      this.events.push(event.type);
+      if (event.type === 'change' && this.resetOnce) {
+        this.resetOnce = false;
+        this.value = 'Synthetic-Only-Password-42!';
+      }
+      return true;
+    }
+  }
+  class FakeInput extends FakeControl {}
+  class FakeTextArea extends FakeControl {}
+  class FakeSelect extends FakeControl {}
+  const email = new FakeInput('email');
+  const password = new FakeInput('password');
+  const unrelated = new FakeInput('text', 'application-owned-value');
+  const otherScenario = new FakeInput('text', 'other-scenario-value');
+  const controls = [email, password, unrelated, otherScenario];
+  const querySelectorAll = (selector) => {
+    if (selector === '[data-csd-synthetic="true"]')
+      return controls.filter((control) => control.getAttribute('data-csd-synthetic') === 'true');
+    if (selector === 'input,textarea,select') return controls;
+    return [];
+  };
+  globalThis.window = {};
+  globalThis.HTMLInputElement = FakeInput;
+  globalThis.HTMLTextAreaElement = FakeTextArea;
+  globalThis.HTMLSelectElement = FakeSelect;
+  globalThis.Event = class {
+    constructor(type) {
+      this.type = type;
+    }
+  };
+  for (const prototype of [FakeInput.prototype, FakeTextArea.prototype, FakeSelect.prototype])
+    Object.defineProperty(prototype, 'value', {
+      get() {
+        return this._value ?? '';
+      },
+      set(value) {
+        this._value = value;
+      },
+      configurable: true,
+    });
+  for (const [control, value] of [
+    [email, ''],
+    [password, ''],
+    [unrelated, 'application-owned-value'],
+    [otherScenario, 'other-scenario-value'],
+  ]) {
+    delete control.value;
+    control.value = value;
+  }
+  globalThis.document = {
+    querySelector: (selector) => {
+      if (selector.includes('email')) return email;
+      if (selector.includes('password')) return password;
+      return null;
+    },
+    querySelectorAll,
+    removeEventListener: () => {},
+  };
+  try {
+    pageHelpers();
+    globalThis.window.__csdSim.beginScenario('run-1', 'login-credential-skimmer');
+    assert.equal(globalThis.window.__csdSim.setSyntheticLogin().markerCount, 2);
+    password.resetOnce = true;
+    otherScenario.setAttribute('data-csd-synthetic', 'true');
+    otherScenario.setAttribute('data-csd-run', 'run-1');
+    otherScenario.setAttribute('data-csd-scenario', 'other-scenario');
+    const result = await globalThis.window.__csdSim.cleanupPage();
+    assert.equal(
+      result.managedControlValueCount,
+      0,
+      JSON.stringify({ email: email.value, password: password.value, events: password.events }),
+    );
+    assert.equal(result.sensitiveValueCount, 0);
+    assert.equal(unrelated.value, 'application-owned-value');
+    assert.equal(otherScenario.value, 'other-scenario-value');
+    assert.equal(email.getAttribute('data-csd-synthetic'), null);
+    assert.equal(password.getAttribute('data-csd-synthetic'), null);
+    for (const control of [email, password])
+      assert.ok(['input', 'change', 'blur'].every((event) => control.events.includes(event)));
+  } finally {
+    Object.assign(globalThis, globals);
   }
 });
 
@@ -306,7 +421,7 @@ test('navigation waits for delayed SPA route preconditions before evaluation', a
       if (String(run).includes('counterPost')) return { postedCount: 2, terminal: 'finished' };
       return {
         artifactCount: 0,
-        controlValueCount: 0,
+        managedControlValueCount: 0,
         sensitiveValueCount: 0,
         timerCount: 0,
         listenerAttached: false,

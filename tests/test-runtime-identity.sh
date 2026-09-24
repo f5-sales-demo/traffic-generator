@@ -327,7 +327,7 @@ const playwright = {
           evaluate: async (callback) => {
             const source = callback.toString();
             if (source.includes('querySelectorAll') && source.includes('data-csd-masked')) return 0;
-            if (source.includes('window.__csdSim?.cleanupPage') || source.includes('window.__csdSim.cleanupPage')) return { artifactCount: 0, controlValueCount: 0, sensitiveValueCount: 0, timerCount: 0, listenerAttached: false };
+            if (source.includes('window.__csdSim?.cleanupPage') || source.includes('window.__csdSim.cleanupPage')) return { artifactCount: 0, managedControlValueCount: 0, sensitiveValueCount: 0, timerCount: 0, listenerAttached: false };
             return passingEvidence(evaluateSteps[evaluateIndex++]);
           },
           screenshot: async ({ path, type }) => {

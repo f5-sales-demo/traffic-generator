@@ -64,7 +64,7 @@ const cleanupStep = (name = 'cleanup-run-artifacts') => ({
   run: () => window.__csdSim.cleanupPage(),
   assertions: [
     assertion('artifactCount', 'eq', 0),
-    assertion('controlValueCount', 'eq', 0),
+    assertion('managedControlValueCount', 'eq', 0),
     assertion('sensitiveValueCount', 'eq', 0),
     assertion('timerCount', 'eq', 0),
     assertion('listenerAttached', 'eq', false),

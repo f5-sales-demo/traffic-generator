@@ -259,7 +259,7 @@ function assertEvidence(step, stepResult) {
   };
 }
 
-export function pageHelpers({ terminalTimeoutMs = 8_000 } = {}) {
+export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioName = null } = {}) {
   const SCRIPT_URLS = {
     jsdelivr: 'https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js',
     esm: 'https://esm.sh/moment@2.30.1',
@@ -267,12 +267,20 @@ export function pageHelpers({ terminalTimeoutMs = 8_000 } = {}) {
     jspm: 'https://ga.jspm.io/npm:dayjs@1.11.13/dayjs.min.js',
   };
   const tracked = { nodes: new Set(), timers: new Set() };
+  const managedContext = { runId, scenarioName };
+  const CLEANUP_SETTLE_MS = 250;
+  const CLEANUP_POLL_MS = 25;
   const findInput = (kind) => {
     const selectors = {
       email: ['#email', 'input[type="email"]', 'input[name*="email" i]', 'input[autocomplete="username"]'],
       password: ['#password', 'input[type="password"]', 'input[autocomplete="current-password"]'],
     };
     return selectors[kind].map((selector) => document.querySelector(selector)).find(Boolean);
+  };
+  const beginScenario = (runId, scenarioName) => {
+    managedContext.runId = runId;
+    managedContext.scenarioName = scenarioName;
+    return { initialized: Boolean(runId && scenarioName) };
   };
   const terminalFetch = async (url, body) => {
     const controller = new AbortController();
@@ -328,21 +336,38 @@ export function pageHelpers({ terminalTimeoutMs = 8_000 } = {}) {
           ? HTMLTextAreaElement.prototype
           : HTMLSelectElement.prototype;
     Object.getOwnPropertyDescriptor(prototype, 'value')?.set?.call(control, value);
-    control.setAttribute('data-csd-synthetic', 'true');
+  };
+  const dispatchValueEvents = (control) => {
     control.dispatchEvent(new Event('input', { bubbles: true }));
     control.dispatchEvent(new Event('change', { bubbles: true }));
+    control.dispatchEvent(new Event('blur', { bubbles: false }));
   };
+  const syntheticFill = (control, value) => {
+    if (!managedContext.runId || !managedContext.scenarioName)
+      throw new Error('scenario context must be initialized before synthetic fill');
+    setNativeValue(control, value);
+    control.setAttribute('data-csd-synthetic', 'true');
+    control.setAttribute('data-csd-run', managedContext.runId);
+    control.setAttribute('data-csd-scenario', managedContext.scenarioName);
+    dispatchValueEvents(control);
+  };
+  const managedControls = () =>
+    [...document.querySelectorAll('[data-csd-synthetic="true"]')].filter(
+      (control) =>
+        control.getAttribute('data-csd-run') === managedContext.runId &&
+        control.getAttribute('data-csd-scenario') === managedContext.scenarioName,
+    );
   const setSyntheticFields = (entries) => {
     let setCount = 0;
     for (const [kind, value] of entries) {
       const control = findInput(kind);
       if (!control) continue;
-      setNativeValue(control, value);
+      syntheticFill(control, value);
       setCount += 1;
     }
     return {
       setCount,
-      markerCount: document.querySelectorAll('[data-csd-synthetic="true"]').length,
+      markerCount: managedControls().length,
       syntheticOnly: true,
     };
   };
@@ -393,32 +418,51 @@ export function pageHelpers({ terminalTimeoutMs = 8_000 } = {}) {
     document.body.appendChild(banner);
     return { installed: true };
   };
-  const cleanupPage = () => {
+  const sensitiveValueCount = () => {
+    const syntheticValue = /synthetic|password|(?:\d[ -]?){12,19}/i;
+    const controlValues = [...document.querySelectorAll('input,textarea,select')].map((control) => control.value);
+    const sensitiveText = [...document.querySelectorAll('[data-csd-sensitive]')].map((node) => node.textContent);
+    return [...controlValues, ...sensitiveText].filter((value) => value && syntheticValue.test(value)).length;
+  };
+  const cleanupPage = async () => {
     for (const node of tracked.nodes) node.remove();
     tracked.nodes.clear();
     for (const timer of tracked.timers) clearTimeout(timer);
     tracked.timers.clear();
     if (window.__csdKeyListener) document.removeEventListener('keydown', window.__csdKeyListener);
     window.__csdKeyListener = null;
-    for (const control of document.querySelectorAll('input,textarea,select')) {
-      setNativeValue(control, '');
-      control.removeAttribute('value');
-      control.removeAttribute('placeholder');
-    }
+    const deadline = Date.now() + CLEANUP_SETTLE_MS;
+    let controls = managedControls();
+    do {
+      for (const control of controls) {
+        setNativeValue(control, '');
+        control.removeAttribute('value');
+        control.removeAttribute('placeholder');
+        dispatchValueEvents(control);
+      }
+      await new Promise((resolve) => setTimeout(resolve, CLEANUP_POLL_MS));
+      controls = managedControls();
+    } while (controls.some((control) => control.value) && Date.now() < deadline);
+    const managedControlValueCount = controls.filter((control) => control.value).length;
+    if (managedControlValueCount === 0)
+      for (const control of controls) {
+        control.removeAttribute('data-csd-synthetic');
+        control.removeAttribute('data-csd-run');
+        control.removeAttribute('data-csd-scenario');
+      }
     for (const node of document.querySelectorAll('[data-csd-sensitive]')) node.textContent = '';
     return {
       artifactCount: document.querySelectorAll(
         '[data-csd-overlay],[data-csd-simulation],[data-tag-manager="synthetic"],link[rel="prefetch"]',
       ).length,
-      controlValueCount: [...document.querySelectorAll('input,textarea,select')].filter((control) => control.value)
-        .length,
-      sensitiveValueCount: [...document.querySelectorAll('[data-csd-sensitive]')].filter((node) => node.textContent)
-        .length,
+      managedControlValueCount,
+      sensitiveValueCount: sensitiveValueCount(),
       timerCount: tracked.timers.size,
       listenerAttached: Boolean(window.__csdKeyListener),
     };
   };
   window.__csdSim = {
+    beginScenario,
     observeFields,
     observeControls,
     setSyntheticLogin: () =>
@@ -431,7 +475,7 @@ export function pageHelpers({ terminalTimeoutMs = 8_000 } = {}) {
       let setCount = 0;
       for (const [index, control] of controls.entries()) {
         if (control instanceof HTMLSelectElement) continue;
-        setNativeValue(
+        syntheticFill(
           control,
           control.type === 'password' ? 'Synthetic-Only-Password-42!' : `synthetic-${index}@example.com`,
         );
@@ -647,7 +691,7 @@ export async function runSuite(options = {}) {
         ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? false,
       });
       cleanup.contexts += 1;
-      await context.addInitScript(pageHelpers);
+      await context.addInitScript(pageHelpers, { runId, scenarioName: scenario.name });
       const page = await context.newPage();
       const requests = new Map();
       const instrumentation = { sensorRequests: 0, dipRequests: 0 };
