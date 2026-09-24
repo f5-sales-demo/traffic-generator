@@ -20,7 +20,7 @@ versions, and delete markers remain until an authenticated operator explicitly a
 
 1. Stop new SSH and Systems Manager submissions and confirm no scenario run is active.
 2. Review retention requirements and export source evidence, replicas, and both regional access logs that must be retained. Do not publish any bucket or object.
-3. Authenticate with AWS profile `Users-280469140135`; verify account `280469140135`, primary region `us-east-1`, replica region `us-east-2`, state key `f5-sales-demo/traffic-generator-aws.tfstate`, and the five outputs used below.
+3. Authenticate with AWS profile `280469140135_Users`; verify account `280469140135`, primary region `us-east-1`, replica region `us-east-2`, state key `f5-sales-demo/traffic-generator-aws.tfstate`, and the five outputs used below.
 4. Inventory every version and delete marker in all four buckets. Use each bucket's owning region and keep AWS CLI pagination enabled.
 5. Obtain four separate human approvals: one for each exact bucket. Purge only a bucket whose approval string matches its name.
 6. For each approved bucket, repeatedly list the complete version inventory, delete batches of no more than 1,000 identifiers, and re-list because deletion or concurrent delivery can leave or create delete markers. Stop at the bounded pass limit.
@@ -35,7 +35,7 @@ versions, and delete markers remain until an authenticated operator explicitly a
 set -euo pipefail
 cd terraform/aws
 
-export AWS_PROFILE=Users-280469140135
+export AWS_PROFILE=280469140135_Users
 export AWS_REGION=us-east-1
 export AWS_REPLICA_REGION=us-east-2
 PROFILE=${AWS_PROFILE}

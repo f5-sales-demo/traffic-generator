@@ -282,7 +282,7 @@ COMMAND_DOCUMENT=$(terraform output -raw ssm_document_name)
 INSTANCE_ID=$(terraform output -raw instance_id)
 
 COMMAND_ID=$(aws ssm send-command \
-  --profile Users-280469140135 \
+  --profile 280469140135_Users \
   --region us-east-1 \
   --document-name "${COMMAND_DOCUMENT}" \
   --instance-ids "${INSTANCE_ID}" \
@@ -312,7 +312,7 @@ for scenario in \
   maximum-detection
 do
   command_id=$(aws ssm send-command \
-    --profile Users-280469140135 \
+    --profile 280469140135_Users \
     --region us-east-1 \
     --document-name "${COMMAND_DOCUMENT}" \
     --instance-ids "${INSTANCE_ID}" \
@@ -324,7 +324,7 @@ do
   deadline=$((SECONDS + 1860))
   while :; do
     status=$(aws ssm get-command-invocation \
-      --profile Users-280469140135 \
+      --profile 280469140135_Users \
       --region us-east-1 \
       --command-id "${command_id}" \
       --instance-id "${INSTANCE_ID}" \

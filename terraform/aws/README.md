@@ -53,7 +53,7 @@ VPC flow logs, and both access-log sinks add ongoing AWS cost.
 
 ## 1. Discover and pin inputs
 
-Authenticate with AWS profile `Users-280469140135`, then perform live discovery for account `280469140135` in `us-east-1`. Select an available x86_64 Canonical Ubuntu 24.04 EBS-backed HVM AMI, Availability Zone, and instance type appropriate for Chrome plus Xvfb. Do not copy an AMI or instance type from this repository or another account.
+Authenticate with AWS profile `280469140135_Users`, then perform live discovery for account `280469140135` in `us-east-1`. Select an available x86_64 Canonical Ubuntu 24.04 EBS-backed HVM AMI, Availability Zone, and instance type appropriate for Chrome plus Xvfb. Do not copy an AMI or instance type from this repository or another account.
 
 Resolve the exact source commit and these versioned artifacts with their SHA-256 digests: AWS CLI v2
 Linux x86_64 archive, Amazon CloudWatch agent Ubuntu amd64 package, Node.js archive, Chrome for
@@ -73,7 +73,7 @@ The backend remains separate from Azure: S3 bucket `terraform-tfstate-xc`, key `
 
 ```bash
 set -euo pipefail
-export AWS_PROFILE=Users-280469140135
+export AWS_PROFILE=280469140135_Users
 export AWS_REGION=us-east-1
 
 terraform -chdir=terraform/aws init
@@ -91,7 +91,7 @@ Revalidate the jumpbox public IPv4 first, update `operator_ssh_cidr` if it chang
 
 ```bash
 set -euo pipefail
-export AWS_PROFILE=Users-280469140135
+export AWS_PROFILE=280469140135_Users
 export AWS_REGION=us-east-1
 
 install -d -m 700 terraform/aws/.plans
@@ -113,7 +113,7 @@ After approval of the reviewed SHA-256 digest, apply only that exact saved plan:
 
 ```bash
 set -euo pipefail
-export AWS_PROFILE=Users-280469140135
+export AWS_PROFILE=280469140135_Users
 export AWS_REGION=us-east-1
 
 terraform -chdir=terraform/aws apply .plans/traffic-generator-aws.tfplan
@@ -131,7 +131,7 @@ SSM remains available for recovery and allowlisted scenario execution:
 ```bash
 INSTANCE_ID="$(terraform -chdir=terraform/aws output -raw instance_id)"
 DOCUMENT_NAME="$(terraform -chdir=terraform/aws output -raw ssm_document_name)"
-aws --profile Users-280469140135 --region us-east-1 ssm send-command \
+aws --profile 280469140135_Users --region us-east-1 ssm send-command \
   --instance-ids "$INSTANCE_ID" \
   --document-name "$DOCUMENT_NAME" \
   --parameters 'Scenario=["login-credential-skimmer"]'
@@ -181,7 +181,7 @@ After runtime verification, run the drift check with the same explicit AWS ident
 
 ```bash
 set -euo pipefail
-export AWS_PROFILE=Users-280469140135
+export AWS_PROFILE=280469140135_Users
 export AWS_REGION=us-east-1
 terraform -chdir=terraform/aws plan -detailed-exitcode
 ```

@@ -75,7 +75,7 @@ If your Azure subscription enforces outbound firewall rules or NSG restrictions,
 
 ### Execution Context and Authentication
 
-The AWS path is constrained to account `280469140135`, named profile `Users-280469140135`, and region `us-east-1`. Authenticate that profile before initialization or planning. If authentication is expired or the caller identity cannot be verified, stop: do not plan, apply, or substitute another profile.
+The AWS path is constrained to account `280469140135`, named profile `280469140135_Users`, and region `us-east-1`. Authenticate that profile before initialization or planning. If authentication is expired or the caller identity cannot be verified, stop: do not plan, apply, or substitute another profile.
 
 The Terraform preflight validates the account, profile, region, and configured target domain. These guards are deployment boundaries, not defaults to override.
 

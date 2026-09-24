@@ -66,7 +66,7 @@ graph LR
     EP[SSM, ssmmessages, logs<br/>interface endpoints + S3 gateway endpoint] --> WORKER
 ```
 
-The AWS deployment targets account `280469140135`, profile `Users-280469140135`, and region `us-east-1`;
+The AWS deployment targets account `280469140135`, profile `280469140135_Users`, and region `us-east-1`;
 Terraform guards reject a different execution context. The worker is placed in the public subnet without
 automatic public addressing. Its Elastic IP is attached directly to the primary network interface so the
 addressing relationship is explicit before first boot. The worker security group permits TCP/22 only from
