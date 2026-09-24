@@ -306,7 +306,18 @@ write_files:
       EOF
       install -d -m 0755 /run/sshd
       sshd -t
-      systemctl reload ssh
+      systemctl unmask ssh.service
+      if systemctl is-active --quiet ssh.socket; then
+        systemctl disable --now ssh.socket
+      fi
+      if systemctl is-active --quiet ssh.service; then
+        systemctl reload-or-restart ssh.service
+      else
+        systemctl enable --now ssh.service
+      fi
+      systemctl is-active --quiet ssh.service
+      systemctl is-enabled --quiet ssh.service
+      ss -H -ltn '( sport = :22 )' | grep -q LISTEN
       stage=cloudwatch-config
       /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/amazon-cloudwatch-agent.json
       stage=services
