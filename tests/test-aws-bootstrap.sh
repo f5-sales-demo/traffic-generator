@@ -83,9 +83,62 @@ grep -Fq 'trap fail_bootstrap ERR' "$TMP/csd-bootstrap"
 grep -Fq 'write_status failed "$stage"' "$TMP/csd-bootstrap"
 grep -Fq 'jq -r .version node_modules/playwright-core/package.json' "$TMP/csd-bootstrap"
 grep -Fq 'install -d -m 0755 /run/sshd' "$TMP/csd-bootstrap"
+grep -Fq "ss -H -ltn '( sport = :22 )' | grep -q LISTEN" "$TMP/csd-bootstrap"
 cloudwatch_line=$(grep -n '^stage=cloudwatch-config$' "$TMP/csd-bootstrap" | cut -d: -f1)
 services_line=$(grep -n '^stage=services$' "$TMP/csd-bootstrap" | cut -d: -f1)
 test "$services_line" -gt "$cloudwatch_line"
+
+awk '
+  /^      install -d -m 0755 \/run\/sshd$/ { body=1 }
+  body && /^      stage=cloudwatch-config$/ { exit }
+  body { sub(/^      /, ""); print }
+' "${AWS_ROOT}/cloud-init.tftpl" >"$TMP/ssh-activation"
+mkdir -p "$TMP/mock-bin"
+cat >"$TMP/mock-bin/systemctl" <<'MOCK_SYSTEMCTL'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" >>"$SYSTEMCTL_LOG"
+case "$*" in
+  'is-active --quiet ssh.socket') exit 0 ;;
+  'disable --now ssh.socket') exit 0 ;;
+  'unmask ssh.service') exit 0 ;;
+  'is-active --quiet ssh.service') test -f "$SYSTEMCTL_STATE" ;;
+  'enable --now ssh.service') touch "$SYSTEMCTL_STATE" ;;
+  'is-enabled --quiet ssh.service') test -f "$SYSTEMCTL_STATE" ;;
+  'reload-or-restart ssh.service') test -f "$SYSTEMCTL_STATE" || exit 90 ;;
+  *) exit 91 ;;
+esac
+MOCK_SYSTEMCTL
+cat >"$TMP/mock-bin/sshd" <<'MOCK_SSHD'
+#!/usr/bin/env bash
+test "$*" = -t
+MOCK_SSHD
+cat >"$TMP/mock-bin/ss" <<'MOCK_SS'
+#!/usr/bin/env bash
+printf 'LISTEN 0 4096 0.0.0.0:22 0.0.0.0:*\n'
+MOCK_SS
+cat >"$TMP/mock-bin/install" <<'MOCK_INSTALL'
+#!/usr/bin/env bash
+test "$*" = '-d -m 0755 /run/sshd'
+MOCK_INSTALL
+chmod +x "$TMP/mock-bin/systemctl" "$TMP/mock-bin/sshd" "$TMP/mock-bin/ss" "$TMP/mock-bin/install"
+cat >"$TMP/ssh-activation-regression" <<EOF
+#!/usr/bin/env bash
+set -Eeuo pipefail
+PATH="$TMP/mock-bin:\$PATH"
+export SYSTEMCTL_LOG="$TMP/systemctl.log"
+export SYSTEMCTL_STATE="$TMP/systemctl.state"
+$(cat "$TMP/ssh-activation")
+EOF
+chmod +x "$TMP/ssh-activation-regression"
+"$TMP/ssh-activation-regression"
+grep -Fxq 'unmask ssh.service' "$TMP/systemctl.log"
+grep -Fxq 'disable --now ssh.socket' "$TMP/systemctl.log"
+grep -Fxq 'enable --now ssh.service' "$TMP/systemctl.log"
+if grep -Fxq 'reload-or-restart ssh.service' "$TMP/systemctl.log"; then exit 1; fi
+enable_line=$(grep -nFx 'enable --now ssh.service' "$TMP/systemctl.log" | cut -d: -f1)
+final_active_line=$(grep -nFx 'is-active --quiet ssh.service' "$TMP/systemctl.log" | tail -n 1 | cut -d: -f1)
+test "$final_active_line" -gt "$enable_line"
 
 awk '
   /^write_status\(\) \{$/ { body=1 }
@@ -110,4 +163,4 @@ if "$TMP/failing-helper-regression"; then exit 1; fi
 test "$(jq -r .status "$TMP/status.json")" = failed
 test "$(jq -r .stage "$TMP/status.json")" = failing-helper
 test "$(jq -r .error_stage "$TMP/status.json")" = failing-helper
-printf '[OK] rendered bootstrap syntax, inherited ERR status transition, ordering, and URI rewrites\n'
+printf '[OK] rendered bootstrap syntax, inherited ERR status transition, SSH activation, ordering, and URI rewrites\n'

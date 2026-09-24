@@ -367,9 +367,14 @@ run "verify_scoped_execution_contract" {
       strcontains(local.worker_cloud_init, "write_status failed \"$stage\"") &&
       strcontains(local.worker_cloud_init, "install -d -m 0755 /run/sshd") &&
       strcontains(local.worker_cloud_init, "jq -r .version node_modules/playwright-core/package.json") &&
+      strcontains(local.worker_cloud_init, "systemctl unmask ssh.service") &&
+      strcontains(local.worker_cloud_init, "systemctl disable --now ssh.socket") &&
+      strcontains(local.worker_cloud_init, "systemctl enable --now ssh.service") &&
+      strcontains(local.worker_cloud_init, "systemctl reload-or-restart ssh.service") &&
+      strcontains(local.worker_cloud_init, "ss -H -ltn '( sport = :22 )' | grep -q LISTEN") &&
       length(regexall("(?s)stage=cloudwatch-config.*stage=services", local.worker_cloud_init)) == 1
     )
-    error_message = "Bootstrap must atomically report failed stages, safely verify npm, prepare sshd runtime state, and start services only after configuration completes."
+    error_message = "Bootstrap must atomically report failed stages, safely activate and verify SSH, and start application services only after configuration completes."
   }
 
   assert {
