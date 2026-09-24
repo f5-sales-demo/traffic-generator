@@ -346,6 +346,18 @@ run "verify_scoped_execution_contract" {
 
   assert {
     condition = (
+      strcontains(local.worker_cloud_init, "chown -R root:root \"$chrome_root\"") &&
+      strcontains(local.worker_cloud_init, "find \"$chrome_root\" -type d -exec chmod 0755 {} +") &&
+      strcontains(local.worker_cloud_init, "find \"$chrome_root\" -type f ! -perm /u=x -exec chmod 0644 {} +") &&
+      strcontains(local.worker_cloud_init, "chmod 0755 \"$chrome_root/chrome\"") &&
+      strcontains(local.worker_cloud_init, "chmod 4755 \"$chrome_root/chrome_sandbox\"") &&
+      strcontains(local.worker_cloud_init, "sudo -u tgen test -x /opt/chrome/chrome")
+    )
+    error_message = "Bootstrap must normalize the extracted Chrome tree for unprivileged traversal and execution while preserving root ownership and the setuid sandbox."
+  }
+
+  assert {
+    condition = (
       strcontains(local.worker_cloud_init, "package_update: false") &&
       strcontains(local.worker_cloud_init, "http://([[:alnum:].-]*ec2\\.archive\\.ubuntu\\.com)/ubuntu/?") &&
       strcontains(local.worker_cloud_init, "https://\\1/ubuntu/") &&

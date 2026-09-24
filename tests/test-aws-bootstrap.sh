@@ -89,6 +89,34 @@ services_line=$(grep -n '^stage=services$' "$TMP/csd-bootstrap" | cut -d: -f1)
 test "$services_line" -gt "$cloudwatch_line"
 
 awk '
+  /^normalize_chrome_permissions\(\) \{$/ { body=1 }
+  body { print }
+  body && /^\}$/ { exit }
+' "$TMP/csd-bootstrap" >"$TMP/chrome-permissions-function"
+cat >"$TMP/chrome-permissions-regression" <<EOF
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 027
+$(cat "$TMP/chrome-permissions-function")
+chrome_root="$TMP/chrome-fixture"
+install -d -m 0750 "\$chrome_root/nested/resources"
+install -m 0750 /dev/null "\$chrome_root/chrome"
+install -m 0750 /dev/null "\$chrome_root/chrome_sandbox"
+install -m 0640 /dev/null "\$chrome_root/nested/resources/data.pak"
+normalize_chrome_permissions "\$chrome_root"
+test "\$(stat -c '%U:%G:%a' "\$chrome_root")" = "root:root:755"
+test "\$(stat -c '%U:%G:%a' "\$chrome_root/nested/resources")" = "root:root:755"
+test "\$(stat -c '%U:%G:%a' "\$chrome_root/chrome")" = "root:root:755"
+test "\$(stat -c '%U:%G:%a' "\$chrome_root/chrome_sandbox")" = "root:root:4755"
+test "\$(stat -c '%U:%G:%a' "\$chrome_root/nested/resources/data.pak")" = "root:root:644"
+test -x "\$chrome_root/chrome"
+if find "\$chrome_root" -perm /0002 -print -quit | grep -q .; then exit 1; fi
+rm -rf "\$chrome_root"
+EOF
+chmod +x "$TMP/chrome-permissions-regression"
+sudo "$TMP/chrome-permissions-regression"
+
+awk '
   /^      install -d -m 0755 \/run\/sshd$/ { body=1 }
   body && /^      stage=cloudwatch-config$/ { exit }
   body { sub(/^      /, ""); print }
@@ -163,4 +191,4 @@ if "$TMP/failing-helper-regression"; then exit 1; fi
 test "$(jq -r .status "$TMP/status.json")" = failed
 test "$(jq -r .stage "$TMP/status.json")" = failing-helper
 test "$(jq -r .error_stage "$TMP/status.json")" = failing-helper
-printf '[OK] rendered bootstrap syntax, inherited ERR status transition, SSH activation, ordering, and URI rewrites\n'
+printf '[OK] rendered bootstrap syntax, Chrome permission normalization, inherited ERR status transition, SSH activation, ordering, and URI rewrites\n'
