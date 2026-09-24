@@ -541,7 +541,7 @@ resource "aws_instance" "worker" {
 
   lifecycle {
     precondition {
-      condition     = data.aws_caller_identity.current.account_id == var.aws_account_id && var.aws_region == "us-east-1" && var.aws_profile == "Users-280469140135"
+      condition     = data.aws_caller_identity.current.account_id == var.aws_account_id && var.aws_region == "us-east-1" && var.aws_profile == "280469140135_Users"
       error_message = "Account, profile, and region must match the reviewed deployment boundary."
     }
     precondition {

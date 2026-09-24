@@ -468,7 +468,7 @@ require_pattern 'aggregate receipt-window observation' "${REPO_ROOT}/docs/en/06-
 reject_pattern 'explicitly observed field identifiers' "${REPO_ROOT}/docs/en/06-runner.mdx" "runner does not claim receipt field identifiers"
 require_pattern 'optional aggregate count' "${AWS_ROOT}/README.md" "AWS README documents aggregate-only form field observation"
 reject_pattern 'explicitly observed fields' "${AWS_ROOT}/README.md" "AWS README does not claim receipt field identifiers"
-require_pattern 'export AWS_PROFILE=Users-280469140135' "${AWS_ROOT}/README.md" "AWS README exports the required Terraform profile"
+require_pattern 'export AWS_PROFILE=280469140135_Users' "${AWS_ROOT}/README.md" "AWS README exports the required Terraform profile"
 require_pattern 'export AWS_REGION=us-east-1' "${AWS_ROOT}/README.md" "AWS README exports the required Terraform region"
 require_pattern 'set -euo pipefail' "${REPO_ROOT}/docs/en/08-teardown.mdx" "teardown executable blocks fail closed"
 for observation_status in OBSERVED NOT_OBSERVED PENDING ERROR; do

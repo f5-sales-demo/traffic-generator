@@ -12,11 +12,11 @@ variable "aws_account_id" {
 variable "aws_profile" {
   description = "Required AWS shared configuration profile."
   type        = string
-  default     = "Users-280469140135"
+  default     = "280469140135_Users"
 
   validation {
-    condition     = var.aws_profile == "Users-280469140135"
-    error_message = "aws_profile must be Users-280469140135."
+    condition     = var.aws_profile == "280469140135_Users"
+    error_message = "aws_profile must be 280469140135_Users."
   }
 }
 

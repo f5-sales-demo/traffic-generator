@@ -31,7 +31,7 @@ deployment_manifest_sha256  = "<DEPLOYMENT_MANIFEST_SHA256>"
 
 # Guarded deployment boundary. These values are intentionally exact.
 aws_account_id = "280469140135"
-aws_profile    = "Users-280469140135"
+aws_profile    = "280469140135_Users"
 aws_region     = "us-east-1"
 replication_region = "us-east-2"
 target_url     = "https://client-side-defense.f5-sales-demo.com"
