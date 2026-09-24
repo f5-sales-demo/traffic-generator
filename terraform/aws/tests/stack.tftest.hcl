@@ -308,6 +308,12 @@ run "verify_public_worker_and_storage" {
     error_message = "The cross-region evidence replica bucket must deny insecure transport."
   }
 
+
+  assert {
+    condition     = one(aws_s3_bucket_replication_configuration.evidence.rule).priority == 1 && one(aws_s3_bucket_replication_configuration.evidence.rule).delete_marker_replication[0].status == "Disabled"
+    error_message = "The V2 replication rule must declare priority and delete-marker replication status."
+  }
+
 }
 
 run "verify_separately_approved_teardown_toggle" {
