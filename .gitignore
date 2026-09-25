@@ -72,8 +72,8 @@ wheels/
 # Terraform
 .terraform/
 .terraform.lock.hcl
+!terraform/.terraform.lock.hcl
 !terraform/aws/.terraform.lock.hcl
-.terraform-test/
 *.tfstate
 *.tfstate.*
 crash.log
@@ -225,20 +225,3 @@ packages/typescript-edit-benchmark/runs/
 # Local review working artifacts. No trailing slash, so symlinks match too.
 .codex-review
 .agy-review.*
-
-
-# Local Terraform plans and caches (committed lock files remain explicit exceptions)
-.terraform/
-*.tfplan
-*.tfplan.*
-terraform/aws/plans/
-terraform/aws/.terraform/
-
-# Runtime browser and evidence artifacts; canonical suite source remains tracked
-evidence/
-screenshots/
-runs/
-receipts/
-*.receipt.json
-suites/csd-violations/evidence/
-suites/csd-violations/runs/
