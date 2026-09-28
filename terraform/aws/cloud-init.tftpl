@@ -198,7 +198,7 @@ write_files:
       fetch() { curl -fSL --retry 4 -o "$3" "$1"; echo "$2  $3" | sha256sum -c; }
       normalize_aws_cli_permissions() {
         local aws_cli_root=$1 owner=$${2:-root} group=$${3:-tgen}
-        find -P "$aws_cli_root" -type d -exec chown "$owner:$group" {} + -exec chmod 0750 {} +
+        find -P "$aws_cli_root" -type d -exec chown "$owner:$group" {} + -exec chmod 00750 {} +
         find -P "$aws_cli_root" -type f -exec chown "$owner:$group" {} +
         find -P "$aws_cli_root" -type f -perm /u=x -exec chmod 0750 {} +
         find -P "$aws_cli_root" -type f ! -perm /u=x -exec chmod 0640 {} +
@@ -268,7 +268,7 @@ write_files:
       normalize_chrome_permissions() {
         local chrome_root=$1
         chown -R root:root "$chrome_root"
-        find "$chrome_root" -type d -exec chmod 0755 {} +
+        find "$chrome_root" -type d -exec chmod 00755 {} +
         find "$chrome_root" -type f -perm /u=x -exec chmod 0755 {} +
         find "$chrome_root" -type f ! -perm /u=x -exec chmod 0644 {} +
         chmod 0755 "$chrome_root/chrome"
