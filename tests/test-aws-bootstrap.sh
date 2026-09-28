@@ -95,6 +95,7 @@ awk '
   body && /^\}$/ { exit }
 ' "$TMP/csd-bootstrap" >"$TMP/chrome-permissions-function"
 grep -Fqx '  chown -R root:root "$chrome_root"' "$TMP/chrome-permissions-function"
+grep -Fqx '  find "$chrome_root" -type d -exec chmod 00755 {} +' "$TMP/chrome-permissions-function"
 grep -Fqx '  chmod 4755 "$chrome_root/chrome_sandbox"' "$TMP/chrome-permissions-function"
 cat >"$TMP/chrome-permissions-regression" <<EOF
 #!/usr/bin/env bash
@@ -107,6 +108,7 @@ install -d -m 0750 "\$chrome_root/nested/resources"
 install -m 0750 /dev/null "\$chrome_root/chrome"
 install -m 0750 /dev/null "\$chrome_root/chrome_sandbox"
 install -m 0640 /dev/null "\$chrome_root/nested/resources/data.pak"
+chmod 2750 "\$chrome_root" "\$chrome_root/nested" "\$chrome_root/nested/resources"
 fixture_owner="\$(id -u):\$(id -g)"
 normalize_chrome_permissions "\$chrome_root"
 test "\$(stat -c '%u:%g:%a' "\$chrome_root")" = "\$fixture_owner:755"
@@ -129,7 +131,7 @@ awk '
   body { print }
   body && /^\}$/ { exit }
 ' "$TMP/csd-bootstrap" >"$TMP/aws-cli-permissions-function"
-grep -Fqx '  find -P "$aws_cli_root" -type d -exec chown "$owner:$group" {} + -exec chmod 0750 {} +' "$TMP/aws-cli-permissions-function"
+grep -Fqx '  find -P "$aws_cli_root" -type d -exec chown "$owner:$group" {} + -exec chmod 00750 {} +' "$TMP/aws-cli-permissions-function"
 grep -Fqx '  find -P "$aws_cli_root" -type f -perm /u=x -exec chmod 0750 {} +' "$TMP/aws-cli-permissions-function"
 grep -Fqx '  find -P "$aws_cli_root" -type f ! -perm /u=x -exec chmod 0640 {} +' "$TMP/aws-cli-permissions-function"
 cat >"$TMP/aws-cli-permissions-regression" <<EOF
@@ -147,6 +149,7 @@ aws_cli_root="$TMP/aws-cli-fixture"
 install -d -m 0777 "\$aws_cli_root/v2/current/bin"
 install -m 0777 /dev/null "\$aws_cli_root/v2/current/bin/aws"
 install -m 0666 /dev/null "\$aws_cli_root/v2/current/data"
+chmod 2777 "\$aws_cli_root" "\$aws_cli_root/v2" "\$aws_cli_root/v2/current" "\$aws_cli_root/v2/current/bin"
 ln -s v2/current/bin/aws "\$aws_cli_root/aws"
 link_target="\$(readlink "\$aws_cli_root/aws")"
 normalize_aws_cli_permissions "\$aws_cli_root" "\$(id -un)" "\$(id -gn)"
@@ -161,7 +164,10 @@ if find -P "\$aws_cli_root" \( -type d -o -type f \) -perm /0007 -print -quit | 
 rm -rf "\$aws_cli_root"
 EOF
 chmod +x "$TMP/aws-cli-permissions-regression"
-"$TMP/aws-cli-permissions-regression"
+if ! bash -x "$TMP/aws-cli-permissions-regression" >"$TMP/aws-cli-permissions.log" 2>&1; then
+  cat "$TMP/aws-cli-permissions.log" >&2
+  exit 1
+fi
 
 awk '
   /^      install -d -m 0755 \/run\/sshd$/ { body=1 }
