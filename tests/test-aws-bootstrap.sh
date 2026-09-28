@@ -119,7 +119,10 @@ if find "\$chrome_root" -perm /0002 -print -quit | grep -q .; then exit 1; fi
 rm -rf "\$chrome_root"
 EOF
 chmod +x "$TMP/chrome-permissions-regression"
-"$TMP/chrome-permissions-regression"
+if ! bash -x "$TMP/chrome-permissions-regression" >"$TMP/chrome-permissions.log" 2>&1; then
+  cat "$TMP/chrome-permissions.log" >&2
+  exit 1
+fi
 
 awk '
   /^normalize_aws_cli_permissions\(\) \{$/ { body=1 }
