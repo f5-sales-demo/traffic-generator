@@ -107,7 +107,7 @@ require_pattern 'preserve-env=INSTANCE_ID,RUN_ID,CSD_SCENARIO,DISPLAY,AWS_CLI_BI
 require_pattern 'PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' "${AWS_ROOT}/cloud-init.tftpl" "unprivileged wrapper includes the reviewed install directory in its exact PATH"
 require_pattern 'normalize_aws_cli_permissions /opt/aws-cli' "${AWS_ROOT}/cloud-init.tftpl" "bootstrap normalizes AWS CLI permissions after every install or rerun"
 require_pattern 'owner=\$\$\{2:-root\} group=\$\$\{3:-tgen\}' "${AWS_ROOT}/cloud-init.tftpl" "AWS CLI permission normalization targets root:tgen in production"
-require_pattern 'find -P "\$aws_cli_root" -type d .*chmod 0750' "${AWS_ROOT}/cloud-init.tftpl" "AWS CLI directories remain root-owned and group traversable without world access"
+require_pattern 'find -P "\$aws_cli_root" -type d .*chmod 00750' "${AWS_ROOT}/cloud-init.tftpl" "AWS CLI directories remain root-owned and group traversable without world access"
 require_pattern 'find -P "\$aws_cli_root" -type f -perm /u=x .*chmod 0750' "${AWS_ROOT}/cloud-init.tftpl" "AWS CLI executable files retain group execution without world access"
 require_pattern 'find -P "\$aws_cli_root" -type f ! -perm /u=x .*chmod 0640' "${AWS_ROOT}/cloud-init.tftpl" "AWS CLI regular data files are group-readable without world access"
 require_pattern 'test -L /usr/local/bin/aws' "${AWS_ROOT}/cloud-init.tftpl" "bootstrap requires the AWS CLI symlink"
