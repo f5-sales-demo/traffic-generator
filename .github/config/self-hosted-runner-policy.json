@@ -794,16 +794,6 @@
           "reason": "read-only AWS and KVM release-chain pull request policy"
         }
       },
-      ".github/workflows/_build-test.yml": {
-        "build": {
-          "runs_on": "ubuntu-latest",
-          "reason": "CGO race tests require the hosted compiler toolchain"
-        },
-        "lint": {
-          "runs_on": "ubuntu-latest",
-          "reason": "repository Go lint uses the hosted toolchain"
-        }
-      },
       ".github/workflows/_generate-docs.yml": {
         "generate": {
           "runs_on": "ubuntu-latest",
