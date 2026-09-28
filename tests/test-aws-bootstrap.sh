@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+trap 'status=$?; printf "AWS bootstrap test failed at line %s (status %s): %s\n" "$LINENO" "$status" "$BASH_COMMAND" >&2' ERR
 
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 AWS_ROOT="${REPO_ROOT}/terraform/aws"
