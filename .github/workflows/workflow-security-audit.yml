@@ -99,8 +99,10 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           targets=(.github/workflows/ workflows/*.yml)
+          test "$(zizmor --version)" = "zizmor 1.29.0"
+          test "$(provider-python -c 'import yaml; print(yaml.__version__)')" = "6.0.2"
           ZIZMOR_EXIT=0
-          uvx --from 'zizmor==1.29.0' zizmor --no-config --no-ignores --persona=auditor --format=json "${targets[@]}" > zizmor-findings.json 2>zizmor-diagnostics.log || ZIZMOR_EXIT=$?
+          zizmor --no-config --no-ignores --persona=auditor --format=json "${targets[@]}" > zizmor-findings.json 2>zizmor-diagnostics.log || ZIZMOR_EXIT=$?
           case "$ZIZMOR_EXIT" in
             0|11|12|13|14) ;;
             *)
@@ -109,12 +111,12 @@ jobs:
               exit 1
               ;;
           esac
-          uv run --with 'PyYAML==6.0.2' --no-project python scripts/workflow_security_validator.py \
+          provider-python scripts/workflow_security_validator.py \
             --repository "$AUDITED_REPOSITORY" \
             --policy .github/config/self-hosted-runner-policy.json \
             --governance .claude/governance.json \
             --zizmor-exit "$ZIZMOR_EXIT" \
             zizmor-findings.json
-          uv run --with 'PyYAML==6.0.2' --no-project python scripts/audit-runner-workflows.py \
+          provider-python scripts/audit-runner-workflows.py \
             --repository "$AUDITED_REPOSITORY" \
             --policy .github/config/self-hosted-runner-policy.json
