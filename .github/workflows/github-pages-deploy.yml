@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'documentation/**'
   workflow_dispatch:
 
 permissions: {}
@@ -18,9 +19,10 @@ concurrency:
 
 jobs:
   docs:
-    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@9a2ae498f31b5f3a601574a77216df11569669cd
+    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@717d4602e88975dfc79d5d45ae87a0a52f9bfb70
     with:
       content-ref: ${{ github.sha }}
+      content-path: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' && 'documentation' || 'docs' }}
       socketless_runner_label: managed-socketless
       container_build_runner_label: managed-container-build
     permissions:
