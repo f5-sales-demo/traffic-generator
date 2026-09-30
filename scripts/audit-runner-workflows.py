@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -120,7 +119,6 @@ XCSH_CANDIDATE_GRANT_IDENTITIES = frozenset().union(*XCSH_CANDIDATE_RESTRICTED_G
 # fmt: on
 PROVIDER_REPOSITORY = "f5-sales-demo/terraform-provider-xcsh"
 PROVIDER_BENCHMARK_WORKFLOW = ".github/workflows/workload-benchmark.yml"
-PROVIDER_STAGE_ONE_BRANCH = "feature/2225-parallel-pr-validation"
 PROVIDER_CANDIDATE_LABEL = "terraform-provider-xcsh-32vcpu-candidate"
 PROVIDER_MANUAL_COMPUTE_ROUTE_EXPRESSION = "${{ needs.validate.outputs.runner_label }}"
 PROVIDER_MANUAL_COMPUTE_ROUTE_LABELS = {
@@ -130,12 +128,6 @@ PROVIDER_MANUAL_COMPUTE_ROUTE_LABELS = {
 PROVIDER_CANDIDATE_GRANT_IDENTITIES = frozenset(
     (PROVIDER_REPOSITORY, PROVIDER_BENCHMARK_WORKFLOW, job_id)
     for job_id in PROVIDER_MANUAL_COMPUTE_ROUTE_LABELS
-)
-STAGED_PROVIDER_COMPUTE_JOBS = frozenset(
-    {
-        (".github/workflows/_generate-docs.yml", "generate"),
-        (".github/workflows/_generate-provider.yml", "generate"),
-    }
 )
 CANDIDATE_GRANT_IDENTITIES = (
     XCSH_CANDIDATE_GRANT_IDENTITIES | PROVIDER_CANDIDATE_GRANT_IDENTITIES
@@ -687,35 +679,6 @@ def trusted_dynamic_route_labels(repository, relative, job_id, runs_on, workflow
     return XCSH_MANUAL_COMPUTE_ROUTE_LABELS.get(job_id)
 
 
-def staged_provider_compute_route(repository, relative, job_id, runs_on, routes):
-    """Resolve the exact one-PR hosted-to-compute governance transition."""
-    identity = (repository, relative, job_id)
-    head_ref = os.environ.get("GITHUB_HEAD_REF", "")
-    governance_head = re.fullmatch(
-        r"governance/sync-managed-files-[0-9a-f]{12}-[0-9]+-[0-9]+",
-        head_ref,
-    )
-    event_name = os.environ.get("GITHUB_EVENT_NAME", "")
-    staged_head = governance_head is not None
-    if event_name == "pull_request" and head_ref == PROVIDER_STAGE_ONE_BRANCH:
-        staged_head = True
-    if event_name == "push" and os.environ.get("GITHUB_REF") == "refs/heads/main":
-        staged_head = True
-    grants = routes.get("restricted_grants", {}).get(
-        "terraform-provider-xcsh-compute",
-        frozenset(),
-    )
-    if (
-        repository == PROVIDER_REPOSITORY
-        and (relative, job_id) in STAGED_PROVIDER_COMPUTE_JOBS
-        and runs_on == "ubuntu-latest"
-        and staged_head
-        and identity in grants
-    ):
-        return "terraform-provider-xcsh-compute"
-    return None
-
-
 def profile_for_route(runs_on, profiles, routes, repository):
     """Resolve one security-equivalent profile for an exact scheduling route."""
     if routes["kind"] == "arc":
@@ -989,13 +952,6 @@ def audit_job(  # noqa: PLR0917
             runs_on,
             workflow,
         )
-        staged_route_label = staged_provider_compute_route(
-            repository,
-            relative,
-            job_id,
-            runs_on,
-            routes,
-        )
         is_candidate_job = identity in CANDIDATE_GRANT_IDENTITIES
         is_manual_route = isinstance(runs_on, str) and runs_on in {
             XCSH_MANUAL_COMPUTE_ROUTE_EXPRESSION,
@@ -1008,7 +964,7 @@ def audit_job(  # noqa: PLR0917
             message = "manual route requires its workflow_dispatch job context"
             errors.append(f"{relative}/{job_id}: {message}")
         resolved_profile = profile_for_route(
-            staged_route_label or runs_on,
+            runs_on,
             profiles,
             routes,
             repository,
@@ -1028,7 +984,7 @@ def audit_job(  # noqa: PLR0917
             errors.append(
                 f"{relative}/{job_id}: runs-on must use the canonical repository route, got {runs_on!r}",
             )
-        canonical_label = staged_route_label or canonical_route_label(
+        canonical_label = canonical_route_label(
             runs_on,
             repository,
         )
