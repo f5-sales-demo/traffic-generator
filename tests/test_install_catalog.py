@@ -54,9 +54,9 @@ class InstallerTests(unittest.TestCase):
             with (
                 patch.object(installer, "urlopen", return_value=io.BytesIO(payload)),
                 patch.object(installer.subprocess, "run"),
+                pytest.raises(ValueError, match="differs"),
             ):
-                with pytest.raises(ValueError, match="differs"):
-                    installer.install(commit, hashlib.sha256(payload).hexdigest(), root)
+                installer.install(commit, hashlib.sha256(payload).hexdigest(), root)
             assert (installed / "source.txt").read_text() == "modified"
 
     def test_floating_source_rejected_before_download(self):
