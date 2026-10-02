@@ -36,7 +36,7 @@ run_sqlmap() {
 
   # Count injectable parameters
   local injectable
-  injectable=$(echo "${output}" | grep -c "is vulnerable" 2>/dev/null || echo "0")
+  injectable=$(echo "${output}" | grep -c "is vulnerable" 2>/dev/null || true)
   FINDINGS=$((FINDINGS + injectable))
 
   echo ""

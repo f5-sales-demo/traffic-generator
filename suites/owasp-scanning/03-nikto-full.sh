@@ -35,7 +35,7 @@ run_nikto() {
 
   # Count findings (lines containing "+ " that are not informational headers)
   local count
-  count=$(echo "${output}" | grep -c "^+ " 2>/dev/null || echo "0")
+  count=$(echo "${output}" | grep -c "^+ " 2>/dev/null || true)
   TOTAL_FINDINGS=$((TOTAL_FINDINGS + count))
 
   echo ""
@@ -58,7 +58,7 @@ echo "----------------------------------------"
 
 OUTPUT=$(nikto -h "${BASE}/" -maxtime "${TGEN_SCANNER_SECONDS:-120}s" -C all -nointeractive 2>&1) || true
 echo "${OUTPUT}"
-ROOT_COUNT=$(echo "${OUTPUT}" | grep -c "^+ " 2>/dev/null || echo "0")
+ROOT_COUNT=$(echo "${OUTPUT}" | grep -c "^+ " 2>/dev/null || true)
 TOTAL_FINDINGS=$((TOTAL_FINDINGS + ROOT_COUNT))
 
 echo ""
