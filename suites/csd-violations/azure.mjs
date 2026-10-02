@@ -50,7 +50,15 @@ export async function runAzure(environment = process.env, options = {}) {
         if (!REVIEWED_DESTINATIONS.includes(url.hostname)) return route.abort('blockedbyclient');
         // Keep reviewed synthetic counters/loader attempts on the authorized WAAP route.
         const path = route.request().method() === 'POST' ? '/httpbin/post' : '/httpbin/get';
-        return route.continue({ url: `${target.origin}${path}` });
+        const response = await route.fetch({ url: `${target.origin}${path}` });
+        if (route.request().resourceType() === 'script') {
+          return route.fulfill({
+            response,
+            contentType: 'application/javascript',
+            body: '/* reviewed synthetic loader simulation */',
+          });
+        }
+        return route.fulfill({ response });
       });
     },
     ...options,
