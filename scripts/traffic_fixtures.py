@@ -9,6 +9,7 @@ from pathlib import Path
 
 MINIMUM_ACCOUNTS = 2
 
+
 def main() -> int:
     """Return a real origin-issued synthetic token; never fabricate server responses."""
     path = Path(os.environ["TGEN_FIXTURES"])
@@ -20,7 +21,9 @@ def main() -> int:
         message = "unknown fixture selection"
         raise ValueError(message)
     tokens = fixtures["crapi_tokens"]
-    if len(tokens) < MINIMUM_ACCOUNTS or any(not isinstance(t, str) or not t for t in tokens):
+    if len(tokens) < MINIMUM_ACCOUNTS or any(
+        not isinstance(t, str) or not t for t in tokens
+    ):
         message = "two real synthetic crAPI account tokens are required"
         raise ValueError(message)
     counter = Path(os.environ["TGEN_RESULTS_DIR"]) / ".crapi-account-index"
