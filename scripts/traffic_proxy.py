@@ -113,6 +113,8 @@ class Budget:
             self.persist()
             return
         flow.request.host = host
+        if "X-MUD-User" not in flow.request.headers:
+            flow.request.headers["X-MUD-User"] = "waap-scenario-" + host
         event = asyncio.Event()
         await self.pending.put((event, host))
         await event.wait()

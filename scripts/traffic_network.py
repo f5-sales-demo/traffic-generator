@@ -267,7 +267,12 @@ class NetworkBoundary:
             self.state.local.connections[domain] = connection
         try:
             connection.request(
-                "GET", "/httpbin/get", headers={"X-TGen-Class": "benign"}
+                "GET",
+                "/httpbin/get",
+                headers={
+                    "X-TGen-Class": "benign",
+                    "X-MUD-User": "waap-benign-" + domain,
+                },
             )
             response = connection.getresponse()
             success = SUCCESS_MIN <= response.status < SUCCESS_MAX

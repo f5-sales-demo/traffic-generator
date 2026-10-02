@@ -27,7 +27,7 @@ LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
   --max-time 10) || true
 echo "    Login response: ${LOGIN_RESP}"
 
-TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // empty' 2>/dev/null || true)
+TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // .authToken // empty' 2>/dev/null || true)
 if [[ -z "$TOKEN" ]]; then
   echo "WARN: Could not extract auth token, continuing with empty token"
   TOKEN="invalid-token-for-testing"
