@@ -1,8 +1,10 @@
 """Installer fails before promotion on digest mismatch or unsafe archive content."""
 
+import hashlib
 import importlib.util
 import io
 import pathlib
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -34,6 +36,28 @@ class InstallerTests(unittest.TestCase):
                 installer.install("a" * 40, "b" * 64, root)
             assert current.read_text() == "existing"
             assert sorted(p.name for p in root.iterdir()) == ["current"]
+
+    def test_modified_immutable_source_cannot_be_overwritten(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            commit = "a" * 40
+            installed = root / ("source-" + commit)
+            installed.mkdir()
+            (installed / "source.txt").write_text("modified")
+            archive = io.BytesIO()
+            with tarfile.open(fileobj=archive, mode="w:gz") as tar:
+                entry = tarfile.TarInfo("traffic-generator-" + commit + "/source.txt")
+                content = b"verified-source"
+                entry.size = len(content)
+                tar.addfile(entry, io.BytesIO(content))
+            payload = archive.getvalue()
+            with (
+                patch.object(installer, "urlopen", return_value=io.BytesIO(payload)),
+                patch.object(installer.subprocess, "run"),
+            ):
+                with pytest.raises(ValueError, match="differs"):
+                    installer.install(commit, hashlib.sha256(payload).hexdigest(), root)
+            assert (installed / "source.txt").read_text() == "modified"
 
     def test_floating_source_rejected_before_download(self):
         with (

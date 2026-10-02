@@ -50,8 +50,27 @@ def install(commit: str, digest: str, destination: Path) -> None:
         )
         installed = destination / ("source-" + commit)
         if installed.exists():
-            shutil.rmtree(installed)
-        source.rename(installed)
+            # Reuse immutable installations only when every archived file matches.
+            for candidate in source.rglob("*"):
+                if candidate.is_file():
+                    existing = installed / candidate.relative_to(source)
+                    if (
+                        not existing.is_file()
+                        or hashlib.sha256(existing.read_bytes()).digest()
+                        != hashlib.sha256(candidate.read_bytes()).digest()
+                    ):
+                        message = (
+                            "existing immutable source differs from verified artifact"
+                        )
+                        raise ValueError(message)
+        else:
+            source.rename(installed)
+        for candidate in installed.rglob("*"):
+            if candidate.is_dir():
+                candidate.chmod(0o555)
+            elif candidate.is_file():
+                candidate.chmod(0o555 if candidate.stat().st_mode & 0o111 else 0o444)
+        installed.chmod(0o555)
         link = destination / (".current-" + str(os.getpid()))
         link.symlink_to(installed.name)
         link.replace(destination / "current")
