@@ -42,7 +42,7 @@ run_ffuf() {
 
   # Count result lines (lines with Status: in ffuf output)
   local count
-  count=$(echo "${output}" | grep -cE "Status: [0-9]+" 2>/dev/null || echo "0")
+  count=$(echo "${output}" | grep -cE "Status: [0-9]+" 2>/dev/null || true)
   TOTAL_FOUND=$((TOTAL_FOUND + count))
 
   echo ""
