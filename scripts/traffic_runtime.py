@@ -12,6 +12,7 @@ import subprocess
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 
 from traffic_catalog import load_catalog, readiness
@@ -105,6 +106,7 @@ def execute(
     environment: dict,
     timeout: float,
     stop: threading.Event | None = None,
+    monitor: Callable[[], str | None] | None = None,
 ) -> dict:
     """Deadline and descendant cleanup apply even after a successful parent exit."""
     started = time.time()
@@ -123,6 +125,9 @@ def execute(
                 while process.poll() is None:
                     if stop is not None and stop.is_set():
                         outcome, code = "interrupted", 130
+                        break
+                    if monitor is not None and (failure := monitor()):
+                        outcome, code = failure, 125
                         break
                     if time.monotonic() >= deadline:
                         _expired(command, timeout)
@@ -197,6 +202,30 @@ def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
                 )
                 shutil.rmtree(directory)
                 total -= detail_bytes
+
+
+def evidence_monitor(
+    runtime: Path, active: Path, config: dict
+) -> Callable[[], str | None]:
+    """Enforce retention during execution and stop writers before exhausting the detail cap."""
+    next_check = 0.0
+
+    def check() -> str | None:
+        nonlocal next_check
+        if time.monotonic() < next_check:
+            return None
+        next_check = time.monotonic() + 0.5
+        retain(runtime, active, config["retention_days"], config["retention_bytes"])
+        size = sum(
+            path.stat().st_size
+            for path in runtime.rglob("*")
+            if path.is_file() and not path.is_symlink()
+        )
+        if size >= max(0, config["retention_bytes"] - 1024 * 1024):
+            return "evidence_failure"
+        return None
+
+    return check
 
 
 def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
@@ -290,6 +319,7 @@ def _scenario(
         environment,
         min(config["scenario_timeout_seconds"], scenario["timeout_seconds"]),
         stop,
+        monitor=evidence_monitor(Path(config["results_dir"]), active, config),
     )
     after = boundary.metrics()
     result.update(
@@ -318,6 +348,8 @@ def _scenario(
             r"(?m)^\s*(Registrations attempted|Contact forms submitted): 0$", log_text
         ):
             result["outcome"] = "fixture_failure"
+    if result["outcome"] == "launched" and result["transport_failures"]:
+        result["outcome"] = "transport_failure"
     if scenario["budget"] == "http" and result["http_requests"] == 0:
         result["outcome"] = "fixture_failure"
     if result["outcome"] != "launched":

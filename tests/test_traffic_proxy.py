@@ -11,6 +11,8 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
@@ -67,6 +69,37 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                 ]
                 == 21
             )
+
+    async def test_cancelled_requests_do_not_consume_dispatches(self):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.dict(
+                os.environ,
+                {
+                    "TGEN_DOMAINS": '["www.example.test","api.example.test"]',
+                    "TGEN_PROXY_METRICS": tmp + "/metrics.json",
+                },
+            ),
+        ):
+            spec = importlib.util.spec_from_file_location(
+                "cancel_proxy", ROOT / "scripts/traffic_proxy.py"
+            )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            budget = module.Budget()
+            flow = SimpleNamespace(
+                request=SimpleNamespace(headers={"Host": "www.example.test"}, port=443)
+            )
+            pending = asyncio.create_task(budget.request(flow))
+            await asyncio.sleep(0)
+            pending.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await pending
+            budget.maximum_pending_fillers = 0
+            budget.running()
+            await asyncio.sleep(0.12)
+            budget.done()
+            assert budget.counts["scenario_requests"] == 0
 
 
 if __name__ == "__main__":

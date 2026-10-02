@@ -97,6 +97,23 @@ class BoundaryTests(unittest.TestCase):
         ):
             boundary.__exit__(None, None, None)
 
+    def test_benign_requests_are_counted_at_dispatch_and_completion(self):
+        boundary = NetworkBoundary(
+            ROOT, {"domains": ["www.example.test", "api.example.test"]}, ROOT
+        )
+        with patch("traffic_network.http.client.HTTPSConnection") as connection:
+            response = connection.return_value.getresponse.return_value
+            response.status = 200
+            boundary.request("www.example.test")
+        assert boundary.state.benign["benign_requests"] == 1
+        assert boundary.state.benign["benign_completed"] == 1
+        assert boundary.state.benign["benign_success"] == 1
+        with (
+            patch("traffic_network.subprocess.run"),
+            patch("traffic_network.shutil.rmtree"),
+        ):
+            boundary.__exit__(None, None, None)
+
 
 if __name__ == "__main__":
     unittest.main()

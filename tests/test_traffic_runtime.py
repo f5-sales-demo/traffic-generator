@@ -214,6 +214,25 @@ class RuntimeTests(unittest.TestCase):
             assert path.stat().st_mode & 511 == 384
             assert json.loads(path.read_text())["status"] == "interrupted"
 
+    def test_monitor_stops_descendants_when_private_evidence_fills(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log = pathlib.Path(tmp) / "scenario.log"
+
+            def monitor():
+                if log.stat().st_size > 100:
+                    return "evidence_failure"
+                return None
+
+            result = runtime.execute(
+                ["bash", "-c", "while true; do printf '%0100d\\n' 1; sleep 0.01; done"],
+                log,
+                os.environ.copy(),
+                5,
+                monitor=monitor,
+            )
+            assert result["outcome"] == "evidence_failure"
+            assert result["completed"] - result["started"] < 2
+
 
 if __name__ == "__main__":
     unittest.main()

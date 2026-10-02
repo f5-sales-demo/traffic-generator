@@ -46,9 +46,14 @@ class NetworkBoundary:
         self.state.pool = ThreadPoolExecutor(max_workers=200)
         self.state.benign = {
             "benign_requests": 0,
+            "benign_completed": 0,
             "benign_success": 0,
             "benign_transport_failures": 0,
             "benign_per_domain": dict.fromkeys(config["domains"], 0),
+        }
+        self.state.pacers = {domain: Pacer(90) for domain in config["domains"]}
+        self.state.capacity = {
+            domain: threading.BoundedSemaphore(100) for domain in config["domains"]
         }
         self.state.lock = threading.Lock()
         self.state.threads = []
@@ -277,6 +282,10 @@ class NetworkBoundary:
                 domain, context=self.state.tls_context, timeout=10
             )
             self.state.local.connections[domain] = connection
+        self.state.pacers[domain].acquire()
+        with self.state.lock:
+            self.state.benign["benign_requests"] += 1
+            self.state.benign["benign_per_domain"][domain] += 1
         try:
             connection.request(
                 "GET",
@@ -294,18 +303,21 @@ class NetworkBoundary:
             connection.close()
             self.state.local.connections.pop(domain, None)
         with self.state.lock:
+            self.state.benign["benign_completed"] += 1
             self.state.benign["benign_success"] += int(success)
             self.state.benign["benign_transport_failures"] += int(failed)
 
     def benign_loop(self, domain: str) -> None:
         """Offer 90 launches/sec to each domain without burst credit."""
-        pacer = Pacer(90)
+        capacity = self.state.capacity[domain]
         while not self.state.stop.is_set():
-            pacer.acquire()
-            with self.state.lock:
-                self.state.benign["benign_requests"] += 1
-                self.state.benign["benign_per_domain"][domain] += 1
-            self.state.pool.submit(self.request, domain)
+            if not capacity.acquire(timeout=0.2):
+                continue
+            if self.state.stop.is_set():
+                capacity.release()
+                break
+            future = self.state.pool.submit(self.request, domain)
+            future.add_done_callback(lambda _: capacity.release())
 
     def wrap(self, command: list[str], connection: bool = False) -> list[str]:
         """All HTTP scenario descendants inherit the same isolated egress."""

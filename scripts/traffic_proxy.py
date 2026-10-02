@@ -62,9 +62,13 @@ class Budget:
         while True:
             await asyncio.sleep(max(0, next_slot - time.monotonic()))
             next_slot = time.monotonic() + 0.05
-            try:
-                event, host = self.pending.get_nowait()
-            except asyncio.QueueEmpty:
+            event = None
+            while not self.pending.empty():
+                candidate, host = self.pending.get_nowait()
+                if not candidate.done():
+                    event = candidate
+                    break
+            if event is None:
                 if len(self.tasks) >= self.maximum_pending_fillers:
                     continue
                 host = self.domains[self.counts["attack_requests"] % len(self.domains)]
@@ -74,7 +78,7 @@ class Budget:
                 self.count(host, filler=True)
             else:
                 self.count(host, filler=False)
-                event.set()
+                event.set_result(None)
 
     def filler(self, host: str) -> None:
         """Use spare attack slots for an explicitly identified harmless SQLi simulation."""
@@ -128,13 +132,13 @@ class Budget:
             flow.request.headers["X-MUD-User"] = (
                 "waap-scenario-" + self.current_scenario() + "-" + host
             )
-        event = asyncio.Event()
+        event = asyncio.get_running_loop().create_future()
         await self.pending.put((event, host))
-        await event.wait()
+        await event
 
     def response(self, flow: http.HTTPFlow) -> None:
         """Mitigation is an HTTP outcome, separate from transport failure."""
-        if flow.response.status_code in (403, 429):
+        if flow.response and flow.response.status_code in (403, 429):
             self.counts["attack_mitigated"] += 1
         self.persist()
 
