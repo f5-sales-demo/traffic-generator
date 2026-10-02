@@ -20,6 +20,9 @@ def main() -> int:
     if sys.argv[1] != "crapi-token":
         message = "unknown fixture selection"
         raise ValueError(message)
+    if fixtures.get("fixture_type") not in (None, "seeded-synthetic-origin-accounts"):
+        message = "unsupported fixture identity"
+        raise ValueError(message)
     tokens = fixtures["crapi_tokens"]
     if len(tokens) < MINIMUM_ACCOUNTS or any(
         not isinstance(t, str) or not t for t in tokens
