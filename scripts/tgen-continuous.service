@@ -19,6 +19,7 @@ Restart=on-failure
 RestartSec=10
 KillMode=control-group
 TimeoutStopSec=30
+LimitNOFILE=65536
 UMask=0077
 
 [Install]

@@ -361,7 +361,11 @@ def _scenario(
             result["outcome"] = "fixture_failure"
     if result["outcome"] == "launched" and result["transport_failures"]:
         result["outcome"] = "transport_failure"
-    if scenario["budget"] == "http" and result["http_requests"] == 0:
+    if (
+        result["outcome"] == "launched"
+        and scenario["budget"] == "http"
+        and result["http_requests"] == 0
+    ):
         result["outcome"] = "fixture_failure"
     if result["outcome"] != "launched":
         state["failures"] = (
@@ -378,6 +382,18 @@ def _heartbeat(
 
     def heartbeat() -> None:
         while not stop.wait(2):
+            if not boundary.healthy():
+                state["failures"] = (
+                    state["failures"]
+                    + [
+                        {
+                            "id": state.get("current_scenario"),
+                            "outcome": "proxy_failure",
+                        }
+                    ]
+                )[-200:]
+                stop.set()
+                break
             state["heartbeat"] = time.time()
             state["rates"] = boundary.metrics()
             atomic_json(status_path, state)

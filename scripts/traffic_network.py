@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import urllib.parse
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -21,6 +22,7 @@ from traffic_common import Pacer, atomic_json, terminate
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 CRAPI_ACCOUNT_COUNT = 2
 BENIGN_CONNECTION_MAX_AGE = 10
+PROXY_HEARTBEAT_MAX_AGE = 30
 
 
 def _proxy_failed(message: str) -> None:
@@ -285,7 +287,8 @@ class NetworkBoundary:
             self.state.local.connection_age = {}
         if (
             connection is not None
-            and time.monotonic() - self.state.local.connection_age[domain] > BENIGN_CONNECTION_MAX_AGE
+            and time.monotonic() - self.state.local.connection_age[domain]
+            > BENIGN_CONNECTION_MAX_AGE
         ):
             connection.close()
             connection = None
@@ -366,11 +369,15 @@ class NetworkBoundary:
                 "POST",
                 "https://" + domain + path,
                 "-H",
-                "Content-Type: application/json",
+                "Content-Type: application/x-www-form-urlencoded"
+                if path == "/restaurant/token"
+                else "Content-Type: application/json",
                 "-H",
                 "X-MUD-User: waap-fixture-benign",
                 "-d",
-                json.dumps(body),
+                urllib.parse.urlencode(body)
+                if path == "/restaurant/token"
+                else json.dumps(body),
             ]
         )
         result = subprocess.run(command, capture_output=True, text=True, check=False)  # noqa: S603 - fixed allowlisted paced fixture login
@@ -413,6 +420,14 @@ class NetworkBoundary:
         )
         if juice:
             fixtures["juice_token"] = juice
+        for role in ("customer", "chef"):
+            token = self.fixture_login(
+                domain,
+                "/restaurant/token",
+                {"username": "tgen_" + role, "password": "TGenSynthetic123"},
+            ).get("access_token")
+            if token:
+                fixtures["restaurant_" + role + "_token"] = token
         atomic_json(fixture_path, fixtures)
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
@@ -475,6 +490,16 @@ class NetworkBoundary:
             RUN_ID="waap-" + uuid.uuid4().hex,
             CSD_SCENARIO=scenario.get("scenario", ""),
         )
+
+    def healthy(self) -> bool:
+        """Fail the supervisor when the pacing gateway has stopped making progress."""
+        if self.state.proxy and self.state.proxy.poll() is not None:
+            return False
+        try:
+            metrics = json.loads(self.state.proxy_metrics.read_text())
+        except (OSError, ValueError):
+            return time.time() - self.state.started < PROXY_HEARTBEAT_MAX_AGE
+        return time.time() - metrics.get("updated", 0) < PROXY_HEARTBEAT_MAX_AGE
 
     def metrics(self) -> dict:
         """Read private aggregate metrics, separating controls and attack outcomes."""

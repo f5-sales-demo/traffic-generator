@@ -45,6 +45,8 @@ class BoundaryTests(unittest.TestCase):
                     {"token": "crapi-a"},
                     {"token": "crapi-b"},
                     {"authentication": {"token": "juice"}},
+                    {"access_token": "customer"},
+                    {"access_token": "chef"},
                 ],
             ):
                 boundary.refresh_fixtures("www.example.test")
@@ -113,6 +115,20 @@ class BoundaryTests(unittest.TestCase):
             patch("traffic_network.shutil.rmtree"),
         ):
             boundary.__exit__(None, None, None)
+
+    def test_stalled_gateway_fails_supervisor_health(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = pathlib.Path(tmp)
+            boundary = NetworkBoundary(
+                ROOT, {"domains": ["www.example.test", "api.example.test"]}, runtime
+            )
+            boundary.state.proxy_metrics.write_text(json.dumps({"updated": 1}))
+            assert not boundary.healthy()
+            with (
+                patch("traffic_network.subprocess.run"),
+                patch("traffic_network.shutil.rmtree"),
+            ):
+                boundary.__exit__(None, None, None)
 
 
 if __name__ == "__main__":
