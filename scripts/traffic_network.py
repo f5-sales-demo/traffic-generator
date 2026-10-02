@@ -339,7 +339,9 @@ class NetworkBoundary:
                 '{"username":"name1","password":"pass1"}',
             ]
         )
-        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        result = subprocess.run(  # noqa: S603 - fixed allowlisted paced fixture login
+            command, capture_output=True, text=True, check=False
+        )
         try:
             token = json.loads(result.stdout).get("auth_token")
         except ValueError:
