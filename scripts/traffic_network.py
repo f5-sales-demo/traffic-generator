@@ -410,6 +410,7 @@ class NetworkBoundary:
             TGEN_CONNECTION_RATE=str(self.config["connection_rps"]),
             TGEN_SLOW_CONNECTIONS=str(self.config["slow_connections"]),
             TGEN_DURATION="15",
+            TGEN_REQUEST_TIMEOUT="15",
             TGEN_REPEAT_COUNT="5",
             TGEN_GRAPHQL_BATCH_MAX="10",
             TGEN_GRAPHQL_FIELDS_MAX="50",
