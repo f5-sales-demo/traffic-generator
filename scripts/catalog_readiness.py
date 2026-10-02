@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from traffic_catalog import load_catalog, readiness
 from traffic_runtime import validate_config
@@ -47,9 +47,14 @@ def main() -> int:
         for protocol in ("http", "https"):
             for path in paths:
                 try:
-                    with urlopen(  # noqa: S310 - validated domains with fixed HTTP(S) schemes
-                        protocol + "://" + domain + path, timeout=10
-                    ) as response:
+                    request = Request(protocol + "://" + domain + path)  # noqa: S310 - validated HTTP(S) targets
+                    if path.endswith("/graphql"):
+                        request = Request(  # noqa: S310 - validated HTTP(S) target
+                            protocol + "://" + domain + path,
+                            data=b'{"query":"{ __typename }"}',
+                            headers={"Content-Type": "application/json"},
+                        )
+                    with urlopen(request, timeout=10) as response:  # noqa: S310 - fixed HTTP(S) schemes
                         code = response.status
                     checks.append(
                         {

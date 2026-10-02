@@ -396,5 +396,5 @@ class NetworkBoundary:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-        if hasattr(self, "netns_dir") and self.state.netns_dir.exists():
+        if hasattr(self.state, "netns_dir") and self.state.netns_dir.exists():
             shutil.rmtree(self.state.netns_dir)
