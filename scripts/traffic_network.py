@@ -19,6 +19,7 @@ from typing import Self
 from traffic_common import Pacer, terminate
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
+CRAPI_ACCOUNT_COUNT = 2
 
 
 def _proxy_failed(message: str) -> None:
@@ -315,13 +316,8 @@ class NetworkBoundary:
             ]
         )
 
-    def refresh_fixtures(self, domain: str) -> None:
-        """Refresh real synthetic authentication without modifying protected attack outcomes."""
-        fixture_path = self.runtime.parent / "fixtures.json"
-        if not fixture_path.exists():
-            return
-        fixtures = json.loads(fixture_path.read_text())
-        # Fixture login participates in the same attack HTTP dispatch clock.
+    def fixture_login(self, domain: str, path: str, body: dict) -> dict:
+        """Pace benign synthetic account authentication at the same enforced HTTP boundary."""
         command = self.wrap(
             [
                 "curl",
@@ -330,26 +326,57 @@ class NetworkBoundary:
                 "10",
                 "-X",
                 "POST",
-                "https://" + domain + "/vampi/users/v1/login",
+                "https://" + domain + path,
                 "-H",
                 "Content-Type: application/json",
                 "-H",
                 "X-MUD-User: waap-fixture-benign",
                 "-d",
-                '{"username":"name1","password":"pass1"}',
+                json.dumps(body),
             ]
         )
-        result = subprocess.run(  # noqa: S603 - fixed allowlisted paced fixture login
-            command, capture_output=True, text=True, check=False
-        )
+        result = subprocess.run(command, capture_output=True, text=True, check=False)  # noqa: S603 - fixed allowlisted paced fixture login
         try:
-            token = json.loads(result.stdout).get("auth_token")
+            return json.loads(result.stdout)
         except ValueError:
-            token = None
-        if token:
-            fixtures["vampi_token"] = token
-            fixture_path.write_text(json.dumps(fixtures))
-            fixture_path.chmod(0o600)
+            return {}
+
+    def refresh_fixtures(self, domain: str) -> None:
+        """Generate/renew real tokens for public seeded lab accounts without disabling WAAP."""
+        fixture_path = self.runtime.parent / "fixtures.json"
+        fixtures = json.loads(fixture_path.read_text()) if fixture_path.exists() else {}
+        vampi = self.fixture_login(
+            domain, "/vampi/users/v1/login", {"username": "name1", "password": "pass1"}
+        ).get("auth_token")
+        if vampi:
+            fixtures["vampi_token"] = vampi
+        crapi = []
+        for email, password in (
+            ("adam007@example.com", "adam007!123"),
+            ("pogba006@example.com", "pogba006!123"),
+        ):
+            token = self.fixture_login(
+                domain,
+                "/crapi/identity/api/auth/login",
+                {"email": email, "password": password},
+            ).get("token")
+            if token:
+                crapi.append(token)
+        if len(crapi) == CRAPI_ACCOUNT_COUNT:
+            fixtures["crapi_tokens"] = crapi
+        juice = (
+            self.fixture_login(
+                domain,
+                "/juice-shop/rest/user/login",
+                {"email": "admin@juice-sh.op", "password": "admin123"},
+            )
+            .get("authentication", {})
+            .get("token")
+        )
+        if juice:
+            fixtures["juice_token"] = juice
+        fixture_path.write_text(json.dumps(fixtures))
+        fixture_path.chmod(0o600)
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
         """Provide structured inputs and private per-scenario output paths."""

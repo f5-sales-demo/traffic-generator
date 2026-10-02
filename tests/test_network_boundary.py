@@ -1,7 +1,9 @@
 """Network worker and namespace cleanup regressions without live targets."""
 
+import json
 import pathlib
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -23,6 +25,34 @@ class BoundaryTests(unittest.TestCase):
             patch("traffic_network.shutil.rmtree"),
         ):
             boundary.__exit__(None, None, None)
+
+    def test_real_fixture_accounts_are_collected_without_origin_bypass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            runtime = root / "runtime"
+            runtime.mkdir()
+            boundary = NetworkBoundary(
+                ROOT, {"domains": ["www.example.test", "api.example.test"]}, runtime
+            )
+            with patch.object(
+                boundary,
+                "fixture_login",
+                side_effect=[
+                    {"auth_token": "vampi"},
+                    {"token": "crapi-a"},
+                    {"token": "crapi-b"},
+                    {"authentication": {"token": "juice"}},
+                ],
+            ):
+                boundary.refresh_fixtures("www.example.test")
+            data = json.loads((root / "fixtures.json").read_text())
+            assert data["crapi_tokens"] == ["crapi-a", "crapi-b"]
+            assert data["vampi_token"] == "vampi"
+            with (
+                patch("traffic_network.subprocess.run"),
+                patch("traffic_network.shutil.rmtree"),
+            ):
+                boundary.__exit__(None, None, None)
 
     def test_worker_callback_belongs_to_boundary(self):
         boundary = NetworkBoundary(
