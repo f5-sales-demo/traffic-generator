@@ -6,8 +6,8 @@
 set -uo pipefail
 . "$(dirname "$0")/_lib.sh"
 
-CONCURRENCY=500
-REQUESTS=5000
+CONCURRENCY="${TGEN_CONCURRENCY:-500}"
+REQUESTS="${TGEN_REQUESTS:-5000}"
 
 echo "[*] CDN Thundering Herd / Cache Stampede Test"
 echo "[*] Target: $BASE"

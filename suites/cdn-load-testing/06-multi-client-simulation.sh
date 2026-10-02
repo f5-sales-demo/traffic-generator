@@ -6,9 +6,9 @@
 set -uo pipefail
 . "$(dirname "$0")/_lib.sh"
 
-DURATION="${2:-60}"
+DURATION="${TGEN_DURATION:-${2:-60}}"
 THREADS=4
-CONNS=400
+CONNS="${TGEN_CONCURRENCY:-400}"
 LUA_SCRIPT="$(dirname "$0")/_multi-client.lua"
 
 echo "[*] CDN Multi-Client IP Simulation"

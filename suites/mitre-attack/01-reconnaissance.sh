@@ -13,7 +13,7 @@ echo ""
 
 echo "=== T1595.001: Active Scanning — Port Scan ==="
 echo "    Technique: Scanning IP for open ports and services"
-nmap -sV -T4 --top-ports 100 -Pn "$TARGET" 2>/dev/null | grep -E "(open|filtered|closed)" | head -20
+nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "(open|filtered|closed)" | head -20
 echo ""
 
 echo "=== T1595.002: Active Scanning — Vulnerability Scan ==="

@@ -8,7 +8,7 @@ set -uo pipefail
 TARGET="${1:?Usage: 04-connection-churn.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 
-REQUESTS=100
+REQUESTS="${TGEN_REQUESTS:-100}"
 
 echo "[*] Connection churn test against ${TARGET}"
 echo ""

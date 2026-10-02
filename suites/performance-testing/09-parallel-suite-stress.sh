@@ -14,8 +14,7 @@ SUITES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PARALLEL_SUITES=(
   "web-app-attacks"
   "api-attacks"
-  "reconnaissance"
-  "traffic-generation"
+
 )
 
 echo "[*] Parallel suite stress test against ${TARGET}"

@@ -13,8 +13,8 @@ if ! command -v hey &>/dev/null; then
   exit 1
 fi
 
-REQUESTS=1000
-CONCURRENCY=100
+REQUESTS="${TGEN_REQUESTS:-1000}"
+CONCURRENCY="${TGEN_CONCURRENCY:-100}"
 
 ENDPOINTS=(
   "/health"

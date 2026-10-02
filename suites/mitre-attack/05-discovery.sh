@@ -12,7 +12,7 @@ echo "[*] MITRE ATT&CK TA0007: Discovery against ${TARGET}"
 echo ""
 
 echo "=== T1046: Network Service Scanning ==="
-nmap -sV -T4 --top-ports 20 -Pn "$TARGET" 2>/dev/null | grep -E "open|filtered" | head -10
+nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "open|filtered" | head -10
 echo ""
 
 echo "=== T1087.004: Account Discovery — Cloud/Web Accounts ==="

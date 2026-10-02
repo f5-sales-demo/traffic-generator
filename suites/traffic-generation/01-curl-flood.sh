@@ -8,8 +8,8 @@ set -euo pipefail
 TARGET="${1:?Usage: 01-curl-flood.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 
-CONCURRENCY=100
-DURATION=30
+CONCURRENCY="${TGEN_CONCURRENCY:-100}"
+DURATION="${TGEN_DURATION:-30}"
 
 echo "[*] Curl flood against ${TARGET}"
 echo "    Concurrency: ${CONCURRENCY}"

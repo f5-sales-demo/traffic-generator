@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Supervised continuous catalog control; start is always readiness-gated.
+set -euo pipefail
+ROOT="${TGEN_ROOT:-/opt/traffic-generator}"
+CONFIG="${CATALOG_CONFIG:-$ROOT/catalog-config.json}"
+export PATH="$ROOT/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export NODE_PATH=/usr/lib/node_modules
+case "${1:-}" in
+start)
+  python3 "$ROOT/current/scripts/catalog-readiness.py" --config "$CONFIG"
+  systemctl enable --now tgen-continuous.service
+  ;;
+stop)
+  systemctl disable --now tgen-continuous.service
+  ;;
+status)
+  python3 - "$ROOT/runtime/status.json" <<'PY'
+import json,subprocess,sys
+from pathlib import Path
+path=Path(sys.argv[1])
+status=json.loads(path.read_text()) if path.exists() else {"status":"stopped"}
+status["service_active"]=subprocess.run(["systemctl","is-active","--quiet","tgen-continuous.service"],check=False).returncode==0
+status["service_enabled"]=subprocess.run(["systemctl","is-enabled","--quiet","tgen-continuous.service"],check=False).returncode==0
+print(json.dumps(status))
+PY
+  ;;
+run-once)
+  if systemctl is-active --quiet tgen-continuous.service; then
+    echo "Continuous catalog is already running; stop it before run-once." >&2
+    exit 1
+  fi
+  python3 "$ROOT/current/scripts/catalog-readiness.py" --config "$CONFIG"
+  exec python3 "$ROOT/current/scripts/traffic_runtime.py" --config "$CONFIG" --once
+  ;;
+*)
+  echo "Usage: tgen-control start|stop|status|run-once" >&2
+  exit 2
+  ;;
+esac

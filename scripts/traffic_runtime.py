@@ -1,0 +1,376 @@
+#!/usr/bin/env python3
+"""Private, bounded catalog execution with one shared HTTP pacing boundary."""
+
+import argparse
+import contextlib
+import hashlib
+import json
+import os
+import re
+import shutil
+import signal
+import subprocess
+import threading
+import time
+import uuid
+from pathlib import Path
+
+from traffic_catalog import load_catalog, readiness
+
+DOMAIN_COUNT = 2
+
+
+class Pacer:
+    """Serialize actual launches without accumulating burst credit."""
+
+    def __init__(self, rate: float) -> None:
+        """Initialize the shared nonbursting clock."""
+        self.interval = 1 / rate
+        self.lock = threading.Lock()
+        self.next = time.monotonic()
+
+    def acquire(self) -> float:
+        """Wait for a single launch slot, shared by every nested worker."""
+        with self.lock:
+            now = time.monotonic()
+            if self.next > now:
+                time.sleep(self.next - now)
+            launched = time.monotonic()
+            self.next = launched + self.interval
+            return launched
+
+
+def validate_config(config: dict) -> None:
+    """Fail closed on targets, immutable provenance, or relaxed safety bounds."""
+    if config.get("schema_version") != 1:
+        msg = "unsupported configuration schema"
+        raise ValueError(msg)
+    domains = config.get("domains", [])
+    if (
+        len(domains) != DOMAIN_COUNT
+        or len(set(domains)) != DOMAIN_COUNT
+        or any(
+            not re.fullmatch(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?", d) for d in domains
+        )
+    ):
+        msg = "exactly two distinct authorized domain names are required"
+        raise ValueError(msg)
+    if (
+        config.get("protocol") != "https"
+        or config.get("protections_enabled") is not True
+        or config.get("csd_enabled") is not False
+    ):
+        msg = "HTTPS and enabled WAAP protections with disabled CSD are required"
+        raise ValueError(msg)
+    if (config.get("http_rps"), config.get("benign_rps"), config.get("attack_rps")) != (
+        200,
+        180,
+        20,
+    ):
+        msg = "aggregate budget must be 180 benign plus 20 attack requests/sec"
+        raise ValueError(msg)
+    for key, limit in (
+        ("connection_rps", 20),
+        ("slow_connections", 20),
+        ("scenario_timeout_seconds", 900),
+        ("retention_days", 7),
+        ("retention_bytes", 10 * 1024**3),
+    ):
+        if type(config.get(key)) is not int or not 0 < config[key] <= limit:
+            raise ValueError("invalid safety bound: " + key)
+    if not re.fullmatch(
+        r"[a-f0-9]{40}", config.get("source_commit", "")
+    ) or not re.fullmatch(r"[a-f0-9]{64}", config.get("artifact_sha256", "")):
+        msg = "immutable source commit and artifact digest are required"
+        raise ValueError(msg)
+    if not Path(config.get("results_dir", "")).is_absolute():
+        msg = "absolute private results directory required"
+        raise ValueError(msg)
+
+
+def atomic_json(path: Path, value: dict) -> None:
+    """Replace a private receipt atomically."""
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    temporary = path.with_name(path.name + ".tmp-" + uuid.uuid4().hex)
+    with temporary.open("x") as stream:
+        temporary.chmod(0o600)
+        json.dump(value, stream)
+        stream.write("\n")
+    temporary.replace(path)
+
+
+def terminate(process: subprocess.Popen) -> None:
+    """Terminate an entire scenario session, including background workers."""
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(process.pid, sig)
+        if sig == signal.SIGTERM:
+            time.sleep(0.2)
+    process.wait()
+
+
+def _expired(command: list[str], timeout: float) -> None:
+    """Convert an elapsed monotonic deadline into the explicit timeout result."""
+    raise subprocess.TimeoutExpired(command, timeout)
+
+
+def execute(
+    command: list[str],
+    log: Path,
+    environment: dict,
+    timeout: float,
+    stop: threading.Event | None = None,
+) -> dict:
+    """Deadline and descendant cleanup apply even after a successful parent exit."""
+    started = time.time()
+    log.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with log.open("wb") as output:
+        log.chmod(0o600)
+        process = subprocess.Popen(  # noqa: S603 - argv from validated explicit catalog
+            command,
+            stdout=output,
+            stderr=subprocess.STDOUT,
+            env=environment,
+            start_new_session=True,
+        )
+        try:
+            deadline = time.monotonic() + timeout
+            while process.poll() is None:
+                if stop is not None and stop.is_set():
+                    outcome, code = "interrupted", 130
+                    break
+                if time.monotonic() >= deadline:
+                    _expired(command, timeout)
+                time.sleep(0.05)
+            else:
+                code = process.returncode
+                outcome = "launched" if code == 0 else "tool_failure"
+        except subprocess.TimeoutExpired:
+            code, outcome = 124, "timeout"
+        finally:
+            terminate(process)
+    text = log.read_text(errors="replace")
+    if outcome == "launched" and re.search(
+        r"(?im)^\s*(SKIP:|.*(?:could not|failed to|no |missing ).*(?:token|fixture|authenticate|vehicle|video|order)|.*skipping.*(?:token|fixture|verification))", text
+    ):
+        outcome = "fixture_failure"
+    return {
+        "started": started,
+        "completed": time.time(),
+        "exit_code": code,
+        "outcome": outcome,
+    }
+
+
+def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
+    """Evict oldest detailed runs by age then total bytes; preserve active evidence."""
+    candidates = sorted(
+        (
+            p
+            for p in root.iterdir()
+            if p.is_dir() and p != active and not p.is_symlink()
+        ),
+        key=lambda p: p.stat().st_mtime,
+    )
+    sizes = {
+        p: sum(
+            f.stat().st_size for f in p.rglob("*") if f.is_file() and not f.is_symlink()
+        )
+        for p in [*candidates, active]
+        if p.exists()
+    }
+    total = sum(sizes.values())
+    for path in candidates:
+        if path.stat().st_mtime < time.time() - days * 86400 or total > max_bytes:
+            shutil.rmtree(path)
+            total -= sizes[path]
+
+
+def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
+    """Use explicit interpreters; connection probes use separately paced equivalents."""
+    if scenario.get("adapter") == "bounded-benchmark":
+        return [
+            "python3",
+            str(root / "scripts/traffic_benchmark.py"),
+            scenario["id"],
+            domain,
+        ]
+    if scenario["budget"] == "connection":
+        return [
+            "python3",
+            str(root / "scripts/traffic_connections.py"),
+            scenario["id"],
+            domain,
+        ]
+    if scenario["kind"] == "csd-browser":
+        return [
+            "node",
+            str(root / "suites/csd-violations/azure.mjs"),
+            scenario["scenario"],
+        ]
+    return [
+        "node" if scenario["kind"] == "javascript" else "bash",
+        str(root / scenario["entrypoint"]),
+        domain,
+    ]
+
+
+def run_nested(root: Path, scenarios: list[dict]) -> int:
+    """Nested suite stress inherits the single egress boundary and emits child receipts."""
+    results = Path(os.environ["TGEN_RESULTS_DIR"])
+    failed = False
+    for scenario in scenarios:
+        directory = results / scenario["id"].replace("/", "--")
+        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+        command = scenario_command(root, scenario, os.environ["TARGET_FQDN"])
+        # Native connection tools cannot bypass the isolated HTTP egress from nested runs.
+        if scenario["budget"] == "connection":
+            result = {
+                "id": scenario["id"],
+                "outcome": "fixture_failure",
+                "reason": "connection behavior must run in the sequential top-level catalog",
+            }
+        else:
+            environment = dict(
+                os.environ, TGEN_RESULTS_DIR=str(directory), RESULTS_DIR=str(directory)
+            )
+            result = execute(
+                command,
+                directory / "scenario.log",
+                environment,
+                scenario["timeout_seconds"],
+            )
+        atomic_json(directory / "receipt.json", result)
+        failed |= result["outcome"] != "launched"
+    return int(failed)
+
+
+def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) -> int:
+    """Supervise perpetual passes; failures remain visible while subsequent launches continue."""
+    config = json.loads(config_path.read_text())
+    validate_config(config)
+    ready = readiness(root, load_catalog(root))
+    if not ready["ready"]:
+        raise ValueError(
+            "missing catalog dependencies: " + ",".join(ready["missing_tools"])
+        )
+    from traffic_network import NetworkBoundary  # noqa: PLC0415 - runtime import cycle
+
+    runtime = Path(config["results_dir"])
+    runtime.mkdir(parents=True, exist_ok=True, mode=0o700)
+    status_path = runtime / "status.json"
+    old = json.loads(status_path.read_text()) if status_path.exists() else {}
+    state = {
+        "schema_version": 1,
+        "status": "starting",
+        "source_commit": config["source_commit"],
+        "artifact_sha256": config["artifact_sha256"],
+        "configured_rates": {
+            "http": 200,
+            "benign": 180,
+            "attack": 20,
+            "connection": 20,
+        },
+        "completed_passes": old.get("completed_passes", 0),
+        "previous_run_interrupted": old.get("status") in ("running", "starting"),
+        "failures": [],
+        "current_scenario": None,
+    }
+    stop = threading.Event()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, lambda *_: stop.set())
+    with NetworkBoundary(root, config, runtime) as boundary:
+
+        def heartbeat() -> None:
+            while not stop.wait(2):
+                state["heartbeat"] = time.time()
+                state["rates"] = boundary.metrics()
+                atomic_json(status_path, state)
+
+        worker = threading.Thread(target=heartbeat, daemon=True)
+        worker.start()
+        state["status"] = "running"
+        while not stop.is_set():
+            pass_id = "pass-" + uuid.uuid4().hex
+            active = runtime / pass_id
+            active.mkdir(mode=0o700)
+            receipts = []
+            for index, scenario in enumerate(scenarios):
+                if stop.is_set():
+                    break
+                state["current_scenario"] = scenario["id"]
+                domain = config["domains"][index % 2]
+                directory = active / scenario["id"].replace("/", "--")
+                directory.mkdir(mode=0o700)
+                environment = boundary.environment(scenario, domain, directory)
+                before = boundary.metrics()
+                command = boundary.wrap(
+                    scenario_command(root, scenario, domain),
+                    connection=scenario["budget"] == "connection",
+                )
+                result = execute(
+                    command,
+                    directory / "scenario.log",
+                    environment,
+                    min(
+                        config["scenario_timeout_seconds"], scenario["timeout_seconds"]
+                    ),
+                    stop,
+                )
+                after = boundary.metrics()
+                result.update(
+                    {
+                        "id": scenario["id"],
+                        "source_sha256": hashlib.sha256(
+                            (root / scenario["entrypoint"]).read_bytes()
+                        ).hexdigest(),
+                        "http_requests": after.get("attack_requests", 0)
+                        - before.get("attack_requests", 0),
+                        "claim": scenario["expected_outcome"],
+                    }
+                )
+                if scenario["budget"] == "http" and result["http_requests"] == 0:
+                    result["outcome"] = "fixture_failure"
+                if result["outcome"] != "launched":
+                    state["failures"] = (
+                        state["failures"]
+                        + [{"id": scenario["id"], "outcome": result["outcome"]}]
+                    )[-200:]
+                atomic_json(directory / "receipt.json", result)
+                receipts.append(result)
+                retain(
+                    runtime, active, config["retention_days"], config["retention_bytes"]
+                )
+            complete = len(receipts) == len(scenarios)
+            passed = complete and all(r["outcome"] == "launched" for r in receipts)
+            receipt = {
+                "id": pass_id,
+                "complete": complete,
+                "passed": passed,
+                "scenarios": receipts,
+                "completed": time.time(),
+            }
+            atomic_json(active / "receipt.json", receipt)
+            if complete:
+                state["completed_passes"] += 1
+            state["last_pass"] = {k: v for k, v in receipt.items() if k != "scenarios"}
+            if not continuous:
+                stop.set()
+        worker.join(3)
+    state.update(status="stopped", current_scenario=None, heartbeat=time.time())
+    atomic_json(status_path, state)
+    return 0 if not state["failures"] else 1
+
+
+def main() -> int:
+    """Continuous service entrypoint."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--once", action="store_true")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    return run(root, load_catalog(root)["scenarios"], args.config, not args.once)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

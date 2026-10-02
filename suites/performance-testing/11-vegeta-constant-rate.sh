@@ -13,9 +13,9 @@ if ! command -v vegeta &>/dev/null; then
   exit 1
 fi
 
-DURATION=20s
+DURATION="${TGEN_DURATION:-20}"s
 
-RATES=(10 50 100 200 500 1000)
+RATES=(5 10 "${TGEN_ATTACK_RATE:-20}")
 
 TARGETS_FILE=$(mktemp)
 cat >"$TARGETS_FILE" <<EOF

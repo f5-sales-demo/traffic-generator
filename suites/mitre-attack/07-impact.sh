@@ -14,7 +14,7 @@ echo ""
 echo "=== T1499.002: Endpoint DoS — Service Exhaustion Flood ==="
 echo "    Technique: High-volume requests to exhaust application resources"
 echo "    Duration: 15 seconds, 500 concurrent connections"
-result=$(wrk -t4 -c500 -d15s "${BASE}/juice-shop/rest/products/search?q=test" 2>&1)
+result=$(wrk -t2 -c"${TGEN_CONCURRENCY:-20}" -d15s "${BASE}/juice-shop/rest/products/search?q=test" 2>&1)
 rps=$(echo "$result" | grep "Requests/sec" | awk '{print $2}')
 to=$(echo "$result" | grep "timeout" | grep -oP "timeout \K\d+")
 echo "  Throughput: ${rps:-N/A} req/s | Timeouts: ${to:-0}"
@@ -22,7 +22,7 @@ echo ""
 
 echo "=== T1499.003: Endpoint DoS — Application Exhaustion ==="
 echo "    Technique: Slowloris-style slow HTTP attack (15s)"
-SLOWLORIS_CONNS=20
+SLOWLORIS_CONNS="${TGEN_SLOW_CONNECTIONS:-20}"
 PIDS=()
 for i in $(seq $SLOWLORIS_CONNS); do
   (
