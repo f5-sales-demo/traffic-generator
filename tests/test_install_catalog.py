@@ -68,6 +68,27 @@ class InstallerTests(unittest.TestCase):
                 installer.install("main", "b" * 64, pathlib.Path(tmp))
             fetch.assert_not_called()
 
+    def test_extra_executable_in_existing_source_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            commit = "a" * 40
+            installed = root / ("source-" + commit)
+            installed.mkdir()
+            (installed / "source.txt").write_bytes(b"verified-source")
+            (installed / "extra.sh").write_text("unverified executable")
+            archive = io.BytesIO()
+            with tarfile.open(fileobj=archive, mode="w:gz") as tar:
+                entry = tarfile.TarInfo("traffic-generator-" + commit + "/source.txt")
+                entry.size = len(b"verified-source")
+                tar.addfile(entry, io.BytesIO(b"verified-source"))
+            payload = archive.getvalue()
+            with (
+                patch.object(installer, "urlopen", return_value=io.BytesIO(payload)),
+                patch.object(installer.subprocess, "run"),
+                pytest.raises(ValueError, match="differs"),
+            ):
+                installer.install(commit, hashlib.sha256(payload).hexdigest(), root)
+
 
 if __name__ == "__main__":
     unittest.main()

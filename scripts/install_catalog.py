@@ -50,7 +50,20 @@ def install(commit: str, digest: str, destination: Path) -> None:
         )
         installed = destination / ("source-" + commit)
         if installed.exists():
-            # Reuse immutable installations only when every archived file matches.
+            # Reuse only an exact inventory; extra scripts invalidate immutable provenance.
+            expected = {
+                str(p.relative_to(source)) for p in source.rglob("*") if p.is_file()
+            }
+            actual = {
+                str(p.relative_to(installed))
+                for p in installed.rglob("*")
+                if p.is_file()
+            }
+            if expected != actual or any(p.is_symlink() for p in installed.rglob("*")):
+                message = (
+                    "existing immutable source inventory differs from verified artifact"
+                )
+                raise ValueError(message)
             for candidate in source.rglob("*"):
                 if candidate.is_file():
                     existing = installed / candidate.relative_to(source)
