@@ -20,6 +20,7 @@ from traffic_common import Pacer, atomic_json, terminate
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 CRAPI_ACCOUNT_COUNT = 2
+BENIGN_CONNECTION_MAX_AGE = 10
 
 
 def _proxy_failed(message: str) -> None:
@@ -43,17 +44,18 @@ class NetworkBoundary:
         self.state.proxy_metrics = runtime / "proxy-metrics.json"
         self.state.stop = threading.Event()
         self.state.proxy = None
-        self.state.pool = ThreadPoolExecutor(max_workers=200)
+        self.state.pool = ThreadPoolExecutor(max_workers=80)
         self.state.benign = {
             "benign_requests": 0,
             "benign_completed": 0,
+            "benign_error_categories": {},
             "benign_success": 0,
             "benign_transport_failures": 0,
             "benign_per_domain": dict.fromkeys(config["domains"], 0),
         }
         self.state.pacers = {domain: Pacer(90) for domain in config["domains"]}
         self.state.capacity = {
-            domain: threading.BoundedSemaphore(100) for domain in config["domains"]
+            domain: threading.BoundedSemaphore(40) for domain in config["domains"]
         }
         self.state.lock = threading.Lock()
         self.state.threads = []
@@ -279,11 +281,20 @@ class NetworkBoundary:
         if not hasattr(self.state.local, "connections"):
             self.state.local.connections = {}
         connection = self.state.local.connections.get(domain)
+        if not hasattr(self.state.local, "connection_age"):
+            self.state.local.connection_age = {}
+        if (
+            connection is not None
+            and time.monotonic() - self.state.local.connection_age[domain] > BENIGN_CONNECTION_MAX_AGE
+        ):
+            connection.close()
+            connection = None
         if connection is None:
             connection = http.client.HTTPSConnection(
                 domain, context=self.state.tls_context, timeout=10
             )
             self.state.local.connections[domain] = connection
+            self.state.local.connection_age[domain] = time.monotonic()
         self.state.pacers[domain].acquire()
         with self.state.lock:
             self.state.benign["benign_requests"] += 1
@@ -300,8 +311,12 @@ class NetworkBoundary:
             response = connection.getresponse()
             success = SUCCESS_MIN <= response.status < SUCCESS_MAX
             response.read()
-        except (OSError, http.client.HTTPException):
+        except (OSError, http.client.HTTPException) as error:
             failed = True
+            with self.state.lock:
+                category = type(error).__name__
+                errors = self.state.benign["benign_error_categories"]
+                errors[category] = errors.get(category, 0) + 1
             connection.close()
             self.state.local.connections.pop(domain, None)
         with self.state.lock:
