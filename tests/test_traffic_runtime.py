@@ -100,6 +100,32 @@ class RuntimeTests(unittest.TestCase):
                 assert stat.exists()
                 assert stat.read_text().split()[2] == "Z"
 
+    def test_outer_deadline_kills_nested_workers_in_inherited_group(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            pid_file = root / "pid"
+            code = "import os,pathlib; from traffic_runtime import execute; env=dict(os.environ,TGEN_NESTED_EXECUTION='1'); execute(['bash','-c','sleep 1000 & echo $! > \"$1\"; wait','bash',os.environ['PID_FILE']],pathlib.Path(os.environ['CHILD_LOG']),env,1000)"
+            environment = dict(
+                os.environ,
+                PYTHONPATH=str(ROOT / "scripts"),
+                PID_FILE=str(pid_file),
+                CHILD_LOG=str(root / "nested.log"),
+            )
+            result = runtime.execute(
+                [sys.executable, "-c", code], root / "outer.log", environment, 0.5
+            )
+            assert result["outcome"] == "timeout"
+            pid = int(pid_file.read_text())
+            for _ in range(30):
+                try:
+                    os.kill(pid, 0)
+                except ProcessLookupError:
+                    break
+                time.sleep(0.02)
+            else:
+                stat = pathlib.Path(f"/proc/{pid}/stat")
+                assert stat.exists() and stat.read_text().split()[2] == "Z"
+
     def test_nonzero_and_skips_cannot_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             for body, outcome in [

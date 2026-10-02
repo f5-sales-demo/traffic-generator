@@ -116,7 +116,7 @@ def execute(
             stdout=output,
             stderr=subprocess.STDOUT,
             env=environment,
-            start_new_session=True,
+            start_new_session=environment.get("TGEN_NESTED_EXECUTION") != "1",
         ) as process:
             try:
                 deadline = time.monotonic() + timeout
@@ -133,7 +133,9 @@ def execute(
             except subprocess.TimeoutExpired:
                 code, outcome = 124, "timeout"
             finally:
-                terminate(process)
+                terminate(
+                    process, group=environment.get("TGEN_NESTED_EXECUTION") != "1"
+                )
     text = log.read_text(errors="replace")
     if outcome == "launched" and re.search(
         r"(?im)^\s*(SKIP:|WARN: Could not extract auth token|.*Could not (?:setup|authenticate|retrieve vehicle)|.*Skipping (?:verification|exploit|JWT))",
@@ -221,7 +223,10 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
             }
         else:
             environment = dict(
-                os.environ, TGEN_RESULTS_DIR=str(directory), RESULTS_DIR=str(directory)
+                os.environ,
+                TGEN_NESTED_EXECUTION="1",
+                TGEN_RESULTS_DIR=str(directory),
+                RESULTS_DIR=str(directory),
             )
             result = execute(
                 command,

@@ -42,11 +42,14 @@ def atomic_json(path: Path, value: dict) -> None:
     temporary.replace(path)
 
 
-def terminate(process: subprocess.Popen) -> None:
+def terminate(process: subprocess.Popen, group: bool = True) -> None:
     """Terminate an entire scenario session, including background workers."""
     for sig in (signal.SIGTERM, signal.SIGKILL):
         with contextlib.suppress(ProcessLookupError):
-            os.killpg(process.pid, sig)
+            if group:
+                os.killpg(process.pid, sig)
+            else:
+                process.send_signal(sig)
         if sig == signal.SIGTERM:
             time.sleep(0.2)
     process.wait()
