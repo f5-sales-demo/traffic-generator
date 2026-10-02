@@ -803,6 +803,7 @@ export async function runSuite(options = {}) {
         scenarioResult.network = [...requests.values()];
         scenarioResult.completedAt = new Date().toISOString();
         try {
+          if (options.routeCleanup) await options.routeCleanup(context);
           await context.close();
         } catch (error) {
           reportLocalError(`context cleanup ${scenario.name} failed`, error);

@@ -43,6 +43,9 @@ export async function runAzure(environment = process.env, options = {}) {
       artifactDigest: environment.TGEN_ARTIFACT_SHA256,
       csdEnabled: false,
     },
+    routeCleanup: async (context) => {
+      await context.unrouteAll({ behavior: 'wait' });
+    },
     routeSetup: async (context) => {
       await context.route('**/*', async (route) => {
         const url = new URL(route.request().url());
