@@ -39,7 +39,7 @@ sqlmap --batch --level=1 --risk=1 \
   -u "${BASE}/users/v1/admin" \
   ${AUTH_FLAG:+"$AUTH_FLAG"} \
   --timeout=10 --retries=1 --threads=3 \
-  --output-dir=/tmp/sqlmap-vampi-users ||
+  --output-dir="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-vampi-users" ||
   echo "WARN: sqlmap user lookup scan returned non-zero"
 
 echo ""
@@ -52,7 +52,7 @@ sqlmap --batch --level=1 --risk=1 \
   --method=POST \
   -H "Content-Type: application/json" \
   --timeout=10 --retries=1 --threads=3 \
-  --output-dir=/tmp/sqlmap-vampi-login ||
+  --output-dir="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-vampi-login" ||
   echo "WARN: sqlmap login scan returned non-zero"
 
 echo ""
@@ -65,7 +65,7 @@ sqlmap --batch --level=1 --risk=1 \
   --method=POST \
   -H "Content-Type: application/json" \
   --timeout=10 --retries=1 --threads=3 \
-  --output-dir=/tmp/sqlmap-vampi-register ||
+  --output-dir="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-vampi-register" ||
   echo "WARN: sqlmap register scan returned non-zero"
 
 echo ""
