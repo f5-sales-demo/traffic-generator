@@ -115,7 +115,7 @@ def execute(
                 terminate(process)
     text = log.read_text(errors="replace")
     if outcome == "launched" and re.search(
-        r"(?im)^\s*(SKIP:|.*(?:could not|failed to|no |missing ).*(?:token|fixture|authenticate|vehicle|video|order)|.*skipping.*(?:token|fixture|verification))",
+        r"(?im)^\s*(SKIP:|WARN: Could not extract auth token|.*Could not (?:setup|authenticate|retrieve vehicle)|.*Skipping (?:verification|exploit|JWT))",
         text,
     ):
         outcome = "fixture_failure"
