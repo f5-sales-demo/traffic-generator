@@ -26,6 +26,14 @@ TARGETS=(
   "${BASE}/vampi/"
 )
 
+if [[ -n "${TGEN_NUCLEI_TEMPLATES:-}" ]]; then
+  echo "[CATALOG] Bounded native template scope: $TGEN_NUCLEI_TEMPLATES"
+  for url in "${TARGETS[@]}"; do
+    nuclei -duc -t "$TGEN_NUCLEI_TEMPLATES" -u "$url" -rl 20 -c 2 -bs 1 -timeout 10 -silent
+  done
+  exit 0
+fi
+
 ########################################################################
 # Phase 1: Full severity scan against all targets
 ########################################################################

@@ -395,6 +395,15 @@ class NetworkBoundary:
             REQUESTS_CA_BUNDLE=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             NODE_EXTRA_CA_CERTS=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             TGEN_INHERITED_BOUNDARY="1",
+            TGEN_NUCLEI_TEMPLATES=",".join(
+                "/opt/nuclei-templates/http/" + name
+                for name in (
+                    "technologies/tech-detect.yaml",
+                    "misconfiguration/http-missing-security-headers.yaml",
+                    "vulnerabilities/odoo-xss.yaml",
+                    "vulnerabilities/bentoml-ssrf.yaml",
+                )
+            ),
             TGEN_PARAMETER_WORDLIST=str(self.root / "suites/parameter-words.txt"),
             TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json"),
             TGEN_CRAPI_VEHICLE_UUID=str(fixtures.get("crapi_vehicle_uuid", "")),
