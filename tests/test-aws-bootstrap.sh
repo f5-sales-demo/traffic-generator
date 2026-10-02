@@ -276,20 +276,8 @@ for unit in csd-continuous.service csd-continuous.timer csd-worker-health.servic
   extract_file "/etc/systemd/system/$unit" "$TMP/cloud-init.yaml" >"$TMP/$unit"
   test -s "$TMP/$unit"
 done
-# Verify rendered units on Linux in an isolated filesystem, without starting them.
-unit_root="$TMP/unit-root"
-mkdir -p "$unit_root/etc/systemd/system" "$unit_root/opt/node/bin" "$unit_root/usr/bin" "$unit_root/usr/local/bin"
-cp "$TMP/"*.service "$TMP/csd-continuous.timer" "$unit_root/etc/systemd/system/"
-for executable in opt/node/bin/node usr/bin/Xvfb usr/local/bin/csd-worker-health-check; do
-  cp /bin/true "$unit_root/$executable"
-done
-for target in sysinit basic shutdown network network-online timers multi-user; do
-  printf '[Unit]\nDescription=Unit syntax fixture\n' >"$unit_root/etc/systemd/system/$target.target"
-done
-printf '[Unit]\nDescription=Tmpfiles ordering fixture\n[Service]\nType=oneshot\nExecStart=/bin/true\n' >"$unit_root/etc/systemd/system/systemd-tmpfiles-setup.service"
-mkdir -p "$unit_root/bin"
-cp /bin/true "$unit_root/bin/true"
-systemd-analyze --root="$unit_root" --man=no verify csd-continuous.service csd-continuous.timer csd-worker-health.service csd-xvfb.service
+# Rendered unit contracts run in unit CI; actual systemd parsing is an explicit
+# environment integration in tests/csd-host.integration.mjs.
 grep -Fxq 'Requires=csd-worker-health.service' "$TMP/csd-continuous.service"
 grep -Fxq 'After=csd-worker-health.service network-online.target systemd-tmpfiles-setup.service' "$TMP/csd-continuous.service"
 grep -Fxq 'ExecStart=/opt/node/bin/node /opt/traffic-generator/source/suites/csd-violations/continuous.mjs tick' "$TMP/csd-continuous.service"
@@ -312,7 +300,6 @@ extract_file /etc/logrotate.d/csd-traffic-generator "$TMP/cloud-init.yaml" >"$TM
 for setting in daily 'size 10M' 'rotate 7' compress delaycompress copytruncate; do
   grep -Fxq "  $setting" "$TMP/logrotate.conf"
 done
-logrotate --debug "$TMP/logrotate.conf" >/dev/null 2>&1
 grep -Fq 'test -f "$1/suites/csd-violations/continuous.mjs"' "$TMP/csd-bootstrap"
 grep -Fq '/opt/node/bin/node --check "$dst/suites/csd-violations/continuous.mjs"' "$TMP/csd-bootstrap"
 awk '/^valid\(\) \{$/ { body=1 } body { print } body && /^\}$/ { exit }' "$TMP/csd-bootstrap" >"$TMP/source-valid-function"

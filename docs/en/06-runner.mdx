@@ -297,6 +297,29 @@ boot and 15 seconds after the prior oneshot becomes inactive, with 1-second accu
 of missed firings. Dispatch requires network-online and healthy Xvfb/headed Chrome. Cleanup,
 backoff, lock contention, and reboot introduce gaps: recurring traffic is not literally zero downtime.
 
+### Unit and Host Integration Proof
+
+All nine canonical `tests/test-*.sh` scripts remain required unit checks. Dispatcher tests run
+real Git content verification and the production `executionArgs` environment tail in a real
+unprivileged subprocess, including credential rejection. Bootstrap tests render enabled and
+disabled Terraform configurations and assert the complete scheduling, containment, permission,
+retry, and activation contracts. Unit CI does not claim to exercise sudo elevation or the
+systemd/logrotate host parsers.
+
+Before merge, run this explicit integration command on the approved Linux verification host
+against the exact final PR head, after formatting and pushing:
+
+```bash
+node --test tests/csd-host.integration.mjs
+```
+
+It requires real noninteractive sudo to `nobody`, validates reset versus allowlisted per-run
+assignments through the production argv builder, and runs actual `systemd-analyze verify` and
+`logrotate --debug` on canonical template content. Missing tools or privilege denial fail the
+command; there is no skip/pass fallback. It neither starts services nor generates traffic.
+On the later approved AWS deployment, real `tgen` execution, timer/reboot behavior, and evidence
+acceptance remain mandatory; verification-host parser and privilege proof is not live-worker proof.
+
 ### Sanitized Status and Temporary Pause
 
 Run on the AWS worker:

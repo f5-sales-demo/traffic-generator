@@ -494,7 +494,7 @@ test('real Git normalized tracked executables retain exact pinned content checks
   assert.equal(verifySourceTree(source, commit), false);
   assert.equal(verifySourceTree(source, 'f'.repeat(40)), false);
 });
-test('real sudo env reset cannot discard per-run fields or inherit credentials', async () => {
+test('real env subprocess preserves production argv assignments without inherited credentials', async () => {
   const env = {
     ...config,
     RUN_ID: 'csd-boundary',
@@ -507,17 +507,11 @@ test('real sudo env reset cannot discard per-run fields or inherit credentials',
     XCSH_API_TOKEN: 'synthetic-token',
   };
   const script = `printf "%s|%s|%s|%s|%s" "$RUN_ID" "$CSD_SCENARIO" "$DISPLAY" "\${AWS_SECRET_ACCESS_KEY-unset}" "\${XCSH_API_TOKEN-unset}"`;
-  // The old process boundary loses the assignment under the real sudo policy.
-  const old = command(
-    '/usr/bin/sudo',
-    ['-n', '-u', 'nobody', '--', '/bin/bash', '-c', `printf "%s" "\${RUN_ID-unset}"`],
-    { env },
-  );
-  assert.equal(old, 'unset');
   const args = executionArgs({ runId: env.RUN_ID, scenario: env.CSD_SCENARIO, env, args: ['-c', script] });
   assert.ok(!args.some((arg) => arg.includes('synthetic-secret') || arg.includes('synthetic-token')));
-  args[1] = 'nobody'; // same real privilege boundary, no test account installation
-  const output = command('/usr/bin/sudo', ['-n', ...args], { env });
+  assert.deepEqual(args.slice(0, 5), ['-u', 'tgen', '--', '/usr/bin/env', '-i']);
+  // Execute the production env argv tail, not a fixture implementation of sanitization.
+  const output = command(args[3], args.slice(4), { env });
   assert.equal(output, `${env.RUN_ID}|${env.CSD_SCENARIO}|:100|unset|unset`);
 });
 test('unknown credential/runtime keys fail closed at configuration gate', () => {
