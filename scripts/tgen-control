@@ -5,6 +5,7 @@ ROOT="${TGEN_ROOT:-/opt/traffic-generator}"
 CONFIG="${CATALOG_CONFIG:-$ROOT/catalog-config.json}"
 export PATH="$ROOT/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export NODE_PATH=/usr/lib/node_modules
+export PYTHONDONTWRITEBYTECODE=1
 case "${1:-}" in
 start)
   python3 "$ROOT/current/scripts/catalog_readiness.py" --config "$CONFIG"

@@ -9,6 +9,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -19,6 +20,7 @@ from traffic_catalog import load_catalog, readiness
 from traffic_common import atomic_json, terminate
 from traffic_network import NetworkBoundary
 
+sys.dont_write_bytecode = True
 DOMAIN_COUNT = 2
 
 

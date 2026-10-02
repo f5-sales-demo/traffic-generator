@@ -41,6 +41,7 @@ def install(commit: str, digest: str, destination: Path) -> None:
         subprocess.run(  # noqa: S603 - validated content-addressed source
             [
                 shutil.which("python3") or "/usr/bin/python3",
+                "-B",
                 str(source / "scripts/traffic_catalog.py"),
                 "catalog",
                 "--dry-run",
