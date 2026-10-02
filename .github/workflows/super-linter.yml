@@ -97,7 +97,8 @@ jobs:
     with:
       rust_edition: ${{ github.repository == 'f5-sales-demo/xcsh' && '2024' || '2021' }}
       classify_xc_minimum_configs: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' }}
-      socketless_runner_label: ${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-socketless' || 'managed-socketless' }}
+      # Real sudo boundary and systemd/logrotate validation require a hosted VM.
+      socketless_runner_label: ubuntu-latest
       container_build_runner_label: ${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-container-build' || 'managed-container-build' }}
     permissions:
       contents: read # checkout repository content in the reusable workflow
