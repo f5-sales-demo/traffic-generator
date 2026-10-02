@@ -18,7 +18,7 @@ echo ""
 
 echo "=== T1595.002: Active Scanning — Vulnerability Scan ==="
 echo "    Technique: Scanning for known vulnerabilities"
-nikto -h "$BASE" -maxtime 60s 2>&1 | grep -E "^\+" | head -15
+nikto -h "$BASE" -maxtime "${TGEN_SCANNER_SECONDS:-60}s" 2>&1 | grep -E "^\+" | head -15
 echo ""
 
 echo "=== T1595.003: Active Scanning — Wordlist Scan ==="

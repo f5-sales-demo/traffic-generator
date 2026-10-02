@@ -10,7 +10,7 @@ TARGET="${1:?Usage: 05-nikto-scan.sh <TARGET_FQDN>}"
 echo "[*] Nikto scan against ${TARGET}"
 echo ""
 
-nikto -h "${TARGET_PROTOCOL:-http}://${TARGET}" -maxtime 120s ||
+nikto -h "${TARGET_PROTOCOL:-http}://${TARGET}" -maxtime "${TGEN_SCANNER_SECONDS:-120}s" ||
   echo "WARN: nikto exited with non-zero status"
 
 echo ""
