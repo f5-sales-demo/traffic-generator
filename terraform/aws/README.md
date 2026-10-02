@@ -65,7 +65,7 @@ exact version; `latest` URLs are rejected.
 
 From the GitHub jumpbox, determine its current public IPv4 immediately before each plan and apply and express it as an exact `/32`. The current observed example is `142.127.218.190/32`; it is evidence for the example only and must be revalidated because ISP addressing can change. Terraform intentionally performs no external IP discovery.
 
-Use an existing public key, for example `/home/robin/.ssh/id_ed25519.pub` on `robin@192.168.2.240`. Set `ssh_public_key_path` for interactive use, or `ssh_public_key` for automation, but never both. Do not commit public-key material, and never provide a private key.
+Use an existing public key, for example `~/.ssh/id_ed25519.pub` in the operator account. Set `ssh_public_key_path` for interactive use, or `ssh_public_key` for automation, but never both. Do not commit public-key material, and never provide a private key.
 
 Copy `terraform.tfvars.example` to an untracked `terraform.tfvars` and replace every placeholder.
 
@@ -128,7 +128,7 @@ The `ssh_command` output is executable when `ssh_public_key_path` was used. When
 ssh ubuntu@"$(terraform -chdir=terraform/aws output -raw public_ip)"
 ```
 
-SSM remains available for recovery and allowlisted scenario execution:
+With `continuous_enabled = true` (the default), Terraform-driven cloud-init hydration starts recurring CSD traffic after verified source installation and bounded runtime health. **No manual start is needed.** SSM remains available for recovery and deliberate allowlisted scenario execution after pausing/draining recurrence:
 
 ```bash
 INSTANCE_ID="$(terraform -chdir=terraform/aws output -raw instance_id)"
@@ -157,6 +157,13 @@ it from clean staging. Root ownership and read-only modes are applied after veri
 execute the reviewed suite but cannot alter source or provenance. A failed fetch or digest mismatch exhausts
 the bounded attempts and stops cloud-init without publishing an unverified checkout.
 
+For unattended hydration, `source_commit` must be the exact published, reviewed merge SHA containing
+`continuous.mjs` and the compatible `run.sh`/`run.mjs` changes. Derive the scenario-manifest SHA-256
+from `suites/csd-violations/scenarios.mjs` at that same commit and retain the reviewed manifest version.
+Do not use a moving branch, an old one-shot source pin, a guessed future SHA, or uncommitted source
+embedded in user data. Source reuse also requires the dispatcher to be present. The example keeps
+symbolic source/digest inputs until publication; existing provider constraints and lock versions remain unchanged.
+
 The CloudWatch agent persistently forwards four distinct local logs to the encrypted runtime log group:
 `/var/log/cloud-init-output.log`, worker health, Xvfb, and the canonical scenario wrapper output. Its own
 logs are deliberately excluded to avoid recursion. The worker IAM policy permits scoped CloudWatch Logs
@@ -176,6 +183,98 @@ CloudWatch log streams, and local evidence beneath
 screenshot `objectKey` names the exact uploaded object beneath `runs/<run-id>/<scenario>/`, with the
 scenario segment appearing once. A successful browser run does not itself prove an F5 Distributed Cloud
 Client-Side Defense detection; verify that separately through the approved API or console workflow.
+
+## Unattended recurrence, status, and control
+
+The root-owned `csd-continuous.service` invokes pinned Node with `continuous.mjs tick`. Each timer
+firing executes at most one existing scenario, or one due frozen-upload retry without starting Chrome.
+The dispatcher imports the canonical 11-name order from `scenarios.mjs`, advances through terminal
+decisions, then wraps. `completedCycles` counts decisions, not eleven successful detections or uploads.
+This is separate from the newer generic catalog scheduler, which excludes CSD; do not configure both
+as alternative owners of CSD traffic.
+
+Bootstrap stops recurrence before installation, verifies the source and dispatcher, starts Xvfb and
+bounded health, requires `ready`, then enables/starts `csd-continuous.timer` only when enabled.
+`continuous_enabled` is a Terraform boolean defaulting to `true`, exposed as an output and rendered
+once as `CONTINUOUS_ENABLED=1` or `0` in `/etc/traffic-generator/runtime.env`. Disabled hydration
+still installs and validates the dispatcher and units, but stops/disables recurrence. Do not hand-edit
+the Terraform-owned environment as a permanent configuration change. User-data changes retain the
+worker replacement behavior; review the saved plan and protection-disable procedure before deployment.
+
+The enabled timer survives reboot without rerunning cloud-init: first tick after 30 seconds, subsequent
+tick 15 seconds after the service becomes inactive, with 1-second accuracy and no missed-tick replay.
+The service waits for network-online and headed health; health waits for Xvfb. Recurrence includes
+cleanup, backoff, contention, and reboot gaps: it is not zero-downtime or uninterrupted traffic.
+
+Read sanitized scheduling status on the worker:
+
+```bash
+sudo /opt/node/bin/node \
+  /opt/traffic-generator/source/suites/csd-violations/continuous.mjs status
+systemctl is-enabled csd-continuous.timer
+systemctl is-active csd-continuous.timer csd-continuous.service
+```
+
+An inactive oneshot between ticks is normal. Status exposes cursor, attempted/browser-passed/committed/
+failed/timeout/interrupted counters, completed cycles, current run/scenario, heartbeat, retry schedule,
+last outcome, and bounded pending uploads; it does not expose raw infrastructure identities, credentials,
+or error bodies. Root atomically persists private state under
+`/opt/traffic-generator/runtime/continuous/state.json`. A fatal blocked state survives reboot: diagnose
+and correct the cause rather than deleting state or treating a restart as recovery.
+
+For temporary operator maintenance or manual SSM traffic, inhibit the timer first and allow the current
+service to drain (up to its 1,100-second start budget). Verify the service is inactive and the shared
+lock is free before proceeding. If it cannot drain, stop the service deliberately and verify interrupted
+run cleanup and pending evidence before continuing:
+
+```bash
+sudo systemctl stop csd-continuous.timer
+systemctl is-active csd-continuous.service
+sudo flock -n /run/lock/csd-traffic-generator.lock /usr/bin/true
+# Only if cancellation is required instead of draining:
+sudo systemctl stop csd-continuous.service
+```
+
+Temporary `stop` does not survive reboot. For maintenance spanning reboot, disable the timer as an
+explicit temporary operational override (`sudo systemctl disable --now csd-continuous.timer`), or deploy
+the reviewed Terraform setting `continuous_enabled = false`; record the override and reconcile it.
+Only after maintenance is complete, health is ready, no manual run holds the lock, and the reviewed
+configuration enables recurrence, resume with `sudo systemctl enable --now csd-continuous.timer`.
+Do not call `tick` as an operator start command or delete the shared lock. `run.sh` alone owns the
+nonblocking lock for normal and upload-retry execution; reboot tmpfiles recreates it as root:tgen `0660`.
+
+**Page Tamper UAT requires explicit pause and drain for the entire quiet, baseline, canary, and recovery
+window.** There is no automatic reservation integration with the CSD controller. This timer schedules
+only the existing 11 browser scenarios, never a Page Tamper baseline/canary/header matrix.
+
+### Failure bounds and evidence retention
+
+Scenario execution is bounded to 900 seconds, finalization to 120 seconds, and owned-child cleanup to
+30 seconds. The systemd service has a 1,100-second start timeout, 45-second stop timeout, and cgroup
+containment; health has 120/30-second start/stop bounds. These do not depend on SSM command timeouts.
+Transient work has at most three total attempts with 30/60/120-second backoff steps capped at 300
+seconds. Exhaustion records failure and advances; lock contention consumes neither cursor nor retries.
+Fatal configuration, provenance, target, integrity, or authentication failures block further launches.
+
+At most 32 pending upload records are retained, with at most three total retry attempts per frozen
+upload and a 120-second retry deadline. A tick retries at most one due upload and does not run a browser
+in the same tick. Exhausted retries remain visible; queue/disk limits block new browser work rather
+than deleting pending evidence. `execution-result.json` (schema version 1) lives under the run root,
+outside the frozen scenario directory, and separates browser exit, upload exit/commit, outcome, failure
+category, and signal. Missing or inconsistent results are failures, not inferred successes.
+
+Only completed committed run directories are eligible for oldest-first pruning after seven days or
+when total local detail exceeds 5 GiB. New work is rejected below 1 GiB free space; pending evidence
+has a 2 GiB subcap. Active and pending evidence is never silently pruned. Log rotation is daily or at
+10 MiB, retaining seven compressed rotations with delayed compression and copytruncate. Investigate
+a disk block and preserve required evidence before authorized cleanup; never remove live run paths
+or frozen pending evidence to make status green.
+
+Verify fresh hydration with committed, hash-validated evidence for all eleven names over two cycles,
+monotonic counters, bounded disk usage, no owned-child leaks, and controlled reboot recurrence. A ready
+probe, active timer, successful browser run, or upload commit does **not** guarantee CSD detection.
+These are acceptance checks for later approved deployment, not claims that this source change has
+already been applied or validated on a live worker.
 
 ## 6. Drift and recovery
 

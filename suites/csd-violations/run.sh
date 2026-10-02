@@ -3,6 +3,108 @@ set -uo pipefail
 
 COMMIT_FILE=upload-commit.json
 FAILURE_FILE=.finalization-failed.json
+umask 077
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd -P)
+NODE_BIN=/opt/node/bin/node
+LOCK_PATH=/run/lock/csd-traffic-generator.lock
+RESULTS_ROOT=/opt/traffic-generator/runtime/results
+PRIMARY_EXIT=0 SIGNAL="" OUTCOME=ok UPLOAD_EXIT=0 UPLOAD_COMMITTED=false
+NODE_PID="" XVFB_PID="" FINALIZING=0
+FINALIZATION_DEADLINE=0
+# Policy belongs to the dispatcher module; shell consumes its exact bounds.
+read_policy() {
+  local values
+  values=$(
+    "$NODE_BIN" --input-type=module - "$SCRIPT_DIR/continuous.mjs" <<'NODE'
+import { pathToFileURL } from 'node:url';
+const { DEFAULT_POLICY: p } = await import(pathToFileURL(process.argv[2]));
+console.log([p.scenarioMs / 1000, p.finalizationMs / 1000, p.cleanupMs / 1000, p.maxRunBytes / 1024, p.maxOutputBytes / 1024].join(' '));
+NODE
+  ) || return 78
+  [[ "$values" =~ ^[0-9]+\ [0-9]+\ [0-9]+\ [0-9]+\ [0-9]+$ ]] || return 78
+  read -r SCENARIO_SECONDS FINALIZATION_SECONDS CLEANUP_SECONDS FILE_BLOCKS LOG_BLOCKS <<<"$values"
+}
+
+read_runtime_env() {
+  local line key value assignment
+  local bare_assignment='^([A-Z][A-Z0-9_]*)=([a-zA-Z0-9_./:@+-]*)$'
+  local single_assignment="^([A-Z][A-Z0-9_]*)='([a-zA-Z0-9_./:@+-]*)'$"
+  local double_assignment='^([A-Z][A-Z0-9_]*)="([a-zA-Z0-9_./:@+-]*)"$'
+  local -A seen=()
+  [[ -r "$RUNTIME_ENV" && ! -L "$RUNTIME_ENV" ]] || return 78
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    # Accept only literal assignments, including readonly/quoted generated paths.
+    # Never evaluate shell syntax or make caller-selected DISPLAY readonly.
+    assignment=${line#readonly }
+    if [[ "$assignment" =~ $bare_assignment || "$assignment" =~ $single_assignment || "$assignment" =~ $double_assignment ]]; then
+      key=${BASH_REMATCH[1]} value=${BASH_REMATCH[2]}
+    else
+      return 78
+    fi
+    [[ -z "${seen[$key]:-}" ]] || return 78
+    seen[$key]=1
+    case "$key" in
+    TARGET_URL | EVIDENCE_BUCKET | LOG_GROUP_NAME | NODE_PATH | CHROME_BIN | DISPLAY | SOURCE_REPOSITORY_URL | SOURCE_COMMIT | AWS_REGION | AMI_ID | DEPLOYMENT_MANIFEST_VERSION | DEPLOYMENT_MANIFEST_SHA256 | AWS_CLI_BIN | AWS_CLI_VERSION | CSD_AWS_RUNTIME | CONTINUOUS_ENABLED | CHROME_VERSION | NODE_VERSION | PLAYWRIGHT_VERSION) export "$key=$value" ;;
+    *) return 78 ;;
+    esac
+  done <"$RUNTIME_ENV"
+}
+
+validate_scenario() {
+  "$NODE_BIN" --input-type=module - "$SCRIPT_DIR/scenarios.mjs" "$CSD_SCENARIO" <<'NODE'
+import { pathToFileURL } from 'node:url';
+const { SCENARIO_NAMES } = await import(pathToFileURL(process.argv[2]));
+process.exit(SCENARIO_NAMES.includes(process.argv[3]) ? 0 : 64);
+NODE
+}
+
+write_execution_result() {
+  local failure=null temporary="${RESULTS_DIR}/execution-result.json.tmp-$$"
+  [[ "$OUTCOME" == ok ]] || failure="\"${OUTCOME}\""
+  jq -cn --arg scenario "$CSD_SCENARIO" --arg runId "$RUN_ID" --arg outcome "$OUTCOME" \
+    --arg signal "$SIGNAL" --argjson browserExit "$PRIMARY_EXIT" --argjson uploadExit "$UPLOAD_EXIT" \
+    --argjson uploadCommitted "$UPLOAD_COMMITTED" --argjson failureCategory "$failure" \
+    '{schemaVersion:1,scenario:$scenario,runId:$runId,outcome:$outcome,browserExit:$browserExit,uploadExit:$uploadExit,uploadCommitted:$uploadCommitted,failureCategory:$failureCategory,signal:$signal}' >"$temporary" &&
+    mv "$temporary" "${RESULTS_DIR}/execution-result.json"
+}
+
+classify_exit() {
+  case "$1" in
+  0) OUTCOME=ok ;;
+  65 | 66 | 74) OUTCOME=fatal_integrity ;;
+  77) OUTCOME=fatal_auth ;;
+  78 | 64 | 69) OUTCOME=fatal_config ;;
+  67) OUTCOME=fatal_target ;;
+  124 | 137) OUTCOME=timeout ;;
+  130 | 143) OUTCOME=interrupted ;;
+  *) OUTCOME=upload_transient ;;
+  esac
+}
+
+bounded_aws() {
+  local remaining=$((FINALIZATION_DEADLINE - SECONDS)) error_file rc
+  ((remaining > 0)) || return 124
+  error_file=$(mktemp) || return 78
+  (
+    ulimit -f "$LOG_BLOCKS"
+    timeout --signal=TERM --kill-after=2 "$remaining" "$AWS_CLI_BIN" "$@" 2>"$error_file"
+  )
+  rc=$?
+  if grep -Eqi 'AccessDenied|InvalidAccessKeyId|ExpiredToken|InvalidToken|SignatureDoesNotMatch|Unauthorized|Unable to locate credentials' "$error_file"; then rc=77; fi
+  if grep -Eqi '(^|[^0-9])404([^0-9]|$)|Not Found|NoSuchKey' "$error_file"; then rc=44; fi
+  rm -f "$error_file"
+  return "$rc"
+}
+
+stop_owned_group() {
+  local pid=$1 deadline=$((SECONDS + CLEANUP_SECONDS))
+  [[ -n "$pid" ]] || return 0
+  kill -TERM -- "-$pid" 2>/dev/null || true
+  while kill -0 -- "-$pid" 2>/dev/null && ((SECONDS < deadline)); do sleep 0.1; done
+  kill -KILL -- "-$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+}
 
 write_status() {
   local status_path="${SCENARIO_DIR}/run-status.json"
@@ -77,26 +179,13 @@ write_failure_marker() {
 }
 
 remote_object_sha256() {
-  local key=$1 response error_file rc
-  error_file=$(mktemp) || return
-  if response=$("$AWS_CLI_BIN" s3api head-object \
-    --bucket "$EVIDENCE_BUCKET" --key "$key" --output json 2>"$error_file"); then
-    rm -f "$error_file"
-    jq -er '
-      [(.Metadata // {}) | to_entries[] | select((.key | ascii_downcase) == "sha256") | .value]
-      | if length == 1 then .[0] else empty end
-    ' <<<"$response"
-    return $?
+  local key=$1 response rc
+  if response=$(bounded_aws s3api head-object --bucket "$EVIDENCE_BUCKET" --key "$key" --output json); then
+    jq -er '[ (.Metadata // {}) | to_entries[] | select((.key | ascii_downcase) == "sha256") | .value ] | if length == 1 then .[0] else empty end' <<<"$response" || return 66
   else
     rc=$?
+    return "$rc"
   fi
-  if grep -Eqi '(^|[^0-9])404([^0-9]|$)|Not Found|NoSuchKey' "$error_file"; then
-    rm -f "$error_file"
-    return 44
-  fi
-  cat "$error_file" >&2
-  rm -f "$error_file"
-  return "$rc"
 }
 
 upload_if_missing() {
@@ -106,7 +195,7 @@ upload_if_missing() {
   [[ "$actual" == "$expected" ]] || return 66
   if remote=$(remote_object_sha256 "$key"); then
     [[ "$(printf '%s' "$remote" | tr '[:upper:]' '[:lower:]')" == "$expected" ]] || {
-      echo "ERROR: remote object checksum metadata mismatch: ${key}" >&2
+      echo 'ERROR: remote object checksum metadata mismatch' >&2
       return 74
     }
     return 0
@@ -114,8 +203,8 @@ upload_if_missing() {
     rc=$?
   fi
   [[ "$rc" -eq 44 ]] || return "$rc"
-  "$AWS_CLI_BIN" s3 cp "$file" "s3://${EVIDENCE_BUCKET}/${key}" \
-    --metadata "sha256=${expected}" --only-show-errors
+  bounded_aws s3 cp "$file" "s3://${EVIDENCE_BUCKET}/${key}" \
+    --metadata "sha256=${expected}" --only-show-errors >/dev/null
 }
 
 upload_manifest_objects() {
@@ -144,6 +233,8 @@ upload_final_metadata() {
 validate_frozen_evidence() {
   local manifest_run manifest_scenario
   [[ -s "${SCENARIO_DIR}/upload-manifest.json" && -s "${SCENARIO_DIR}/SHA256SUMS" ]] || return 66
+  [[ -z "$(find -P "$SCENARIO_DIR" -type l -print -quit)" ]] || return 66
+  jq -e '.schemaVersion == 2 and .status == "pending" and (.objects | type == "object" and length > 0)' "${SCENARIO_DIR}/upload-manifest.json" >/dev/null || return 66
   manifest_run=$(jq -r '.runId' "${SCENARIO_DIR}/upload-manifest.json") || return
   manifest_scenario=$(jq -r '.scenario' "${SCENARIO_DIR}/upload-manifest.json") || return
   [[ "$manifest_run" == "$RUN_ID" && "$manifest_scenario" == "$CSD_SCENARIO" ]] || return 65
@@ -152,254 +243,186 @@ validate_frozen_evidence() {
 
 commit_upload() {
   local key="runs/${RUN_ID}/${CSD_SCENARIO}/${COMMIT_FILE}" expected
-  write_upload_commit || return
+  [[ -f "${SCENARIO_DIR}/${COMMIT_FILE}" ]] || write_upload_commit || return
   expected=$(sha256sum "${SCENARIO_DIR}/${COMMIT_FILE}" | cut -d' ' -f1) || return
   upload_if_missing "${SCENARIO_DIR}/${COMMIT_FILE}" "$key" "$expected"
 }
 
-retry_upload() {
-  local requested_dir=$1 upload_exit=0
-  SCENARIO_DIR=$(cd "$requested_dir" 2>/dev/null && pwd) || {
-    echo "ERROR: retry directory is unavailable: ${requested_dir}" >&2
-    return 66
-  }
-  CSD_SCENARIO=$(basename "$SCENARIO_DIR")
-  RUN_ID=$(basename "$(dirname "$SCENARIO_DIR")")
-  case "$CSD_SCENARIO" in
-  login-credential-skimmer | registration-harvester | payment-overlay-card-skimmer | obfuscated-loader | multi-cdn-injection | tag-manager-hijack | multi-channel-exfiltration | high-volume-domain-exfiltration | form-overlay | keylogger-simulation | maximum-detection) ;;
-  *)
-    echo 'ERROR: retry scenario is not allowlisted' >&2
-    return 64
-    ;;
-  esac
-  [[ "$RUN_ID" =~ ^[a-z0-9][a-z0-9-]{0,127}$ ]] || {
-    echo 'ERROR: retry run ID contains unsafe path characters' >&2
-    return 64
-  }
-  PRIMARY_EXIT=$(jq -r '.browserExit' "${SCENARIO_DIR}/run-status.json") || return 66
-  SIGNAL=$(jq -r '.signal' "${SCENARIO_DIR}/run-status.json") || return 66
-  validate_frozen_evidence || {
-    upload_exit=$?
-    write_failure_marker "$upload_exit" validation
-    return "$upload_exit"
-  }
-  upload_manifest_objects || upload_exit=$?
-  if [[ "$upload_exit" -eq 0 ]]; then upload_final_metadata || upload_exit=$?; fi
-  if [[ "$upload_exit" -eq 0 ]]; then commit_upload || upload_exit=$?; fi
-  if [[ "$upload_exit" -ne 0 ]]; then
-    write_failure_marker "$upload_exit" retry-upload
-    return "$upload_exit"
+upload_worker() {
+  local rc=0
+  if [[ "$MODE" == normal ]]; then
+    write_status || return 66
+    write_upload_manifest || return 66
+    write_checksums || return 66
   fi
-  rm -f "${SCENARIO_DIR}/${FAILURE_FILE}"
-  return "$PRIMARY_EXIT"
+  validate_frozen_evidence || return $?
+  upload_manifest_objects || rc=$?
+  if [[ "$rc" -eq 0 ]]; then upload_final_metadata || rc=$?; fi
+  if [[ "$rc" -eq 0 ]]; then commit_upload || rc=$?; fi
+  return "$rc"
 }
 
-# shellcheck disable=SC2329 # invoked by EXIT trap
 finalize() {
-  local trap_exit=$? upload_exit=0 final_exit
+  local initial=$? worker rc budget=$FINALIZATION_SECONDS
+  if [[ "${CANCELLED:-0}" -eq 1 ]]; then budget=10; fi
   [[ "$FINALIZING" -eq 0 ]] || return
   FINALIZING=1
-  trap - EXIT TERM INT
-  [[ -n "$PRIMARY_EXIT" ]] || PRIMARY_EXIT=$trap_exit
-
-  if [[ -n "$XVFB_PID" ]] && kill -0 "$XVFB_PID" 2>/dev/null; then
-    kill "$XVFB_PID" 2>/dev/null || true
-    wait "$XVFB_PID" 2>/dev/null || true
+  trap - EXIT
+  # A second signal cancels only this run's finalizer, never a global browser.
+  stop_owned_group "$NODE_PID"
+  stop_owned_group "$XVFB_PID"
+  if [[ "$MODE" == normal && "$PRIMARY_EXIT" -eq 0 && "$initial" -ne 0 ]]; then PRIMARY_EXIT=$initial; fi
+  export SCENARIO_DIR RUN_ID CSD_SCENARIO PRIMARY_EXIT SIGNAL SOURCE_COMMIT DEPLOYMENT_MANIFEST_SHA256
+  export AWS_CLI_BIN EVIDENCE_BUCKET COMMIT_FILE FAILURE_FILE MODE
+  export -f write_status write_upload_manifest write_checksums write_upload_commit remote_object_sha256 bounded_aws upload_if_missing upload_manifest_objects upload_final_metadata validate_frozen_evidence commit_upload upload_worker
+  export FINALIZATION_BUDGET=$budget
+  export LOG_BLOCKS
+  setsid timeout --signal=TERM --kill-after=2 "$budget" bash -c 'FINALIZATION_DEADLINE=$((SECONDS + FINALIZATION_BUDGET)); upload_worker' >/dev/null 2>/dev/null &
+  worker=$!
+  FINALIZER_PID=$worker
+  wait "$worker"
+  rc=$?
+  if [[ "$rc" -eq 130 || "$rc" -eq 143 ]]; then
+    kill -KILL -- "-$worker" 2>/dev/null || true
+    wait "$worker" 2>/dev/null || true
   fi
-  [[ -d "$SCENARIO_DIR" ]] || exit 1
-  rm -f "${SCENARIO_DIR}/${COMMIT_FILE}" "${SCENARIO_DIR}/${FAILURE_FILE}"
-
-  write_status || upload_exit=$?
-  if [[ "$upload_exit" -eq 0 ]]; then write_upload_manifest || upload_exit=$?; fi
-  if [[ "$upload_exit" -eq 0 ]]; then write_checksums || upload_exit=$?; fi
-  if [[ "$upload_exit" -eq 0 ]]; then validate_frozen_evidence || upload_exit=$?; fi
-  if [[ "$upload_exit" -eq 0 ]]; then upload_manifest_objects || upload_exit=$?; fi
-  if [[ "$upload_exit" -eq 0 ]]; then upload_final_metadata || upload_exit=$?; fi
-  if [[ "$upload_exit" -eq 0 ]]; then commit_upload || upload_exit=$?; fi
-
-  if [[ "$upload_exit" -ne 0 ]]; then
-    write_failure_marker "$upload_exit" initial-upload
-    exit "$upload_exit"
+  FINALIZER_PID=""
+  UPLOAD_EXIT=$rc
+  if [[ "$rc" -eq 0 ]]; then
+    UPLOAD_COMMITTED=true
+    rm -f "${SCENARIO_DIR}/${FAILURE_FILE}"
+    case "$PRIMARY_EXIT" in
+    0) OUTCOME=ok ;;
+    124 | 137) OUTCOME=timeout ;;
+    130 | 143) OUTCOME=interrupted ;;
+    64 | 78 | 69) OUTCOME=fatal_config ;;
+    *) OUTCOME=scenario_failure ;;
+    esac
+    rc=$PRIMARY_EXIT
+  else
+    write_failure_marker "$rc" upload || true
+    classify_exit "$rc"
+    if [[ "${CANCELLED:-0}" -eq 1 ]]; then
+      OUTCOME=interrupted
+      rc=$PRIMARY_EXIT
+    fi
   fi
-  rm -f "${SCENARIO_DIR}/${FAILURE_FILE}"
-  final_exit=$PRIMARY_EXIT
-  exit "$final_exit"
+  write_execution_result || exit 66
+  exit "$rc"
 }
 
-RUNTIME_ENV=${RUNTIME_ENV:-/etc/traffic-generator/runtime.env}
-if [[ "${1:-}" == "--retry-upload" ]]; then
-  [[ $# -eq 2 ]] || {
-    echo 'usage: run.sh --retry-upload SCENARIO_DIR' >&2
-    exit 64
-  }
-  [[ -r "$RUNTIME_ENV" ]] || {
-    echo "ERROR: runtime environment is unavailable: $RUNTIME_ENV" >&2
-    exit 78
-  }
-  set -a
-  # shellcheck disable=SC1090 # validated runtime environment path
-  source "$RUNTIME_ENV"
-  set +a
-  EVIDENCE_BUCKET="${EVIDENCE_BUCKET:?EVIDENCE_BUCKET is required}"
-  AWS_CLI_BIN="${AWS_CLI_BIN:?AWS_CLI_BIN is required}"
-  AWS_CLI_VERSION="${AWS_CLI_VERSION:?AWS_CLI_VERSION is required}"
-  [[ -x "$AWS_CLI_BIN" ]] || {
-    echo "ERROR: reviewed AWS CLI is not executable: ${AWS_CLI_BIN}" >&2
-    exit 69
-  }
-  [[ "$("$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" == "$AWS_CLI_VERSION" ]] || {
-    echo "ERROR: reviewed AWS CLI version does not match ${AWS_CLI_VERSION}" >&2
-    exit 69
-  }
-  for command in jq sha256sum; do command -v "$command" >/dev/null 2>&1 || {
-    echo "ERROR: required command not found: ${command}" >&2
-    exit 69
-  }; done
-  retry_upload "$2"
-  exit $?
-fi
-
-if [[ "${1:-}" == "--finalize-test" ]]; then
-  [[ $# -eq 4 ]] || {
-    echo 'usage: run.sh --finalize-test SCENARIO_DIR RUN_ID SCENARIO' >&2
-    exit 64
-  }
-  SCENARIO_DIR=$2
-  RUN_ID=$3
-  CSD_SCENARIO=$4
-  PRIMARY_EXIT=0
-  SIGNAL=""
-  SOURCE_COMMIT=0123456789abcdef0123456789abcdef01234567
-  DEPLOYMENT_MANIFEST_SHA256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-  write_status
-  write_upload_manifest
-  write_checksums
-  validate_frozen_evidence
-  write_upload_commit
-  exit 0
-fi
-
-CALLER_DISPLAY=${DISPLAY-}
-[[ -r "$RUNTIME_ENV" ]] || {
-  echo "ERROR: runtime environment is unavailable: $RUNTIME_ENV" >&2
-  exit 78
-}
-set -a
-# shellcheck disable=SC1090 # validated runtime environment path
-source "$RUNTIME_ENV"
-set +a
-
-EXPECTED_HOST="client-side-defense.f5-sales-demo.com"
-TARGET_URL="${TARGET_URL:?TARGET_URL is required}"
-EVIDENCE_BUCKET="${EVIDENCE_BUCKET:?EVIDENCE_BUCKET is required}"
-SOURCE_REPOSITORY_URL="${SOURCE_REPOSITORY_URL:?SOURCE_REPOSITORY_URL is required}"
-SOURCE_COMMIT="${SOURCE_COMMIT:?SOURCE_COMMIT is required}"
-AWS_REGION="${AWS_REGION:?AWS_REGION is required}"
-AMI_ID="${AMI_ID:?AMI_ID is required}"
-DEPLOYMENT_MANIFEST_VERSION="${DEPLOYMENT_MANIFEST_VERSION:?DEPLOYMENT_MANIFEST_VERSION is required}"
-DEPLOYMENT_MANIFEST_SHA256="${DEPLOYMENT_MANIFEST_SHA256:?DEPLOYMENT_MANIFEST_SHA256 is required}"
-AWS_CLI_BIN="${AWS_CLI_BIN:?AWS_CLI_BIN is required}"
-AWS_CLI_VERSION="${AWS_CLI_VERSION:?AWS_CLI_VERSION is required}"
-[[ "${CSD_AWS_RUNTIME:-}" == "1" ]] || {
-  echo 'ERROR: CSD_AWS_RUNTIME must equal 1' >&2
-  exit 78
-}
-RESULTS_ROOT="${RESULTS_ROOT:-/opt/traffic-generator/runtime/results}"
-RUN_ID="${RUN_ID:-csd-$(date -u +%Y%m%dt%H%M%Sz)-$$}"
-RESULTS_DIR="${RESULTS_DIR:-${RESULTS_ROOT}/${RUN_ID}}"
-CSD_SCENARIO="${CSD_SCENARIO:?CSD_SCENARIO is required}"
-SCENARIO_DIR="${RESULTS_DIR}/${CSD_SCENARIO}"
-# The deployed health service owns :99. Preserve the run-specific display supplied by
-# the SSM launcher, otherwise use the dedicated interactive-run display.
-DISPLAY="${CALLER_DISPLAY:-:100}"
-CHROME_PATH=/opt/chrome/chrome
-XVFB_PID=""
-NODE_PID=""
-PRIMARY_EXIT=""
-SIGNAL=""
-FINALIZING=0
-
-# shellcheck disable=SC2329 # invoked by signal traps
 on_signal() {
-  SIGNAL=$1
-  PRIMARY_EXIT=$2
-  if [[ -n "$NODE_PID" ]] && kill -0 "$NODE_PID" 2>/dev/null; then
-    kill -"$1" "$NODE_PID" 2>/dev/null || true
-    wait "$NODE_PID" 2>/dev/null || true
+  SIGNAL=$1 PRIMARY_EXIT=$2 OUTCOME=interrupted CANCELLED=1
+  if [[ -n "${FINALIZER_PID:-}" ]]; then
+    kill -TERM -- "-$FINALIZER_PID" 2>/dev/null || true
+    return
   fi
   exit "$2"
 }
 
-case "$TARGET_URL" in "https://${EXPECTED_HOST}" | "https://${EXPECTED_HOST}/"*) ;; *)
-  echo "ERROR: TARGET_URL must use exact HTTPS host ${EXPECTED_HOST}" >&2
-  exit 64
-  ;;
-esac
-case "$CSD_SCENARIO" in
-login-credential-skimmer | registration-harvester | payment-overlay-card-skimmer | obfuscated-loader | multi-cdn-injection | tag-manager-hijack | multi-channel-exfiltration | high-volume-domain-exfiltration | form-overlay | keylogger-simulation | maximum-detection) ;;
-*)
-  echo 'ERROR: CSD_SCENARIO is not allowlisted' >&2
-  exit 64
-  ;;
-esac
-[[ "$RUN_ID" =~ ^[a-z0-9][a-z0-9-]{0,127}$ ]] || {
-  echo 'ERROR: RUN_ID contains unsafe path characters' >&2
-  exit 64
-}
-[[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || {
-  echo 'ERROR: SOURCE_COMMIT is invalid' >&2
-  exit 78
-}
-[[ "$DEPLOYMENT_MANIFEST_SHA256" =~ ^[0-9a-f]{64}$ ]] || {
-  echo 'ERROR: DEPLOYMENT_MANIFEST_SHA256 is invalid' >&2
-  exit 78
-}
-[[ -x "$CHROME_PATH" ]] || {
-  echo 'ERROR: /opt/chrome/chrome is not executable' >&2
-  exit 69
-}
-[[ -x "$AWS_CLI_BIN" ]] || {
-  echo "ERROR: reviewed AWS CLI is not executable: ${AWS_CLI_BIN}" >&2
-  exit 69
-}
-[[ "$("$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" == "$AWS_CLI_VERSION" ]] || {
-  echo "ERROR: reviewed AWS CLI version does not match ${AWS_CLI_VERSION}" >&2
-  exit 69
-}
-for command in node Xvfb jq sha256sum; do command -v "$command" >/dev/null 2>&1 || {
-  echo "ERROR: required command not found: ${command}" >&2
-  exit 69
-}; done
-node -e "require.resolve('/opt/traffic-generator/node_modules/playwright-core/package.json')" >/dev/null 2>&1 || {
-  echo 'ERROR: playwright-core is not installed at /opt/traffic-generator/node_modules' >&2
-  exit 69
+# Returning the scenario status lets the shell invoke its EXIT finalizer once.
+wait_for_scenario() {
+  wait "$NODE_PID"
+  PRIMARY_EXIT=$?
+  return "$PRIMARY_EXIT"
 }
 
-mkdir -p "$RESULTS_DIR"
-if ! mkdir "$SCENARIO_DIR"; then
-  echo "ERROR: scenario evidence directory already exists: $SCENARIO_DIR" >&2
-  exit 73
+# The metadata fixture performs no browser/network work or deployed safety bypass.
+if [[ "${1:-}" == --finalize-test ]]; then
+  [[ $# -eq 4 ]] || exit 64
+  SCENARIO_DIR=$2 RUN_ID=$3 CSD_SCENARIO=$4
+  SOURCE_COMMIT=0123456789abcdef0123456789abcdef01234567
+  DEPLOYMENT_MANIFEST_SHA256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  write_status && write_upload_manifest && write_checksums && validate_frozen_evidence && write_upload_commit
+  exit $?
 fi
-export TARGET_URL EVIDENCE_BUCKET RESULTS_DIR RUN_ID CSD_SCENARIO DISPLAY CHROME_PATH
-export SOURCE_REPOSITORY_URL SOURCE_COMMIT AWS_REGION AMI_ID DEPLOYMENT_MANIFEST_VERSION DEPLOYMENT_MANIFEST_SHA256 CSD_AWS_RUNTIME
-export CSD_AWS_OUTPUT_DIR="$RESULTS_DIR"
-export NODE_PATH=/opt/traffic-generator/node_modules
 
-trap finalize EXIT
+RUNTIME_ENV=${RUNTIME_ENV:-/etc/traffic-generator/runtime.env}
+CALLER_DISPLAY=${DISPLAY-}
+read_runtime_env || {
+  echo 'ERROR: runtime configuration rejected' >&2
+  exit 78
+}
+MODE=normal
+if [[ "${1:-}" == --retry-upload ]]; then
+  [[ $# -eq 2 ]] || exit 64
+  MODE=retry
+  SCENARIO_DIR=$2
+  [[ "$SCENARIO_DIR" == "$RESULTS_ROOT/"* && "$SCENARIO_DIR" != *'..'* && ! -L "$SCENARIO_DIR" ]] || exit 66
+  CSD_SCENARIO=$(basename "$SCENARIO_DIR")
+  RESULTS_DIR=$(dirname "$SCENARIO_DIR")
+  RUN_ID=$(basename "$RESULTS_DIR")
+else
+  [[ $# -eq 0 ]] || exit 64
+  RUN_ID=${RUN_ID:-csd-$(date -u +%Y%m%dt%H%M%Sz)-$$}
+  CSD_SCENARIO=${CSD_SCENARIO:-}
+  RESULTS_DIR="${RESULTS_ROOT}/${RUN_ID}"
+  SCENARIO_DIR="${RESULTS_DIR}/${CSD_SCENARIO}"
+fi
+[[ "$RUN_ID" =~ ^[a-z0-9][a-z0-9-]{0,127}$ ]] || exit 64
+validate_scenario || exit 64
+read_policy || exit 78
+[[ "$SCENARIO_DIR" == "${RESULTS_ROOT}/${RUN_ID}/${CSD_SCENARIO}" ]] || exit 66
+[[ ! -L "$RESULTS_ROOT" && ! -L "$RESULTS_DIR" && ! -L "$SCENARIO_DIR" ]] || exit 66
+[[ "$(realpath -m "$SCENARIO_DIR")" == "$SCENARIO_DIR" ]] || exit 66
+[[ -d "$RESULTS_ROOT" ]] || exit 78
+for command in flock setsid timeout jq sha256sum; do command -v "$command" >/dev/null || exit 69; done
+[[ -e "$LOCK_PATH" && ! -L "$LOCK_PATH" ]] || exit 78
+exec 9<>"$LOCK_PATH" || exit 78
+if ! flock -n 9; then
+  # Never overwrite an active run's result on contention.
+  echo '{"schemaVersion":1,"outcome":"busy"}'
+  exit 75
+fi
+preflight_result() {
+  local rc=$?
+  if [[ "$rc" -ne 0 && -d "$RESULTS_DIR" ]]; then
+    classify_exit "$rc"
+    PRIMARY_EXIT=null UPLOAD_EXIT=null
+    write_execution_result || true
+  fi
+}
+if [[ "$MODE" == normal ]]; then
+  [[ ! -e "$RESULTS_DIR" ]] || exit 66
+  mkdir "$RESULTS_DIR" || exit 78
+fi
+trap 'preflight_result' EXIT
+[[ -n "${AWS_CLI_BIN:-}" && -n "${AWS_CLI_VERSION:-}" && -n "${EVIDENCE_BUCKET:-}" && -x "$AWS_CLI_BIN" ]] || exit 78
+[[ "$(timeout 5 "$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" == "$AWS_CLI_VERSION" ]] || exit 78
+if [[ "$MODE" == retry ]]; then
+  [[ -d "$SCENARIO_DIR" ]] || exit 66
+  PRIMARY_EXIT=$(jq -er '.browserExit | select(type == "number" and floor == . and . >= 0 and . <= 255)' "${SCENARIO_DIR}/run-status.json") || exit 66
+  SIGNAL=$(jq -er '.signal | select(. == "" or . == "TERM" or . == "INT")' "${SCENARIO_DIR}/run-status.json") || exit 66
+  # Preserve the frozen browser signal; only new signals set CANCELLED.
+  trap 'finalize' EXIT
+  trap 'on_signal TERM 143' TERM
+  trap 'on_signal INT 130' INT
+  exit 0
+fi
+TARGET_URL=${TARGET_URL:-}
+[[ "$TARGET_URL" == https://client-side-defense.f5-sales-demo.com ]] || exit 67
+[[ "${CSD_AWS_RUNTIME:-}" == 1 && "${SOURCE_COMMIT:-}" =~ ^[0-9a-f]{40}$ && "${DEPLOYMENT_MANIFEST_SHA256:-}" =~ ^[0-9a-f]{64}$ ]] || exit 78
+CHROME_PATH=/opt/chrome/chrome
+DISPLAY="${CALLER_DISPLAY:-:100}"
+[[ "$DISPLAY" =~ ^:[0-9]+$ && "$DISPLAY" != :99 ]] || exit 78
+[[ -x "$CHROME_PATH" ]] || exit 69
+command -v Xvfb >/dev/null || exit 69
+"$NODE_BIN" -e "require.resolve('/opt/traffic-generator/node_modules/playwright-core/package.json')" >/dev/null 2>&1 || exit 69
+mkdir -p "$RESULTS_DIR" || exit 78
+mkdir "$SCENARIO_DIR" || exit 66
+export TARGET_URL EVIDENCE_BUCKET RESULTS_DIR RUN_ID CSD_SCENARIO DISPLAY CHROME_PATH
+export CSD_AWS_OUTPUT_DIR="$RESULTS_DIR" NODE_PATH=/opt/traffic-generator/node_modules
+trap 'finalize' EXIT
 trap 'on_signal TERM 143' TERM
 trap 'on_signal INT 130' INT
-Xvfb "$DISPLAY" -screen 0 1440x900x24 -nolisten tcp >"${SCENARIO_DIR}/xvfb.log" 2>&1 &
+ulimit -f "$FILE_BLOCKS" # Finite per-file evidence ceiling from canonical policy.
+setsid Xvfb "$DISPLAY" -screen 0 1440x900x24 -nolisten tcp >"${SCENARIO_DIR}/xvfb.log" 2>&1 &
 XVFB_PID=$!
 sleep 1
 kill -0 "$XVFB_PID" 2>/dev/null || {
-  echo 'ERROR: Xvfb failed to start' >&2
+  PRIMARY_EXIT=70
   exit 70
 }
-set +e
-node "$(dirname "$0")/run.mjs" >"${SCENARIO_DIR}/runner.log" 2>&1 &
+setsid timeout --foreground --signal=TERM --kill-after="$CLEANUP_SECONDS" "$SCENARIO_SECONDS" "$NODE_BIN" "$SCRIPT_DIR/run.mjs" >"${SCENARIO_DIR}/runner.log" 2>&1 &
 NODE_PID=$!
-wait "$NODE_PID"
-PRIMARY_EXIT=$?
-NODE_PID=""
-set -e
-exit "$PRIMARY_EXIT"
+wait_for_scenario

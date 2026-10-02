@@ -7,8 +7,13 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
 cat >"$TMP/main.tf" <<EOF
+variable "continuous_enabled" {
+  type = bool
+  default = true
+}
 locals {
   rendered = templatefile("${AWS_ROOT}/cloud-init.tftpl", {
+    continuous_enabled = var.continuous_enabled
     aws_region = "us-east-1"
     ami_id = "ami-0123456789abcdef0"
     evidence_bucket = "fixture-evidence"
@@ -28,15 +33,15 @@ locals {
     playwright_core_version = "1.55.0"
     deployment_manifest_version = "1.0.0"
     deployment_manifest_sha256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    target_url = "https://example.invalid"
+    target_url = "https://client-side-defense.f5-sales-demo.com"
   })
 }
 output "rendered" { value = local.rendered }
 EOF
 
 terraform -chdir="$TMP" init -backend=false -input=false >/dev/null
-terraform -chdir="$TMP" apply -auto-approve -input=false >/dev/null
-terraform -chdir="$TMP" output -raw rendered >"$TMP/cloud-init.yaml"
+printf 'jsonencode(local.rendered)\n' | terraform -chdir="$TMP" console -no-color | jq -r . | jq -r . >"$TMP/cloud-init.yaml"
+printf 'jsonencode(local.rendered)\n' | TF_VAR_continuous_enabled=false terraform -chdir="$TMP" console -no-color | jq -r . | jq -r . >"$TMP/cloud-init-disabled.yaml"
 
 awk '
   /^  - path: \/usr\/local\/sbin\/csd-bootstrap$/ { found=1; next }
@@ -243,4 +248,131 @@ if "$TMP/failing-helper-regression"; then exit 1; fi
 test "$(jq -r .status "$TMP/status.json")" = failed
 test "$(jq -r .stage "$TMP/status.json")" = failing-helper
 test "$(jq -r .error_stage "$TMP/status.json")" = failing-helper
+# Hydration renders both modes without Terraform plan/apply or guest traffic.
+grep -Fxq '      CONTINUOUS_ENABLED=1' "$TMP/cloud-init.yaml"
+grep -Fxq '      CONTINUOUS_ENABLED=0' "$TMP/cloud-init-disabled.yaml"
+grep -Fq 'continuous_enabled              = var.continuous_enabled' "$AWS_ROOT/main.tf"
+grep -Fq 'variable "continuous_enabled"' "$AWS_ROOT/variables.tf"
+grep -Fq 'output "continuous_enabled"' "$AWS_ROOT/outputs.tf"
+grep -A5 -F 'variable "continuous_enabled"' "$AWS_ROOT/variables.tf" | grep -Fq 'default     = true'
+extract_file() {
+  awk -v target="$1" '
+    $0 == "  - path: " target { found=1; next }
+    found && /^    content: \|$/ { body=1; next }
+    body && (/^  - path:/ || /^runcmd:/) { exit }
+    body { sub(/^      /, ""); print }
+  ' "$2"
+}
+for helper in csd-run csd-worker-health-check csd-log-event; do
+  extract_file "/usr/local/bin/$helper" "$TMP/cloud-init.yaml" >"$TMP/$helper"
+  bash -n "$TMP/$helper"
+done
+if grep -Eq 'flock|exec 9>' "$TMP/csd-run"; then exit 1; fi
+for unit in csd-continuous.service csd-continuous.timer csd-worker-health.service csd-xvfb.service; do
+  extract_file "/etc/systemd/system/$unit" "$TMP/cloud-init.yaml" >"$TMP/$unit"
+  test -s "$TMP/$unit"
+done
+# Verify rendered units on Linux in an isolated filesystem, without starting them.
+unit_root="$TMP/unit-root"
+mkdir -p "$unit_root/etc/systemd/system" "$unit_root/opt/node/bin" "$unit_root/usr/bin" "$unit_root/usr/local/bin"
+cp "$TMP/"*.service "$TMP/csd-continuous.timer" "$unit_root/etc/systemd/system/"
+for executable in opt/node/bin/node usr/bin/Xvfb usr/local/bin/csd-worker-health-check; do
+  cp /bin/true "$unit_root/$executable"
+done
+for target in sysinit basic shutdown network network-online timers multi-user; do
+  printf '[Unit]\nDescription=Unit syntax fixture\n' >"$unit_root/etc/systemd/system/$target.target"
+done
+printf '[Unit]\nDescription=Tmpfiles ordering fixture\n[Service]\nType=oneshot\nExecStart=/bin/true\n' >"$unit_root/etc/systemd/system/systemd-tmpfiles-setup.service"
+mkdir -p "$unit_root/bin"
+cp /bin/true "$unit_root/bin/true"
+systemd-analyze --root="$unit_root" --man=no verify csd-continuous.service csd-continuous.timer csd-worker-health.service csd-xvfb.service
+grep -Fxq 'Requires=csd-worker-health.service' "$TMP/csd-continuous.service"
+grep -Fxq 'After=csd-worker-health.service network-online.target systemd-tmpfiles-setup.service' "$TMP/csd-continuous.service"
+grep -Fxq 'ExecStart=/opt/node/bin/node /opt/traffic-generator/source/suites/csd-violations/continuous.mjs tick' "$TMP/csd-continuous.service"
+grep -Fxq 'TimeoutStartSec=1100s' "$TMP/csd-continuous.service"
+grep -Fxq 'TimeoutStopSec=45s' "$TMP/csd-continuous.service"
+grep -Fxq 'KillMode=control-group' "$TMP/csd-continuous.service"
+grep -Fxq 'OnBootSec=30s' "$TMP/csd-continuous.timer"
+grep -Fxq 'OnUnitInactiveSec=15s' "$TMP/csd-continuous.timer"
+grep -Fxq 'AccuracySec=1s' "$TMP/csd-continuous.timer"
+grep -Fxq 'Persistent=false' "$TMP/csd-continuous.timer"
+grep -Fxq 'WantedBy=timers.target' "$TMP/csd-continuous.timer"
+grep -Fxq 'Requires=csd-xvfb.service' "$TMP/csd-worker-health.service"
+grep -Fxq 'Wants=network-online.target' "$TMP/csd-worker-health.service"
+grep -Fxq 'TimeoutStartSec=120s' "$TMP/csd-worker-health.service"
+grep -Fxq 'TimeoutStopSec=30s' "$TMP/csd-worker-health.service"
+extract_file /etc/tmpfiles.d/csd-traffic-generator.conf "$TMP/cloud-init.yaml" >"$TMP/tmpfiles.conf"
+grep -Fxq 'f /run/lock/csd-traffic-generator.lock 0660 root tgen -' "$TMP/tmpfiles.conf"
+grep -Fxq 'd /opt/traffic-generator/runtime/continuous 0700 root root -' "$TMP/tmpfiles.conf"
+extract_file /etc/logrotate.d/csd-traffic-generator "$TMP/cloud-init.yaml" >"$TMP/logrotate.conf"
+for setting in daily 'size 10M' 'rotate 7' compress delaycompress copytruncate; do
+  grep -Fxq "  $setting" "$TMP/logrotate.conf"
+done
+logrotate --debug "$TMP/logrotate.conf" >/dev/null 2>&1
+grep -Fq 'test -f "$1/suites/csd-violations/continuous.mjs"' "$TMP/csd-bootstrap"
+grep -Fq '/opt/node/bin/node --check "$dst/suites/csd-violations/continuous.mjs"' "$TMP/csd-bootstrap"
+awk '/^valid\(\) \{$/ { body=1 } body { print } body && /^\}$/ { exit }' "$TMP/csd-bootstrap" >"$TMP/source-valid-function"
+(
+  source "$TMP/source-valid-function"
+  fixture="$TMP/source-fixture"
+  manifest=suites/csd-violations/scenarios.mjs
+  mkdir -p "$fixture/suites/csd-violations"
+  printf 'export const fixture = true;\n' >"$fixture/$manifest"
+  touch "$fixture/suites/csd-violations/run.sh" "$fixture/suites/csd-violations/run.mjs"
+  git init -q "$fixture"
+  git -C "$fixture" add suites
+  git -C "$fixture" -c user.name='Fixture' -c user.email='fixture@example.com' commit -qm fixture
+  commit=$(git -C "$fixture" rev-parse HEAD)
+  digest=$(sha256sum "$fixture/$manifest" | cut -d' ' -f1)
+  if valid "$fixture"; then exit 1; fi
+  touch "$fixture/suites/csd-violations/continuous.mjs"
+  valid "$fixture"
+  digest=invalid
+  if valid "$fixture"; then exit 1; fi
+)
+stop_line=$(grep -nFx 'systemctl disable --now csd-continuous.timer csd-continuous.service' "$TMP/csd-bootstrap" | head -n1 | cut -d: -f1)
+source_line=$(grep -nFx 'stage=source' "$TMP/csd-bootstrap" | cut -d: -f1)
+test "$stop_line" -lt "$source_line"
+grep -Fq 'test "$TARGET_URL" = https://client-side-defense.f5-sales-demo.com' "$TMP/csd-worker-health-check"
+grep -Fq 'test "$(sha256sum /opt/traffic-generator/source/suites/csd-violations/scenarios.mjs' "$TMP/csd-worker-health-check"
+# Exercise the actual rendered activation branches through a bounded command adapter.
+for mode in enabled disabled; do
+  yaml="$TMP/cloud-init.yaml"
+  test "$mode" != disabled || yaml="$TMP/cloud-init-disabled.yaml"
+  extract_file /usr/local/sbin/csd-bootstrap "$yaml" | awk '
+    /^stage=services$/ { body=1; next }
+    body && /^stage=ready$/ { exit }
+    body { print }
+  ' >"$TMP/activation-$mode"
+  (
+    set -Eeuo pipefail
+    export MODE="$mode"
+    export SYSTEMCTL_LOG="$TMP/activation-$mode.log"
+    status_file="$TMP/ready-status.json"
+    printf '{"status":"ready"}\n' >"$status_file"
+    systemd-analyze() { test "$1" = verify; }
+    systemctl() {
+      printf '%s\n' "$*" >>"$SYSTEMCTL_LOG"
+      case "$*" in
+      'is-active --quiet csd-continuous.timer' | 'is-enabled --quiet csd-continuous.timer') test "$MODE" = enabled ;;
+      'is-active --quiet csd-continuous.service') return 3 ;;
+      *) return 0 ;;
+      esac
+    }
+    systemd-analyze verify
+    systemctl --version
+    export -f systemctl systemd-analyze
+    export status_file
+    bash -e "$TMP/activation-$mode"
+    printf '{"status":"failed"}\n' >"$status_file"
+    if bash -e "$TMP/activation-$mode"; then exit 1; fi
+  )
+  grep -Fxq 'restart csd-worker-health.service' "$TMP/activation-$mode.log"
+  if test "$mode" = enabled; then
+    grep -Fxq 'enable --now csd-continuous.timer' "$TMP/activation-$mode.log"
+  else
+    grep -Fxq 'disable --now csd-continuous.timer csd-continuous.service' "$TMP/activation-$mode.log"
+    if grep -Fxq 'enable --now csd-continuous.timer' "$TMP/activation-$mode.log"; then exit 1; fi
+  fi
+done
 printf '[OK] rendered bootstrap syntax, Chrome permission normalization, inherited ERR status transition, SSH activation, ordering, and URI rewrites\n'

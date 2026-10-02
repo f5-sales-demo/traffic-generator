@@ -118,6 +118,7 @@ locals {
     deployment_manifest_version     = var.deployment_manifest_version
     deployment_manifest_sha256      = var.deployment_manifest_sha256
     target_url                      = var.target_url
+    continuous_enabled              = var.continuous_enabled
   })
 
   scenario_names = [

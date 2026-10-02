@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import {
+  boundedOperation,
   buildReceipt,
   pageHelpers,
   runSuite,
@@ -175,11 +176,11 @@ test('obsolete unsafe CSD suites and helper test are removed', async () => {
 });
 
 test('URL evidence redacts sensitive query values and removes fragments', () => {
-  const sanitized = sanitizeUrl('https://example.invalid/path?email=a%40b.invalid&safe=yes&token=secret#fragment');
+  const sanitized = sanitizeUrl('https://example.invalid/path?email=a%40example.com&safe=yes&token=secret#fragment');
   assert.match(sanitized, /email=%5BREDACTED%5D/);
   assert.match(sanitized, /token=%5BREDACTED%5D/);
   assert.match(sanitized, /safe=yes/);
-  assert.doesNotMatch(sanitized, /fragment|secret|a%40b/);
+  assert.doesNotMatch(sanitized, /fragment|secret|a%40example\.com/);
 });
 
 test('receipt counts final screenshot and assertion failures', () => {
@@ -459,7 +460,7 @@ test('navigation waits for delayed SPA route preconditions before evaluation', a
   }
 });
 
-test('serialized receipt stores bounded errors while stderr retains local diagnostics', async () => {
+test('serialized receipt and local stderr never retain raw diagnostics', async () => {
   const secretError =
     'page said user@example.com password=hunter2 token=secret123 https://evil.invalid/path?email=user%40example.com&token=secret123';
   const outputDirectory = await mkdtemp(join(tmpdir(), 'csd-error-redaction-'));
@@ -510,7 +511,8 @@ test('serialized receipt stores bounded errors while stderr retains local diagno
     assert.match(serialized, /CONTEXT_CLEANUP_FAILED/);
     assert.match(serialized, /BROWSER_CLEANUP_FAILED/);
     assert.doesNotMatch(serialized, /user@example\.com|hunter2|secret123|evil\.invalid|page said/i);
-    assert.ok(stderr.some((message) => message.includes(secretError)));
+    assert.ok(stderr.length > 0);
+    assert.doesNotMatch(stderr.join('\n'), /user@example\.com|hunter2|secret123|evil\.invalid|page said/i);
   } finally {
     console.error = originalConsoleError;
     await rm(outputDirectory, { recursive: true, force: true });
@@ -519,7 +521,7 @@ test('serialized receipt stores bounded errors while stderr retains local diagno
 
 test('shell wrapper uses an immutable retryable upload commit protocol', async () => {
   const source = await readFile(new URL('../suites/csd-violations/run.sh', import.meta.url), 'utf8');
-  assert.match(source, /RESULTS_ROOT="\$\{RESULTS_ROOT:-\/opt\/traffic-generator\/runtime\/results\}"/);
+  assert.match(source, /RESULTS_ROOT=\/opt\/traffic-generator\/runtime\/results/);
   assert.match(source, /SCENARIO_DIR="\$\{RESULTS_DIR\}\/\$\{CSD_SCENARIO\}"/);
   assert.match(source, /--retry-upload/);
   assert.match(source, /upload_manifest_objects/);
@@ -537,14 +539,15 @@ test('shell wrapper uses an immutable retryable upload commit protocol', async (
   assert.doesNotMatch(source, /\.uploadStatus =/);
   assert.match(source, /write_failure_marker/);
   assert.match(source, /commitUploaded:false/);
-  assert.match(source, /source "\$RUNTIME_ENV"/);
+  assert.match(source, /read_runtime_env/);
+  assert.doesNotMatch(source, /source "\$RUNTIME_ENV"/);
   assert.match(source, /CHROME_PATH=\/opt\/chrome\/chrome/);
   assert.doesNotMatch(source, /google-chrome|chromium-browser|command -v "\$candidate"/);
-  assert.match(source, /AWS_CLI_BIN="\$\{AWS_CLI_BIN:\?AWS_CLI_BIN is required\}"/);
-  assert.match(source, /AWS_CLI_VERSION="\$\{AWS_CLI_VERSION:\?AWS_CLI_VERSION is required\}"/);
+  assert.match(source, /AWS_CLI_BIN/);
+  assert.match(source, /AWS_CLI_VERSION/);
   assert.match(source, /"\$AWS_CLI_BIN" --version 2>&1/);
-  assert.match(source, /"\$AWS_CLI_BIN" s3api head-object/);
-  assert.match(source, /"\$AWS_CLI_BIN" s3 cp/);
+  assert.match(source, /bounded_aws s3api head-object/);
+  assert.match(source, /bounded_aws s3 cp/);
   assert.doesNotMatch(source, /command -v aws|(^|[^A-Z_])aws s3(api)? /m);
   assert.match(source, /trap 'on_signal TERM 143' TERM/);
   assert.match(source, /trap 'on_signal INT 130' INT/);
@@ -601,4 +604,80 @@ test('AWS headed Chrome captures every step and final screenshot', {
   assert.equal(result.receipt.cleanup.browser, 'closed');
   assert.equal(result.exitCode, 0);
   assert.ok(result.receipt.scenarios.every((scenario) => scenario.finalScreenshot.status === 'captured'));
+});
+
+test('bounded operations reject timeout and cancellation without waiting for an uncooperative adapter', async () => {
+  await assert.rejects(
+    boundedOperation(() => new Promise(() => {}), 5),
+    /OPERATION_TIMEOUT/,
+  );
+  const controller = new AbortController();
+  const pending = boundedOperation(() => new Promise(() => {}), 10_000, controller.signal);
+  controller.abort();
+  await assert.rejects(pending, /RUN_INTERRUPTED/);
+  await assert.rejects(
+    boundedOperation(() => 1, 5, controller.signal),
+    /RUN_INTERRUPTED/,
+  );
+});
+
+test('cancellation stops new steps, bounds failed cleanup, and preserves a failed receipt', async () => {
+  const outputDirectory = await mkdtemp(join(tmpdir(), 'csd-cancel-'));
+  const controller = new AbortController();
+  let navigations = 0;
+  const page = {
+    on() {},
+    goto: async () => {
+      navigations++;
+      controller.abort();
+      return { status: () => 200 };
+    },
+    evaluate: async () => new Promise(() => {}),
+    screenshot: async () => new Promise(() => {}),
+  };
+  const playwright = {
+    chromium: {
+      launch: async () => ({
+        newContext: async () => ({
+          addInitScript: async () => {},
+          newPage: async () => page,
+          close: async () => new Promise(() => {}),
+        }),
+        close: async () => new Promise(() => {}),
+      }),
+    },
+  };
+  try {
+    const result = await runSuite({
+      playwright,
+      outputDirectory,
+      scenario: SCENARIO_NAMES[0],
+      runId: 'cancel-run',
+      targetUrl: 'https://client-side-defense.f5-sales-demo.com',
+      signal: controller.signal,
+      cleanupDeadline: () => Date.now() + 5,
+    });
+    assert.equal(navigations, 1);
+    assert.equal(result.exitCode, 143);
+    assert.equal(result.receipt.cleanup.browser, 'failed');
+    assert.equal(result.receipt.scenarios[0].status, 'failed');
+    assert.equal(JSON.parse(await readFile(result.receiptPath, 'utf8')).counts.passed, 0);
+  } finally {
+    await rm(outputDirectory, { recursive: true, force: true });
+  }
+});
+
+test('one shared lock and external execution result govern browser and upload retry', async () => {
+  const source = await readFile(new URL('../suites/csd-violations/run.sh', import.meta.url), 'utf8');
+  assert.equal((source.match(/flock -n 9/g) ?? []).length, 1);
+  assert.match(source, /LOCK_PATH=\/run\/lock\/csd-traffic-generator.lock/);
+  assert.match(source, /execution-result.json/);
+  assert.match(source, /schemaVersion:1,scenario:\$scenario,runId:\$runId,outcome:\$outcome/);
+  assert.match(source, /uploadCommitted:\$uploadCommitted,failureCategory:\$failureCategory,signal:\$signal/);
+  assert.match(source, /realpath -m/);
+  assert.match(source, /SCENARIO_NAMES.includes/);
+  assert.doesNotMatch(source, /pkill|killall|login-credential-skimmer \| registration/);
+  assert.match(source, /timeout --foreground --signal=TERM --kill-after="\$CLEANUP_SECONDS" "\$SCENARIO_SECONDS"/);
+  assert.match(source, /timeout --signal=TERM --kill-after=2 "\$budget"/);
+  assert.match(source, /DEFAULT_POLICY: p/);
 });
