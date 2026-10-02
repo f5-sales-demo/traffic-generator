@@ -71,6 +71,11 @@ LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
   --max-time 10) || true
 
 TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // empty' 2>/dev/null || true)
+if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
+  LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
+    -H "Content-Type: application/json" -d '{"username":"name1","password":"pass1"}' --max-time 10)
+  TOKEN=$(printf '%s' "$LOGIN_RESP" | jq -r '.auth_token // empty')
+fi
 if [[ -z "$TOKEN" ]]; then
   echo "    WARN: Could not get token, using dummy"
   TOKEN="dummy-token-for-testing"

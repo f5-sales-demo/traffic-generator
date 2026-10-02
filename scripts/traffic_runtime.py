@@ -224,6 +224,9 @@ def _scenario(
 ) -> dict:
     """Launch one scenario and record meaningful network dispatch independently of filler."""
     config = boundary.config
+    atomic_json(
+        Path(config["results_dir"]) / "current-scenario.json", {"id": scenario["id"]}
+    )
     directory = active / scenario["id"].replace("/", "--")
     directory.mkdir(mode=0o700)
     environment = boundary.environment(scenario, domain, directory)
@@ -251,6 +254,13 @@ def _scenario(
             "claim": scenario["expected_outcome"],
         }
     )
+    if scenario["kind"] == "javascript":
+        log_text = (directory / "scenario.log").read_text(errors="replace")
+        if (
+            "Registrations attempted: 0" in log_text
+            or "Contact forms submitted: 0" in log_text
+        ):
+            result["outcome"] = "fixture_failure"
     if scenario["budget"] == "http" and result["http_requests"] == 0:
         result["outcome"] = "fixture_failure"
     if result["outcome"] != "launched":

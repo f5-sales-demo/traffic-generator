@@ -89,6 +89,7 @@ const USER_AGENTS = [
       userAgent: ua,
     });
     const page = await context.newPage();
+    page.setDefaultTimeout(10000);
 
     const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
     console.log(`[+] UA: ${uaShort}`);

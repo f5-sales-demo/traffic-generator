@@ -59,6 +59,7 @@ const CREDENTIALS = [
       ignoreHTTPSErrors: true,
     });
     const page = await context.newPage();
+    page.setDefaultTimeout(10000);
 
     try {
       console.log(`[+] Trying: ${cred.user} / ${cred.password}`);

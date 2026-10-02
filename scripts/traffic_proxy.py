@@ -26,6 +26,8 @@ class Budget:
             "scenario_requests": 0,
             "filler_requests": 0,
             "attack_transport_failures": 0,
+            "scenario_transport_failures": 0,
+            "tool_cancellations": 0,
             "attack_mitigated": 0,
             "denied_destinations": 0,
             "per_domain": {},
@@ -34,6 +36,7 @@ class Budget:
         self.ticker: asyncio.Task | None = None
         self.tasks: set[asyncio.Task] = set()
         self.maximum_pending_fillers = 200
+        self.scenario_file = self.metrics_path.parent / "current-scenario.json"
 
     def running(self) -> None:
         """Start one pacing clock; unused scenario slots rotate bounded synthetic attacks."""
@@ -94,6 +97,14 @@ class Budget:
         except (URLError, OSError):
             self.counts["attack_transport_failures"] += 1
 
+    def current_scenario(self) -> str:
+        """Join requests to the supervised active scenario with a bounded synthetic identity."""
+        try:
+            identifier = json.loads(self.scenario_file.read_text())["id"]
+            return identifier.replace("/", "-")
+        except (OSError, KeyError, ValueError):
+            return "catalog"
+
     async def request(self, flow: http.HTTPFlow) -> None:
         """All tool/browser descendants queue here immediately before upstream forwarding."""
         host = (
@@ -115,10 +126,7 @@ class Budget:
         flow.request.host = host
         if "X-MUD-User" not in flow.request.headers:
             flow.request.headers["X-MUD-User"] = (
-                "waap-scenario-"
-                + os.environ.get("TGEN_CURRENT_SCENARIO", "catalog")
-                + "-"
-                + host
+                "waap-scenario-" + self.current_scenario() + "-" + host
             )
         event = asyncio.Event()
         await self.pending.put((event, host))
@@ -132,7 +140,19 @@ class Budget:
 
     def error(self, flow: http.HTTPFlow) -> None:
         """Record failed proxied upstream requests."""
-        self.counts["attack_transport_failures"] += 1
+        if flow.error and any(
+            word in flow.error.msg.lower()
+            for word in (
+                "client",
+                "killed",
+                "cancel",
+                "disconnected",
+                "connection closed",
+            )
+        ):
+            self.counts["tool_cancellations"] += 1
+        else:
+            self.counts["scenario_transport_failures"] += 1
         self.persist()
 
     def persist(self) -> None:

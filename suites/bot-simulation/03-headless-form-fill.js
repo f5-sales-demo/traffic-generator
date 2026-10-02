@@ -85,12 +85,13 @@ const IDENTITIES = [
   for (const identity of IDENTITIES) {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const page = await context.newPage();
+    page.setDefaultTimeout(10000);
 
     // --- Registration form ---
     try {
       console.log(`[+] Registering: ${identity.email}`);
       await page.goto(`${BASE_URL}/juice-shop/#/register`, {
-        waitUntil: 'networkidle',
+        waitUntil: 'domcontentloaded',
         timeout: 15000,
       });
 
@@ -119,7 +120,7 @@ const IDENTITIES = [
     try {
       console.log(`[+] Submitting contact form as: ${identity.name}`);
       await page.goto(`${BASE_URL}/juice-shop/#/contact`, {
-        waitUntil: 'networkidle',
+        waitUntil: 'domcontentloaded',
         timeout: 15000,
       });
 
