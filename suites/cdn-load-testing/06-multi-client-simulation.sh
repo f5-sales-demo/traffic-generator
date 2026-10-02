@@ -39,8 +39,8 @@ echo ""
 
 # Phase 2: Per-thread cookie jar isolation
 echo "[+] Phase 2: Independent session isolation (200 parallel curl workers)"
-WORKER_COUNT=200
-REQUESTS_PER_WORKER=50
+WORKER_COUNT="${TGEN_CONCURRENCY:-200}"
+REQUESTS_PER_WORKER="${TGEN_REQUESTS_PER_WORKER:-50}"
 TOTAL_EXPECTED=$((WORKER_COUNT * REQUESTS_PER_WORKER))
 
 TMPDIR="/tmp/cdn-multi-client-$$"
