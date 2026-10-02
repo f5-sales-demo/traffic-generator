@@ -89,7 +89,7 @@ def readiness(
     }
     missing = sorted(t for t in tools if not find_tool(t))
     missing_assets = [
-        path for path in catalog.get("required_assets", []) if not Path(path).is_file()
+        path for path in catalog.get("required_assets", []) if not Path(path).exists()
     ]
     return {
         "ready": not missing and not missing_assets,

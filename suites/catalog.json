@@ -2239,6 +2239,7 @@
   "required_assets": [
     "/opt/seclists/Discovery/Web-Content/common.txt",
     "/opt/seclists/Discovery/Web-Content/raft-medium-directories.txt",
-    "/opt/seclists/Passwords/Common-Credentials/best15.txt"
+    "/opt/seclists/Passwords/Common-Credentials/best15.txt",
+    "/opt/nuclei-templates/http"
   ]
 }

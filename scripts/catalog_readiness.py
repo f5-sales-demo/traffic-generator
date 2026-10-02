@@ -26,7 +26,7 @@ def main() -> int:
     catalog = load_catalog(root)
     result = readiness(root, catalog)
     result["missing_assets"] = [
-        p for p in catalog["required_assets"] if not Path(p).is_file()
+        p for p in catalog["required_assets"] if not Path(p).exists()
     ]
     node = shutil.which("node") or "/usr/bin/node"
     browser = subprocess.run(  # noqa: S603 - fixed browser runtime readiness
