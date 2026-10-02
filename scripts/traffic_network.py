@@ -245,6 +245,8 @@ class NetworkBoundary:
                     "--set",
                     "connection_strategy=lazy",
                     "--set",
+                    "http2=false",
+                    "--set",
                     "confdir=" + str(self.runtime / "mitm-ca"),
                     "-s",
                     str(self.root / "scripts/traffic_proxy.py"),

@@ -4,6 +4,7 @@ import asyncio
 import http.client as http_client
 import json
 import os
+import re
 import ssl
 import time
 from pathlib import Path
@@ -185,7 +186,7 @@ class Budget:
                         {
                             "method": flow.request.method,
                             "path": flow.request.path,
-                            "error": flow.error.msg,
+                            "error": re.sub(r"b'[^']*'", "[redacted header]", flow.error.msg),
                             "scenario": self.current_scenario(),
                         }
                     )

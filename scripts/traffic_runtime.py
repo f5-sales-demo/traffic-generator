@@ -401,6 +401,7 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
     state = {
         "schema_version": 1,
         "status": "starting",
+        "run_started": time.time(),
         "source_commit": config["source_commit"],
         "artifact_sha256": config["artifact_sha256"],
         "configured_rates": {
