@@ -40,8 +40,12 @@ output "rendered" { value = local.rendered }
 EOF
 
 terraform -chdir="$TMP" init -backend=false -input=false >/dev/null
-printf 'jsonencode(local.rendered)\n' | terraform -chdir="$TMP" console -no-color | jq -r . | jq -r . >"$TMP/cloud-init.yaml"
-printf 'jsonencode(local.rendered)\n' | TF_VAR_continuous_enabled=false terraform -chdir="$TMP" console -no-color | jq -r . | jq -r . >"$TMP/cloud-init-disabled.yaml"
+# Provider-free fixture plans expose outputs without console stdin, which the
+# GitHub setup-terraform output wrapper does not forward to its child process.
+terraform -chdir="$TMP" plan -refresh=false -input=false -lock=false -out="$TMP/enabled.tfplan" >/dev/null
+terraform -chdir="$TMP" show -json "$TMP/enabled.tfplan" | jq -r '.planned_values.outputs.rendered.value' >"$TMP/cloud-init.yaml"
+TF_VAR_continuous_enabled=false terraform -chdir="$TMP" plan -refresh=false -input=false -lock=false -out="$TMP/disabled.tfplan" >/dev/null
+terraform -chdir="$TMP" show -json "$TMP/disabled.tfplan" | jq -r '.planned_values.outputs.rendered.value' >"$TMP/cloud-init-disabled.yaml"
 
 awk '
   /^  - path: \/usr\/local\/sbin\/csd-bootstrap$/ { found=1; next }
