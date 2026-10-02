@@ -420,6 +420,8 @@ class NetworkBoundary:
             TGEN_CONNECTION_RATE=str(self.config["connection_rps"]),
             TGEN_SLOW_CONNECTIONS=str(self.config["slow_connections"]),
             TGEN_DURATION="15",
+            TGEN_SQLMAP_LEVEL="1",
+            TGEN_SQLMAP_RISK="1",
             TGEN_SCANNER_SECONDS="30",
             TGEN_REQUEST_TIMEOUT="15",
             TGEN_REPEAT_COUNT="5",

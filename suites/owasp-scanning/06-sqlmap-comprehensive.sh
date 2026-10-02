@@ -52,13 +52,13 @@ echo "========================================"
 
 run_sqlmap "Juice Shop — Product Search" \
   -u "${BASE}/juice-shop/rest/products/search?q=test" \
-  --level=5 --risk=3 --threads=4 \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" --threads=4 \
   ${SQLMAP_COMMON}
 
 run_sqlmap "Juice Shop — Login Endpoint" \
   -u "${BASE}/juice-shop/rest/user/login" \
   --method=POST --data='{"email":"test@test.com","password":"test"}' \
-  --level=3 --risk=2 --threads=4 \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" --threads=4 \
   ${SQLMAP_COMMON}
 
 ########################################################################
@@ -94,13 +94,13 @@ fi
 run_sqlmap "DVWA — SQL Injection (GET)" \
   -u "${BASE}/dvwa/vulnerabilities/sqli/?id=1&Submit=Submit" \
   --cookie="${DVWA_COOKIE}" \
-  --level=5 --risk=3 --dump \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" --dump \
   ${SQLMAP_COMMON}
 
 run_sqlmap "DVWA — Blind SQL Injection" \
   -u "${BASE}/dvwa/vulnerabilities/sqli_blind/?id=1&Submit=Submit" \
   --cookie="${DVWA_COOKIE}" \
-  --technique=BT --level=5 --risk=3 \
+  --technique=BT --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" \
   ${SQLMAP_COMMON}
 
 ########################################################################
@@ -111,13 +111,13 @@ echo "========================================"
 
 run_sqlmap "VAmPI — User Lookup" \
   -u "${BASE}/vampi/users/v1/test" \
-  --level=3 --risk=2 \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" \
   ${SQLMAP_COMMON}
 
 run_sqlmap "VAmPI — Login" \
   -u "${BASE}/vampi/users/v1/login" \
   --method=POST --data='{"username":"test","password":"test"}' \
-  --level=3 --risk=2 \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" \
   ${SQLMAP_COMMON}
 
 ########################################################################
