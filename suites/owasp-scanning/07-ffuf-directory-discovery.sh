@@ -33,7 +33,11 @@ run_ffuf() {
   echo "----------------------------------------"
 
   local output
-  output=$(ffuf "$@" 2>&1) || true
+  if [[ -n "${TGEN_DISCOVERY_WORDLIST:-}" ]]; then
+    output=$(ffuf "$@" -w "$TGEN_DISCOVERY_WORDLIST" -t 2 2>&1)
+  else
+    output=$(ffuf "$@" 2>&1)
+  fi || true
   echo "${output}"
 
   # Count result lines (lines with Status: in ffuf output)

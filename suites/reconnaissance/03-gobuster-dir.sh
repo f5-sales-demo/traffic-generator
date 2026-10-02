@@ -22,6 +22,10 @@ if [[ ! -f "$WORDLIST" ]]; then
   done
 fi
 
+if [[ -n "${TGEN_DISCOVERY_WORDLIST:-}" ]]; then
+  WORDLIST="$TGEN_DISCOVERY_WORDLIST"
+fi
+
 echo "[+] Using wordlist: ${WORDLIST}"
 echo ""
 

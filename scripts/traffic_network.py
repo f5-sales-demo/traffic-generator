@@ -405,6 +405,7 @@ class NetworkBoundary:
                     "vulnerabilities/bentoml-ssrf.yaml",
                 )
             ),
+            TGEN_DISCOVERY_WORDLIST=str(self.root / "suites/discovery-words.txt"),
             TGEN_PARAMETER_WORDLIST=str(self.root / "suites/parameter-words.txt"),
             TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json"),
             TGEN_CRAPI_VEHICLE_UUID=str(fixtures.get("crapi_vehicle_uuid", "")),
