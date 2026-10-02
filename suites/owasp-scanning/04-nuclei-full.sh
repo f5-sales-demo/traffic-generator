@@ -29,7 +29,7 @@ TARGETS=(
 if [[ -n "${TGEN_NUCLEI_TEMPLATES:-}" ]]; then
   echo "[CATALOG] Bounded native template scope: $TGEN_NUCLEI_TEMPLATES"
   for url in "${TARGETS[@]}"; do
-    nuclei -duc -t "$TGEN_NUCLEI_TEMPLATES" -u "$url" -rl 20 -c 2 -bs 1 -timeout 10 -silent
+    nuclei -duc -ni -config "${TGEN_NUCLEI_CONFIG:-$(dirname "$0")/../nuclei-config.yaml}" -t "$TGEN_NUCLEI_TEMPLATES" -u "$url" -rl 20 -c 2 -bs 1 -timeout 10 -silent
   done
   exit 0
 fi
@@ -43,7 +43,7 @@ echo "----------------------------------------"
 for url in "${TARGETS[@]}"; do
   echo ""
   echo "[*] Scanning: ${url}"
-  nuclei -duc -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -severity info,low,medium,high,critical \
+  nuclei -duc -ni -config "${TGEN_NUCLEI_CONFIG:-$(dirname "$0")/../nuclei-config.yaml}" -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -severity info,low,medium,high,critical \
     ${NUCLEI_OPTS} 2>&1 || true
 done
 
@@ -57,7 +57,7 @@ echo "----------------------------------------"
 for url in "${TARGETS[@]}"; do
   echo ""
   echo "[*] CVE scan: ${url}"
-  nuclei -duc -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -tags cve \
+  nuclei -duc -ni -config "${TGEN_NUCLEI_CONFIG:-$(dirname "$0")/../nuclei-config.yaml}" -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -tags cve \
     ${NUCLEI_OPTS} 2>&1 || true
 done
 
@@ -71,7 +71,7 @@ echo "----------------------------------------"
 for url in "${TARGETS[@]}"; do
   echo ""
   echo "[*] OWASP scan: ${url}"
-  nuclei -duc -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -tags owasp \
+  nuclei -duc -ni -config "${TGEN_NUCLEI_CONFIG:-$(dirname "$0")/../nuclei-config.yaml}" -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -tags owasp \
     ${NUCLEI_OPTS} 2>&1 || true
 done
 
@@ -85,7 +85,7 @@ echo "----------------------------------------"
 for url in "${TARGETS[@]}"; do
   echo ""
   echo "[*] Injection scan: ${url}"
-  nuclei -duc -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -tags sqli,xss,ssrf,lfi \
+  nuclei -duc -ni -config "${TGEN_NUCLEI_CONFIG:-$(dirname "$0")/../nuclei-config.yaml}" -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -tags sqli,xss,ssrf,lfi \
     ${NUCLEI_OPTS} 2>&1 || true
 done
 
@@ -99,7 +99,7 @@ echo "----------------------------------------"
 for url in "${TARGETS[@]}"; do
   echo ""
   echo "[*] Exposure/misconfig scan: ${url}"
-  nuclei -duc -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -tags exposure,misconfig \
+  nuclei -duc -ni -config "${TGEN_NUCLEI_CONFIG:-$(dirname "$0")/../nuclei-config.yaml}" -t "${TGEN_NUCLEI_TEMPLATES:-/opt/nuclei-templates/http}" -u "${url}" -tags exposure,misconfig \
     ${NUCLEI_OPTS} 2>&1 || true
 done
 

@@ -1,0 +1,5 @@
+disable-update-check: true
+no-interactsh: true
+rate-limit: 20
+concurrency: 2
+bulk-size: 1
