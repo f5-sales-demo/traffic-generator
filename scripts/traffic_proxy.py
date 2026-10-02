@@ -14,7 +14,6 @@ from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
 
-
 HTTPS_PORT = 443
 
 
