@@ -479,7 +479,13 @@ class NetworkBoundary:
             TGEN_ZAP_SPIDER_MINUTES="1",
             TGEN_ZAP_SCAN_MINUTES="2",
             TGEN_BROWSER_IDENTITIES="2",
-            TGEN_CONCURRENCY="20",
+            TGEN_CONCURRENCY="2"
+            if scenario["id"]
+            in (
+                "cdn-load-testing/08-kraken-cdn-max",
+                "cdn-load-testing/09-origin-torture",
+            )
+            else "20",
             TGEN_REQUESTS="100",
             TGEN_UA_REQUESTS="5",
             TGEN_UA_CONCURRENCY="2",
