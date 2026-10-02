@@ -16,7 +16,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Self
 
-from traffic_common import Pacer, terminate
+from traffic_common import Pacer, atomic_json, terminate
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 CRAPI_ACCOUNT_COUNT = 2
@@ -69,6 +69,15 @@ class NetworkBoundary:
             msg = "network pacing requires root in the supervised service"
             raise ValueError(msg)
         try:
+            atomic_json(
+                self.runtime / "network-owner.json",
+                {
+                    "namespace": self.state.namespace,
+                    "host_link": self.state.host_link,
+                    "chain": self.state.chain,
+                    "browser_temp": str(self.browser_temp),
+                },
+            )
             self.command("ip", "netns", "add", self.state.namespace)
             self.command(
                 "ip",
@@ -469,5 +478,6 @@ class NetworkBoundary:
                 stderr=subprocess.DEVNULL,
             )
         shutil.rmtree(self.browser_temp)
+        (self.runtime / "network-owner.json").unlink(missing_ok=True)
         if hasattr(self.state, "netns_dir") and self.state.netns_dir.exists():
             shutil.rmtree(self.state.netns_dir)

@@ -7,8 +7,11 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import pytest
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+from cleanup_network import cleanup  # noqa: E402 - scripts under test
 from traffic_network import NetworkBoundary  # noqa: E402 - scripts under test
 
 
@@ -53,6 +56,34 @@ class BoundaryTests(unittest.TestCase):
                 patch("traffic_network.shutil.rmtree"),
             ):
                 boundary.__exit__(None, None, None)
+
+    def test_cleanup_refuses_foreign_namespace_and_removes_only_owned_rules(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            receipt = root / "network-owner.json"
+            receipt.write_text(
+                json.dumps(
+                    {"namespace": "foreign", "host_link": "eth0", "chain": "INPUT"}
+                )
+            )
+            with patch("cleanup_network.subprocess.run") as run:
+                with pytest.raises(ValueError, match="invalid task-owned"):
+                    cleanup(root)
+                run.assert_not_called()
+            receipt.write_text(
+                json.dumps(
+                    {
+                        "namespace": "tgen-abcdef0",
+                        "host_link": "tghabcdef0",
+                        "chain": "TGENABCDEF0",
+                    }
+                )
+            )
+            with patch("cleanup_network.subprocess.run") as run:
+                cleanup(root)
+                assert run.call_count == 8
+                assert all(call.args[0][-1] != "INPUT" for call in run.call_args_list)
+            assert not receipt.exists()
 
     def test_worker_callback_belongs_to_boundary(self):
         boundary = NetworkBoundary(
