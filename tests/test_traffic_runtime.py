@@ -127,6 +127,19 @@ class RuntimeTests(unittest.TestCase):
                 assert stat.exists()
                 assert stat.read_text().split()[2] == "Z"
 
+    def test_removed_evidence_log_is_recorded_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            log = root / "scenario" / "scenario.log"
+            result = runtime.execute(
+                ["/bin/bash", "-c", 'rm -rf "$1"', "bash", str(log.parent)],
+                log,
+                os.environ.copy(),
+                5,
+            )
+            assert result["outcome"] == "tool_failure"
+            assert log.exists()
+
     def test_nonzero_and_skips_cannot_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             for body, outcome in [

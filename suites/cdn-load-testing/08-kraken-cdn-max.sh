@@ -63,16 +63,16 @@ echo ""
 echo "=== LAYER 2: hey SUSTAINED (diverse clients) ==="
 HEY_PIDS=""
 if command -v hey >/dev/null 2>&1; then
-  hey -z "${DURATION}s" -c 200 -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/" >"$RESULTS_DIR/hey-juice-shop.log" 2>&1 &
+  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/" >"$RESULTS_DIR/hey-juice-shop.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /juice-shop/ (PID $!, 200c)"
-  hey -z "${DURATION}s" -c 200 -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/rest/products/search?q=apple" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
+  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/rest/products/search?q=apple" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /juice-shop/rest/products/search (PID $!, 200c)"
-  hey -z "${DURATION}s" -c 200 -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/httpbin/get" >"$RESULTS_DIR/hey-httpbin.log" 2>&1 &
+  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/httpbin/get" >"$RESULTS_DIR/hey-httpbin.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /httpbin/get (PID $!, 200c)"
-  hey -z "${DURATION}s" -c 200 -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/vampi/users/v1" >"$RESULTS_DIR/hey-vampi.log" 2>&1 &
+  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/vampi/users/v1" >"$RESULTS_DIR/hey-vampi.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /vampi/users/v1 (PID $!, 200c)"
 fi
@@ -107,10 +107,10 @@ echo ""
 echo "=== LAYER 4: ab KEEPALIVE BASELINE ==="
 AB_PIDS=""
 if command -v ab >/dev/null 2>&1; then
-  ab -n 999999 -c 300 -k -t "$DURATION" -s 10 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
+  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 10 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /juice-shop/ (PID $!, 300c keepalive)"
-  ab -n 999999 -c 300 -k -t "$DURATION" -s 10 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
+  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 10 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /httpbin/get (PID $!, 300c keepalive)"
 fi
@@ -127,7 +127,7 @@ echo "=== LAYER 5: THUNDERING HERD BURSTS (every 60s) ==="
     BURST_NUM=$((BURST_NUM + 1))
     STAMP="burst-${BURST_NUM}-$(date +%s%N)"
     if command -v hey >/dev/null 2>&1; then
-      hey -n 2000 -c 500 -t 10 "${BASE}/httpbin/get?${STAMP}" >/dev/null 2>&1
+      hey -n "${TGEN_REQUESTS:-2000}" -c "${TGEN_CONCURRENCY:-500}" -t 10 "${BASE}/httpbin/get?${STAMP}" >/dev/null 2>&1
     fi
   done
 ) &
@@ -257,7 +257,9 @@ free -m | grep Mem
 ss -s | grep estab
 echo "TIME_WAIT: $(ss -tan state time-wait | wc -l)"
 
-rm -rf "$RESULTS_DIR"
+if [[ -z "${TGEN_RESULTS_DIR:-}" ]]; then
+  rm -rf "$RESULTS_DIR"
+fi
 
 echo ""
 echo "================================================================"

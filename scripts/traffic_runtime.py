@@ -136,6 +136,11 @@ def execute(
                 terminate(
                     process, group=environment.get("TGEN_NESTED_EXECUTION") != "1"
                 )
+    if not log.exists():
+        log.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        log.write_text("Scenario removed its owned evidence log.\n")
+        log.chmod(0o600)
+        outcome = "tool_failure"
     text = log.read_text(errors="replace")
     if outcome == "launched" and re.search(
         r"(?im)^\s*(SKIP:|WARN: Could not extract auth token|.*Could not (?:setup|authenticate|retrieve vehicle)|.*Skipping (?:verification|exploit|JWT))",
