@@ -124,7 +124,8 @@ class RuntimeTests(unittest.TestCase):
                 time.sleep(0.02)
             else:
                 stat = pathlib.Path(f"/proc/{pid}/stat")
-                assert stat.exists() and stat.read_text().split()[2] == "Z"
+                assert stat.exists()
+                assert stat.read_text().split()[2] == "Z"
 
     def test_nonzero_and_skips_cannot_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
