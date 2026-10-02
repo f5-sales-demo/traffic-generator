@@ -371,6 +371,7 @@ class NetworkBoundary:
             TGEN_CONNECTION_RATE=str(self.config["connection_rps"]),
             TGEN_SLOW_CONNECTIONS=str(self.config["slow_connections"]),
             TGEN_DURATION="15",
+            TGEN_BROWSER_IDENTITIES="2",
             TGEN_CONCURRENCY="20",
             TGEN_REQUESTS="100",
             SOURCE_COMMIT=self.config["source_commit"],

@@ -82,7 +82,7 @@ const IDENTITIES = [
   let registrations = 0;
   let contacts = 0;
 
-  for (const identity of IDENTITIES) {
+  for (const identity of IDENTITIES.slice(0, Number(process.env.TGEN_BROWSER_IDENTITIES || IDENTITIES.length))) {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const page = await context.newPage();
     page.setDefaultTimeout(10000);
