@@ -12,7 +12,11 @@ echo "[*] MITRE ATT&CK TA0007: Discovery against ${TARGET}"
 echo ""
 
 echo "=== T1046: Network Service Scanning ==="
-nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "open|filtered" | head -10
+if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+  curl -skI --max-time 15 "$BASE/" | head -10
+else
+  nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "open|filtered" | head -10
+fi
 echo ""
 
 echo "=== T1087.004: Account Discovery — Cloud/Web Accounts ==="
