@@ -17,7 +17,7 @@ echo "========================================"
 echo "[*] Target: ${BASE}"
 echo ""
 
-OUTPUT_DIR="/tmp/dalfox"
+OUTPUT_DIR="${TGEN_RESULTS_DIR:-/tmp/dalfox}"
 mkdir -p "${OUTPUT_DIR}"
 TOTAL_XSS=0
 

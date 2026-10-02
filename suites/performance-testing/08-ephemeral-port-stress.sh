@@ -32,7 +32,7 @@ else
 fi
 echo ""
 
-BATCHES=(50 100 200 500 1000)
+BATCHES=(20 50 "${TGEN_REQUESTS:-100}")
 
 for batch in "${BATCHES[@]}"; do
   echo "=== Batch: ${batch} rapid connections (Connection: close) ==="

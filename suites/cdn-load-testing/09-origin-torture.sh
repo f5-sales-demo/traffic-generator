@@ -9,11 +9,11 @@ TARGET="${1:-${TARGET_FQDN:?TARGET_FQDN required}}"
 PROTOCOL="${TARGET_PROTOCOL:-http}"
 BASE="${PROTOCOL}://${TARGET}"
 CRAPI_PORT="${CRAPI_PORT:-8888}"
-CRAPI_BASE="${PROTOCOL}://${TARGET}:${CRAPI_PORT}"
-DURATION="${2:-600}"
+CRAPI_BASE="${CRAPI_BASE_URL:-${PROTOCOL}://${TARGET}:${CRAPI_PORT}}"
+DURATION="${TGEN_DURATION:-${2:-600}}"
 NCPU=$(nproc)
 
-RESULTS_DIR="/tmp/origin-torture-$$"
+RESULTS_DIR="${TGEN_RESULTS_DIR:-/tmp/origin-torture-$$}"
 mkdir -p "$RESULTS_DIR"
 SUITE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -28,15 +28,19 @@ echo "  Mode:     ALL exploit suites + sustained load generators"
 echo "================================================================"
 echo ""
 
-# Kernel tuning
-SOMAXCONN=$((NCPU * 8192))
-[ "$SOMAXCONN" -gt 131072 ] && SOMAXCONN=131072
-sudo sysctl -w net.core.somaxconn=$SOMAXCONN >/dev/null 2>&1
-sudo sysctl -w net.ipv4.tcp_tw_reuse=1 >/dev/null 2>&1
-sudo sysctl -w net.ipv4.tcp_fin_timeout=5 >/dev/null 2>&1
-sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535" >/dev/null 2>&1
-sudo sysctl -w fs.file-max=$((NCPU * 262144)) >/dev/null 2>&1
-ulimit -n 524288 2>/dev/null || ulimit -n 65535 2>/dev/null || true
+# Host tuning is excluded from paced, supervised execution.
+if [[ -z "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+  # Kernel tuning
+  SOMAXCONN=$((NCPU * 8192))
+  [ "$SOMAXCONN" -gt 131072 ] && SOMAXCONN=131072
+  sudo sysctl -w net.core.somaxconn=$SOMAXCONN >/dev/null 2>&1
+  sudo sysctl -w net.ipv4.tcp_tw_reuse=1 >/dev/null 2>&1
+  sudo sysctl -w net.ipv4.tcp_fin_timeout=5 >/dev/null 2>&1
+  sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535" >/dev/null 2>&1
+  sudo sysctl -w fs.file-max=$((NCPU * 262144)) >/dev/null 2>&1
+  ulimit -n 524288 2>/dev/null || ulimit -n 65535 2>/dev/null || true
+
+fi
 
 CPU_PRE=$(awk '{printf "%.2f", $1}' /proc/loadavg)
 RAM_PRE=$(free -m | awk '/Mem:/{print $3}')
@@ -49,7 +53,7 @@ echo ""
 echo "=== LAYER 1: SUSTAINED WRK LOAD (all apps, keepalive) ==="
 WRK_T=$((NCPU / 2))
 [ "$WRK_T" -lt 2 ] && WRK_T=2
-WRK_C=256
+WRK_C="${TGEN_CONCURRENCY:-256}"
 
 ORIGIN_ENDPOINTS=(
   "/juice-shop/"
@@ -93,7 +97,7 @@ echo ""
 # LAYER 2: hey sustained against key API endpoints
 # ================================================================
 echo "=== LAYER 2: HEY SUSTAINED (API throughput) ==="
-HEY_C=200
+HEY_C="${TGEN_CONCURRENCY:-200}"
 
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/juice-shop/rest/products/search?q=test" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
 echo "[+] hey: /juice-shop/rest/products/search (PID $!, ${HEY_C}c)"
@@ -111,7 +115,7 @@ echo ""
 echo "=== LAYER 3: GRAPHQL TORTURE (wrk Lua, keepalive) ==="
 GQL_LUA="$(dirname "$0")/_graphql-torture.lua"
 if [ -f "$GQL_LUA" ]; then
-  wrk -t"$WRK_T" -c128 -d"${DURATION}s" --timeout 30s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 30s \
     -s "$GQL_LUA" "${BASE}/" >"$RESULTS_DIR/wrk-gql-torture.log" 2>&1 &
   GQL_PID=$!
   echo "[+] wrk GraphQL torture: batch DoS + recursion + SQLi + XSS (PID $GQL_PID, ${WRK_T}t/128c keepalive)"
@@ -127,7 +131,7 @@ echo ""
 echo "=== LAYER 4: RESTAURANT ATTACKS (wrk Lua, keepalive) ==="
 REST_LUA="$(dirname "$0")/_restaurant-torture.lua"
 if [ -f "$REST_LUA" ]; then
-  wrk -t"$WRK_T" -c128 -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 10s \
     -s "$REST_LUA" "${BASE}/" >"$RESULTS_DIR/wrk-restaurant-torture.log" 2>&1 &
   REST_PID=$!
   echo "[+] wrk Restaurant torture: BOLA + BOPLA + SSRF + injection (PID $REST_PID, ${WRK_T}t/128c keepalive)"
@@ -143,7 +147,7 @@ echo ""
 echo "=== LAYER 5: CRAPI CHALLENGES (wrk Lua, keepalive) ==="
 CRAPI_LUA="$(dirname "$0")/_crapi-torture.lua"
 if [ -f "$CRAPI_LUA" ]; then
-  wrk -t"$WRK_T" -c128 -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 10s \
     -s "$CRAPI_LUA" "${CRAPI_BASE}/" >"$RESULTS_DIR/wrk-crapi-torture.log" 2>&1 &
   CRAPI_PID=$!
   echo "[+] wrk crAPI torture: BOLA + NoSQL + OTP + orders (PID $CRAPI_PID, ${WRK_T}t/128c keepalive)"
@@ -161,15 +165,11 @@ SUITE_PIDS=""
 for suite in dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack; do
   if [ -d "$SUITE_DIR/$suite" ]; then
     (
-      cd "$SUITE_DIR/$suite" || exit 1
-      for script in $(ls -1 [0-9]*.sh [0-9]*.js 2>/dev/null); do
-        [ -f "$script" ] || continue
-        if [[ "$script" == *.js ]]; then
-          NODE_PATH=/usr/lib/node_modules node "$script" "$TARGET" 2>&1
-        else
-          bash "$script" "$TARGET" 2>&1
-        fi
-      done
+      if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+        TGEN_RESULTS_DIR="$RESULTS_DIR/nested-$suite" bash "$SUITE_DIR/runner.sh" "$suite"
+      else
+        bash "$SUITE_DIR/runner.sh" "$suite"
+      fi
     ) >"$RESULTS_DIR/suite-${suite}.log" 2>&1 &
     PID=$!
     SUITE_PIDS="$SUITE_PIDS $PID"

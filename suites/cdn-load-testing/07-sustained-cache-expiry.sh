@@ -6,9 +6,9 @@
 set -uo pipefail
 . "$(dirname "$0")/_lib.sh"
 
-DURATION="${2:-1800}"
+DURATION="${TGEN_DURATION:-${2:-1800}}"
 THREADS=4
-CONNS=200
+CONNS="${TGEN_CONCURRENCY:-200}"
 LUA_SCRIPT="$(dirname "$0")/_baseline.lua"
 SAMPLE_INTERVAL=30
 SAMPLES_PER_CHECK=10

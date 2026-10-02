@@ -23,7 +23,11 @@ ENDPOINTS=(
 
 for endpoint in "${ENDPOINTS[@]}"; do
   echo "[+] Scanning: ${endpoint}"
-  arjun -u "$endpoint" -t 10 --stable ||
+  if [[ -n "${TGEN_PARAMETER_WORDLIST:-}" ]]; then
+    arjun -u "$endpoint" -t 2 -w "$TGEN_PARAMETER_WORDLIST" --disable-redirects
+  else
+    arjun -u "$endpoint" -t 10 --stable
+  fi ||
     echo "WARN: arjun returned non-zero for ${endpoint}"
   echo ""
 done

@@ -6,9 +6,9 @@
 set -uo pipefail
 . "$(dirname "$0")/_lib.sh"
 
-DURATION="${2:-60}"
+DURATION="${TGEN_DURATION:-${2:-60}}"
 THREADS=4
-CONNS=400
+CONNS="${TGEN_CONCURRENCY:-400}"
 LUA_SCRIPT="$(dirname "$0")/_multi-client.lua"
 
 echo "[*] CDN Multi-Client IP Simulation"
@@ -39,8 +39,8 @@ echo ""
 
 # Phase 2: Per-thread cookie jar isolation
 echo "[+] Phase 2: Independent session isolation (200 parallel curl workers)"
-WORKER_COUNT=200
-REQUESTS_PER_WORKER=50
+WORKER_COUNT="${TGEN_CONCURRENCY:-200}"
+REQUESTS_PER_WORKER="${TGEN_REQUESTS_PER_WORKER:-50}"
 TOTAL_EXPECTED=$((WORKER_COUNT * REQUESTS_PER_WORKER))
 
 TMPDIR="/tmp/cdn-multi-client-$$"
@@ -71,7 +71,7 @@ for w in $(seq 1 "$WORKER_COUNT"); do
   ) &
 
   # Rate-limit worker spawning to avoid fork bomb
-  if [ $((w % 50)) -eq 0 ]; then
+  if [ $((w % ${TGEN_CONCURRENCY:-50})) -eq 0 ]; then
     wait
   fi
 done

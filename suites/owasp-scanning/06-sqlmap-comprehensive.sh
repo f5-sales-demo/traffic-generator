@@ -17,7 +17,8 @@ echo "========================================"
 echo "[*] Target: ${BASE}"
 echo ""
 
-SQLMAP_COMMON="--batch --timeout=15 --retries=2 --output-dir=/tmp/sqlmap-output"
+SQLMAP_OUTPUT_DIR="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-output"
+SQLMAP_COMMON="--batch --timeout=15 --retries=2 --output-dir=$SQLMAP_OUTPUT_DIR"
 FINDINGS=0
 
 ########################################################################
@@ -36,7 +37,7 @@ run_sqlmap() {
 
   # Count injectable parameters
   local injectable
-  injectable=$(echo "${output}" | grep -c "is vulnerable" 2>/dev/null || echo "0")
+  injectable=$(echo "${output}" | grep -c "is vulnerable" 2>/dev/null || true)
   FINDINGS=$((FINDINGS + injectable))
 
   echo ""
@@ -52,13 +53,13 @@ echo "========================================"
 
 run_sqlmap "Juice Shop — Product Search" \
   -u "${BASE}/juice-shop/rest/products/search?q=test" \
-  --level=5 --risk=3 --threads=4 \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" --threads=4 \
   ${SQLMAP_COMMON}
 
 run_sqlmap "Juice Shop — Login Endpoint" \
   -u "${BASE}/juice-shop/rest/user/login" \
   --method=POST --data='{"email":"test@test.com","password":"test"}' \
-  --level=3 --risk=2 --threads=4 \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" --threads=4 \
   ${SQLMAP_COMMON}
 
 ########################################################################
@@ -94,13 +95,13 @@ fi
 run_sqlmap "DVWA — SQL Injection (GET)" \
   -u "${BASE}/dvwa/vulnerabilities/sqli/?id=1&Submit=Submit" \
   --cookie="${DVWA_COOKIE}" \
-  --level=5 --risk=3 --dump \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" --dump \
   ${SQLMAP_COMMON}
 
 run_sqlmap "DVWA — Blind SQL Injection" \
   -u "${BASE}/dvwa/vulnerabilities/sqli_blind/?id=1&Submit=Submit" \
   --cookie="${DVWA_COOKIE}" \
-  --technique=BT --level=5 --risk=3 \
+  --technique=BT --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" \
   ${SQLMAP_COMMON}
 
 ########################################################################
@@ -111,13 +112,13 @@ echo "========================================"
 
 run_sqlmap "VAmPI — User Lookup" \
   -u "${BASE}/vampi/users/v1/test" \
-  --level=3 --risk=2 \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" \
   ${SQLMAP_COMMON}
 
 run_sqlmap "VAmPI — Login" \
   -u "${BASE}/vampi/users/v1/login" \
   --method=POST --data='{"username":"test","password":"test"}' \
-  --level=3 --risk=2 \
+  --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" \
   ${SQLMAP_COMMON}
 
 ########################################################################
@@ -128,6 +129,6 @@ echo "========================================"
 echo " SQLMap Scan Summary"
 echo "========================================"
 echo "  Total injectable parameters found: ${FINDINGS}"
-echo "  Output directory: /tmp/sqlmap-output/"
+echo "  Output directory: $SQLMAP_OUTPUT_DIR/"
 echo ""
 echo "[*] SQLMap comprehensive scan finished."

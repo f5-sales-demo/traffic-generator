@@ -82,15 +82,16 @@ const IDENTITIES = [
   let registrations = 0;
   let contacts = 0;
 
-  for (const identity of IDENTITIES) {
+  for (const identity of IDENTITIES.slice(0, Number(process.env.TGEN_BROWSER_IDENTITIES || IDENTITIES.length))) {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const page = await context.newPage();
+    page.setDefaultTimeout(10000);
 
     // --- Registration form ---
     try {
       console.log(`[+] Registering: ${identity.email}`);
       await page.goto(`${BASE_URL}/juice-shop/#/register`, {
-        waitUntil: 'networkidle',
+        waitUntil: 'domcontentloaded',
         timeout: 15000,
       });
 
@@ -107,7 +108,21 @@ const IDENTITIES = [
       }
       await page.fill('#securityAnswerControl', 'bot answer');
 
-      await page.click('#registerButton').catch(() => {});
+      const registration = await page.evaluate(async (identity) => {
+        const response = await fetch('/juice-shop/api/Users/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: identity.email,
+            password: identity.password,
+            passwordRepeat: identity.password,
+            securityQuestion: { id: 1 },
+            securityAnswer: 'synthetic answer',
+          }),
+        });
+        return response.status;
+      }, identity);
+      console.log(`    Registration HTTP ${registration} (browser submission)`);
       await page.waitForTimeout(1000);
       console.log(`    Registration submitted`);
       registrations++;
@@ -119,7 +134,7 @@ const IDENTITIES = [
     try {
       console.log(`[+] Submitting contact form as: ${identity.name}`);
       await page.goto(`${BASE_URL}/juice-shop/#/contact`, {
-        waitUntil: 'networkidle',
+        waitUntil: 'domcontentloaded',
         timeout: 15000,
       });
 
@@ -131,7 +146,15 @@ const IDENTITIES = [
         await stars[stars.length - 1].click();
       }
 
-      await page.click('#submitButton').catch(() => {});
+      const contact = await page.evaluate(async (identity) => {
+        const response = await fetch('/juice-shop/api/Feedbacks/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comment: identity.comment, rating: 5 }),
+        });
+        return response.status;
+      }, identity);
+      console.log(`    Contact HTTP ${contact} (browser submission)`);
       await page.waitForTimeout(500);
       console.log(`    Contact form submitted`);
       contacts++;

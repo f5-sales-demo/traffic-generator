@@ -1,0 +1,40 @@
+---
+title: Continuous catalog execution
+description: Ordered simulation launches with a shared HTTP budget and private receipts.
+---
+
+The explicit `suites/catalog.json` records all numbered shell and JavaScript entrypoints,
+eleven CSD browser simulations, and the two standalone benchmarks. Reports are identified
+as reports. Every scenario records its dependencies, order, paths, expected outcome,
+request class, concurrency intent, and fifteen-minute maximum deadline.
+
+`bash suites/runner.sh <suite> --dry-run` reads the catalog without reading configuration,
+creating output, launching a browser, or sending traffic. `catalog` selects the entire
+ordered catalog. Missing scenarios and dependencies fail readiness.
+
+The Azure service uses a private structured `catalog-config.json`. It fixes the aggregate
+HTTP budget at 200 requests/sec: 90 benign requests/sec per authorized domain and a
+shared 20 requests/sec attack budget. A Linux namespace routes every HTTP scenario
+subprocess, scanner, browser, and nested worker through one transparent pacing proxy.
+Spare attack slots carry attributed synthetic filler; filler never satisfies a scenario's
+meaningful-launch requirement. TLS and slow-header probes use bounded equivalents on
+application ports, at most 20 attempts/sec and 20 slow connections. Manual benchmark
+adapters preserve multiple paths and connection behavior without changing host tuning.
+
+CSD simulations use the existing reusable browser engine through `azure.mjs`. They visit
+the authorized Juice Shop route and redirect reviewed synthetic counter/loader activity
+to the authorized HTTP echo fixture. CSD remains disabled. Browser receipts establish
+simulation activity and cleanup only; they never establish CSD detection or enforcement.
+The existing AWS launcher retains its provenance and headed-browser contract.
+
+Per-scenario private logs and browser screenshots accompany launch receipts. Heartbeats
+report source commit/digest, current scenario, complete passes, configured/measured rates,
+HTTP outcomes and failures. A timeout terminates the scenario's process group before
+continuing. Incomplete prerequisites, skips, tool errors and transport failures cannot
+be reported as successful launch coverage. Detailed evidence is retained for at most
+seven days or 10 GiB, evicting the oldest completed runs first.
+
+`install_catalog.py` verifies the bounded immutable upstream archive before promotion.
+Cloud-init and live updates use the same installer and pinned commit/digest. Installed
+readiness checks tools, wordlists, browser executable, certificates and application routes
+before the explicitly enabled supervised service starts.

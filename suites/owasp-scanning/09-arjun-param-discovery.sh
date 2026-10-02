@@ -17,7 +17,7 @@ echo "========================================"
 echo "[*] Target: ${BASE}"
 echo ""
 
-OUTPUT_DIR="/tmp/arjun"
+OUTPUT_DIR="${TGEN_RESULTS_DIR:-/tmp/arjun}"
 mkdir -p "${OUTPUT_DIR}"
 TOTAL_PARAMS=0
 
@@ -39,7 +39,11 @@ run_arjun() {
   echo "----------------------------------------"
 
   local output
-  output=$(arjun -u "${url}" -m "${method}" -oJ "${output_file}" --stable 2>&1) || true
+  if [[ -n "${TGEN_PARAMETER_WORDLIST:-}" ]]; then
+    output=$(arjun -u "${url}" -m "${method}" -oJ "${output_file}" -t 2 -w "$TGEN_PARAMETER_WORDLIST" --disable-redirects 2>&1) || true
+  else
+    output=$(arjun -u "${url}" -m "${method}" -oJ "${output_file}" --stable 2>&1) || true
+  fi
   echo "${output}"
 
   # Count discovered parameters

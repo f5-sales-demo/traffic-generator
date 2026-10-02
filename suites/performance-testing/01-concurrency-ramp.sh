@@ -17,8 +17,8 @@ ENDPOINTS=(
   "/csd-demo/health"
 )
 
-CONCURRENCY_LEVELS=(1 10 25 50 100 200 500)
-REQUESTS_PER_LEVEL=100
+CONCURRENCY_LEVELS=(1 10 "${TGEN_CONCURRENCY:-20}")
+REQUESTS_PER_LEVEL="${TGEN_REQUESTS:-100}"
 
 echo "[*] Concurrency ramp test against ${TARGET}"
 echo "    Endpoints: ${#ENDPOINTS[@]}"

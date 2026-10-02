@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "domains": ["www.example.test", "api.example.test"],
+  "protocol": "https",
+  "http_rps": 200,
+  "benign_rps": 180,
+  "attack_rps": 20,
+  "connection_rps": 20,
+  "slow_connections": 20,
+  "csd_enabled": false,
+  "protections_enabled": true,
+  "scenario_timeout_seconds": 900,
+  "retention_days": 7,
+  "retention_bytes": 10737418240,
+  "results_dir": "/opt/traffic-generator/runtime",
+  "source_commit": "0000000000000000000000000000000000000000",
+  "artifact_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+}

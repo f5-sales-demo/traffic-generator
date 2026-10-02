@@ -9,8 +9,8 @@ set -uo pipefail
 TARGET="${1:?Usage: 07-self-profile-under-load.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 
-CONCURRENCY=100
-DURATION=60
+CONCURRENCY="${TGEN_CONCURRENCY:-100}"
+DURATION="${TGEN_DURATION:-60}"
 SAMPLE_INTERVAL=5
 
 echo "[*] Self-profile under load against ${TARGET}"

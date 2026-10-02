@@ -33,12 +33,27 @@ run_ffuf() {
   echo "----------------------------------------"
 
   local output
-  output=$(ffuf "$@" 2>&1) || true
+  if [[ -n "${TGEN_DISCOVERY_WORDLIST:-}" ]]; then
+    local bounded_args=() skip_next=0 arg
+    for arg in "$@"; do
+      if [[ "$skip_next" == 1 ]]; then
+        skip_next=0
+        continue
+      fi
+      case "$arg" in
+      -w | -t) skip_next=1 ;;
+      *) bounded_args+=("$arg") ;;
+      esac
+    done
+    output=$(ffuf "${bounded_args[@]}" -w "$TGEN_DISCOVERY_WORDLIST" -t 2 2>&1)
+  else
+    output=$(ffuf "$@" 2>&1)
+  fi || true
   echo "${output}"
 
   # Count result lines (lines with Status: in ffuf output)
   local count
-  count=$(echo "${output}" | grep -cE "Status: [0-9]+" 2>/dev/null || echo "0")
+  count=$(echo "${output}" | grep -cE "Status: [0-9]+" 2>/dev/null || true)
   TOTAL_FOUND=$((TOTAL_FOUND + count))
 
   echo ""

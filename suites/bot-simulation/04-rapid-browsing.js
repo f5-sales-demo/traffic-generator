@@ -83,12 +83,13 @@ const USER_AGENTS = [
   let errors = 0;
   const startTime = Date.now();
 
-  for (const ua of USER_AGENTS) {
+  for (const ua of USER_AGENTS.slice(0, Number(process.env.TGEN_BROWSER_IDENTITIES || USER_AGENTS.length))) {
     const context = await browser.newContext({
       ignoreHTTPSErrors: true,
       userAgent: ua,
     });
     const page = await context.newPage();
+    page.setDefaultTimeout(10000);
 
     const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
     console.log(`[+] UA: ${uaShort}`);

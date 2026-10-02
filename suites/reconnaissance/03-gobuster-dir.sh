@@ -11,7 +11,7 @@ echo "[*] Gobuster directory scan against ${TARGET}"
 echo ""
 
 WORDLIST="/opt/seclists/Discovery/Web-Content/common.txt"
-if [[ -f "$WORDLIST" ]]; then
+if [[ ! -f "$WORDLIST" ]]; then
   echo "WARN: Wordlist not found at ${WORDLIST}, trying alternate locations..."
   for alt in /usr/share/seclists/Discovery/Web-Content/common.txt \
     /usr/share/wordlists/dirb/common.txt; do
@@ -20,6 +20,10 @@ if [[ -f "$WORDLIST" ]]; then
       break
     fi
   done
+fi
+
+if [[ -n "${TGEN_DISCOVERY_WORDLIST:-}" ]]; then
+  WORDLIST="$TGEN_DISCOVERY_WORDLIST"
 fi
 
 echo "[+] Using wordlist: ${WORDLIST}"

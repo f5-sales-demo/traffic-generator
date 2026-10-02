@@ -13,9 +13,9 @@ if ! command -v wrk &>/dev/null; then
   exit 1
 fi
 
-DURATION=30
+DURATION="${TGEN_DURATION:-30}"
 THREADS=$(nproc)
-CONNECTIONS_LIST=(10 50 100 500 1000)
+CONNECTIONS_LIST=(1 10 "${TGEN_CONCURRENCY:-20}")
 
 ENDPOINTS=(
   "/health"

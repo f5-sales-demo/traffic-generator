@@ -14,7 +14,7 @@ BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 ZAP_PORT=8090
 ZAP_API="http://localhost:${ZAP_PORT}"
 ZAP_PID=""
-REPORT_DIR="/tmp"
+REPORT_DIR="${TGEN_RESULTS_DIR:-/tmp}"
 
 APPS=(
   "/"
@@ -47,7 +47,9 @@ run_zap_daemon_mode() {
   echo "[*] Starting ZAP daemon on port ${ZAP_PORT}..."
   JVM_ARGS="-Xmx512m" zap -daemon -port "${ZAP_PORT}" \
     -config api.disablekey=true \
-    -config spider.maxDuration=2 \
+    -config autoupdate.checkOnStart=false \
+    -config autoupdate.checkAddonUpdates=false \
+    -config spider.maxDuration="${TGEN_ZAP_SPIDER_MINUTES:-2}" \
     -config scanner.maxScanDurationInMins=0 &
   ZAP_PID=$!
 
@@ -55,7 +57,7 @@ run_zap_daemon_mode() {
   echo "[*] Waiting for ZAP to start..."
   ZAP_READY=0
   for i in $(seq 1 30); do
-    if curl -s "${ZAP_API}/JSON/core/view/version/" >/dev/null 2>&1; then
+    if curl -sf "${ZAP_API}/JSON/core/view/version/" >/dev/null 2>&1; then
       ZAP_READY=1
       break
     fi
@@ -79,7 +81,7 @@ run_zap_daemon_mode() {
       python3 -c "import sys,json; print(json.load(sys.stdin).get('scan','0'))" 2>/dev/null || echo "0")
 
     # Wait for spider to finish (max 120s)
-    for j in $(seq 1 40); do
+    for j in $(seq 1 "${TGEN_ZAP_POLL_COUNT:-40}"); do
       STATUS=$(curl -s "${ZAP_API}/JSON/spider/view/status/?scanId=${SCAN_ID}" |
         python3 -c "import sys,json; print(json.load(sys.stdin).get('status','100'))" 2>/dev/null || echo "100")
       if [[ "${STATUS}" -ge 100 ]]; then
@@ -88,13 +90,14 @@ run_zap_daemon_mode() {
       echo "    Spider progress: ${STATUS}%"
       sleep 3
     done
-    echo "    Spider complete for ${app}"
+    curl -sf "${ZAP_API}/JSON/spider/action/stop/?scanId=${SCAN_ID}" >/dev/null
+    echo "    Spider stopped after bounded traversal for ${app}"
   done
 
   # Wait for passive scan to finish
   echo ""
   echo "[*] Waiting for passive scan to complete..."
-  for k in $(seq 1 40); do
+  for k in $(seq 1 "${TGEN_ZAP_POLL_COUNT:-40}"); do
     RECORDS=$(curl -s "${ZAP_API}/JSON/pscan/view/recordsToScan/" |
       python3 -c "import sys,json; print(json.load(sys.stdin).get('recordsToScan','0'))" 2>/dev/null || echo "0")
     if [[ "${RECORDS}" -eq 0 ]]; then
@@ -145,6 +148,12 @@ except Exception as e:
   echo "[*] Report: ${REPORT_DIR}/zap-baseline-report.html"
   return 0
 }
+
+# Continuous mode uses the bounded native daemon path directly.
+if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+  run_zap_daemon_mode
+  exit $?
+fi
 
 ########################################################################
 # Attempt 1: ZAP quick scan mode

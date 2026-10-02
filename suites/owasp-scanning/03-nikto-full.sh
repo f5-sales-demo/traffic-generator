@@ -30,12 +30,12 @@ run_nikto() {
   echo "----------------------------------------"
 
   local output
-  output=$(nikto -h "${url}" -maxtime 180s ${extra_args} -nointeractive 2>&1) || true
+  output=$(nikto -h "${url}" -maxtime "${TGEN_SCANNER_SECONDS:-180}s" ${extra_args} -nointeractive 2>&1) || true
   echo "${output}"
 
   # Count findings (lines containing "+ " that are not informational headers)
   local count
-  count=$(echo "${output}" | grep -c "^+ " 2>/dev/null || echo "0")
+  count=$(echo "${output}" | grep -c "^+ " 2>/dev/null || true)
   TOTAL_FINDINGS=$((TOTAL_FINDINGS + count))
 
   echo ""
@@ -56,9 +56,9 @@ echo "[*] Scanning: Root (all CGI checks)"
 echo "    URL: ${BASE}/"
 echo "----------------------------------------"
 
-OUTPUT=$(nikto -h "${BASE}/" -maxtime 120s -C all -nointeractive 2>&1) || true
+OUTPUT=$(nikto -h "${BASE}/" -maxtime "${TGEN_SCANNER_SECONDS:-120}s" -C all -nointeractive 2>&1) || true
 echo "${OUTPUT}"
-ROOT_COUNT=$(echo "${OUTPUT}" | grep -c "^+ " 2>/dev/null || echo "0")
+ROOT_COUNT=$(echo "${OUTPUT}" | grep -c "^+ " 2>/dev/null || true)
 TOTAL_FINDINGS=$((TOTAL_FINDINGS + ROOT_COUNT))
 
 echo ""

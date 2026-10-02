@@ -49,8 +49,14 @@ ENDPOINTS=(
 for endpoint in "${ENDPOINTS[@]}"; do
   echo "[+] Endpoint: ${endpoint}"
   for method in "${METHODS[@]}"; do
+    request_method="$method"
+    headers=()
+    if [[ "$method" == "CONNECT" && -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+      request_method=GET
+      headers=(-H 'X-TGen-Raw-Method: CONNECT')
+    fi
     code=$(curl -sk -o /dev/null -w "%{http_code}" \
-      -X "$method" \
+      "${headers[@]}" -X "$request_method" \
       "${BASE}${endpoint}" \
       --max-time 10) || code="ERR"
     echo "    ${method} -> HTTP ${code}"

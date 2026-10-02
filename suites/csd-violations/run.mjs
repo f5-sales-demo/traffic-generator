@@ -680,8 +680,8 @@ export async function runSuite(options = {}) {
   const browser = await playwright.chromium.launch({
     executablePath,
     channel: executablePath ? undefined : 'chrome',
-    headless: false,
-    args: ['--disable-dev-shm-usage'],
+    headless: options.headless ?? false,
+    args: options.browserArgs ?? ['--disable-dev-shm-usage'],
   });
   const scenarioResults = [];
   const cleanup = { browser: 'pending', contexts: 0, errors: [] };
@@ -691,6 +691,7 @@ export async function runSuite(options = {}) {
         ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? false,
       });
       cleanup.contexts += 1;
+      if (options.routeSetup) await options.routeSetup(context, target);
       await context.addInitScript(pageHelpers, { runId, scenarioName: scenario.name });
       const page = await context.newPage();
       const requests = new Map();
@@ -736,7 +737,8 @@ export async function runSuite(options = {}) {
           };
           try {
             if (step.op === 'navigate') {
-              const stepUrl = new URL(step.route, target);
+              const route = options.routePrefix ? options.routePrefix.replace(/\/$/, '') + step.route : step.route;
+              const stepUrl = new URL(route, target);
               if (stepUrl.hostname !== target.hostname)
                 throw new Error('scenario navigation escaped the validated target');
               const response = await page.goto(stepUrl.toString(), {
@@ -801,6 +803,7 @@ export async function runSuite(options = {}) {
         scenarioResult.network = [...requests.values()];
         scenarioResult.completedAt = new Date().toISOString();
         try {
+          if (options.routeCleanup) await options.routeCleanup(context);
           await context.close();
         } catch (error) {
           reportLocalError(`context cleanup ${scenario.name} failed`, error);

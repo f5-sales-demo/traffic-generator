@@ -13,9 +13,9 @@ else
   PORT=80
   USE_SSL=false
 fi
-NUM_CONNECTIONS=20
+NUM_CONNECTIONS="${TGEN_CONCURRENCY:-20}"
 HEADER_DELAY=5
-MAX_DURATION=60
+MAX_DURATION="${TGEN_DURATION:-60}"
 
 echo "[*] Slowloris-style attack against ${TARGET}:${PORT}"
 echo "    Connections: ${NUM_CONNECTIONS}"

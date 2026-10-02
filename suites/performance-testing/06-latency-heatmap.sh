@@ -8,7 +8,7 @@ set -uo pipefail
 TARGET="${1:?Usage: 06-latency-heatmap.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 
-REQUESTS=50
+REQUESTS="${TGEN_REQUESTS:-50}"
 
 ENDPOINTS=(
   "/health"

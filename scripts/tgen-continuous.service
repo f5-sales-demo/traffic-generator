@@ -1,0 +1,27 @@
+[Unit]
+Description=Perpetual ordered WAAP traffic catalog at 200 aggregate HTTP requests/sec
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=root
+Environment="PATH=/opt/traffic-generator/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="NODE_PATH=/usr/lib/node_modules"
+Environment="PYTHONDONTWRITEBYTECODE=1"
+ExecStartPre=/usr/bin/python3 /opt/traffic-generator/current/scripts/cleanup_network.py --config /opt/traffic-generator/catalog-config.json
+ExecStartPre=/usr/bin/python3 /opt/traffic-generator/current/scripts/catalog_readiness.py --config /opt/traffic-generator/catalog-config.json
+ExecStart=/usr/bin/python3 /opt/traffic-generator/current/scripts/traffic_runtime.py --config /opt/traffic-generator/catalog-config.json
+ExecStopPost=/usr/bin/python3 /opt/traffic-generator/current/scripts/cleanup_network.py --config /opt/traffic-generator/catalog-config.json
+Restart=on-failure
+RestartSec=10
+KillMode=control-group
+TimeoutStartSec=300
+TimeoutStopSec=30
+LimitNOFILE=65536
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

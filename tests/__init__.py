@@ -1,0 +1,1 @@
+"""Traffic catalog regression contracts."""

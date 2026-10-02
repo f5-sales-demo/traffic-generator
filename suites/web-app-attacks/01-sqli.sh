@@ -16,7 +16,7 @@ echo "[+] Running sqlmap against Juice Shop search API..."
 sqlmap --batch --level=1 --risk=1 \
   -u "${BASE}/juice-shop/rest/products/search?q=test" \
   --timeout=10 --retries=1 --threads=3 \
-  --output-dir=/tmp/sqlmap-juice ||
+  --output-dir="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-juice" ||
   echo "WARN: sqlmap juice-shop scan returned non-zero"
 
 echo ""
@@ -24,7 +24,7 @@ echo "[+] Running sqlmap against DVWA SQLi endpoint..."
 sqlmap --batch --level=1 --risk=1 \
   -u "${BASE}/dvwa/vulnerabilities/sqli/?id=1&Submit=Submit" \
   --timeout=10 --retries=1 --threads=3 \
-  --output-dir=/tmp/sqlmap-dvwa ||
+  --output-dir="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-dvwa" ||
   echo "WARN: sqlmap dvwa scan returned non-zero"
 
 echo ""

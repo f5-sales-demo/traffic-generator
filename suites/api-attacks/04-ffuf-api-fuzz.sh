@@ -95,7 +95,15 @@ FUZZ_ENDPOINTS=(
   "${BASE}/dvwa/"
 )
 
+if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+  sed -i '/^CONNECT$/d' "$METHODS_FILE"
+fi
 for endpoint in "${FUZZ_ENDPOINTS[@]}"; do
+  if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+    echo "[+] Paced raw CONNECT method probe: $endpoint"
+    curl -s --max-time 15 -o /dev/null -w 'CONNECT -> HTTP %{http_code}\n' \
+      -H 'X-TGen-Raw-Method: CONNECT' "$endpoint"
+  fi
   echo ""
   echo "[+] Method fuzzing: ${endpoint}"
   ffuf -u "$endpoint" \
