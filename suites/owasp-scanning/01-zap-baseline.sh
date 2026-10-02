@@ -146,6 +146,12 @@ except Exception as e:
   return 0
 }
 
+# Continuous mode uses the bounded native daemon path directly.
+if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+  run_zap_daemon_mode
+  exit $?
+fi
+
 ########################################################################
 # Attempt 1: ZAP quick scan mode
 ########################################################################
