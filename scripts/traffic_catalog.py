@@ -23,6 +23,14 @@ def validate_catalog(root: Path, catalog: dict) -> None:
         for p in (root / "suites").glob("*/[0-9]*")
         if p.is_file()
     }
+    suites = sorted(path.name for path in (root / "suites").iterdir() if path.is_dir())
+    if catalog["suites"] != suites:
+        message = "catalog suite inventory is incomplete"
+        raise ValueError(message)
+    benchmark_paths = {
+        str(path.relative_to(root))
+        for path in (root / "suites/cdn-load-testing").glob("bench-*.sh")
+    }
     seen: set[str] = set()
     recorded: set[str] = set()
     for scenario in catalog["scenarios"]:
@@ -43,7 +51,7 @@ def validate_catalog(root: Path, catalog: dict) -> None:
         ):
             msg = "scenario deadline must be within fifteen minutes"
             raise ValueError(msg)
-    if not numbered <= recorded:
+    if not (numbered | benchmark_paths) <= recorded:
         msg = "numbered executable missing from catalog"
         raise ValueError(msg)
     browser_names = re.findall(

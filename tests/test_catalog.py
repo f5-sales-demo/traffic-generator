@@ -44,6 +44,12 @@ class CatalogTests(unittest.TestCase):
         with pytest.raises(ValueError, match="missing ordered dependency"):
             self.module.validate_catalog(ROOT, catalog)
 
+    def test_missing_suite_is_rejected(self):
+        catalog = self.module.load_catalog(ROOT)
+        catalog["suites"].pop()
+        with pytest.raises(ValueError, match="suite inventory"):
+            self.module.validate_catalog(ROOT, catalog)
+
     def test_missing_tool_is_failure(self):
         result = self.module.readiness(
             ROOT, self.module.load_catalog(ROOT), find_tool=lambda _: None
