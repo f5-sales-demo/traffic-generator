@@ -315,6 +315,40 @@ class NetworkBoundary:
             ]
         )
 
+    def refresh_fixtures(self, domain: str) -> None:
+        """Refresh real synthetic authentication without modifying protected attack outcomes."""
+        fixture_path = self.runtime.parent / "fixtures.json"
+        if not fixture_path.exists():
+            return
+        fixtures = json.loads(fixture_path.read_text())
+        # Fixture login participates in the same attack HTTP dispatch clock.
+        command = self.wrap(
+            [
+                "curl",
+                "-sk",
+                "--max-time",
+                "10",
+                "-X",
+                "POST",
+                "https://" + domain + "/vampi/users/v1/login",
+                "-H",
+                "Content-Type: application/json",
+                "-H",
+                "X-MUD-User: waap-fixture-benign",
+                "-d",
+                '{"username":"name1","password":"pass1"}',
+            ]
+        )
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        try:
+            token = json.loads(result.stdout).get("auth_token")
+        except ValueError:
+            token = None
+        if token:
+            fixtures["vampi_token"] = token
+            fixture_path.write_text(json.dumps(fixtures))
+            fixture_path.chmod(0o600)
+
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
         """Provide structured inputs and private per-scenario output paths."""
         return dict(

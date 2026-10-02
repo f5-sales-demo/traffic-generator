@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Read a real seeded synthetic application token from the private fixture receipt."""
 
+import base64
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 
@@ -17,6 +19,14 @@ def token(kind: str) -> str:
     if not isinstance(value, str) or not value:
         message = "required real synthetic fixture token is absent"
         raise ValueError(message)
+    encoded = value.split(".")[1] if "." in value else ""
+    if encoded:
+        payload = json.loads(
+            base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
+        )
+        if payload.get("exp", time.time() + 60) <= time.time():
+            message = "real synthetic fixture token expired; refresh required"
+            raise ValueError(message)
     return value
 
 

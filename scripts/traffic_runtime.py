@@ -229,6 +229,7 @@ def _scenario(
     )
     directory = active / scenario["id"].replace("/", "--")
     directory.mkdir(mode=0o700)
+    boundary.refresh_fixtures(domain)
     environment = boundary.environment(scenario, domain, directory)
     before = boundary.metrics()
     command = boundary.wrap(
