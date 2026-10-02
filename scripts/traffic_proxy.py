@@ -130,6 +130,8 @@ class Budget:
             self.persist()
             return
         flow.request.host = host
+        # Older scanners send cleartext HTTP to 443; the authorized origin listener requires TLS.
+        flow.request.scheme = "https" if flow.request.port == 443 else "http"
         if "X-MUD-User" not in flow.request.headers:
             flow.request.headers["X-MUD-User"] = (
                 "waap-scenario-" + self.current_scenario() + "-" + host
