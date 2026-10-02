@@ -388,6 +388,7 @@ class NetworkBoundary:
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
         """Provide structured inputs and private per-scenario output paths."""
+        fixtures = json.loads((self.runtime.parent / "fixtures.json").read_text())
         return dict(
             os.environ,
             SSL_CERT_FILE=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
@@ -396,6 +397,9 @@ class NetworkBoundary:
             TGEN_INHERITED_BOUNDARY="1",
             TGEN_PARAMETER_WORDLIST=str(self.root / "suites/parameter-words.txt"),
             TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json"),
+            TGEN_CRAPI_VEHICLE_UUID=str(fixtures.get("crapi_vehicle_uuid", "")),
+            TGEN_CRAPI_VIDEO_ID=str(fixtures.get("crapi_video_id", "")),
+            TGEN_CRAPI_ORDER_ID=str(fixtures.get("crapi_order_id", "")),
             TARGET_FQDN=domain,
             TARGET_PROTOCOL="https",
             CRAPI_BASE_URL="https://" + domain + "/crapi",
