@@ -168,6 +168,19 @@ class RuntimeTests(unittest.TestCase):
             runtime.retain(root, active, 7, 1)
             assert certificate.exists()
 
+    def test_completed_active_scenario_evidence_expires_by_age(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            active = root / "pass-active"
+            active.mkdir()
+            scenario = active / "completed"
+            scenario.mkdir()
+            (scenario / "receipt.json").write_text("{}")
+            os.utime(scenario, (1, 1))
+            runtime.retain(root, active, 7, 100000)
+            assert not scenario.exists()
+            assert active.exists()
+
     def test_atomic_receipt_is_private(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = pathlib.Path(tmp) / "receipt.json"
