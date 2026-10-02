@@ -68,14 +68,19 @@
     "uptime",
     "xargs",
     "sha256sum",
-    "hashid"
+    "hashid",
+    "setpriv",
+    "getent"
   ],
   "support_files": [
     "suites/csd-violations/scenarios.mjs",
     "suites/csd-violations/run.sh",
     "suites/parameter-words.txt",
     "scripts/fixture_token.py",
-    "scripts/traffic_fixtures.py"
+    "scripts/traffic_fixtures.py",
+    "suites/discovery-words.txt",
+    "suites/nuclei-config.yaml",
+    "scripts/cleanup_network.py"
   ],
   "scenarios": [
     {
