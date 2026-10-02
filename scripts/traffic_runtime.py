@@ -350,13 +350,16 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
                 "id": pass_id,
                 "started": state["pass_started"],
                 "complete": len(receipts) == len(scenarios),
+                "catalog_complete": len(receipts)
+                == len(load_catalog(root)["scenarios"]),
+                "scenario_count": len(receipts),
                 "passed": len(receipts) == len(scenarios)
                 and all(r["outcome"] == "launched" for r in receipts),
                 "scenarios": receipts,
                 "completed": time.time(),
             }
             atomic_json(active / "receipt.json", receipt)
-            if receipt["complete"]:
+            if receipt["catalog_complete"]:
                 state["completed_passes"] += 1
             state["last_pass"] = {k: v for k, v in receipt.items() if k != "scenarios"}
             state["catalog_passes"] = (

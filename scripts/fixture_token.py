@@ -3,6 +3,7 @@
 
 import json
 import os
+import sys
 from pathlib import Path
 
 
@@ -20,4 +21,4 @@ def token(kind: str) -> str:
 
 
 if __name__ == "__main__":
-    print(token("juice_token"))
+    print(token(sys.argv[1] if len(sys.argv) > 1 else "juice_token"))

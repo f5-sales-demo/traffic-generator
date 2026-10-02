@@ -29,11 +29,8 @@ echo "    Login response: ${LOGIN_RESP}"
 
 TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // .authToken // empty' 2>/dev/null || true)
 if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
-  FIXTURE_LOGIN=$(curl -sk -X POST "${BASE}/users/v1/login" \
-    -H "Content-Type: application/json" \
-    -d '{"username":"name1","password":"pass1"}' --max-time 10)
-  TOKEN=$(printf '%s' "$FIXTURE_LOGIN" | jq -r '.auth_token // empty')
-  echo "[FIXTURE] Seeded VAmPI account selected after registration did not persist across replicas"
+  TOKEN=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py" vampi_token)
+  echo "[FIXTURE] Using a real seeded VAmPI token after blocked authentication"
 fi
 if [[ -z "$TOKEN" ]]; then
   echo "WARN: Could not extract auth token, continuing with empty token"
