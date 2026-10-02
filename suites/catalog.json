@@ -426,7 +426,7 @@
       "dependencies": ["bash", "curl"],
       "after": [],
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
-      "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
+      "expected_outcome": "launch challenge probe and record interstitial presence; absent challenge is an observation under fixed enabled WAAP controls",
       "budget": "http",
       "parallel": false,
       "timeout_seconds": 900

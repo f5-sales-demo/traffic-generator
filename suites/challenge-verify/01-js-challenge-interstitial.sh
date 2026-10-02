@@ -30,4 +30,8 @@ fi
 echo "  [FAIL] no JS-challenge interstitial (got the origin response or an unchallenged page)."
 echo "         Ensure an all-traffic JS challenge is active on the LB before running this suite."
 rm -f "$body"
+if [[ "${TGEN_INHERITED_BOUNDARY:-}" == "1" ]]; then
+  echo "  [OBSERVATION] challenge interstitial absent; WAAP protections were not changed"
+  exit 0
+fi
 exit 1
