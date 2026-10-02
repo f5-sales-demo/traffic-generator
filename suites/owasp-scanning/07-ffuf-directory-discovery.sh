@@ -34,7 +34,18 @@ run_ffuf() {
 
   local output
   if [[ -n "${TGEN_DISCOVERY_WORDLIST:-}" ]]; then
-    output=$(ffuf "$@" -w "$TGEN_DISCOVERY_WORDLIST" -t 2 2>&1)
+    local bounded_args=() skip_next=0 arg
+    for arg in "$@"; do
+      if [[ "$skip_next" == 1 ]]; then
+        skip_next=0
+        continue
+      fi
+      case "$arg" in
+      -w | -t) skip_next=1 ;;
+      *) bounded_args+=("$arg") ;;
+      esac
+    done
+    output=$(ffuf "${bounded_args[@]}" -w "$TGEN_DISCOVERY_WORDLIST" -t 2 2>&1)
   else
     output=$(ffuf "$@" 2>&1)
   fi || true
