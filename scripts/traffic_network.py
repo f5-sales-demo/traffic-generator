@@ -488,7 +488,9 @@ class NetworkBoundary:
                 "cdn-load-testing/09-origin-torture",
             )
             else "20",
-            TGEN_REQUESTS="100",
+            TGEN_REQUESTS="20"
+            if scenario["id"] == "performance-testing/06-latency-heatmap"
+            else "100",
             TGEN_UA_REQUESTS="5",
             TGEN_UA_CONCURRENCY="2",
             TGEN_REQUESTS_PER_WORKER="5",
