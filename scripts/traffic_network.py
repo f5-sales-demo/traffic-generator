@@ -46,7 +46,7 @@ class NetworkBoundary:
         self.state.proxy_metrics = runtime / "proxy-metrics.json"
         self.state.stop = threading.Event()
         self.state.proxy = None
-        self.state.pool = ThreadPoolExecutor(max_workers=120)
+        self.state.pool = ThreadPoolExecutor(max_workers=200)
         self.state.benign = {
             "benign_requests": 0,
             "benign_completed": 0,
@@ -57,7 +57,7 @@ class NetworkBoundary:
         }
         self.state.pacers = {domain: Pacer(90) for domain in config["domains"]}
         self.state.capacity = {
-            domain: threading.BoundedSemaphore(60) for domain in config["domains"]
+            domain: threading.BoundedSemaphore(100) for domain in config["domains"]
         }
         self.state.lock = threading.Lock()
         self.state.threads = []
