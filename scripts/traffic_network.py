@@ -265,7 +265,7 @@ class NetworkBoundary:
     def wrap(self, command: list[str], connection: bool = False) -> list[str]:
         """All HTTP scenario descendants inherit the same isolated egress."""
         return (
-            command if connection else ["ip", "netns", "exec", self.namespace, *command]
+            command if connection else ["ip", "netns", "exec", self.namespace, "setpriv", "--bounding-set=-all", "--inh-caps=-all", "--ambient-caps=-all", *command]
         )
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
