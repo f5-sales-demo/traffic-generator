@@ -71,7 +71,7 @@ for w in $(seq 1 "$WORKER_COUNT"); do
   ) &
 
   # Rate-limit worker spawning to avoid fork bomb
-  if [ $((w % 50)) -eq 0 ]; then
+  if [ $((w % ${TGEN_CONCURRENCY:-50})) -eq 0 ]; then
     wait
   fi
 done
