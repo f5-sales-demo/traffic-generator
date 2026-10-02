@@ -21,7 +21,7 @@ echo "    Resolved to: ${TARGET_IP}"
 echo ""
 
 echo "[+] Running masscan against ${TARGET_IP} (all ports)..."
-masscan "$TARGET_IP" -p80,443 --rate="${TGEN_CONNECTION_RATE:-20}" ||
+masscan "$TARGET_IP" -p"${TGEN_CONNECTION_PORTS:-0-65535}" --rate="${TGEN_CONNECTION_RATE:-1000}" ||
   echo "WARN: masscan exited with non-zero status"
 
 echo ""

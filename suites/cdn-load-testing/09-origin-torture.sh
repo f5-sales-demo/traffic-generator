@@ -53,7 +53,7 @@ echo ""
 echo "=== LAYER 1: SUSTAINED WRK LOAD (all apps, keepalive) ==="
 WRK_T=$((NCPU / 2))
 [ "$WRK_T" -lt 2 ] && WRK_T=2
-WRK_C="${TGEN_CONCURRENCY:-20}"
+WRK_C="${TGEN_CONCURRENCY:-256}"
 
 ORIGIN_ENDPOINTS=(
   "/juice-shop/"
@@ -165,7 +165,11 @@ SUITE_PIDS=""
 for suite in dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack; do
   if [ -d "$SUITE_DIR/$suite" ]; then
     (
-      bash "$SUITE_DIR/runner.sh" "$suite"
+      if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+        TGEN_RESULTS_DIR="$RESULTS_DIR/nested-$suite" bash "$SUITE_DIR/runner.sh" "$suite"
+      else
+        bash "$SUITE_DIR/runner.sh" "$suite"
+      fi
     ) >"$RESULTS_DIR/suite-${suite}.log" 2>&1 &
     PID=$!
     SUITE_PIDS="$SUITE_PIDS $PID"

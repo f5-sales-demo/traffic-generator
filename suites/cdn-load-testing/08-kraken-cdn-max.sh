@@ -34,7 +34,7 @@ echo "=== LAYER 1: wrk SUSTAINED LOAD (deep path randomization) ==="
 WRK_PIDS=""
 if command -v wrk >/dev/null 2>&1; then
   for ep in "/juice-shop/" "/dvwa/login.php" "/vampi/users/v1" "/httpbin/get" "/csd-demo/health" "/whoami/" "/health"; do
-    wrk -t2 -c"${TGEN_CONCURRENCY:-20}" -d"${DURATION}s" --timeout 10s \
+    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s \
       -H "X-Forwarded-For: $(rand_ip)" \
       -H "Accept-Encoding: $(rand_encoding)" \
       -H "User-Agent: $(rand_ua)" \
@@ -44,13 +44,13 @@ if command -v wrk >/dev/null 2>&1; then
   done
   # Combined Lua-randomized instance
   if [ -f "$LUA_BASELINE" ]; then
-    wrk -t2 -c"${TGEN_CONCURRENCY:-20}" -d"${DURATION}s" --timeout 10s -s "$LUA_BASELINE" "${BASE}/" >"$RESULTS_DIR/wrk-lua-baseline.log" 2>&1 &
+    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s -s "$LUA_BASELINE" "${BASE}/" >"$RESULTS_DIR/wrk-lua-baseline.log" 2>&1 &
     WRK_PIDS="$WRK_PIDS $!"
     echo "[+] wrk Lua-randomized: all paths (PID $!, 4t/500c)"
   fi
   # Multi-client Lua instance
   if [ -f "$LUA_MULTI" ]; then
-    wrk -t2 -c"${TGEN_CONCURRENCY:-20}" -d"${DURATION}s" --timeout 10s -s "$LUA_MULTI" "${BASE}/" >"$RESULTS_DIR/wrk-lua-multi.log" 2>&1 &
+    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s -s "$LUA_MULTI" "${BASE}/" >"$RESULTS_DIR/wrk-lua-multi.log" 2>&1 &
     WRK_PIDS="$WRK_PIDS $!"
     echo "[+] wrk Lua-multi-client: vendor headers (PID $!, 4t/500c)"
   fi
@@ -92,7 +92,7 @@ if command -v vegeta >/dev/null 2>&1; then
       echo "Accept-Encoding: $(rand_encoding)"
       echo "Cookie: session=vegeta-${RANDOM}"
     ) >"$RESULTS_DIR/vegeta-targets-$(echo "$ep" | tr '/' '_').txt"
-    vegeta attack -rate="${TGEN_ATTACK_RATE:-20}/s" -duration="${DURATION}s" -timeout=10s \
+    vegeta attack -rate="${TGEN_ATTACK_RATE:-500}/s" -duration="${DURATION}s" -timeout=10s \
       -targets="$RESULTS_DIR/vegeta-targets-$(echo "$ep" | tr '/' '_').txt" 2>/dev/null |
       vegeta encode >"$RESULTS_DIR/vegeta-$(echo "$ep" | tr '/' '_').bin" &
     VEG_PIDS="$VEG_PIDS $!"
