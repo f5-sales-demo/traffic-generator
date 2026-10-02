@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { constants } from 'node:fs';
+import { constants, realpathSync } from 'node:fs';
 import { access } from 'node:fs/promises';
 // Azure launches reuse the browser engine. AWS remains governed by validateAwsRuntime.
 import { createRequire } from 'node:module';
@@ -65,7 +65,7 @@ export async function runAzure(environment = process.env, options = {}) {
   });
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pathname) {
+if (process.argv[1] && realpathSync(resolve(process.argv[1])) === new URL(import.meta.url).pathname) {
   try {
     const result = await runAzure();
     console.log(JSON.stringify({ counts: result.receipt.counts, receipt: result.receiptPath, csdEnabled: false }));

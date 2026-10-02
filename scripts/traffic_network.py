@@ -7,6 +7,7 @@ import shutil
 import socket
 import ssl
 import subprocess
+import tempfile
 import threading
 import time
 import uuid
@@ -32,6 +33,7 @@ class NetworkBoundary:
         """Initialize a task-owned egress boundary and benign counters."""
         self.root, self.config, self.runtime = root, config, runtime
         self.state = SimpleNamespace()
+        self.browser_temp = Path(tempfile.mkdtemp(prefix="tgen-"))
         suffix = uuid.uuid4().hex[:7]
         self.state.namespace = "tgen-" + suffix
         self.state.host_link, self.state.guest_link = "tgh" + suffix, "tgg" + suffix
@@ -329,7 +331,7 @@ class NetworkBoundary:
             TARGET_URL="https://" + domain + "/juice-shop/",
             TGEN_RESULTS_DIR=str(directory),
             RESULTS_DIR=str(directory),
-            TMPDIR=str(directory),
+            TMPDIR=str(self.browser_temp),
             TGEN_CONNECTION_RATE=str(self.config["connection_rps"]),
             TGEN_SLOW_CONNECTIONS=str(self.config["slow_connections"]),
             TGEN_DURATION="15",
@@ -402,5 +404,6 @@ class NetworkBoundary:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+        shutil.rmtree(self.browser_temp)
         if hasattr(self.state, "netns_dir") and self.state.netns_dir.exists():
             shutil.rmtree(self.state.netns_dir)
