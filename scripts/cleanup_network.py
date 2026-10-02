@@ -4,6 +4,7 @@
 import argparse
 import json
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -51,6 +52,17 @@ def cleanup(runtime: Path) -> None:
         subprocess.run(  # noqa: S603 - validated task-owned cleanup argv
             command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
+    temp = Path(data.get("browser_temp", ""))
+    if (
+        temp.parent == Path("/tmp")  # noqa: S108 - validated recorded private temporary directory
+        and re.fullmatch(r"tgen-[a-zA-Z0-9_-]+", temp.name)
+        and temp.exists()
+        and not temp.is_symlink()
+    ):
+        shutil.rmtree(temp)
+    netns = Path("/etc/netns") / namespace
+    if netns.exists() and not netns.is_symlink():
+        shutil.rmtree(netns)
     receipt.unlink()
 
 

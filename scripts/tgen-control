@@ -14,10 +14,11 @@ stop)
   systemctl disable --now tgen-continuous.service
   ;;
 status)
-  python3 - "$ROOT/runtime/status.json" <<'PY'
+  python3 - "$CONFIG" <<'PY'
 import json,subprocess,sys
 from pathlib import Path
-path=Path(sys.argv[1])
+config=json.loads(Path(sys.argv[1]).read_text())
+path=Path(config["results_dir"])/"status.json"
 status=json.loads(path.read_text()) if path.exists() else {"status":"stopped"}
 status["service_active"]=subprocess.run(["systemctl","is-active","--quiet","tgen-continuous.service"],check=False).returncode==0
 status["service_enabled"]=subprocess.run(["systemctl","is-enabled","--quiet","tgen-continuous.service"],check=False).returncode==0
