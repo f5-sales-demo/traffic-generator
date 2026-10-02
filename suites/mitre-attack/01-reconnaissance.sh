@@ -13,7 +13,14 @@ echo ""
 
 echo "=== T1595.001: Active Scanning — Port Scan ==="
 echo "    Technique: Scanning IP for open ports and services"
-nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "(open|filtered|closed)" | head -20
+if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+  echo "[CATALOG] Paced HTTP service assessment; TCP/TLS port scans run in the connection catalog"
+  for path in / /health /httpbin/headers; do
+    curl -skI --max-time 15 "${BASE}${path}" | head -12
+  done
+else
+  nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "(open|filtered|closed)" | head -20
+fi
 echo ""
 
 echo "=== T1595.002: Active Scanning — Vulnerability Scan ==="
@@ -23,7 +30,7 @@ echo ""
 
 echo "=== T1595.003: Active Scanning — Wordlist Scan ==="
 echo "    Technique: Brute-force directory/file enumeration"
-ffuf -u "${BASE}/FUZZ" -w /opt/seclists/Discovery/Web-Content/common.txt \
+ffuf -u "${BASE}/FUZZ" -w "${TGEN_DISCOVERY_WORDLIST:-/opt/seclists/Discovery/Web-Content/common.txt}" \
   -mc 200,301,302,401,403 -t 50 -timeout 10 -s 2>/dev/null | head -20
 echo ""
 
