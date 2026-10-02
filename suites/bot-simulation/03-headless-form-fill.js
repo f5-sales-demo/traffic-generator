@@ -108,7 +108,7 @@ const IDENTITIES = [
       }
       await page.fill('#securityAnswerControl', 'bot answer');
 
-      await page.click('#registerButton').catch(() => {});
+      await page.click('#registerButton');
       await page.waitForTimeout(1000);
       console.log(`    Registration submitted`);
       registrations++;
@@ -132,7 +132,7 @@ const IDENTITIES = [
         await stars[stars.length - 1].click();
       }
 
-      await page.click('#submitButton').catch(() => {});
+      await page.click('#submitButton');
       await page.waitForTimeout(500);
       console.log(`    Contact form submitted`);
       contacts++;
