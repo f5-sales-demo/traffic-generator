@@ -245,7 +245,7 @@ class NetworkBoundary:
                 _proxy_failed(msg)
             for domain in self.config["domains"]:
                 worker = threading.Thread(
-                    target=self.state.benign_loop, args=(domain,), daemon=True
+                    target=self.benign_loop, args=(domain,), daemon=True
                 )
                 worker.start()
                 self.state.threads.append(worker)
