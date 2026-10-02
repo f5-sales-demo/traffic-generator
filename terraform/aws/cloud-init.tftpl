@@ -31,6 +31,7 @@ write_files:
       AMI_ID=${ami_id}
       DEPLOYMENT_MANIFEST_VERSION=${deployment_manifest_version}
       DEPLOYMENT_MANIFEST_SHA256=${deployment_manifest_sha256}
+      CONTINUOUS_ENABLED=${continuous_enabled ? "1" : "0"}
   - path: /etc/amazon-cloudwatch-agent.json
     owner: root:root
     permissions: '0644'
@@ -95,8 +96,6 @@ write_files:
       [[ "$INSTANCE_ID" =~ ^i-[0-9a-f]+$ ]] || { echo "ERROR: IMDSv2 returned an invalid instance ID" >&2; exit 69; }
       unset imds_token
       export INSTANCE_ID
-      exec 9>/run/lock/csd-traffic-generator.lock
-      flock -n 9 || { echo "ERROR: another CSD run is active" >&2; exit 75; }
       run_id="$(date -u +%Y%m%dt%H%M%Sz)-$(cat /proc/sys/kernel/random/uuid)"
       trap 'rc=$?; /usr/local/bin/csd-log-event "run=$run_id scenario=$scenario exit=$rc" || true' EXIT
       /usr/local/bin/csd-log-event "run=$run_id scenario=$scenario status=started" || true
@@ -123,6 +122,11 @@ write_files:
       test "$(stat -c '%U:%G:%a' /opt/traffic-generator/source)" = "root:root:555"
       test "$(stat -c '%U:%G:%a' /opt/traffic-generator/source/suites/csd-violations/run.mjs)" = "root:root:444"
       /opt/node/bin/node --version | grep -q '^v22\.'
+      test "$TARGET_URL" = https://client-side-defense.f5-sales-demo.com
+      case "$CONTINUOUS_ENABLED" in 1|0) ;; *) exit 64 ;; esac
+      test "$(stat -c '%U:%G:%a' /opt/traffic-generator/source/suites/csd-violations/continuous.mjs)" = "root:root:444"
+      test "$(sha256sum /opt/traffic-generator/source/suites/csd-violations/scenarios.mjs | cut -d' ' -f1)" = "$DEPLOYMENT_MANIFEST_SHA256"
+      /opt/node/bin/node --check /opt/traffic-generator/source/suites/csd-violations/continuous.mjs
       test "$(/opt/node/bin/node -p 'require("/opt/traffic-generator/node_modules/playwright-core/package.json").version')" = "${playwright_core_version}"
       sudo -u tgen test -x "$AWS_CLI_BIN"
       test "$(sudo -u tgen "$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = "$AWS_CLI_VERSION"
@@ -159,17 +163,79 @@ write_files:
       [Unit]
       Description=Verify CSD traffic generator runtime
       Requires=csd-xvfb.service
+      Wants=network-online.target
       After=csd-xvfb.service network-online.target
       [Service]
       Type=oneshot
       User=root
       Group=root
       RemainAfterExit=true
+      TimeoutStartSec=120s
+      TimeoutStopSec=30s
+      KillMode=control-group
       StandardOutput=append:/var/log/csd-worker-health.log
       StandardError=inherit
       ExecStart=/usr/local/bin/csd-worker-health-check
       [Install]
       WantedBy=multi-user.target
+  - path: /etc/systemd/system/csd-continuous.service
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Dispatch one canonical CSD scenario or frozen upload retry
+      Requires=csd-worker-health.service
+      Wants=network-online.target
+      After=csd-worker-health.service network-online.target systemd-tmpfiles-setup.service
+      [Service]
+      Type=oneshot
+      User=root
+      Group=root
+      WorkingDirectory=/opt/traffic-generator
+      Environment=PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      ExecStart=/opt/node/bin/node /opt/traffic-generator/source/suites/csd-violations/continuous.mjs tick
+      TimeoutStartSec=1100s
+      TimeoutStopSec=45s
+      KillMode=control-group
+      UMask=0077
+      StandardOutput=append:/var/log/csd-scenario.log
+      StandardError=inherit
+  - path: /etc/systemd/system/csd-continuous.timer
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Resume serial CSD dispatch after boot and each completed tick
+      Wants=network-online.target
+      After=network-online.target csd-worker-health.service systemd-tmpfiles-setup.service
+      [Timer]
+      Unit=csd-continuous.service
+      OnBootSec=30s
+      OnUnitInactiveSec=15s
+      AccuracySec=1s
+      Persistent=false
+      [Install]
+      WantedBy=timers.target
+  - path: /etc/tmpfiles.d/csd-traffic-generator.conf
+    owner: root:root
+    permissions: '0644'
+    content: |
+      f /run/lock/csd-traffic-generator.lock 0660 root tgen -
+      d /opt/traffic-generator/runtime/continuous 0700 root root -
+  - path: /etc/logrotate.d/csd-traffic-generator
+    owner: root:root
+    permissions: '0644'
+    content: |
+      /var/log/csd-scenario.log /var/log/csd-worker-health.log /var/log/csd-xvfb.log {
+        daily
+        size 10M
+        rotate 7
+        compress
+        delaycompress
+        copytruncate
+        missingok
+        notifempty
+      }
   - path: /usr/local/sbin/csd-bootstrap
     owner: root:root
     permissions: '0755'
@@ -203,6 +269,11 @@ write_files:
         find -P "$aws_cli_root" -type f -perm /u=x -exec chmod 0750 {} +
         find -P "$aws_cli_root" -type f ! -perm /u=x -exec chmod 0640 {} +
       }
+      stage=quiescing
+      systemctl daemon-reload
+      systemctl disable --now csd-continuous.timer csd-continuous.service
+      ! systemctl is-active --quiet csd-continuous.timer
+      ! systemctl is-active --quiet csd-continuous.service
       write_status provisioning
       systemctl disable --now csd-worker-health.service csd-xvfb.service >/dev/null 2>&1 || true
       stage=apt-sources
@@ -219,7 +290,7 @@ write_files:
       stage=prerequisites
       apt-get update
       DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates curl git inotify-tools jq libasound2t64 libatk-bridge2.0-0 \
+        ca-certificates curl git inotify-tools jq logrotate libasound2t64 libatk-bridge2.0-0 \
         libatk1.0-0 libcups2 libdrm2 libgbm1 libgtk-3-0 libnss3 libx11-xcb1 \
         libxcomposite1 libxdamage1 libxfixes3 libxkbcommon0 libxrandr2 sudo unzip xauth xvfb xz-utils
       rm -rf /var/lib/apt/lists/*
@@ -227,6 +298,7 @@ write_files:
       install -o tgen -g tgen -m 0640 /dev/null /var/log/csd-xvfb.log
       install -o root -g root -m 0640 /dev/null /var/log/csd-scenario.log
       install -d -o tgen -g tgen -m 0750 /opt/traffic-generator /opt/traffic-generator/runtime/results /opt/traffic-generator/browser-profile
+      systemd-tmpfiles --create /etc/tmpfiles.d/csd-traffic-generator.conf
       install -d -o root -g root -m 0755 /opt/{node,chrome}
       stage=aws-cli
       if ! test -x /usr/local/bin/aws || test "$(/usr/local/bin/aws --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" != '${aws_cli_version}'; then
@@ -296,6 +368,8 @@ write_files:
       digest='${deployment_manifest_sha256}'
       valid() {
         test -d "$1/.git" && test -f "$1/$manifest" &&
+          test -f "$1/suites/csd-violations/continuous.mjs" &&
+          test -f "$1/suites/csd-violations/run.sh" && test -f "$1/suites/csd-violations/run.mjs" &&
           test "$(git -C "$1" rev-parse HEAD 2>/dev/null)" = "$commit" &&
           test "$(sha256sum "$1/$manifest" | cut -d' ' -f1)" = "$digest"
       }
@@ -322,6 +396,8 @@ write_files:
       find "$dst" -type f -exec chmod 0444 {} +
       test -r "$dst/suites/csd-violations/run.mjs"
       test "$(stat -c '%a' "$dst/suites/csd-violations/run.mjs")" = 444
+      test "$(stat -c '%U:%G:%a' "$dst/suites/csd-violations/continuous.mjs")" = root:root:444
+      /opt/node/bin/node --check "$dst/suites/csd-violations/continuous.mjs"
       stage=ssh
       cat >/etc/ssh/sshd_config.d/60-csd-operator.conf <<'EOF'
       PasswordAuthentication no
@@ -347,9 +423,23 @@ write_files:
       /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/etc/amazon-cloudwatch-agent.json
       stage=services
       systemctl daemon-reload
+      systemd-analyze verify /etc/systemd/system/csd-xvfb.service /etc/systemd/system/csd-worker-health.service /etc/systemd/system/csd-continuous.service /etc/systemd/system/csd-continuous.timer
       systemctl enable --now csd-xvfb.service
-      systemctl enable --now csd-worker-health.service
+      systemctl enable csd-worker-health.service
+      systemctl restart csd-worker-health.service
+      systemctl is-active --quiet csd-worker-health.service
       test "$(jq -r .status "$status_file")" = ready
+      stage=continuous
+      if test '${continuous_enabled ? "1" : "0"}' = 1; then
+        systemctl enable --now csd-continuous.timer
+        systemctl is-enabled --quiet csd-continuous.timer
+        systemctl is-active --quiet csd-continuous.timer
+      else
+        systemctl disable --now csd-continuous.timer csd-continuous.service
+        ! systemctl is-enabled --quiet csd-continuous.timer
+        ! systemctl is-active --quiet csd-continuous.timer
+        ! systemctl is-active --quiet csd-continuous.service
+      fi
       stage=ready
       trap - ERR
       /usr/local/bin/csd-log-event 'bootstrap status=ready' || true

@@ -43,6 +43,11 @@ output "target_url" {
   value       = var.target_url
 }
 
+output "continuous_enabled" {
+  description = "Whether bootstrap enables the persistent CSD dispatch timer after runtime health verification."
+  value       = var.continuous_enabled
+}
+
 output "source_commit" {
   description = "Immutable repository revision configured on the worker."
   value       = var.source_commit

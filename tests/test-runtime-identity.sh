@@ -65,7 +65,6 @@ require_pattern 'platform !== .linux.' "${CSD_ROOT}/run.mjs" "real browser runne
 require_pattern '/opt/traffic-generator/status.json' "${CSD_ROOT}/run.mjs" "real browser runner requires deployed status identity"
 require_pattern '/opt/chrome/chrome' "${CSD_ROOT}/run.mjs" "real browser runner requires deployed Chrome path"
 require_pattern '/opt/traffic-generator/node_modules' "${CSD_ROOT}/run.mjs" "real browser runner requires deployed Playwright path"
-PROVENANCE_ALLOWLIST='SOURCE_REPOSITORY_URL,SOURCE_COMMIT,AWS_REGION,AMI_ID,INSTANCE_ID,DEPLOYMENT_MANIFEST_VERSION,DEPLOYMENT_MANIFEST_SHA256'
 reject_pattern 'preserve-env=SOURCE_REPOSITORY_URL,SOURCE_COMMIT,AWS_REGION,AMI_ID,INSTANCE_ID,DEPLOYMENT_MANIFEST_VERSION,DEPLOYMENT_MANIFEST_SHA256' "${AWS_ROOT}/cloud-init.tftpl" "canonical suite wrapper sources provenance from runtime.env rather than duplicating it"
 if [ "$(grep -Fc 'latest/meta-data/instance-id' "${AWS_ROOT}/cloud-init.tftpl")" -eq 2 ] && [ "$(grep -Fc 'export INSTANCE_ID' "${AWS_ROOT}/cloud-init.tftpl")" -eq 2 ]; then
   pass "normal and first-boot paths derive and export instance identity with IMDSv2"
@@ -97,7 +96,8 @@ require_pattern 'jq -r \.version node_modules/playwright-core/package\.json' "${
 reject_pattern '/opt/traffic-generator/results' "${AWS_ROOT}/cloud-init.tftpl" "cloud-init contains no obsolete AWS evidence root"
 require_pattern "type: 'png'" "${CSD_ROOT}/run.mjs" "screenshots explicitly use PNG before atomic rename"
 require_pattern 'await rm\(temporaryPath, \{ force: true \}\)' "${CSD_ROOT}/run.mjs" "failed screenshot capture removes partial temporary file"
-require_pattern 'source "\$RUNTIME_ENV"' "${CSD_ROOT}/run.sh" "suite wrapper sources deployed runtime environment"
+require_pattern 'read_runtime_env' "${CSD_ROOT}/run.sh" "suite wrapper strictly parses deployed runtime environment"
+reject_pattern 'source "\$RUNTIME_ENV"' "${CSD_ROOT}/run.sh" "runtime environment is never evaluated as shell code"
 require_pattern 'CALLER_DISPLAY=\$\{DISPLAY-\}' "${CSD_ROOT}/run.sh" "suite wrapper captures the explicit per-run display before runtime.env"
 require_pattern 'DISPLAY="\$\{CALLER_DISPLAY:-:100\}"' "${CSD_ROOT}/run.sh" "suite wrapper preserves the per-run display and never falls back to health display :99"
 reject_pattern 'DISPLAY="\$\{DISPLAY:-:99\}"' "${CSD_ROOT}/run.sh" "suite wrapper does not collide with persistent health Xvfb"
@@ -113,8 +113,8 @@ require_pattern 'find -P "\$aws_cli_root" -type f ! -perm /u=x .*chmod 0640' "${
 require_pattern 'test -L /usr/local/bin/aws' "${AWS_ROOT}/cloud-init.tftpl" "bootstrap requires the AWS CLI symlink"
 require_pattern 'sudo -u tgen test -x "?\$AWS_CLI_BIN"?' "${AWS_ROOT}/cloud-init.tftpl" "worker health requires tgen to traverse and execute the reviewed AWS CLI binary"
 require_pattern 'sudo -u tgen "\$AWS_CLI_BIN" --version 2>&1' "${AWS_ROOT}/cloud-init.tftpl" "worker health checks the reviewed AWS CLI version as tgen including stderr output"
-require_pattern '"\$AWS_CLI_BIN" s3api head-object' "${CSD_ROOT}/run.sh" "suite wrapper uses the reviewed AWS CLI for object checks"
-require_pattern '"\$AWS_CLI_BIN" s3 cp' "${CSD_ROOT}/run.sh" "suite wrapper uses the reviewed AWS CLI for evidence uploads"
+require_pattern 'bounded_aws s3api head-object' "${CSD_ROOT}/run.sh" "suite wrapper bounds reviewed AWS CLI object checks"
+require_pattern 'bounded_aws s3 cp' "${CSD_ROOT}/run.sh" "suite wrapper bounds reviewed AWS CLI evidence uploads"
 reject_pattern 'command -v aws|(^|[^A-Z_])aws s3(api)? ' "${CSD_ROOT}/run.sh" "suite wrapper never resolves AWS CLI through PATH"
 require_pattern 'AbortController' "${CSD_ROOT}/run.mjs" "terminal fetch uses abortable bounded requests"
 require_pattern 'clearTimeout\(timer\)' "${CSD_ROOT}/run.mjs" "terminal fetch cleans its timeout"
@@ -131,6 +131,23 @@ require_pattern 'ascii_downcase.*sha256' "${CSD_ROOT}/run.sh" "remote checksum m
 reject_pattern 'list-objects-v2' "${CSD_ROOT}/run.sh" "retry does not infer object identity from prefix listing"
 reject_pattern '--sse([[:space:]]|$)|--sse-kms-key-id' "${CSD_ROOT}/run.sh" "uploads rely on enforced bucket default customer KMS encryption"
 require_pattern '! -name "\$COMMIT_FILE" ! -name "\$FAILURE_FILE"' "${CSD_ROOT}/run.sh" "commit and local failure marker are excluded from authoritative evidence"
+
+# Exercise the deployed wait function as the final command with implicit EXIT.
+node --input-type=module - "${CSD_ROOT}/run.sh" <<'NODE' || FAIL=1
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const source = readFileSync(process.argv[2], 'utf8');
+const waitFunction = source.match(/^wait_for_scenario\(\) \{\n[\s\S]*?^\}/m)?.[0];
+assert.ok(waitFunction, 'deployed wait function exists');
+for (const expected of [0, 7, 124]) {
+  const script = `set -uo pipefail\nPRIMARY_EXIT=0\n${waitFunction}\ntrap 'initial=$?; printf "%s %s\\n" "$initial" "$PRIMARY_EXIT"' EXIT\n(bash -c 'exit ${expected}') &\nNODE_PID=$!\nwait_for_scenario`;
+  const result = spawnSync('bash', ['-c', script], { encoding: 'utf8' });
+  assert.equal(result.status, expected, result.stderr);
+  assert.equal(result.stdout.trim(), `${expected} ${expected}`);
+}
+console.log('[OK] implicit EXIT preserves success, nonzero browser and timeout status');
+NODE
 
 FINALIZATION_FIXTURE=$(mktemp -d)
 trap 'rm -rf "$FINALIZATION_FIXTURE"' EXIT
@@ -173,16 +190,96 @@ MOCK_REMOTE="${MOCK_ROOT}/remote"
 MOCK_METADATA="${MOCK_ROOT}/metadata"
 MOCK_STATE="${MOCK_ROOT}/state"
 mkdir -p "$MOCK_BIN" "$MOCK_REMOTE" "$MOCK_METADATA"
-cat >"${MOCK_ROOT}/runtime.env" <<EOF
-EVIDENCE_BUCKET=fixture-bucket
-AWS_CLI_BIN=${MOCK_BIN}/aws
-AWS_CLI_VERSION=2.31.4
-EOF
+# Render every key from the current cloud-init runtime.env contract. Only the
+# AWS binary path is adapted for the isolated upload fixture below.
+node --input-type=module - "${AWS_ROOT}/cloud-init.tftpl" "${CSD_ROOT}/run.sh" "$MOCK_ROOT" "$MOCK_BIN" <<'NODE'
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync } from 'node:fs';
+const [templatePath, runnerPath, root, bin] = process.argv.slice(2);
+const template = readFileSync(templatePath, 'utf8');
+const block = template.match(/  - path: \/etc\/traffic-generator\/runtime\.env\n[\s\S]*?    content: \|\n((?:      .*\n)+)/)?.[1];
+assert.ok(block, 'current cloud-init runtime.env block exists');
+const values = {
+  aws_region: 'us-east-1', evidence_bucket: 'fixture-bucket', aws_cli_version: '2.31.4',
+  log_group_name: '/f5-sales-demo/traffic-generator', source_commit: '0123456789abcdef0123456789abcdef01234567',
+  target_url: 'https://client-side-defense.f5-sales-demo.com',
+  source_repository_url: 'https://github.com/f5-sales-demo/traffic-generator.git', ami_id: 'ami-0123456789abcdef0',
+  deployment_manifest_version: '1', deployment_manifest_sha256: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+};
+const rendered = block.replace(/^      /gm, '').replace(/\$\{([^}]+)\}/g, (_, expression) => {
+  if (expression === 'continuous_enabled ? "1" : "0"') return '1';
+  assert.ok(Object.hasOwn(values, expression), `fixture value for generated key: ${expression}`);
+  return values[expression];
+});
+writeFileSync(`${root}/generated-runtime.env`, rendered);
+writeFileSync(`${root}/runtime.env`, rendered.replace('AWS_CLI_BIN=/usr/local/bin/aws', `AWS_CLI_BIN=${bin}/aws`));
+const runner = readFileSync(runnerPath, 'utf8');
+const parser = runner.slice(runner.indexOf('read_runtime_env() {'), runner.indexOf('\nvalidate_scenario() {'));
+assert.ok(parser.startsWith('read_runtime_env() {'));
+const displayChoice = runner.match(/^DISPLAY="\$\{CALLER_DISPLAY:-:100\}"$/m)?.[0];
+assert.ok(displayChoice, 'production per-run display selection exists');
+writeFileSync(`${root}/parser-fixture.sh`, `#!/usr/bin/env bash
+set -euo pipefail
+${parser}
+CALLER_DISPLAY=\${DISPLAY-}
+read_runtime_env || exit 78
+${displayChoice}
+[[ "$DISPLAY" == "$EXPECTED_DISPLAY" && "$RUN_ID" == fixture-identity && "$CSD_SCENARIO" == login-credential-skimmer && "$INSTANCE_ID" == i-00000000000000000 ]] || exit 65
+[[ "$LOG_GROUP_NAME" == /f5-sales-demo/traffic-generator && "$NODE_PATH" == /opt/traffic-generator/node_modules && "$CHROME_BIN" == /opt/chrome/chrome && "$AWS_CLI_BIN" == /usr/local/bin/aws ]] || exit 65
+`);
+writeFileSync(`${root}/quoted-runtime.env`, rendered.split('\n').map(line => {
+  if (!line) return line;
+  const index = line.indexOf('=');
+  const key = line.slice(0, index), value = line.slice(index + 1);
+  return `readonly ${key}=${key === 'NODE_PATH' ? `'${value}'` : `"${value}"`}`;
+}).join('\n'));
+NODE
+parser_fixture() {
+  RUN_ID=fixture-identity CSD_SCENARIO=login-credential-skimmer INSTANCE_ID=i-00000000000000000 \
+    RUNTIME_ENV="$1" EXPECTED_DISPLAY="$2" bash "${MOCK_ROOT}/parser-fixture.sh"
+}
+if (
+  unset DISPLAY
+  parser_fixture "${MOCK_ROOT}/generated-runtime.env" :100
+); then
+  pass 'complete rendered cloud-init environment accepts manual identity and selects private display :100'
+else fail 'complete rendered environment manual selection'; fi
+if DISPLAY=:101 parser_fixture "${MOCK_ROOT}/generated-runtime.env" :101; then
+  pass 'complete rendered cloud-init environment preserves dispatcher identity and display'
+else fail 'complete rendered environment dispatcher selection'; fi
+if DISPLAY=:102 parser_fixture "${MOCK_ROOT}/quoted-runtime.env" :102; then
+  pass 'readonly single/double quoted literal paths parse without eval or freezing caller display'
+else fail 'readonly quoted literal environment'; fi
+parser_rejections_passed=1
+for rejected_line in 'UNKNOWN_KEY=value' 'DISPLAY=:105' 'NODE_PATH=$(touch injected)' \
+  'NODE_PATH=`touch injected`' 'NODE_PATH=/safe;touch injected' 'readonly NODE_PATH="/safe path"' \
+  'export NODE_PATH=/safe' 'NODE_PATH="/safe' 'readonly UNKNOWN_KEY="value"' 'readonly DISPLAY=":105"'; do
+  cp "${MOCK_ROOT}/generated-runtime.env" "${MOCK_ROOT}/rejected-runtime.env"
+  printf '%s\n' "$rejected_line" >>"${MOCK_ROOT}/rejected-runtime.env"
+  rejected_exit=0
+  DISPLAY=:101 parser_fixture "${MOCK_ROOT}/rejected-runtime.env" :101 || rejected_exit=$?
+  if [[ "$rejected_exit" -ne 78 ]]; then
+    parser_rejections_passed=0
+    fail 'unknown, duplicate or shell syntax runtime key fails closed'
+  fi
+done
+# Injection must be rejected independently of the duplicate-key guard too.
+for rejected_value in '$(touch injected)' '`touch injected`' '/safe;touch injected' '"/safe path"' '"/safe'; do
+  printf 'NODE_PATH=%s\n' "$rejected_value" >"${MOCK_ROOT}/rejected-runtime.env"
+  rejected_exit=0
+  DISPLAY=:101 parser_fixture "${MOCK_ROOT}/rejected-runtime.env" :101 || rejected_exit=$?
+  if [[ "$rejected_exit" -ne 78 ]]; then
+    parser_rejections_passed=0
+    fail 'first-occurrence shell syntax runtime value fails closed'
+  fi
+done
+if [[ "$parser_rejections_passed" -eq 1 ]]; then pass 'runtime unknown, duplicate and injection cases fail closed'; fi
 cat >"${MOCK_BIN}/aws" <<'MOCKAWS'
 #!/usr/bin/env bash
 set -euo pipefail
 if [[ "$1" == --version ]]; then printf 'aws-cli/2.31.4 Python/3.13.7 Linux/6.8.0 exe/x86_64.ubuntu.24\n' >&2; exit 0; fi
 if [[ "$1" == s3api && "$2" == head-object ]]; then
+  if [[ "${HANG_HEAD:-0}" == 1 ]]; then sleep 60; fi
   key=
   while [[ $# -gt 0 ]]; do [[ "$1" == --key ]] && { key=$2; break; }; shift; done
   if [[ "${DENY_HEAD_KEY:-}" == "$key" ]]; then printf 'AccessDenied\n' >&2; exit 77; fi
@@ -213,9 +310,25 @@ fi
 exit 64
 MOCKAWS
 chmod +x "${MOCK_BIN}/aws"
+# Isolated source-copy adapters exercise lifecycle functions without live paths,
+# changing the deployed script, running a browser, or adding environment bypasses.
+run_retry() {
+  local fixture=$1 isolated="${MOCK_ROOT}/run-fixture.sh"
+  node --input-type=module - "${CSD_ROOT}/run.sh" "$isolated" "$(dirname "$(dirname "$fixture")")" "${MOCK_ROOT}/lock" "$(command -v node)" <<'NODE'
+import { readFileSync, writeFileSync } from 'node:fs';
+const [source, output, root, lock, node] = process.argv.slice(2);
+writeFileSync(output, readFileSync(source, 'utf8')
+  .replace('RESULTS_ROOT=/opt/traffic-generator/runtime/results', `RESULTS_ROOT=${root}`)
+  .replace('LOCK_PATH=/run/lock/csd-traffic-generator.lock', `LOCK_PATH=${lock}`)
+  .replace('NODE_BIN=/opt/node/bin/node', `NODE_BIN=${node}`)
+  .replace('SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd -P)', `SCRIPT_DIR=${source.slice(0, source.lastIndexOf('/'))}`));
+NODE
+  touch "${MOCK_ROOT}/lock"
+  bash "$isolated" --retry-upload "$fixture"
+}
 export MOCK_REMOTE MOCK_METADATA MOCK_STATE
 rm -f "$MOCK_STATE"
-if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" FAIL_UPLOAD_AT=2 bash "${CSD_ROOT}/run.sh" --retry-upload "$RETRY_FIXTURE"; then
+if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" FAIL_UPLOAD_AT=2 run_retry "$RETRY_FIXTURE"; then
   fail "initial upload failure remains nonzero"
 elif [ -f "${RETRY_FIXTURE}/.finalization-failed.json" ] && [ ! -f "${MOCK_REMOTE}/runs/fixture-run/login-credential-skimmer/upload-commit.json" ]; then
   pass "initial upload failure remains retryable and uncommitted"
@@ -223,7 +336,7 @@ else
   fail "initial upload failure remains retryable and uncommitted"
 fi
 rm -f "$MOCK_STATE"
-if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" bash "${CSD_ROOT}/run.sh" --retry-upload "$RETRY_FIXTURE" &&
+if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" run_retry "$RETRY_FIXTURE" &&
   [ ! -f "${RETRY_FIXTURE}/.finalization-failed.json" ] &&
   [ -f "${MOCK_REMOTE}/runs/fixture-run/login-credential-skimmer/upload-commit.json" ]; then
   pass "partial upload retry validates remote metadata and commits without rerunning browser"
@@ -231,7 +344,7 @@ else
   fail "partial upload retry validates remote metadata and commits without rerunning browser"
 fi
 upload_count=$(cat "$MOCK_STATE")
-if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" MOCK_METADATA_KEY=SHA256 bash "${CSD_ROOT}/run.sh" --retry-upload "$RETRY_FIXTURE" &&
+if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" MOCK_METADATA_KEY=SHA256 run_retry "$RETRY_FIXTURE" &&
   [ "$(cat "$MOCK_STATE")" -eq "$upload_count" ]; then
   pass "already committed retry is idempotent with case-normalized checksum metadata"
 else
@@ -239,7 +352,7 @@ else
 fi
 rm -rf "$MOCK_REMOTE" "$MOCK_METADATA" && mkdir -p "$MOCK_REMOTE" "$MOCK_METADATA"
 rm -f "$MOCK_STATE"
-if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" FAIL_UPLOAD_AT=7 bash "${CSD_ROOT}/run.sh" --retry-upload "$STAGED_FIXTURE"; then
+if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" FAIL_UPLOAD_AT=7 run_retry "$STAGED_FIXTURE"; then
   fail "final commit upload failure remains nonzero"
 elif [ -f "${STAGED_FIXTURE}/.finalization-failed.json" ] && [ ! -f "${MOCK_REMOTE}/runs/fixture-run/login-credential-skimmer/upload-commit.json" ]; then
   pass "final commit failure remains retryable and uncommitted"
@@ -250,7 +363,7 @@ mismatch_key=runs/fixture-run/login-credential-skimmer/browser.log
 mkdir -p "${MOCK_REMOTE}/$(dirname "$mismatch_key")" "${MOCK_METADATA}/$(dirname "$mismatch_key")"
 printf 'different remote bytes\n' >"${MOCK_REMOTE}/${mismatch_key}"
 printf '%064d\n' 0 >"${MOCK_METADATA}/${mismatch_key}"
-if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" bash "${CSD_ROOT}/run.sh" --retry-upload "$STAGED_MISMATCH_FIXTURE"; then
+if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" run_retry "$STAGED_MISMATCH_FIXTURE"; then
   fail "existing mismatched remote key fails closed"
 else
   pass "existing mismatched remote key fails closed"
@@ -258,18 +371,61 @@ fi
 rm -rf "$MOCK_REMOTE" "$MOCK_METADATA" && mkdir -p "$MOCK_REMOTE" "$MOCK_METADATA"
 printf '' >"${STAGED_DENIED_FIXTURE}/zero-byte.log"
 bash "${CSD_ROOT}/run.sh" --finalize-test "$STAGED_DENIED_FIXTURE" fixture-run login-credential-skimmer
-if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" bash "${CSD_ROOT}/run.sh" --retry-upload "$STAGED_DENIED_FIXTURE" &&
+if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" run_retry "$STAGED_DENIED_FIXTURE" &&
   [ -f "${MOCK_REMOTE}/runs/fixture-run/login-credential-skimmer/zero-byte.log" ] &&
   [ "$(cat "${MOCK_METADATA}/runs/fixture-run/login-credential-skimmer/zero-byte.log")" = "$(sha256sum "${STAGED_DENIED_FIXTURE}/zero-byte.log" | cut -d' ' -f1)" ]; then
   pass "zero-byte evidence uploads with exact SHA-256 metadata"
 else
   fail "zero-byte evidence uploads with exact SHA-256 metadata"
 fi
-if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" DENY_HEAD_KEY=runs/fixture-run/login-credential-skimmer/receipt.json bash "${CSD_ROOT}/run.sh" --retry-upload "$STAGED_DENIED_FIXTURE"; then
+if PATH="${MOCK_BIN}:$PATH" RUNTIME_ENV="${MOCK_ROOT}/runtime.env" DENY_HEAD_KEY=runs/fixture-run/login-credential-skimmer/receipt.json run_retry "$STAGED_DENIED_FIXTURE"; then
   fail "head-object denial is not treated as a missing key"
 else
   pass "head-object denial is not treated as a missing key"
 fi
+# Focused retry lock, path, authentication, timeout and frozen-evidence checks.
+ISOLATED_RUNNER="${MOCK_ROOT}/run-fixture.sh"
+exec 8<>"${MOCK_ROOT}/lock"
+flock -n 8
+busy_exit=0
+RUNTIME_ENV="${MOCK_ROOT}/runtime.env" bash "$ISOLATED_RUNNER" --retry-upload "$STAGED_DENIED_FIXTURE" >/dev/null || busy_exit=$?
+flock -u 8
+exec 8>&-
+if [[ "$busy_exit" -eq 75 ]]; then pass 'upload retry contends on the single shared run lock'; else fail 'shared retry lock'; fi
+outside_exit=0
+RUNTIME_ENV="${MOCK_ROOT}/runtime.env" bash "$ISOLATED_RUNNER" --retry-upload "$RETRY_FIXTURE" >/dev/null || outside_exit=$?
+if [[ "$outside_exit" -eq 66 ]]; then pass 'retry rejects evidence outside exact configured root'; else fail 'exact retry root'; fi
+if jq -e '.schemaVersion == 1 and .outcome == "fatal_auth" and .uploadCommitted == false and .failureCategory == "fatal_auth"' "$(dirname "$STAGED_DENIED_FIXTURE")/execution-result.json" >/dev/null; then
+  pass 'authentication denial is classified without raw AWS diagnostics'
+else fail 'authentication denial classification'; fi
+timeout_runner="${MOCK_ROOT}/run-timeout.sh"
+node --input-type=module - "$ISOLATED_RUNNER" "$timeout_runner" <<'NODE'
+import { readFileSync, writeFileSync } from 'node:fs';
+const [source, output] = process.argv.slice(2);
+writeFileSync(output, readFileSync(source, 'utf8').replace('local initial=$? worker rc budget=$FINALIZATION_SECONDS', 'local initial=$? worker rc budget=1'));
+NODE
+before_digest=$(sha256sum "${STAGED_DENIED_FIXTURE}/SHA256SUMS" "${STAGED_DENIED_FIXTURE}/receipt.json" "${STAGED_DENIED_FIXTURE}/upload-manifest.json" "${STAGED_DENIED_FIXTURE}/upload-commit.json")
+timeout_exit=0
+RUNTIME_ENV="${MOCK_ROOT}/runtime.env" HANG_HEAD=1 bash "$timeout_runner" --retry-upload "$STAGED_DENIED_FIXTURE" >/dev/null || timeout_exit=$?
+after_digest=$(sha256sum "${STAGED_DENIED_FIXTURE}/SHA256SUMS" "${STAGED_DENIED_FIXTURE}/receipt.json" "${STAGED_DENIED_FIXTURE}/upload-manifest.json" "${STAGED_DENIED_FIXTURE}/upload-commit.json")
+if [[ "$timeout_exit" -eq 124 && "$before_digest" == "$after_digest" ]] &&
+  jq -e '.outcome == "timeout" and .uploadCommitted == false and .uploadExit == 124' "$(dirname "$STAGED_DENIED_FIXTURE")/execution-result.json" >/dev/null; then
+  pass 'bounded upload timeout preserves frozen receipt, checksums, manifest and commit bytes'
+else fail 'bounded upload timeout and immutable evidence'; fi
+RUNTIME_ENV="${MOCK_ROOT}/runtime.env" HANG_HEAD=1 bash "$ISOLATED_RUNNER" --retry-upload "$STAGED_DENIED_FIXTURE" >/dev/null &
+cancel_pid=$!
+sleep 0.3
+kill -TERM "$cancel_pid"
+cancel_exit=0
+wait "$cancel_pid" || cancel_exit=$?
+if [[ "$cancel_exit" -eq 143 ]] &&
+  jq -e '.outcome == "interrupted" and .signal == "TERM" and .uploadCommitted == false' "$(dirname "$STAGED_DENIED_FIXTURE")/execution-result.json" >/dev/null; then
+  pass 'SIGTERM stops only the owned finalizer and preserves a structured interruption'
+else fail 'SIGTERM retry finalization'; fi
+ln -s "$STAGED_DENIED_FIXTURE" "$(dirname "$STAGED_DENIED_FIXTURE")/scenario-link"
+link_exit=0
+RUNTIME_ENV="${MOCK_ROOT}/runtime.env" bash "$ISOLATED_RUNNER" --retry-upload "$(dirname "$STAGED_DENIED_FIXTURE")/scenario-link" >/dev/null || link_exit=$?
+if [[ "$link_exit" -eq 66 ]]; then pass 'retry rejects symlink path'; else fail 'symlink retry rejection'; fi
 if [ -f "${CSD_ROOT}/scenarios.mjs" ] && [ -f "${CSD_ROOT}/run.mjs" ]; then
   node --input-type=module - "${CSD_ROOT}/scenarios.mjs" "${CSD_ROOT}/run.mjs" <<'NODE' || FAIL=1
 import { mkdtemp, writeFile } from 'node:fs/promises';

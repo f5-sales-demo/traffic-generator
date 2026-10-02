@@ -10,7 +10,7 @@ import { Steps, Aside } from "@astrojs/starlight/components";
 ## Choose the Runner
 
 - **Azure:** the existing `/opt/traffic-generator/suites/runner.sh` interface below remains supported over SSH.
-- **AWS:** use the Terraform `ssh_command` output from the authorized jumpbox for direct administration, or submit allowlisted `csd-violations` runs through the Systems Manager command document. Systems Manager remains the recovery path.
+- **AWS:** Terraform hydration starts recurring `csd-violations` traffic by default; no manual start is needed. Use the `terraform/aws` `ssh_command` output for administration and Systems Manager for recovery or deliberate one-shot execution after pausing/draining recurrence.
 
 The two runners have separate hosts, result stores, and Terraform state. Do not use Azure output names or credentials with the AWS deployment.
 
@@ -269,6 +269,128 @@ $(terraform output -raw ssh_command)
 
 The command uses Ubuntu user `ubuntu`, the worker Elastic IP, and a key-path hint. It works only from the exact current `/32` allowed by the worker security group. Do not broaden TCP/22 to `0.0.0.0/0`. If SSH is unavailable, use Systems Manager for recovery and verify whether the jumpbox public address changed.
 
+## AWS Unattended CSD Hydration
+
+`terraform/aws` owns the CSD worker's runtime configuration. `continuous_enabled` is a boolean
+defaulting to `true` and exposed by the same-named output. Cloud-init writes exactly one
+`CONTINUOUS_ENABLED=1|0` field into `/etc/traffic-generator/runtime.env`, stops scheduling before
+installation, verifies pinned source/dependencies/dispatcher presence, starts Xvfb and bounded headed
+health, requires `ready`, then enables/starts `csd-continuous.timer` when enabled. Disabled hydration
+still installs and validates the units and dispatcher but stops/disables automatic launches.
+
+Publish and review the implementation before choosing deployment inputs: use the exact published
+merge SHA containing `continuous.mjs` and compatible `run.sh`/`run.mjs`, and derive the canonical
+`scenarios.mjs` digest at that same immutable commit. Keep the reviewed manifest version. Never use
+a moving branch, guessed future SHA, old one-shot pin, or uncommitted source injected into user data.
+The symbolic placeholders in `terraform.tfvars.example` are intentionally not deployable values.
+A user-data change retains worker replacement behavior; use the reviewed saved-plan and separate
+termination-protection procedure in the [AWS stack guide](https://github.com/f5-sales-demo/traffic-generator/blob/main/terraform/aws/README.md).
+
+Each root-managed service firing invokes `continuous.mjs tick` through pinned Node and executes at
+most one of the existing eleven scenarios, or one due frozen-upload retry without Chrome. Names and
+order come directly from `SCENARIO_NAMES` in `scenarios.mjs`; terminal decisions advance the cursor
+and wrap into another cycle. `completedCycles` does not mean eleven detections or successful uploads.
+The generic catalog scheduler excludes CSD and is not a second CSD execution owner.
+
+The enabled timer persists across reboot without rerunning cloud-init. It fires after 30 seconds at
+boot and 15 seconds after the prior oneshot becomes inactive, with 1-second accuracy and no replay
+of missed firings. Dispatch requires network-online and healthy Xvfb/headed Chrome. Cleanup,
+backoff, lock contention, and reboot introduce gaps: recurring traffic is not literally zero downtime.
+
+### Unit and Host Integration Proof
+
+All nine canonical `tests/test-*.sh` scripts remain required unit checks. Dispatcher tests run
+real Git content verification and the production `executionArgs` environment tail in a real
+unprivileged subprocess, including credential rejection. Bootstrap tests render enabled and
+disabled Terraform configurations and assert the complete scheduling, containment, permission,
+retry, and activation contracts. Unit CI does not claim to exercise sudo elevation or the
+systemd/logrotate host parsers.
+
+Before merge, run this explicit integration command on the approved Linux verification host
+against the exact final PR head, after formatting and pushing:
+
+```bash
+node --test tests/csd-host.integration.mjs
+```
+
+It requires real noninteractive sudo to `nobody`, validates reset versus allowlisted per-run
+assignments through the production argv builder, and runs actual `systemd-analyze verify` and
+`logrotate --debug` on canonical template content. Missing tools or privilege denial fail the
+command; there is no skip/pass fallback. It neither starts services nor generates traffic.
+On the later approved AWS deployment, real `tgen` execution, timer/reboot behavior, and evidence
+acceptance remain mandatory; verification-host parser and privilege proof is not live-worker proof.
+
+### Sanitized Status and Temporary Pause
+
+Run on the AWS worker:
+
+```bash
+sudo /opt/node/bin/node \
+  /opt/traffic-generator/source/suites/csd-violations/continuous.mjs status
+systemctl is-enabled csd-continuous.timer
+systemctl is-active csd-continuous.timer csd-continuous.service
+```
+
+An inactive oneshot between ticks is normal. Sanitized status includes cursor, completed cycles,
+attempted/browser-passed/committed/failed/timeout/interrupted counters, heartbeat, current run/scenario,
+last outcome, backoff schedule, and pending uploads, not credentials, raw identities, or error bodies.
+Root persists atomic private state at `/opt/traffic-generator/runtime/continuous/state.json`. Persistent
+fatal blocks survive reboot; do not delete state to hide a failure or assume restart fixes its cause.
+
+Before deliberate SSM traffic or UAT, stop the timer and let the current run drain within its
+1,100-second service budget. Verify the service is inactive and the common lock is free:
+
+```bash
+sudo systemctl stop csd-continuous.timer
+systemctl is-active csd-continuous.service
+sudo flock -n /run/lock/csd-traffic-generator.lock /usr/bin/true
+# If deliberate cancellation is necessary instead of draining:
+sudo systemctl stop csd-continuous.service
+```
+
+After cancellation, verify owned-child cleanup and interrupted/pending evidence before proceeding.
+`run.sh` alone acquires the shared nonblocking lock for both normal and upload-retry work; do not
+unlink it or add nested locks. Reboot tmpfiles recreates it as root:tgen `0660`. A temporary timer stop
+does not survive reboot: disable it for reboot-spanning maintenance, or deploy the reviewed
+`continuous_enabled = false` setting. Record/reconcile any operational override; do not permanently
+hand-edit the Terraform-owned environment. Resume only after maintenance, healthy runtime, and no
+manual lock holder, with the reviewed enabled configuration:
+
+```bash
+sudo systemctl enable --now csd-continuous.timer
+```
+
+Do not invoke internal `tick` as an operator start command. **Dedicated Page Tamper UAT must inhibit
+and drain recurrence for its entire quiet/baseline/canary/recovery window.** No automatic CSD-controller
+reservation integration is provided, and no Page Tamper baseline, canary, or header matrix is scheduled.
+
+### Bounded Retries, Cleanup, and Retention
+
+Scenario/browser execution has a 900-second budget, finalization 120 seconds, and owned-child cleanup
+30 seconds. Systemd bounds service start/stop to 1,100/45 seconds with cgroup containment; health
+start/stop is bounded to 120/30 seconds. These limits do not depend on SSM command timeouts.
+Transient work allows at most three total attempts with 30/60/120-second backoff steps capped at 300
+seconds; exhaustion records failure and advances to avoid starving other scenarios. Busy lock retries
+consume neither cursor nor attempt budget. Fatal configuration/provenance/target/integrity/authentication
+failures block further launches persistently.
+
+At most 32 pending uploads are recorded; each frozen upload has at most three total retry attempts,
+each bounded to 120 seconds. Retry-only ticks never rerun Chrome. Exhausted pending evidence stays
+visible/frozen; queue or disk limits block new work instead of deleting it. The run-root
+`execution-result.json` (schema version 1), outside the frozen scenario directory, distinguishes browser
+exit, upload exit/commit, outcome, failure category, and signal. Missing/inconsistent results are failures.
+
+Only completed committed directories are eligible for oldest-first pruning after seven days or above
+5 GiB of local detail. New work is rejected below 1 GiB free space; pending evidence has a 2 GiB cap.
+Active and pending evidence is not silently pruned. Local append-open logs rotate daily or at 10 MiB
+with seven rotations, compression/delayed compression, and copytruncate. Diagnose disk blocks and
+preserve evidence before authorized cleanup; never remove active or pending runs to bypass bounds.
+
+Acceptance on a later approved fresh deployment requires committed hash-validated evidence for all
+eleven names over two cycles, monotonic counters, bounded disk, no owned-child leaks, and controlled
+reboot recurrence. Ready health, active units, browser success, and committed uploads do not guarantee
+CSD detection. This documentation describes the source contract, not completed live deployment evidence.
+
 ## AWS Systems Manager Run Flow
 
 Use the non-sensitive `ssm_document_name` and `instance_id` outputs from `terraform/aws`. The
@@ -291,11 +413,12 @@ COMMAND_ID=$(aws ssm send-command \
   --output text)
 ```
 
-To submit all 11 scenarios, run them serially because the worker rejects overlapping runs. Retain
-each command ID and poll for at most 1,860 seconds per command. This covers the document's
-1,800-second command timeout plus a bounded status-propagation margin; the default
-`command-executed` waiter can expire after roughly 100 seconds while a valid scenario is still
-running.
+For a deliberate manual pass after pausing/draining recurrence, submit the 11 scenarios serially
+because all entrypoints share the same lock. Retain each command ID and poll for at most 1,860
+seconds per command. This covers the document's 1,800-second command timeout plus a bounded
+status-propagation margin; actual execution remains bounded by the wrapper. The default
+`command-executed` waiter can expire after roughly 100 seconds while a valid scenario is still running.
+Manual submission is optional, not the normal hydration/start path.
 
 ```bash
 for scenario in \

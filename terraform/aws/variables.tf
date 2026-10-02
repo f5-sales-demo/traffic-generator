@@ -275,6 +275,13 @@ variable "termination_protection_enabled" {
 }
 
 
+variable "continuous_enabled" {
+  description = "Enable unattended canonical CSD scenario dispatch after verified bootstrap health; false installs but stops and disables dispatch."
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
 variable "target_url" {
   description = "Exact authorized CSD demo target."
   type        = string

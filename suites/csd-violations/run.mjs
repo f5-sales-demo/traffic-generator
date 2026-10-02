@@ -4,6 +4,7 @@ import { constants } from 'node:fs';
 import { access, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { DEFAULT_POLICY } from './continuous.mjs';
 import { SCENARIOS, SUITE_MANIFEST } from './scenarios.mjs';
 
 const EXPECTED_HOST = 'client-side-defense.f5-sales-demo.com';
@@ -68,8 +69,27 @@ export function persistedError(kind) {
   };
 }
 
-function reportLocalError(context, error) {
-  console.error(`${context}: ${String(error?.message || error)}`);
+function reportLocalError(context) {
+  console.error(`${context}: operation failed`);
+}
+
+export async function boundedOperation(operation, timeoutMs, signal) {
+  if (signal?.aborted) throw new Error('RUN_INTERRUPTED');
+  let timer;
+  let abort;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(operation),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('OPERATION_TIMEOUT')), timeoutMs);
+        abort = () => reject(new Error('RUN_INTERRUPTED'));
+        signal?.addEventListener('abort', abort, { once: true });
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
+  }
 }
 
 function screenshotFailureCount(scenario) {
@@ -654,6 +674,18 @@ export async function validateAwsRuntime(environment = process.env, platform = p
 }
 
 export async function runSuite(options = {}) {
+  const signal = options.signal;
+  const cleanupDeadline = () =>
+    Math.max(1, (options.cleanupDeadline?.() ?? Date.now() + DEFAULT_POLICY.cleanupMs) - Date.now());
+  const cleanupOperation = (operation) => boundedOperation(operation, cleanupDeadline());
+  const execute = (operation) => boundedOperation(operation, options.operationTimeoutMs ?? 40_000, signal);
+  const captureWithinDeadline = async (operation) => {
+    try {
+      return await cleanupOperation(operation);
+    } catch {
+      return { status: 'failed', captureStatus: 'failed', ...persistedError('screenshot') };
+    }
+  };
   let runtime;
   if (!options.playwright) runtime = await validateAwsRuntime();
   const expectedHost = options.expectedHost ?? EXPECTED_HOST;
@@ -687,13 +719,16 @@ export async function runSuite(options = {}) {
   const cleanup = { browser: 'pending', contexts: 0, errors: [] };
   try {
     for (const [scenarioIndex, scenario] of selectedScenarios.entries()) {
-      const context = await browser.newContext({
-        ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? false,
-      });
+      if (signal?.aborted) break;
+      const context = await execute(() =>
+        browser.newContext({
+          ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? false,
+        }),
+      );
       cleanup.contexts += 1;
       if (options.routeSetup) await options.routeSetup(context, target);
       await context.addInitScript(pageHelpers, { runId, scenarioName: scenario.name });
-      const page = await context.newPage();
+      const page = await execute(() => context.newPage());
       const requests = new Map();
       const instrumentation = { sensorRequests: 0, dipRequests: 0 };
       const scenarioResult = {
@@ -729,6 +764,10 @@ export async function runSuite(options = {}) {
       });
       try {
         for (const [stepIndex, step] of scenario.steps.entries()) {
+          if (signal?.aborted) {
+            scenarioResult.status = 'failed';
+            break;
+          }
           const stepResult = {
             name: step.name,
             operation: step.op,
@@ -741,18 +780,22 @@ export async function runSuite(options = {}) {
               const stepUrl = new URL(route, target);
               if (stepUrl.hostname !== target.hostname)
                 throw new Error('scenario navigation escaped the validated target');
-              const response = await page.goto(stepUrl.toString(), {
-                waitUntil: 'domcontentloaded',
-                timeout: 40_000,
-              });
+              const response = await execute(() =>
+                page.goto(stepUrl.toString(), {
+                  waitUntil: 'domcontentloaded',
+                  timeout: 40_000,
+                }),
+              );
               stepResult.navigationStatus = response?.status() ?? null;
               for (const selector of step.waitFor ?? [])
-                await page.waitForSelector(selector, {
-                  state: 'attached',
-                  timeout: step.waitTimeoutMs ?? 15_000,
-                });
+                await execute(() =>
+                  page.waitForSelector(selector, {
+                    state: 'attached',
+                    timeout: step.waitTimeoutMs ?? 15_000,
+                  }),
+                );
             } else if (step.op === 'evaluate' || step.op === 'cleanup') {
-              const evidence = await page.evaluate(step.run);
+              const evidence = await execute(() => page.evaluate(step.run));
               if (!evidence || typeof evidence !== 'object') throw new Error(`${step.op} step returned no evidence`);
               stepResult.evidence = evidence;
             } else throw new Error(`unsupported operation: ${step.op}`);
@@ -765,22 +808,24 @@ export async function runSuite(options = {}) {
             scenarioResult.status = 'failed';
           }
           stepResult.completedAt = new Date().toISOString();
-          stepResult.screenshot = await captureScreenshot(
-            page,
-            outputDirectory,
-            runId,
-            scenarioIndex,
-            scenario.name,
-            stepIndex,
-            step.name,
-            stepResult.assertions?.status ?? 'not-run',
+          stepResult.screenshot = await captureWithinDeadline(() =>
+            captureScreenshot(
+              page,
+              outputDirectory,
+              runId,
+              scenarioIndex,
+              scenario.name,
+              stepIndex,
+              step.name,
+              stepResult.assertions?.status ?? 'not-run',
+            ),
           );
           if (stepResult.screenshot.status === 'failed') scenarioResult.status = 'failed';
           scenarioResult.steps.push(stepResult);
         }
       } finally {
         try {
-          await page.evaluate(() => window.__csdSim?.cleanupPage());
+          await cleanupOperation(() => page.evaluate(() => window.__csdSim?.cleanupPage()));
         } catch (error) {
           reportLocalError(`page cleanup ${scenario.name} failed`, error);
           cleanup.errors.push({
@@ -789,22 +834,24 @@ export async function runSuite(options = {}) {
           });
           scenarioResult.status = 'failed';
         }
-        scenarioResult.finalScreenshot = await captureScreenshot(
-          page,
-          outputDirectory,
-          runId,
-          scenarioIndex,
-          scenario.name,
-          scenario.steps.length,
-          'final',
-          scenarioResult.status === 'passed' ? 'passed' : 'failed',
+        scenarioResult.finalScreenshot = await captureWithinDeadline(() =>
+          captureScreenshot(
+            page,
+            outputDirectory,
+            runId,
+            scenarioIndex,
+            scenario.name,
+            scenario.steps.length,
+            'final',
+            scenarioResult.status === 'passed' ? 'passed' : 'failed',
+          ),
         );
         if (scenarioResult.finalScreenshot.status === 'failed') scenarioResult.status = 'failed';
         scenarioResult.network = [...requests.values()];
         scenarioResult.completedAt = new Date().toISOString();
         try {
-          if (options.routeCleanup) await options.routeCleanup(context);
-          await context.close();
+          if (options.routeCleanup) await cleanupOperation(() => options.routeCleanup(context));
+          await cleanupOperation(() => context.close());
         } catch (error) {
           reportLocalError(`context cleanup ${scenario.name} failed`, error);
           cleanup.errors.push({
@@ -816,9 +863,12 @@ export async function runSuite(options = {}) {
         scenarioResults.push(scenarioResult);
       }
     }
+  } catch {
+    reportLocalError('scenario setup failed');
+    cleanup.errors.push(persistedError('step'));
   } finally {
     try {
-      await browser.close();
+      await cleanupOperation(() => browser.close());
       cleanup.browser = 'closed';
     } catch (error) {
       reportLocalError('browser cleanup failed', error);
@@ -854,25 +904,39 @@ export async function runSuite(options = {}) {
   return {
     receipt,
     receiptPath,
-    exitCode: receipt.counts.failed === 0 && cleanup.errors.length === 0 ? 0 : 1,
+    exitCode: signal?.aborted
+      ? 143
+      : receipt.counts.failed === 0 &&
+          scenarioResults.length === selectedScenarios.length &&
+          cleanup.errors.length === 0
+        ? 0
+        : 1,
   };
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isMain) {
+  const controller = new AbortController();
+  let cancellationDeadline;
+  const cancel = () => {
+    cancellationDeadline ??= Date.now() + DEFAULT_POLICY.cleanupMs;
+    controller.abort();
+  };
+  process.on('SIGTERM', cancel);
+  process.on('SIGINT', cancel);
   try {
-    const result = await runSuite();
-    console.log(
-      JSON.stringify({
-        runId: result.receipt.runId,
-        receipt: result.receiptPath,
-        counts: result.receipt.counts,
-      }),
-    );
+    const result = await runSuite({
+      signal: controller.signal,
+      cleanupDeadline: () => cancellationDeadline ?? Date.now() + DEFAULT_POLICY.cleanupMs,
+    });
+    console.log(JSON.stringify({ runId: result.receipt.runId, counts: result.receipt.counts }));
     process.exitCode = result.exitCode;
-  } catch (error) {
-    console.error(`ERROR: ${String(error.message || error)}`);
-    process.exitCode = 1;
+  } catch {
+    console.error('ERROR: runner prerequisite failed');
+    process.exitCode = controller.signal.aborted ? 143 : 78;
+  } finally {
+    process.removeListener('SIGTERM', cancel);
+    process.removeListener('SIGINT', cancel);
   }
 }
 

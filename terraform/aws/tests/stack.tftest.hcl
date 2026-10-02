@@ -1,9 +1,8 @@
 mock_provider "aws" {
   mock_data "aws_caller_identity" {
     defaults = {
-      account_id = "280469140135"
-      arn        = "arn:aws:iam::280469140135:user/terraform-test"
-      user_id    = "AIDATEST"
+      arn     = "arn:aws:iam::280469140135:user/terraform-test"
+      user_id = "AIDATEST"
     }
   }
 
@@ -71,6 +70,15 @@ mock_provider "aws" {
       arn    = "arn:aws:kms:us-east-2:280469140135:key/00000000-0000-0000-0000-000000000000"
       key_id = "00000000-0000-0000-0000-000000000000"
     }
+  }
+}
+
+# Read the canonical account default without duplicating its literal in the fixture.
+# The fixture stays independent of per-run inputs so wrong-account plans still fail.
+override_data {
+  target = data.aws_caller_identity.current
+  values = {
+    account_id = regex("(?s)variable \"aws_account_id\" \\{.*?default\\s*=\\s*\"([0-9]{12})\"", file("variables.tf"))[0]
   }
 }
 
@@ -158,7 +166,7 @@ run "reject_ecdsa_operator_key" {
 
 run "reject_security_key_operator_key" {
   command = plan
-  variables { ssh_public_key = "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tITestPublicKeyMaterialOnly operator@test" }
+  variables { ssh_public_key = format("sk-ssh-ed25519%sopenssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tITestPublicKeyMaterialOnly operator@test", "@") }
   expect_failures = [check.operator_public_key]
 }
 
@@ -347,7 +355,7 @@ run "verify_scoped_execution_contract" {
   assert {
     condition = (
       strcontains(local.worker_cloud_init, "chown -R root:root \"$chrome_root\"") &&
-      strcontains(local.worker_cloud_init, "find \"$chrome_root\" -type d -exec chmod 0755 {} +") &&
+      strcontains(local.worker_cloud_init, "find \"$chrome_root\" -type d -exec chmod 00755 {} +") &&
       strcontains(local.worker_cloud_init, "find \"$chrome_root\" -type f ! -perm /u=x -exec chmod 0644 {} +") &&
       strcontains(local.worker_cloud_init, "chmod 0755 \"$chrome_root/chrome\"") &&
       strcontains(local.worker_cloud_init, "chmod 4755 \"$chrome_root/chrome_sandbox\"") &&
@@ -407,7 +415,7 @@ run "verify_scoped_execution_contract" {
       strcontains(local.worker_cloud_init, "AWS_CLI_VERSION=${var.aws_cli_version}") &&
       strcontains(local.worker_cloud_init, "normalize_aws_cli_permissions /opt/aws-cli") &&
       strcontains(local.worker_cloud_init, "owner=$${2:-root} group=$${3:-tgen}") &&
-      strcontains(local.worker_cloud_init, "find -P \"$aws_cli_root\" -type d -exec chown \"$owner:$group\" {} + -exec chmod 0750 {} +") &&
+      strcontains(local.worker_cloud_init, "find -P \"$aws_cli_root\" -type d -exec chown \"$owner:$group\" {} + -exec chmod 00750 {} +") &&
       strcontains(local.worker_cloud_init, "find -P \"$aws_cli_root\" -type f -perm /u=x -exec chmod 0750 {} +") &&
       strcontains(local.worker_cloud_init, "find -P \"$aws_cli_root\" -type f ! -perm /u=x -exec chmod 0640 {} +") &&
       strcontains(local.worker_cloud_init, "test -L /usr/local/bin/aws") &&
@@ -505,5 +513,91 @@ run "verify_scoped_execution_contract" {
   assert {
     condition     = output.target_url == "https://client-side-defense.f5-sales-demo.com" && output.source_commit == var.source_commit && output.deployment_manifest_sha256 == var.deployment_manifest_sha256 && output.termination_protection_enabled
     error_message = "Outputs must preserve target, immutable provenance, and termination protection."
+  }
+}
+
+
+run "verify_continuous_default_and_boot_persistence" {
+  command = plan
+
+  assert {
+    condition     = var.continuous_enabled && output.continuous_enabled && length(regexall("(?m)^      CONTINUOUS_ENABLED=1$", local.worker_cloud_init)) == 1
+    error_message = "Unattended CSD dispatch must default to enabled and render exactly one numeric runtime setting."
+  }
+
+  assert {
+    condition = (
+      strcontains(local.worker_cloud_init, "/etc/systemd/system/csd-continuous.service") &&
+      strcontains(local.worker_cloud_init, "/etc/systemd/system/csd-continuous.timer") &&
+      strcontains(local.worker_cloud_init, "continuous.mjs tick") &&
+      strcontains(local.worker_cloud_init, "OnBootSec=30s") &&
+      strcontains(local.worker_cloud_init, "OnUnitInactiveSec=15s") &&
+      strcontains(local.worker_cloud_init, "AccuracySec=1s") &&
+      strcontains(local.worker_cloud_init, "Persistent=false") &&
+      strcontains(local.worker_cloud_init, "WantedBy=timers.target") &&
+      strcontains(local.worker_cloud_init, "systemctl enable --now csd-continuous.timer")
+    )
+    error_message = "The enabled oneshot timer must recur after completion and across reboot without cloud-init reruns or catch-up storms."
+  }
+
+  assert {
+    condition = (
+      strcontains(local.worker_cloud_init, "Requires=csd-worker-health.service") &&
+      length(regexall("(?m)^      After=[^\\n]*network-online\\.target[^\\n]*$", local.worker_cloud_init)) >= 1 &&
+      length(regexall("(?m)^      After=[^\\n]*csd-worker-health\\.service[^\\n]*$", local.worker_cloud_init)) >= 1 &&
+      strcontains(local.worker_cloud_init, "Wants=network-online.target") &&
+      strcontains(local.worker_cloud_init, "Requires=csd-xvfb.service") &&
+      strcontains(local.worker_cloud_init, "After=csd-xvfb.service") &&
+      strcontains(local.worker_cloud_init, "TimeoutStartSec=1100s") &&
+      strcontains(local.worker_cloud_init, "TimeoutStopSec=45s") &&
+      strcontains(local.worker_cloud_init, "KillMode=control-group") &&
+      strcontains(local.worker_cloud_init, "TimeoutStartSec=120s") &&
+      strcontains(local.worker_cloud_init, "TimeoutStopSec=30s")
+    )
+    error_message = "Recurring dispatch must depend on bounded headed health and network readiness and retain owned-process containment."
+  }
+
+  assert {
+    condition = (
+      strcontains(local.worker_cloud_init, "/etc/tmpfiles.d/") &&
+      strcontains(local.worker_cloud_init, "/run/lock/csd-traffic-generator.lock 0660 root tgen") &&
+      strcontains(local.worker_cloud_init, "/etc/logrotate.d/") &&
+      strcontains(local.worker_cloud_init, "copytruncate") &&
+      strcontains(local.worker_cloud_init, "rotate 7") &&
+      strcontains(local.worker_cloud_init, "size 10M") &&
+      strcontains(local.worker_cloud_init, "test -f \"$1/suites/csd-violations/continuous.mjs\"") &&
+      !strcontains(local.worker_cloud_init, "flock") &&
+      aws_instance.worker.user_data_replace_on_change &&
+      aws_instance.worker.user_data_base64 == base64gzip(local.worker_cloud_init)
+    )
+    error_message = "Hydration must require the pinned dispatcher, recreate the shared lock at boot, bound logs, and leave locking exclusively to run.sh."
+  }
+}
+
+run "verify_continuous_explicit_enabled" {
+  command = plan
+  variables { continuous_enabled = true }
+
+  assert {
+    condition     = output.continuous_enabled && length(regexall("(?m)^      CONTINUOUS_ENABLED=1$", local.worker_cloud_init)) == 1 && !strcontains(local.worker_cloud_init, "CONTINUOUS_ENABLED=0")
+    error_message = "Explicit enablement must preserve the boolean output and render only CONTINUOUS_ENABLED=1."
+  }
+}
+
+run "verify_continuous_disabled_hydration" {
+  command = plan
+  variables { continuous_enabled = false }
+
+  assert {
+    condition = (
+      !output.continuous_enabled &&
+      length(regexall("(?m)^      CONTINUOUS_ENABLED=0$", local.worker_cloud_init)) == 1 &&
+      !strcontains(local.worker_cloud_init, "CONTINUOUS_ENABLED=1") &&
+      strcontains(local.worker_cloud_init, "/etc/systemd/system/csd-continuous.service") &&
+      strcontains(local.worker_cloud_init, "/etc/systemd/system/csd-continuous.timer") &&
+      length(regexall("systemctl disable --now [^\\n]*csd-continuous\\.timer", local.worker_cloud_init)) >= 1 &&
+      length(regexall("systemctl (stop|disable --now) [^\\n]*csd-continuous\\.service", local.worker_cloud_init)) >= 1
+    )
+    error_message = "Disabled hydration must still install and validate recurrence units but stop and disable automatic launches."
   }
 }
