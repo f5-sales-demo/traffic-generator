@@ -6,7 +6,7 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
@@ -32,6 +32,8 @@ def main() -> int:
             ) as response:
                 response.read()
                 return response.status
+        except HTTPError as error:
+            return error.code
         except (OSError, URLError):
             return 0
 
