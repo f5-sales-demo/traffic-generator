@@ -8,6 +8,7 @@ import tempfile
 import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -237,6 +238,15 @@ class RuntimeTests(unittest.TestCase):
             )
             assert result["outcome"] == "evidence_failure"
             assert result["completed"] - result["started"] < 2
+
+    def test_retention_handles_disappearing_atomic_write_temporary(self):
+
+        temporary = Mock()
+        temporary.is_file.return_value = True
+        temporary.is_symlink.return_value = False
+        temporary.stat.side_effect = FileNotFoundError()
+        with patch.object(pathlib.Path, "rglob", return_value=[temporary]):
+            assert runtime.detail_size(pathlib.Path("/synthetic")) == 0
 
 
 if __name__ == "__main__":

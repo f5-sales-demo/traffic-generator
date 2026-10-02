@@ -162,6 +162,18 @@ def execute(
     }
 
 
+def detail_size(root: Path) -> int:
+    """Count detail while concurrent atomic writers rename temporary files."""
+    total = 0
+    for path in root.rglob("*"):
+        try:
+            if path.is_file() and not path.is_symlink():
+                total += path.stat().st_size
+        except FileNotFoundError:
+            continue
+    return total
+
+
 def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
     """Evict oldest detailed runs by age then total bytes; preserve active evidence."""
     candidates = sorted(
@@ -175,13 +187,7 @@ def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
         ),
         key=lambda p: p.stat().st_mtime,
     )
-    sizes = {
-        p: sum(
-            f.stat().st_size for f in p.rglob("*") if f.is_file() and not f.is_symlink()
-        )
-        for p in [*candidates, active]
-        if p.exists()
-    }
+    sizes = {p: detail_size(p) for p in [*candidates, active] if p.exists()}
     total = sum(sizes.values())
     for path in candidates:
         if path.stat().st_mtime < time.time() - days * 86400 or total > max_bytes:
@@ -197,11 +203,7 @@ def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
                 time.time() - directory.stat().st_mtime > days * 86400
                 or total > max_bytes
             ):
-                detail_bytes = sum(
-                    path.stat().st_size
-                    for path in directory.rglob("*")
-                    if path.is_file()
-                )
+                detail_bytes = detail_size(directory)
                 shutil.rmtree(directory)
                 total -= detail_bytes
 
@@ -218,11 +220,7 @@ def evidence_monitor(
             return None
         next_check = time.monotonic() + 0.5
         retain(runtime, active, config["retention_days"], config["retention_bytes"])
-        size = sum(
-            path.stat().st_size
-            for path in runtime.rglob("*")
-            if path.is_file() and not path.is_symlink()
-        )
+        size = detail_size(runtime)
         if size >= max(0, config["retention_bytes"] - 1024 * 1024):
             return "evidence_failure"
         return None
