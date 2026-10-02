@@ -35,7 +35,11 @@ for suite in "${PARALLEL_SUITES[@]}"; do
   log="/tmp/parallel-stress-${suite}-$$.log"
   LOGS+=("$log")
   echo "[+] Launching: ${suite}"
-  bash "$SUITES_DIR/runner.sh" "$suite" >"$log" 2>&1 &
+  if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+    TGEN_RESULTS_DIR="$TGEN_RESULTS_DIR/nested-$suite" bash "$SUITES_DIR/runner.sh" "$suite" >"$log" 2>&1 &
+  else
+    bash "$SUITES_DIR/runner.sh" "$suite" >"$log" 2>&1 &
+  fi
   PIDS+=($!)
 done
 
@@ -73,12 +77,14 @@ free -m | awk '/^Mem:/ {printf "RAM: %dMB / %dMB (%.0f%% used)\n", $3, $2, $3/$2
 echo ""
 
 echo "=== SUITE RESULTS ==="
+failed=0
 for i in "${!PARALLEL_SUITES[@]}"; do
   suite="${PARALLEL_SUITES[$i]}"
   log="${LOGS[$i]}"
   pid="${PIDS[$i]}"
   wait "$pid" 2>/dev/null
   exit_code=$?
+  [[ "$exit_code" -eq 0 ]] || failed=1
 
   summary=$(grep -E '(Passed|Failed|Skipped|Suite Complete)' "$log" 2>/dev/null | tail -2)
   printf "  %-25s exit=%d %s\n" "$suite" "$exit_code" "$summary"
@@ -90,3 +96,4 @@ echo "  Total wall time: ${wall_secs}s for ${#PARALLEL_SUITES[@]} parallel suite
 
 echo ""
 echo "[*] Parallel suite stress test complete"
+exit "$failed"

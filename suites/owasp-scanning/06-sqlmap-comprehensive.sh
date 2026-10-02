@@ -17,7 +17,8 @@ echo "========================================"
 echo "[*] Target: ${BASE}"
 echo ""
 
-SQLMAP_COMMON="--batch --timeout=15 --retries=2 --output-dir=/tmp/sqlmap-output"
+SQLMAP_OUTPUT_DIR="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-output"
+SQLMAP_COMMON="--batch --timeout=15 --retries=2 --output-dir=$SQLMAP_OUTPUT_DIR"
 FINDINGS=0
 
 ########################################################################
@@ -128,6 +129,6 @@ echo "========================================"
 echo " SQLMap Scan Summary"
 echo "========================================"
 echo "  Total injectable parameters found: ${FINDINGS}"
-echo "  Output directory: /tmp/sqlmap-output/"
+echo "  Output directory: $SQLMAP_OUTPUT_DIR/"
 echo ""
 echo "[*] SQLMap comprehensive scan finished."

@@ -36,6 +36,20 @@ DALFOX_DIR="/tmp/dalfox"
 
 # Arjun output
 ARJUN_DIR="/tmp/arjun"
+if [[ -n "${TGEN_RESULTS_DIR:-}" ]]; then
+  PASS_DIR=$(dirname "$TGEN_RESULTS_DIR")
+  ZAP_BASELINE="$PASS_DIR/owasp-scanning--01-zap-baseline/zap-baseline-report.html"
+  ZAP_ACTIVE="$PASS_DIR/owasp-scanning--02-zap-active-scan/zap-active-scan-report.html"
+  SQLMAP_DIR="$PASS_DIR/owasp-scanning--06-sqlmap-comprehensive/sqlmap-output"
+  DALFOX_DIR="$PASS_DIR/owasp-scanning--08-dalfox-xss-scan"
+  ARJUN_DIR="$PASS_DIR/owasp-scanning--09-arjun-param-discovery"
+  for scenario in 01-zap-baseline 02-zap-active-scan 06-sqlmap-comprehensive 08-dalfox-xss-scan 09-arjun-param-discovery; do
+    [[ -f "$PASS_DIR/owasp-scanning--$scenario/receipt.json" ]] || {
+      echo "SKIP: missing prerequisite scanner receipt: $scenario"
+      exit 1
+    }
+  done
+fi
 
 ########################################################################
 # Count available results

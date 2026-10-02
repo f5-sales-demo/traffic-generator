@@ -471,7 +471,7 @@
       "after": ["crapi-exploits/02-bola-vehicle-location"],
       "target_paths": ["/crapi/health", "/crapi/identity/api/auth/login", "/crapi/mailhog/api/v2/messages"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
-      "budget": "none",
+      "budget": "http",
       "parallel": false,
       "timeout_seconds": 900
     },

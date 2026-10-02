@@ -260,6 +260,7 @@ def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
 def run_nested(root: Path, scenarios: list[dict]) -> int:
     """Nested suite stress inherits the single egress boundary and emits child receipts."""
     results = Path(os.environ["TGEN_RESULTS_DIR"])
+    results.mkdir(parents=True, exist_ok=True, mode=0o700)
     failed = False
     for scenario in scenarios:
         directory = results / scenario["id"].replace("/", "--")
