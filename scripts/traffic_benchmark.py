@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Bounded keepalive and multi-client equivalents for standalone hardware benches."""
 
+import http.client
 import json
 import os
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 
 
 def main() -> int:
@@ -18,35 +18,49 @@ def main() -> int:
         raise ValueError(msg)
     paths = ["/httpbin/get", "/juice-shop/", "/dvwa/", "/vampi/"]
 
+    local = threading.local()
+    connections = []
+    lock = threading.Lock()
+
     def request(index: int) -> int:
-        """Issue one request inside the enforced scenario namespace."""
+        """Issue requests using actual persistent connections inside the paced namespace."""
+        keepalive = "keepalive" in scenario
+        if not hasattr(local, "connection") or not keepalive:
+            local.connection = http.client.HTTPSConnection(domain, timeout=10)
+            with lock:
+                connections.append(local.connection)
         try:
-            headers = {
-                "Connection": "keep-alive" if "keepalive" in scenario else "close"
-            }
-            with urlopen(
-                Request(
-                    "https://" + domain + paths[index % len(paths)], headers=headers
-                ),
-                timeout=10,
-            ) as response:
-                response.read()
-                return response.status
-        except HTTPError as error:
-            return error.code
-        except (OSError, URLError):
+            local.connection.request(
+                "GET",
+                paths[index % len(paths)],
+                headers={"Connection": "keep-alive" if keepalive else "close"},
+            )
+            response = local.connection.getresponse()
+            response.read()
+        except (OSError, http.client.HTTPException):
+            local.connection.close()
+            del local.connection
             return 0
+        else:
+            return response.status
+        finally:
+            if not keepalive and hasattr(local, "connection"):
+                local.connection.close()
 
     with ThreadPoolExecutor(
         max_workers=min(20, int(os.environ["TGEN_CONCURRENCY"]))
     ) as pool:
         codes = list(pool.map(request, range(int(os.environ["TGEN_REQUESTS"]))))
+    for connection in connections:
+        connection.close()
     receipt = {
         "scenario": scenario,
         "execution": "bounded benchmark equivalent",
         "requests": len(codes),
         "outcomes": {str(code): codes.count(code) for code in set(codes)},
         "host_tuning": False,
+        "connections_created": len(connections),
+        "persistent_connections": "keepalive" in scenario,
     }
     path = Path(os.environ["TGEN_RESULTS_DIR"]) / "benchmark.json"
     path.write_text(json.dumps(receipt))
