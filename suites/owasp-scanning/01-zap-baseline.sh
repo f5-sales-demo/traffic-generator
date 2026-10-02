@@ -47,7 +47,7 @@ run_zap_daemon_mode() {
   echo "[*] Starting ZAP daemon on port ${ZAP_PORT}..."
   JVM_ARGS="-Xmx512m" zap -daemon -port "${ZAP_PORT}" \
     -config api.disablekey=true \
-    -config spider.maxDuration=2 \
+    -config spider.maxDuration="${TGEN_ZAP_SPIDER_MINUTES:-2}" \
     -config scanner.maxScanDurationInMins=0 &
   ZAP_PID=$!
 
@@ -55,7 +55,7 @@ run_zap_daemon_mode() {
   echo "[*] Waiting for ZAP to start..."
   ZAP_READY=0
   for i in $(seq 1 30); do
-    if curl -s "${ZAP_API}/JSON/core/view/version/" >/dev/null 2>&1; then
+    if curl -sf "${ZAP_API}/JSON/core/view/version/" >/dev/null 2>&1; then
       ZAP_READY=1
       break
     fi
