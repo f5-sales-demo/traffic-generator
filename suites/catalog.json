@@ -70,7 +70,13 @@
     "sha256sum",
     "hashid"
   ],
-  "support_files": ["suites/csd-violations/scenarios.mjs", "suites/csd-violations/run.sh"],
+  "support_files": [
+    "suites/csd-violations/scenarios.mjs",
+    "suites/csd-violations/run.sh",
+    "suites/parameter-words.txt",
+    "scripts/fixture_token.py",
+    "scripts/traffic_fixtures.py"
+  ],
   "scenarios": [
     {
       "id": "api-attacks/01-vampi-owasp-top10",

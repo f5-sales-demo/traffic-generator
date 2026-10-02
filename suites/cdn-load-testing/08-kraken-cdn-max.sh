@@ -7,7 +7,7 @@ set -uo pipefail
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-600}}"
-RESULTS_DIR="/tmp/cdn-kraken-$$"
+RESULTS_DIR="${TGEN_RESULTS_DIR:-/tmp/cdn-kraken-$$}"
 mkdir -p "$RESULTS_DIR"
 
 echo "================================================================"

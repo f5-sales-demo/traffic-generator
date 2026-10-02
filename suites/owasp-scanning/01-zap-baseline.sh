@@ -14,7 +14,7 @@ BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 ZAP_PORT=8090
 ZAP_API="http://localhost:${ZAP_PORT}"
 ZAP_PID=""
-REPORT_DIR="/tmp"
+REPORT_DIR="${TGEN_RESULTS_DIR:-/tmp}"
 
 APPS=(
   "/"

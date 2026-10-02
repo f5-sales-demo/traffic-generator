@@ -133,7 +133,10 @@ def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
         (
             p
             for p in root.iterdir()
-            if p.is_dir() and p != active and not p.is_symlink()
+            if p.is_dir()
+            and p.name.startswith("pass-")
+            and p != active
+            and not p.is_symlink()
         ),
         key=lambda p: p.stat().st_mtime,
     )
@@ -315,6 +318,7 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
             active = runtime / pass_id
             active.mkdir(mode=0o700)
             receipts = []
+            state["pass_started"] = time.time()
             for index, scenario in enumerate(scenarios):
                 if stop.is_set():
                     break
@@ -334,6 +338,7 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
                 )
             receipt = {
                 "id": pass_id,
+                "started": state["pass_started"],
                 "complete": len(receipts) == len(scenarios),
                 "passed": len(receipts) == len(scenarios)
                 and all(r["outcome"] == "launched" for r in receipts),
@@ -344,6 +349,9 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
             if receipt["complete"]:
                 state["completed_passes"] += 1
             state["last_pass"] = {k: v for k, v in receipt.items() if k != "scenarios"}
+            state["catalog_passes"] = (
+                [*state.get("catalog_passes", []), state["last_pass"]]
+            )[-2:]
             if not continuous:
                 stop.set()
         worker.join(3)

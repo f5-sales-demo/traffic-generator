@@ -111,7 +111,9 @@ class RuntimeTests(unittest.TestCase):
     def test_retention_removes_oldest_completed_only(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
-            old, recent, active = [root / name for name in ("old", "recent", "active")]
+            old, recent, active = [
+                root / name for name in ("pass-old", "pass-recent", "pass-active")
+            ]
             for path in (old, recent, active):
                 path.mkdir()
                 (path / "evidence").write_bytes(b"x" * 100)
@@ -120,6 +122,18 @@ class RuntimeTests(unittest.TestCase):
             assert not old.exists()
             assert not recent.exists()
             assert active.exists()
+
+    def test_retention_preserves_runtime_certificate_and_source_directories(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            active = root / "pass-active"
+            active.mkdir()
+            certificate = root / "mitm-ca"
+            certificate.mkdir()
+            (certificate / "certificate.pem").write_text("private-runtime-certificate")
+            os.utime(certificate, (1, 1))
+            runtime.retain(root, active, 7, 1)
+            assert certificate.exists()
 
     def test_atomic_receipt_is_private(self):
         with tempfile.TemporaryDirectory() as tmp:

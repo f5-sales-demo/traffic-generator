@@ -9,11 +9,11 @@ TARGET="${1:-${TARGET_FQDN:?TARGET_FQDN required}}"
 PROTOCOL="${TARGET_PROTOCOL:-http}"
 BASE="${PROTOCOL}://${TARGET}"
 CRAPI_PORT="${CRAPI_PORT:-8888}"
-CRAPI_BASE="${PROTOCOL}://${TARGET}:${CRAPI_PORT}"
+CRAPI_BASE="${CRAPI_BASE_URL:-${PROTOCOL}://${TARGET}:${CRAPI_PORT}}"
 DURATION="${TGEN_DURATION:-${2:-600}}"
 NCPU=$(nproc)
 
-RESULTS_DIR="/tmp/origin-torture-$$"
+RESULTS_DIR="${TGEN_RESULTS_DIR:-/tmp/origin-torture-$$}"
 mkdir -p "$RESULTS_DIR"
 SUITE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -28,15 +28,19 @@ echo "  Mode:     ALL exploit suites + sustained load generators"
 echo "================================================================"
 echo ""
 
-# Kernel tuning
-SOMAXCONN=$((NCPU * 8192))
-[ "$SOMAXCONN" -gt 131072 ] && SOMAXCONN=131072
-sudo sysctl -w net.core.somaxconn=$SOMAXCONN >/dev/null 2>&1
-sudo sysctl -w net.ipv4.tcp_tw_reuse=1 >/dev/null 2>&1
-sudo sysctl -w net.ipv4.tcp_fin_timeout=5 >/dev/null 2>&1
-sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535" >/dev/null 2>&1
-sudo sysctl -w fs.file-max=$((NCPU * 262144)) >/dev/null 2>&1
-ulimit -n 524288 2>/dev/null || ulimit -n 65535 2>/dev/null || true
+# Host tuning is excluded from paced, supervised execution.
+if [[ -z "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+  # Kernel tuning
+  SOMAXCONN=$((NCPU * 8192))
+  [ "$SOMAXCONN" -gt 131072 ] && SOMAXCONN=131072
+  sudo sysctl -w net.core.somaxconn=$SOMAXCONN >/dev/null 2>&1
+  sudo sysctl -w net.ipv4.tcp_tw_reuse=1 >/dev/null 2>&1
+  sudo sysctl -w net.ipv4.tcp_fin_timeout=5 >/dev/null 2>&1
+  sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535" >/dev/null 2>&1
+  sudo sysctl -w fs.file-max=$((NCPU * 262144)) >/dev/null 2>&1
+  ulimit -n 524288 2>/dev/null || ulimit -n 65535 2>/dev/null || true
+
+fi
 
 CPU_PRE=$(awk '{printf "%.2f", $1}' /proc/loadavg)
 RAM_PRE=$(free -m | awk '/Mem:/{print $3}')
@@ -49,7 +53,7 @@ echo ""
 echo "=== LAYER 1: SUSTAINED WRK LOAD (all apps, keepalive) ==="
 WRK_T=$((NCPU / 2))
 [ "$WRK_T" -lt 2 ] && WRK_T=2
-WRK_C=256
+WRK_C="${TGEN_CONCURRENCY:-20}"
 
 ORIGIN_ENDPOINTS=(
   "/juice-shop/"

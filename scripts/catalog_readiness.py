@@ -47,12 +47,18 @@ def main() -> int:
         for protocol in ("http", "https"):
             for path in paths:
                 try:
-                    request = Request(protocol + "://" + domain + path)  # noqa: S310 - validated HTTP(S) targets
+                    request = Request(  # noqa: S310 - validated HTTP(S) targets
+                        protocol + "://" + domain + path,
+                        headers={"X-MUD-User": "waap-readiness-benign"},
+                    )
                     if path.endswith("/graphql"):
                         request = Request(  # noqa: S310 - validated HTTP(S) target
                             protocol + "://" + domain + path,
                             data=b'{"query":"{ __typename }"}',
-                            headers={"Content-Type": "application/json"},
+                            headers={
+                                "Content-Type": "application/json",
+                                "X-MUD-User": "waap-readiness-benign",
+                            },
                         )
                     with urlopen(request, timeout=10) as response:  # noqa: S310 - fixed HTTP(S) schemes
                         code = response.status

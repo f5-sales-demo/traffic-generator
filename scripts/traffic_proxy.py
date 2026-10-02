@@ -114,7 +114,12 @@ class Budget:
             return
         flow.request.host = host
         if "X-MUD-User" not in flow.request.headers:
-            flow.request.headers["X-MUD-User"] = "waap-scenario-" + host
+            flow.request.headers["X-MUD-User"] = (
+                "waap-scenario-"
+                + os.environ.get("TGEN_CURRENT_SCENARIO", "catalog")
+                + "-"
+                + host
+            )
         event = asyncio.Event()
         await self.pending.put((event, host))
         await event.wait()
