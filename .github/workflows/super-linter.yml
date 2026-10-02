@@ -99,7 +99,7 @@ jobs:
       classify_xc_minimum_configs: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' }}
       # Real sudo boundary and systemd/logrotate validation require a hosted VM.
       socketless_runner_label: ubuntu-latest
-      container_build_runner_label: ${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-container-build' || 'managed-container-build' }}
+      container_build_runner_label: ubuntu-24.04
     permissions:
       contents: read # checkout repository content in the reusable workflow
       packages: read # pull lint tooling from GitHub Packages
