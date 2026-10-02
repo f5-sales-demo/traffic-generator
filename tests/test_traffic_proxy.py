@@ -33,6 +33,8 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             )
             assert spec is not None
             assert spec.loader is not None
+            assert spec is not None
+            assert spec.loader is not None
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             budget = module.Budget()
@@ -85,6 +87,8 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             spec = importlib.util.spec_from_file_location(
                 "cancel_proxy", ROOT / "scripts/traffic_proxy.py"
             )
+            assert spec is not None
+            assert spec.loader is not None
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             budget = module.Budget()
@@ -117,6 +121,8 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             spec = importlib.util.spec_from_file_location(
                 "disconnect_proxy", ROOT / "scripts/traffic_proxy.py"
             )
+            assert spec is not None
+            assert spec.loader is not None
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             budget = module.Budget()
