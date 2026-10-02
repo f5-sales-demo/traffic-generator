@@ -40,9 +40,10 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
 
             async def request(index):
                 flow = SimpleNamespace(
+                    metadata={},
                     request=SimpleNamespace(
                         headers={"Host": "www.example.test"}, host="192.0.2.1", port=443
-                    )
+                    ),
                 )
                 await budget.request(flow)
                 dispatched.append(time.monotonic())
@@ -88,7 +89,8 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             spec.loader.exec_module(module)
             budget = module.Budget()
             flow = SimpleNamespace(
-                request=SimpleNamespace(headers={"Host": "www.example.test"}, port=443)
+                metadata={},
+                request=SimpleNamespace(headers={"Host": "www.example.test"}, port=443),
             )
             pending = asyncio.create_task(budget.request(flow))
             await asyncio.sleep(0)
@@ -100,6 +102,33 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(0.12)
             budget.done()
             assert budget.counts["scenario_requests"] == 0
+
+    async def test_disconnect_cancels_queued_slot(self):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.dict(
+                os.environ,
+                {
+                    "TGEN_DOMAINS": '["www.example.test","api.example.test"]',
+                    "TGEN_PROXY_METRICS": tmp + "/metrics.json",
+                },
+            ),
+        ):
+            spec = importlib.util.spec_from_file_location(
+                "disconnect_proxy", ROOT / "scripts/traffic_proxy.py"
+            )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            budget = module.Budget()
+            future = asyncio.get_running_loop().create_future()
+            flow = SimpleNamespace(
+                metadata={"tgen_pending_slot": future},
+                error=SimpleNamespace(msg="client disconnected"),
+                request=SimpleNamespace(method="GET", path="/synthetic"),
+            )
+            budget.error(flow)
+            assert future.cancelled()
+            assert budget.counts["tool_cancellations"] == 1
 
 
 if __name__ == "__main__":

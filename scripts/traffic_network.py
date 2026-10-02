@@ -424,7 +424,7 @@ class NetworkBoundary:
             token = self.fixture_login(
                 domain,
                 "/restaurant/token",
-                {"username": "tgen_" + role, "password": "TGenSynthetic123"},
+                {"username": "tgen_" + role, "password": "password"},
             ).get("access_token")
             if token:
                 fixtures["restaurant_" + role + "_token"] = token

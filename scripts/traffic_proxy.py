@@ -86,9 +86,7 @@ class Budget:
 
     def filler(self, host: str) -> None:
         """Use spare attack slots for an explicitly identified harmless SQLi simulation."""
-        opener = build_opener(
-            ProxyHandler({}), HTTPSHandler(context=self.tls_context)
-        )
+        opener = build_opener(ProxyHandler({}), HTTPSHandler(context=self.tls_context))
         request = Request(
             "https://" + host + "/httpbin/get?tgen_synthetic=%27%20OR%201%3D1--",
             headers={
@@ -137,8 +135,10 @@ class Budget:
                 "waap-scenario-" + self.current_scenario() + "-" + host
             )
         event = asyncio.get_running_loop().create_future()
+        flow.metadata["tgen_pending_slot"] = event
         await self.pending.put((event, host))
         await event
+        flow.metadata.pop("tgen_pending_slot", None)
         if flow.request.headers.pop("X-TGen-Raw-Method", "") == "CONNECT":
             flow.response = await asyncio.to_thread(
                 self.raw_connect, host, flow.request.path
@@ -178,6 +178,9 @@ class Budget:
 
     def error(self, flow: http.HTTPFlow) -> None:
         """Record failed proxied upstream requests."""
+        pending = flow.metadata.pop("tgen_pending_slot", None)
+        if pending is not None and not pending.done():
+            pending.cancel()
         if flow.error:
             with (self.metrics_path.parent / "error-events.jsonl").open(
                 "a", encoding="utf-8"
@@ -187,7 +190,9 @@ class Budget:
                         {
                             "method": flow.request.method,
                             "path": flow.request.path,
-                            "error": re.sub(r"b'[^']*'", "[redacted header]", flow.error.msg),
+                            "error": re.sub(
+                                r"b'[^']*'", "[redacted header]", flow.error.msg
+                            ),
                             "scenario": self.current_scenario(),
                         }
                     )
