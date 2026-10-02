@@ -144,6 +144,11 @@ class RuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             for body, outcome in [
                 ("echo SKIP: fixture unavailable", "fixture_failure"),
+                ("echo '    [SKIP] scanner missing'", "fixture_failure"),
+                (
+                    "echo '    [FAIL] No video ID available for command injection test'",
+                    "fixture_failure",
+                ),
                 ("exit 2", "tool_failure"),
             ]:
                 result = runtime.execute(

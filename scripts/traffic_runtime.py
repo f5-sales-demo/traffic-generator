@@ -148,7 +148,7 @@ def execute(
         outcome = "tool_failure"
     text = log.read_text(errors="replace")
     if outcome == "launched" and re.search(
-        r"(?im)^\s*(SKIP:|WARN: Could not extract auth token|.*Could not (?:setup|authenticate|retrieve vehicle)|.*Skipping (?:verification|exploit|JWT))",
+        r"(?im)^\s*(\[SKIP\]|SKIP:|.*No (?:video|order) ID available|WARN: Could not extract auth token|.*Could not (?:setup|authenticate|retrieve vehicle)|.*Skipping (?:verification|exploit|JWT))",
         text,
     ):
         outcome = "fixture_failure"
@@ -333,6 +333,14 @@ def _scenario(
             "claim": scenario["expected_outcome"],
         }
     )
+    if scenario["budget"] == "connection":
+        connection_receipt = directory / "connections.json"
+        if connection_receipt.exists():
+            connection_data = json.loads(connection_receipt.read_text())
+            result["connection_attempts"] = connection_data["attempts"]
+            result["connection_limit"] = connection_data["attempt_limit_per_second"]
+        else:
+            result["outcome"] = "tool_failure"
     result["mitigated_requests"] = after.get("attack_mitigated", 0) - before.get(
         "attack_mitigated", 0
     )

@@ -30,6 +30,7 @@ class Budget:
             "tool_cancellations": 0,
             "attack_mitigated": 0,
             "denied_destinations": 0,
+            "error_categories": {},
             "per_domain": {},
         }
         self.started = time.time()
@@ -144,6 +145,30 @@ class Budget:
 
     def error(self, flow: http.HTTPFlow) -> None:
         """Record failed proxied upstream requests."""
+        if flow.error:
+            message = flow.error.msg.lower()
+            category = next(
+                (
+                    word
+                    for word in (
+                        "client",
+                        "killed",
+                        "cancel",
+                        "disconnected",
+                        "connection closed",
+                        "reset",
+                        "tls",
+                        "handshake",
+                        "timeout",
+                        "eof",
+                        "server",
+                    )
+                    if word in message
+                ),
+                "other",
+            )
+            errors = self.counts["error_categories"]
+            errors[category] = errors.get(category, 0) + 1
         if flow.error and any(
             word in flow.error.msg.lower()
             for word in (
