@@ -283,9 +283,8 @@ def _scenario(
     )
     if scenario["kind"] == "javascript":
         log_text = (directory / "scenario.log").read_text(errors="replace")
-        if (
-            "Registrations attempted: 0" in log_text
-            or "Contact forms submitted: 0" in log_text
+        if re.search(
+            r"(?m)^\s*(Registrations attempted|Contact forms submitted): 0$", log_text
         ):
             result["outcome"] = "fixture_failure"
     if scenario["budget"] == "http" and result["http_requests"] == 0:
