@@ -1,6 +1,7 @@
 """Mitmproxy addon: one aggregate clock for scanners, browsers, and filler attacks."""
 
 import asyncio
+import http.client as http_client
 import json
 import os
 import ssl
@@ -136,6 +137,36 @@ class Budget:
         event = asyncio.get_running_loop().create_future()
         await self.pending.put((event, host))
         await event
+        if flow.request.headers.pop("X-TGen-Raw-Method", "") == "CONNECT":
+            flow.response = await asyncio.to_thread(
+                self.raw_connect, host, flow.request.path
+            )
+
+    def raw_connect(self, host: str, path: str) -> http.Response:
+        """Forward an HTTP CONNECT method probe in its counted slot without opening a tunnel."""
+        connection = http_client.HTTPSConnection(
+            host, timeout=10, context=ssl.create_default_context()
+        )
+        try:
+            connection.request(
+                "CONNECT",
+                path,
+                headers={
+                    "Host": host,
+                    "X-MUD-User": "waap-scenario-" + self.current_scenario(),
+                },
+            )
+            response = connection.getresponse()
+            return http.Response.make(
+                response.status,
+                response.read(1024 * 1024),
+                {"X-TGen-Execution": "paced raw CONNECT probe"},
+            )
+        except (OSError, http_client.HTTPException):
+            self.counts["scenario_transport_failures"] += 1
+            return http.Response.make(502, b"raw CONNECT transport failure")
+        finally:
+            connection.close()
 
     def response(self, flow: http.HTTPFlow) -> None:
         """Mitigation is an HTTP outcome, separate from transport failure."""
@@ -146,6 +177,20 @@ class Budget:
     def error(self, flow: http.HTTPFlow) -> None:
         """Record failed proxied upstream requests."""
         if flow.error:
+            with (self.metrics_path.parent / "error-events.jsonl").open(
+                "a", encoding="utf-8"
+            ) as stream:
+                stream.write(
+                    json.dumps(
+                        {
+                            "method": flow.request.method,
+                            "path": flow.request.path,
+                            "error": flow.error.msg,
+                            "scenario": self.current_scenario(),
+                        }
+                    )
+                    + "\n"
+                )
             message = flow.error.msg.lower()
             category = next(
                 (
