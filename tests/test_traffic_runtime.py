@@ -9,9 +9,11 @@ import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import traffic_runtime as runtime
+import traffic_runtime as runtime  # noqa: E402 - scripts under test
 
 
 class RuntimeTests(unittest.TestCase):
@@ -49,11 +51,14 @@ class RuntimeTests(unittest.TestCase):
         ]:
             config = self.config()
             config[key] = value
-            with self.subTest(key=key), self.assertRaises(ValueError):
+            with (
+                self.subTest(key=key),
+                pytest.raises(ValueError, match=r"budget|bound|domains|HTTPS|domain"),
+            ):
                 runtime.validate_config(config)
 
     def test_shared_pacing_under_parallel_workers(self):
-        pacer = runtime.Pacer(20)
+        pacer = __import__("traffic_common").Pacer(20)
         started = time.monotonic()
         with ThreadPoolExecutor(max_workers=8) as pool:
             times = list(pool.map(lambda _: pacer.acquire(), range(21)))

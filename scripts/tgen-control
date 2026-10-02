@@ -7,7 +7,7 @@ export PATH="$ROOT/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/s
 export NODE_PATH=/usr/lib/node_modules
 case "${1:-}" in
 start)
-  python3 "$ROOT/current/scripts/catalog-readiness.py" --config "$CONFIG"
+  python3 "$ROOT/current/scripts/catalog_readiness.py" --config "$CONFIG"
   systemctl enable --now tgen-continuous.service
   ;;
 stop)
@@ -29,7 +29,7 @@ run-once)
     echo "Continuous catalog is already running; stop it before run-once." >&2
     exit 1
   fi
-  python3 "$ROOT/current/scripts/catalog-readiness.py" --config "$CONFIG"
+  python3 "$ROOT/current/scripts/catalog_readiness.py" --config "$CONFIG"
   exec python3 "$ROOT/current/scripts/traffic_runtime.py" --config "$CONFIG" --once
   ;;
 *)

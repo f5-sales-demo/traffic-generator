@@ -12,9 +12,10 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Self
 
-from traffic_runtime import Pacer, terminate
+from traffic_common import Pacer, terminate
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 
@@ -30,26 +31,28 @@ class NetworkBoundary:
     def __init__(self, root: Path, config: dict, runtime: Path) -> None:
         """Initialize a task-owned egress boundary and benign counters."""
         self.root, self.config, self.runtime = root, config, runtime
+        self.state = SimpleNamespace()
         suffix = uuid.uuid4().hex[:7]
-        self.namespace = "tgen-" + suffix
-        self.host_link, self.guest_link = "tgh" + suffix, "tgg" + suffix
-        self.chain = "TGEN" + suffix.upper()
-        self.gateway, self.guest = "169.254.240.1", "169.254.240.2"
-        self.proxy_metrics = runtime / "proxy-metrics.json"
-        self.stop = threading.Event()
-        self.proxy = None
-        self.pool = ThreadPoolExecutor(max_workers=200)
-        self.benign = {
+        self.state.namespace = "tgen-" + suffix
+        self.state.host_link, self.state.guest_link = "tgh" + suffix, "tgg" + suffix
+        self.state.chain = "TGEN" + suffix.upper()
+        self.state.gateway, self.state.guest = "169.254.240.1", "169.254.240.2"
+        self.state.proxy_metrics = runtime / "proxy-metrics.json"
+        self.state.stop = threading.Event()
+        self.state.proxy = None
+        self.state.pool = ThreadPoolExecutor(max_workers=200)
+        self.state.benign = {
             "benign_requests": 0,
             "benign_success": 0,
             "benign_transport_failures": 0,
             "benign_per_domain": dict.fromkeys(config["domains"], 0),
         }
-        self.lock = threading.Lock()
-        self.threads = []
-        self.started = time.time()
-        self.tls_context = ssl.create_default_context()
-        self.local = threading.local()
+        self.state.lock = threading.Lock()
+        self.state.threads = []
+        self.state.netns_dir = Path("/etc/netns") / self.state.namespace
+        self.state.started = time.time()
+        self.state.tls_context = ssl.create_default_context()
+        self.state.local = threading.local()
 
     def command(self, *args: str) -> None:
         """Execute fixed argv; never evaluate generated shell source."""
@@ -63,69 +66,89 @@ class NetworkBoundary:
             msg = "network pacing requires root in the supervised service"
             raise ValueError(msg)
         try:
-            self.command("ip", "netns", "add", self.namespace)
+            self.command("ip", "netns", "add", self.state.namespace)
             self.command(
                 "ip",
                 "link",
                 "add",
-                self.host_link,
+                self.state.host_link,
                 "type",
                 "veth",
                 "peer",
                 "name",
-                self.guest_link,
-            )
-            self.command("ip", "link", "set", self.guest_link, "netns", self.namespace)
-            self.command(
-                "ip", "addr", "add", self.gateway + "/30", "dev", self.host_link
-            )
-            self.command("ip", "link", "set", self.host_link, "up")
-            self.command(
-                "ip",
-                "netns",
-                "exec",
-                self.namespace,
-                "ip",
-                "addr",
-                "add",
-                self.guest + "/30",
-                "dev",
-                self.guest_link,
+                self.state.guest_link,
             )
             self.command(
-                "ip",
-                "netns",
-                "exec",
-                self.namespace,
                 "ip",
                 "link",
                 "set",
-                self.guest_link,
-                "up",
+                self.state.guest_link,
+                "netns",
+                self.state.namespace,
             )
             self.command(
-                "ip", "netns", "exec", self.namespace, "ip", "link", "set", "lo", "up"
+                "ip",
+                "addr",
+                "add",
+                self.state.gateway + "/30",
+                "dev",
+                self.state.host_link,
+            )
+            self.command("ip", "link", "set", self.state.host_link, "up")
+            self.command(
+                "ip",
+                "netns",
+                "exec",
+                self.state.namespace,
+                "ip",
+                "addr",
+                "add",
+                self.state.guest + "/30",
+                "dev",
+                self.state.guest_link,
             )
             self.command(
                 "ip",
                 "netns",
                 "exec",
-                self.namespace,
+                self.state.namespace,
+                "ip",
+                "link",
+                "set",
+                self.state.guest_link,
+                "up",
+            )
+            self.command(
+                "ip",
+                "netns",
+                "exec",
+                self.state.namespace,
+                "ip",
+                "link",
+                "set",
+                "lo",
+                "up",
+            )
+            self.command(
+                "ip",
+                "netns",
+                "exec",
+                self.state.namespace,
                 "ip",
                 "route",
                 "add",
                 "default",
                 "via",
-                self.gateway,
+                self.state.gateway,
             )
             # DNAT/REDIRECT exposes the original destination to mitmproxy transparent mode.
-            self.command("iptables", "-t", "nat", "-N", self.chain)
+            self.command("iptables", "-t", "nat", "-N", self.state.chain)
             self.command(
                 "iptables",
                 "-t",
                 "nat",
                 "-A",
-                self.chain,
+                self.state.chain,
                 "-p",
                 "tcp",
                 "-m",
@@ -145,13 +168,20 @@ class NetworkBoundary:
                 "PREROUTING",
                 "1",
                 "-i",
-                self.host_link,
+                self.state.host_link,
                 "-j",
-                self.chain,
+                self.state.chain,
             )
             # Any tool ignoring HTTP proxies still traverses REDIRECT; non-HTTP egress is denied.
             self.command(
-                "iptables", "-I", "FORWARD", "1", "-i", self.host_link, "-j", "DROP"
+                "iptables",
+                "-I",
+                "FORWARD",
+                "1",
+                "-i",
+                self.state.host_link,
+                "-j",
+                "DROP",
             )
             self.command(
                 "iptables",
@@ -159,7 +189,7 @@ class NetworkBoundary:
                 "INPUT",
                 "1",
                 "-i",
-                self.host_link,
+                self.state.host_link,
                 "-p",
                 "tcp",
                 "--dport",
@@ -168,26 +198,25 @@ class NetworkBoundary:
                 "ACCEPT",
             )
             self.command(
-                "iptables", "-I", "INPUT", "2", "-i", self.host_link, "-j", "DROP"
+                "iptables", "-I", "INPUT", "2", "-i", self.state.host_link, "-j", "DROP"
             )
             # Exact authorized names resolve locally; no external DNS or subnet probing.
-            self.netns_dir = Path("/etc/netns") / self.namespace
-            self.netns_dir.mkdir(mode=0o700, parents=True)
+            self.state.netns_dir.mkdir(mode=0o700, parents=True)
             hosts = "127.0.0.1 localhost\n"
 
             for domain in self.config["domains"]:
                 addresses = socket.getaddrinfo(
                     domain, 443, socket.AF_INET, socket.SOCK_STREAM
                 )
-                hosts += addresses[0][4][0] + " " + domain + "\n"
-            (self.netns_dir / "hosts").write_text(hosts)
+                hosts += str(addresses[0][4][0]) + " " + domain + "\n"
+            (self.state.netns_dir / "hosts").write_text(hosts)
             environment = dict(
                 os.environ,
                 TGEN_DOMAINS=json.dumps(self.config["domains"]),
-                TGEN_PROXY_METRICS=str(self.proxy_metrics),
+                TGEN_PROXY_METRICS=str(self.state.proxy_metrics),
             )
             proxy_log = (self.runtime / "proxy.log").open("ab")
-            self.proxy = subprocess.Popen(  # noqa: S603 - fixed verified proxy invocation
+            self.state.proxy = subprocess.Popen(  # noqa: S603 - fixed verified proxy invocation
                 [
                     shutil.which("mitmdump") or "/usr/local/bin/mitmdump",
                     "--mode",
@@ -211,32 +240,31 @@ class NetworkBoundary:
             )
             proxy_log.close()
             time.sleep(2)
-            if self.proxy.poll() is not None:
+            if self.state.proxy.poll() is not None:
                 msg = "transparent pacing proxy failed to start"
                 _proxy_failed(msg)
             for domain in self.config["domains"]:
                 worker = threading.Thread(
-                    target=self.benign_loop, args=(domain,), daemon=True
+                    target=self.state.benign_loop, args=(domain,), daemon=True
                 )
                 worker.start()
-                self.threads.append(worker)
+                self.state.threads.append(worker)
         except BaseException:
             self.__exit__(None, None, None)
             raise
-        else:
-            return self
+        return self
 
     def request(self, domain: str) -> None:
         """Send one independently paced benign control, with validated upstream TLS."""
         success, failed = False, False
-        if not hasattr(self.local, "connections"):
-            self.local.connections = {}
-        connection = self.local.connections.get(domain)
+        if not hasattr(self.state.local, "connections"):
+            self.state.local.connections = {}
+        connection = self.state.local.connections.get(domain)
         if connection is None:
             connection = http.client.HTTPSConnection(
-                domain, context=self.tls_context, timeout=10
+                domain, context=self.state.tls_context, timeout=10
             )
-            self.local.connections[domain] = connection
+            self.state.local.connections[domain] = connection
         try:
             connection.request(
                 "GET", "/httpbin/get", headers={"X-TGen-Class": "benign"}
@@ -247,25 +275,37 @@ class NetworkBoundary:
         except (OSError, http.client.HTTPException):
             failed = True
             connection.close()
-            self.local.connections.pop(domain, None)
-        with self.lock:
-            self.benign["benign_success"] += int(success)
-            self.benign["benign_transport_failures"] += int(failed)
+            self.state.local.connections.pop(domain, None)
+        with self.state.lock:
+            self.state.benign["benign_success"] += int(success)
+            self.state.benign["benign_transport_failures"] += int(failed)
 
     def benign_loop(self, domain: str) -> None:
         """Offer 90 launches/sec to each domain without burst credit."""
         pacer = Pacer(90)
-        while not self.stop.is_set():
+        while not self.state.stop.is_set():
             pacer.acquire()
-            with self.lock:
-                self.benign["benign_requests"] += 1
-                self.benign["benign_per_domain"][domain] += 1
-            self.pool.submit(self.request, domain)
+            with self.state.lock:
+                self.state.benign["benign_requests"] += 1
+                self.state.benign["benign_per_domain"][domain] += 1
+            self.state.pool.submit(self.request, domain)
 
     def wrap(self, command: list[str], connection: bool = False) -> list[str]:
         """All HTTP scenario descendants inherit the same isolated egress."""
         return (
-            command if connection else ["ip", "netns", "exec", self.namespace, "setpriv", "--bounding-set=-all", "--inh-caps=-all", "--ambient-caps=-all", *command]
+            command
+            if connection
+            else [
+                "ip",
+                "netns",
+                "exec",
+                self.state.namespace,
+                "setpriv",
+                "--bounding-set=-all",
+                "--inh-caps=-all",
+                "--ambient-caps=-all",
+                *command,
+            ]
         )
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
@@ -299,28 +339,32 @@ class NetworkBoundary:
     def metrics(self) -> dict:
         """Read private aggregate metrics, separating controls and attack outcomes."""
         try:
-            attack = json.loads(self.proxy_metrics.read_text())
+            attack = json.loads(self.state.proxy_metrics.read_text())
         except (FileNotFoundError, json.JSONDecodeError):
             attack = {}
-        with self.lock:
-            return {**self.benign, **attack, "elapsed": time.time() - self.started}
+        with self.state.lock:
+            return {
+                **self.state.benign,
+                **attack,
+                "elapsed": time.time() - self.state.started,
+            }
 
     def __exit__(self, *_: object) -> None:
         """Remove only this boundary's namespaces/rules and close every worker."""
-        self.stop.set()
-        for thread in self.threads:
+        self.state.stop.set()
+        for thread in self.state.threads:
             thread.join(2)
-        self.pool.shutdown(wait=True, cancel_futures=True)
-        if self.proxy:
-            terminate(self.proxy)
+        self.state.pool.shutdown(wait=True, cancel_futures=True)
+        if self.state.proxy:
+            terminate(self.state.proxy)
         commands = [
-            ["iptables", "-D", "INPUT", "-i", self.host_link, "-j", "DROP"],
+            ["iptables", "-D", "INPUT", "-i", self.state.host_link, "-j", "DROP"],
             [
                 "iptables",
                 "-D",
                 "INPUT",
                 "-i",
-                self.host_link,
+                self.state.host_link,
                 "-p",
                 "tcp",
                 "--dport",
@@ -328,7 +372,7 @@ class NetworkBoundary:
                 "-j",
                 "ACCEPT",
             ],
-            ["iptables", "-D", "FORWARD", "-i", self.host_link, "-j", "DROP"],
+            ["iptables", "-D", "FORWARD", "-i", self.state.host_link, "-j", "DROP"],
             [
                 "iptables",
                 "-t",
@@ -336,14 +380,14 @@ class NetworkBoundary:
                 "-D",
                 "PREROUTING",
                 "-i",
-                self.host_link,
+                self.state.host_link,
                 "-j",
-                self.chain,
+                self.state.chain,
             ],
-            ["iptables", "-t", "nat", "-F", self.chain],
-            ["iptables", "-t", "nat", "-X", self.chain],
-            ["ip", "link", "delete", self.host_link],
-            ["ip", "netns", "delete", self.namespace],
+            ["iptables", "-t", "nat", "-F", self.state.chain],
+            ["iptables", "-t", "nat", "-X", self.state.chain],
+            ["ip", "link", "delete", self.state.host_link],
+            ["ip", "netns", "delete", self.state.namespace],
         ]
         for command in commands:
             subprocess.run(  # noqa: S603 - fixed network setup/cleanup argv
@@ -352,5 +396,5 @@ class NetworkBoundary:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-        if hasattr(self, "netns_dir") and self.netns_dir.exists():
-            shutil.rmtree(self.netns_dir)
+        if hasattr(self, "netns_dir") and self.state.netns_dir.exists():
+            shutil.rmtree(self.state.netns_dir)

@@ -35,8 +35,8 @@ def install(commit: str, digest: str, destination: Path) -> None:
             message = "generator artifact digest or size mismatch"
             raise ValueError(message)
         archive.write_bytes(payload)
-        with tarfile.open(archive) as source:
-            source.extractall(staging, filter="data")
+        with tarfile.open(archive) as tar_source:
+            tar_source.extractall(staging, filter="data")
         source = staging / ("traffic-generator-" + commit)
         subprocess.run(  # noqa: S603 - validated content-addressed source
             [

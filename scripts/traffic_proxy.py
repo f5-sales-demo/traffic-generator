@@ -6,6 +6,7 @@ import os
 import ssl
 import time
 from pathlib import Path
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
@@ -20,7 +21,7 @@ class Budget:
         self.pending: asyncio.Queue = asyncio.Queue()
         self.domains = json.loads(os.environ["TGEN_DOMAINS"])
         self.metrics_path = Path(os.environ["TGEN_PROXY_METRICS"])
-        self.counts = {
+        self.counts: dict[str, Any] = {
             "attack_requests": 0,
             "scenario_requests": 0,
             "filler_requests": 0,
@@ -95,7 +96,15 @@ class Budget:
 
     async def request(self, flow: http.HTTPFlow) -> None:
         """All tool/browser descendants queue here immediately before upstream forwarding."""
-        host = flow.request.headers.get("Host", "").split(":", 1)[0].lower()
+        host = (
+            (
+                flow.request.headers.get("Host")
+                or flow.client_conn.sni
+                or flow.request.host
+            )
+            .split(":", 1)[0]
+            .lower()
+        )
         if host not in self.domains or flow.request.port not in (80, 443):
             self.counts["denied_destinations"] += 1
             flow.response = http.Response.make(

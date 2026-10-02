@@ -6,6 +6,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
@@ -22,7 +23,8 @@ def validate_catalog(root: Path, catalog: dict) -> None:
         for p in (root / "suites").glob("*/[0-9]*")
         if p.is_file()
     }
-    seen, recorded = set(), set()
+    seen: set[str] = set()
+    recorded: set[str] = set()
     for scenario in catalog["scenarios"]:
         identifier = scenario["id"]
         if identifier in seen or not set(scenario["after"]) <= seen:
@@ -96,31 +98,22 @@ def main() -> int:
     if args.suite not in catalog["suites"] and args.suite != "catalog":
         parser.error("unknown suite")
     scenarios = [
-        s
-        for s in catalog["scenarios"]
-        if args.suite == "catalog" or s["suite"] == args.suite
+        s for s in catalog["scenarios"] if args.suite in ("catalog", s["suite"])
     ]
     if args.dry_run:
         print(json.dumps({"schema_version": 1, "scenarios": scenarios}))
         return 0
-    # Continuous and one-pass execution share a single enforced network boundary.
-    from traffic_runtime import (  # noqa: PLC0415 - avoid catalog/runtime import cycle
-        run,
-        run_nested,
-    )
 
-    if os.environ.get("TGEN_INHERITED_BOUNDARY") == "1":
-        return run_nested(root, scenarios)
-    return run(
-        root,
-        scenarios,
-        Path(
-            os.environ.get(
-                "CATALOG_CONFIG", "/opt/traffic-generator/catalog-config.json"
-            )
-        ),
-        continuous=False,
-    )
+    command = [
+        shutil.which("python3") or "/usr/bin/python3",
+        str(root / "scripts/traffic_runtime.py"),
+        "--config",
+        os.environ.get("CATALOG_CONFIG", "/opt/traffic-generator/catalog-config.json"),
+        "--once",
+        "--suite",
+        args.suite,
+    ]
+    return subprocess.run(command, check=False).returncode  # noqa: S603 - validated CLI selector
 
 
 if __name__ == "__main__":

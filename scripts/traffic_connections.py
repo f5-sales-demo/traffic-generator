@@ -9,8 +9,9 @@ import ssl
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
-from traffic_runtime import Pacer
+from traffic_common import Pacer
 
 HTTPS_PORT = 443
 
@@ -56,23 +57,23 @@ def main() -> int:
                     else [None]
                 ):
                     pacer.acquire()
-                    result = {"port": port, "attempted": time.time()}
+                    result: dict[str, Any] = {"port": port, "attempted": time.time()}
                     try:
                         with socket.create_connection(
                             (host, port), timeout=5
-                        ) as connection:
+                        ) as tcp_probe:
                             if version:
                                 context = ssl.create_default_context()
                                 context.minimum_version = context.maximum_version = (
                                     version
                                 )
                                 with context.wrap_socket(
-                                    connection, server_hostname=host
+                                    tcp_probe, server_hostname=host
                                 ) as secured:
                                     result.update(
                                         connected=True,
                                         tls=secured.version(),
-                                        cipher=secured.cipher()[0],
+                                        cipher=(secured.cipher() or ("unknown",))[0],
                                     )
                             else:
                                 result["connected"] = True

@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 
+import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -17,6 +18,8 @@ class CatalogTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location(
             "traffic_catalog", ROOT / "scripts/traffic_catalog.py"
         )
+        assert spec is not None
+        assert spec.loader is not None
         self.module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.module)
 
@@ -38,7 +41,7 @@ class CatalogTests(unittest.TestCase):
     def test_missing_scenario_fails(self):
         catalog = self.module.load_catalog(ROOT)
         catalog["scenarios"].pop(0)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError, match="missing ordered dependency"):
             self.module.validate_catalog(ROOT, catalog)
 
     def test_missing_tool_is_failure(self):
@@ -55,19 +58,31 @@ class CatalogTests(unittest.TestCase):
                 "CONFIG_FILE": tmp + "/missing",
                 "RESULTS_DIR": tmp + "/results",
             }
-            result = subprocess.run(
-                ["bash", str(ROOT / "suites/runner.sh"), "bot-simulation", "--dry-run"],
+            result = subprocess.run(  # noqa: S603 - fixed regression command
+                [
+                    "/bin/bash",
+                    str(ROOT / "suites/runner.sh"),
+                    "bot-simulation",
+                    "--dry-run",
+                ],
                 env=env,
+                check=False,
                 capture_output=True,
                 text=True,
             )
             assert result.returncode == 0, result.stderr
             assert len(json.loads(result.stdout)["scenarios"]) == 5
-            assert list(pathlib.Path(tmp).iterdir()) == []
+            assert not list(pathlib.Path(tmp).iterdir())
 
     def test_csd_dry_run_includes_all_simulations(self):
-        result = subprocess.run(
-            ["bash", str(ROOT / "suites/runner.sh"), "csd-violations", "--dry-run"],
+        result = subprocess.run(  # noqa: S603 - fixed regression command
+            [
+                "/bin/bash",
+                str(ROOT / "suites/runner.sh"),
+                "csd-violations",
+                "--dry-run",
+            ],
+            check=False,
             capture_output=True,
             text=True,
         )

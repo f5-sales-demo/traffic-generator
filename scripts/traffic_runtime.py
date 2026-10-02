@@ -2,7 +2,6 @@
 """Private, bounded catalog execution with one shared HTTP pacing boundary."""
 
 import argparse
-import contextlib
 import hashlib
 import json
 import os
@@ -16,28 +15,10 @@ import uuid
 from pathlib import Path
 
 from traffic_catalog import load_catalog, readiness
+from traffic_common import atomic_json, terminate
+from traffic_network import NetworkBoundary
 
 DOMAIN_COUNT = 2
-
-
-class Pacer:
-    """Serialize actual launches without accumulating burst credit."""
-
-    def __init__(self, rate: float) -> None:
-        """Initialize the shared nonbursting clock."""
-        self.interval = 1 / rate
-        self.lock = threading.Lock()
-        self.next = time.monotonic()
-
-    def acquire(self) -> float:
-        """Wait for a single launch slot, shared by every nested worker."""
-        with self.lock:
-            now = time.monotonic()
-            if self.next > now:
-                time.sleep(self.next - now)
-            launched = time.monotonic()
-            self.next = launched + self.interval
-            return launched
 
 
 def validate_config(config: dict) -> None:
@@ -76,7 +57,11 @@ def validate_config(config: dict) -> None:
         ("retention_days", 7),
         ("retention_bytes", 10 * 1024**3),
     ):
-        if type(config.get(key)) is not int or not 0 < config[key] <= limit:
+        if (
+            not isinstance(config.get(key), int)
+            or isinstance(config.get(key), bool)
+            or not 0 < config[key] <= limit
+        ):
             raise ValueError("invalid safety bound: " + key)
     if not re.fullmatch(
         r"[a-f0-9]{40}", config.get("source_commit", "")
@@ -86,27 +71,6 @@ def validate_config(config: dict) -> None:
     if not Path(config.get("results_dir", "")).is_absolute():
         msg = "absolute private results directory required"
         raise ValueError(msg)
-
-
-def atomic_json(path: Path, value: dict) -> None:
-    """Replace a private receipt atomically."""
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    temporary = path.with_name(path.name + ".tmp-" + uuid.uuid4().hex)
-    with temporary.open("x") as stream:
-        temporary.chmod(0o600)
-        json.dump(value, stream)
-        stream.write("\n")
-    temporary.replace(path)
-
-
-def terminate(process: subprocess.Popen) -> None:
-    """Terminate an entire scenario session, including background workers."""
-    for sig in (signal.SIGTERM, signal.SIGKILL):
-        with contextlib.suppress(ProcessLookupError):
-            os.killpg(process.pid, sig)
-        if sig == signal.SIGTERM:
-            time.sleep(0.2)
-    process.wait()
 
 
 def _expired(command: list[str], timeout: float) -> None:
@@ -126,32 +90,33 @@ def execute(
     log.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     with log.open("wb") as output:
         log.chmod(0o600)
-        process = subprocess.Popen(  # noqa: S603 - argv from validated explicit catalog
+        with subprocess.Popen(  # noqa: S603 - argv from validated explicit catalog
             command,
             stdout=output,
             stderr=subprocess.STDOUT,
             env=environment,
             start_new_session=True,
-        )
-        try:
-            deadline = time.monotonic() + timeout
-            while process.poll() is None:
-                if stop is not None and stop.is_set():
-                    outcome, code = "interrupted", 130
-                    break
-                if time.monotonic() >= deadline:
-                    _expired(command, timeout)
-                time.sleep(0.05)
-            else:
-                code = process.returncode
-                outcome = "launched" if code == 0 else "tool_failure"
-        except subprocess.TimeoutExpired:
-            code, outcome = 124, "timeout"
-        finally:
-            terminate(process)
+        ) as process:
+            try:
+                deadline = time.monotonic() + timeout
+                while process.poll() is None:
+                    if stop is not None and stop.is_set():
+                        outcome, code = "interrupted", 130
+                        break
+                    if time.monotonic() >= deadline:
+                        _expired(command, timeout)
+                    time.sleep(0.05)
+                else:
+                    code = process.returncode
+                    outcome = "launched" if code == 0 else "tool_failure"
+            except subprocess.TimeoutExpired:
+                code, outcome = 124, "timeout"
+            finally:
+                terminate(process)
     text = log.read_text(errors="replace")
     if outcome == "launched" and re.search(
-        r"(?im)^\s*(SKIP:|.*(?:could not|failed to|no |missing ).*(?:token|fixture|authenticate|vehicle|video|order)|.*skipping.*(?:token|fixture|verification))", text
+        r"(?im)^\s*(SKIP:|.*(?:could not|failed to|no |missing ).*(?:token|fixture|authenticate|vehicle|video|order)|.*skipping.*(?:token|fixture|verification))",
+        text,
     ):
         outcome = "fixture_failure"
     return {
@@ -245,16 +210,79 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
     return int(failed)
 
 
+def _scenario(
+    root: Path,
+    scenario: dict,
+    domain: str,
+    active: Path,
+    boundary: NetworkBoundary,
+    state: dict,
+    stop: threading.Event,
+) -> dict:
+    """Launch one scenario and record meaningful network dispatch independently of filler."""
+    config = boundary.config
+    directory = active / scenario["id"].replace("/", "--")
+    directory.mkdir(mode=0o700)
+    environment = boundary.environment(scenario, domain, directory)
+    before = boundary.metrics()
+    command = boundary.wrap(
+        scenario_command(root, scenario, domain),
+        connection=scenario["budget"] == "connection",
+    )
+    result = execute(
+        command,
+        directory / "scenario.log",
+        environment,
+        min(config["scenario_timeout_seconds"], scenario["timeout_seconds"]),
+        stop,
+    )
+    after = boundary.metrics()
+    result.update(
+        {
+            "id": scenario["id"],
+            "source_sha256": hashlib.sha256(
+                (root / scenario["entrypoint"]).read_bytes()
+            ).hexdigest(),
+            "http_requests": after.get("scenario_requests", 0)
+            - before.get("scenario_requests", 0),
+            "claim": scenario["expected_outcome"],
+        }
+    )
+    if scenario["budget"] == "http" and result["http_requests"] == 0:
+        result["outcome"] = "fixture_failure"
+    if result["outcome"] != "launched":
+        state["failures"] = (
+            state["failures"] + [{"id": scenario["id"], "outcome": result["outcome"]}]
+        )[-200:]
+    atomic_json(directory / "receipt.json", result)
+    return result
+
+
+def _heartbeat(
+    boundary: NetworkBoundary, stop: threading.Event, state: dict, status_path: Path
+) -> threading.Thread:
+    """Publish private liveness and measured traffic while a scenario runs."""
+
+    def heartbeat() -> None:
+        while not stop.wait(2):
+            state["heartbeat"] = time.time()
+            state["rates"] = boundary.metrics()
+            atomic_json(status_path, state)
+
+    worker = threading.Thread(target=heartbeat, daemon=True)
+    worker.start()
+    return worker
+
+
 def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) -> int:
     """Supervise perpetual passes; failures remain visible while subsequent launches continue."""
     config = json.loads(config_path.read_text())
     validate_config(config)
-    ready = readiness(root, load_catalog(root))
-    if not ready["ready"]:
+    if not readiness(root, load_catalog(root))["ready"]:
         raise ValueError(
-            "missing catalog dependencies: " + ",".join(ready["missing_tools"])
+            "missing catalog dependencies: "
+            + ",".join(readiness(root, load_catalog(root))["missing_tools"])
         )
-    from traffic_network import NetworkBoundary  # noqa: PLC0415 - runtime import cycle
 
     runtime = Path(config["results_dir"])
     runtime.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -280,15 +308,7 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
     for sig in (signal.SIGTERM, signal.SIGINT):
         signal.signal(sig, lambda *_: stop.set())
     with NetworkBoundary(root, config, runtime) as boundary:
-
-        def heartbeat() -> None:
-            while not stop.wait(2):
-                state["heartbeat"] = time.time()
-                state["rates"] = boundary.metrics()
-                atomic_json(status_path, state)
-
-        worker = threading.Thread(target=heartbeat, daemon=True)
-        worker.start()
+        worker = _heartbeat(boundary, stop, state, status_path)
         state["status"] = "running"
         while not stop.is_set():
             pass_id = "pass-" + uuid.uuid4().hex
@@ -299,59 +319,29 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
                 if stop.is_set():
                     break
                 state["current_scenario"] = scenario["id"]
-                domain = config["domains"][index % 2]
-                directory = active / scenario["id"].replace("/", "--")
-                directory.mkdir(mode=0o700)
-                environment = boundary.environment(scenario, domain, directory)
-                before = boundary.metrics()
-                command = boundary.wrap(
-                    scenario_command(root, scenario, domain),
-                    connection=scenario["budget"] == "connection",
-                )
-                result = execute(
-                    command,
-                    directory / "scenario.log",
-                    environment,
-                    min(
-                        config["scenario_timeout_seconds"], scenario["timeout_seconds"]
-                    ),
+                result = _scenario(
+                    root,
+                    scenario,
+                    config["domains"][index % 2],
+                    active,
+                    boundary,
+                    state,
                     stop,
                 )
-                after = boundary.metrics()
-                result.update(
-                    {
-                        "id": scenario["id"],
-                        "source_sha256": hashlib.sha256(
-                            (root / scenario["entrypoint"]).read_bytes()
-                        ).hexdigest(),
-                        "http_requests": after.get("attack_requests", 0)
-                        - before.get("attack_requests", 0),
-                        "claim": scenario["expected_outcome"],
-                    }
-                )
-                if scenario["budget"] == "http" and result["http_requests"] == 0:
-                    result["outcome"] = "fixture_failure"
-                if result["outcome"] != "launched":
-                    state["failures"] = (
-                        state["failures"]
-                        + [{"id": scenario["id"], "outcome": result["outcome"]}]
-                    )[-200:]
-                atomic_json(directory / "receipt.json", result)
                 receipts.append(result)
                 retain(
                     runtime, active, config["retention_days"], config["retention_bytes"]
                 )
-            complete = len(receipts) == len(scenarios)
-            passed = complete and all(r["outcome"] == "launched" for r in receipts)
             receipt = {
                 "id": pass_id,
-                "complete": complete,
-                "passed": passed,
+                "complete": len(receipts) == len(scenarios),
+                "passed": len(receipts) == len(scenarios)
+                and all(r["outcome"] == "launched" for r in receipts),
                 "scenarios": receipts,
                 "completed": time.time(),
             }
             atomic_json(active / "receipt.json", receipt)
-            if complete:
+            if receipt["complete"]:
                 state["completed_passes"] += 1
             state["last_pass"] = {k: v for k, v in receipt.items() if k != "scenarios"}
             if not continuous:
@@ -367,9 +357,17 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--once", action="store_true")
+    parser.add_argument("--suite", default="catalog")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    return run(root, load_catalog(root)["scenarios"], args.config, not args.once)
+    scenarios = [
+        s
+        for s in load_catalog(root)["scenarios"]
+        if args.suite in ("catalog", s["suite"])
+    ]
+    if os.environ.get("TGEN_INHERITED_BOUNDARY") == "1":
+        return run_nested(root, scenarios)
+    return run(root, scenarios, args.config, not args.once)
 
 
 if __name__ == "__main__":
