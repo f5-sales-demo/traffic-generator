@@ -35,6 +35,7 @@ class Budget:
             "error_categories": {},
             "per_domain": {},
         }
+        self.tls_context = ssl.create_default_context()
         self.started = time.time()
         self.ticker: asyncio.Task | None = None
         self.tasks: set[asyncio.Task] = set()
@@ -86,7 +87,7 @@ class Budget:
     def filler(self, host: str) -> None:
         """Use spare attack slots for an explicitly identified harmless SQLi simulation."""
         opener = build_opener(
-            ProxyHandler({}), HTTPSHandler(context=ssl.create_default_context())
+            ProxyHandler({}), HTTPSHandler(context=self.tls_context)
         )
         request = Request(
             "https://" + host + "/httpbin/get?tgen_synthetic=%27%20OR%201%3D1--",
@@ -146,7 +147,7 @@ class Budget:
     def raw_connect(self, host: str, path: str) -> http.Response:
         """Forward an HTTP CONNECT method probe in its counted slot without opening a tunnel."""
         connection = http_client.HTTPSConnection(
-            host, timeout=10, context=ssl.create_default_context()
+            host, timeout=10, context=self.tls_context
         )
         try:
             connection.request(
