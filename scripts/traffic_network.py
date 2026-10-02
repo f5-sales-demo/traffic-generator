@@ -411,6 +411,8 @@ class NetworkBoundary:
             TGEN_SLOW_CONNECTIONS=str(self.config["slow_connections"]),
             TGEN_DURATION="15",
             TGEN_REPEAT_COUNT="5",
+            TGEN_GRAPHQL_BATCH_MAX="10",
+            TGEN_GRAPHQL_FIELDS_MAX="50",
             TGEN_ZAP_SPIDER_MINUTES="1",
             TGEN_ZAP_SCAN_MINUTES="2",
             TGEN_BROWSER_IDENTITIES="2",
