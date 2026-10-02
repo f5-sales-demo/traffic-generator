@@ -411,6 +411,7 @@ class NetworkBoundary:
             TGEN_CRAPI_VEHICLE_UUID=str(fixtures.get("crapi_vehicle_uuid", "")),
             TGEN_CRAPI_VIDEO_ID=str(fixtures.get("crapi_video_id", "")),
             TGEN_CRAPI_ORDER_ID=str(fixtures.get("crapi_order_id", "")),
+            TGEN_AUTHORIZED_DOMAINS=json.dumps(self.config["domains"]),
             TARGET_FQDN=domain,
             TARGET_PROTOCOL="https",
             CRAPI_BASE_URL="https://" + domain + "/crapi",
