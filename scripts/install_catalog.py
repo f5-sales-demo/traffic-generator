@@ -98,6 +98,29 @@ def install(commit: str, digest: str, destination: Path) -> None:
         path.chmod(0o600)
 
 
+def install_service(destination: Path, system_root: Path = Path("/")) -> None:
+    """Install the verified artifact's supervised control without enabling traffic."""
+    source = destination / "current/scripts"
+    control = system_root / "usr/local/bin/tgen-control"
+    service = system_root / "etc/systemd/system/tgen-continuous.service"
+    control.parent.mkdir(parents=True, exist_ok=True)
+    service.parent.mkdir(parents=True, exist_ok=True)
+    control.write_text(
+        (source / "tgen-control")
+        .read_text()
+        .replace("/opt/traffic-generator", str(destination))
+    )
+    control.chmod(0o755)
+    service.write_text(
+        (source / "tgen-continuous.service")
+        .read_text()
+        .replace("/opt/traffic-generator", str(destination))
+    )
+    service.chmod(0o644)
+    if system_root == Path("/"):
+        subprocess.run(["/usr/bin/systemctl", "daemon-reload"], check=True)
+
+
 def main() -> None:
     """Install a verified catalog artifact."""
     parser = argparse.ArgumentParser()
@@ -106,8 +129,11 @@ def main() -> None:
     parser.add_argument(
         "--destination", type=Path, default=Path("/opt/traffic-generator")
     )
+    parser.add_argument("--install-service", action="store_true")
     args = parser.parse_args()
     install(args.commit, args.sha256, args.destination)
+    if args.install_service:
+        install_service(args.destination)
 
 
 if __name__ == "__main__":

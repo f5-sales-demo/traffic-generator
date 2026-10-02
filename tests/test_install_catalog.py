@@ -89,6 +89,25 @@ class InstallerTests(unittest.TestCase):
             ):
                 installer.install(commit, hashlib.sha256(payload).hexdigest(), root)
 
+    def test_service_install_uses_verified_source_and_stays_stopped(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            destination = root / "catalog"
+            source = destination / "current/scripts"
+            source.mkdir(parents=True)
+            for name in ("tgen-control", "tgen-continuous.service"):
+                (source / name).write_bytes((ROOT / "scripts" / name).read_bytes())
+            installer.install_service(destination, root / "system")
+            control = root / "system/usr/local/bin/tgen-control"
+            assert str(destination) in control.read_text()
+            assert control.stat().st_mode & 0o777 == 0o755
+            assert (
+                "ExecStart="
+                in (
+                    root / "system/etc/systemd/system/tgen-continuous.service"
+                ).read_text()
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
