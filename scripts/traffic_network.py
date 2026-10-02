@@ -466,6 +466,7 @@ class NetworkBoundary:
             TGEN_CONNECTION_RATE=str(self.config["connection_rps"]),
             TGEN_SLOW_CONNECTIONS=str(self.config["slow_connections"]),
             TGEN_DURATION="15",
+            TGEN_DVWA_PASSWORD="password",
             TGEN_THREADS="2",
             TGEN_ATTACK_RATE="20",
             TGEN_CONNECTION_PORTS="80,443",
