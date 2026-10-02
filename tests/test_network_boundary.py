@@ -47,7 +47,7 @@ class BoundaryTests(unittest.TestCase):
                 boundary.refresh_fixtures("www.example.test")
             data = json.loads((root / "fixtures.json").read_text())
             assert data["crapi_tokens"] == ["crapi-a", "crapi-b"]
-            assert data["vampi_token"] == "vampi"
+            assert data["vampi_token"] == "vampi"  # noqa: S105 - synthetic mock token
             with (
                 patch("traffic_network.subprocess.run"),
                 patch("traffic_network.shutil.rmtree"),
