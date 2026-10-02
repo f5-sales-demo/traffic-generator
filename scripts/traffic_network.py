@@ -384,8 +384,7 @@ class NetworkBoundary:
         )
         if juice:
             fixtures["juice_token"] = juice
-        fixture_path.write_text(json.dumps(fixtures))
-        fixture_path.chmod(0o600)
+        atomic_json(fixture_path, fixtures)
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
         """Provide structured inputs and private per-scenario output paths."""
