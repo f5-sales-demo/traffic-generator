@@ -170,22 +170,28 @@ def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
         for p in [*candidates, active]
         if p.exists()
     }
-    # Bound completed scenario evidence even during a long catalog pass.
-    if active.exists():
-        for directory in sorted(
-            (p for p in active.iterdir() if p.is_dir()), key=lambda p: p.stat().st_mtime
-        ):
-            receipt = directory / "receipt.json"
-            if (
-                receipt.exists()
-                and time.time() - directory.stat().st_mtime > days * 86400
-            ):
-                shutil.rmtree(directory)
     total = sum(sizes.values())
     for path in candidates:
         if path.stat().st_mtime < time.time() - days * 86400 or total > max_bytes:
             shutil.rmtree(path)
             total -= sizes[path]
+    # Evict completed scenario detail while preserving the active pass and executing scenario.
+    if active.exists():
+        for directory in sorted(
+            (p for p in active.iterdir() if p.is_dir()), key=lambda p: p.stat().st_mtime
+        ):
+            receipt = directory / "receipt.json"
+            if receipt.exists() and (
+                time.time() - directory.stat().st_mtime > days * 86400
+                or total > max_bytes
+            ):
+                detail_bytes = sum(
+                    path.stat().st_size
+                    for path in directory.rglob("*")
+                    if path.is_file()
+                )
+                shutil.rmtree(directory)
+                total -= detail_bytes
 
 
 def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:

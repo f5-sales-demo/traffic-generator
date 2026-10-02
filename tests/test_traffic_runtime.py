@@ -181,6 +181,19 @@ class RuntimeTests(unittest.TestCase):
             assert not scenario.exists()
             assert active.exists()
 
+    def test_completed_active_scenario_evidence_is_evictable_by_size(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            active = root / "pass-active"
+            active.mkdir()
+            completed = active / "completed"
+            completed.mkdir()
+            (completed / "receipt.json").write_text("{}")
+            (completed / "screenshot.png").write_bytes(b"x" * 200)
+            runtime.retain(root, active, 7, 100)
+            assert not completed.exists()
+            assert active.exists()
+
     def test_atomic_receipt_is_private(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = pathlib.Path(tmp) / "receipt.json"
