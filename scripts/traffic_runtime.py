@@ -281,6 +281,15 @@ def _scenario(
             "claim": scenario["expected_outcome"],
         }
     )
+    result["mitigated_requests"] = after.get("attack_mitigated", 0) - before.get(
+        "attack_mitigated", 0
+    )
+    result["transport_failures"] = after.get(
+        "scenario_transport_failures", 0
+    ) - before.get("scenario_transport_failures", 0)
+    result["tool_cancellations"] = after.get("tool_cancellations", 0) - before.get(
+        "tool_cancellations", 0
+    )
     if scenario["kind"] == "javascript":
         log_text = (directory / "scenario.log").read_text(errors="replace")
         if re.search(
