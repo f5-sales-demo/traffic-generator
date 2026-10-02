@@ -434,6 +434,7 @@ class NetworkBoundary:
             TGEN_BROWSER_IDENTITIES="2",
             TGEN_CONCURRENCY="20",
             TGEN_REQUESTS="100",
+            TGEN_UA_REQUESTS="5",
             TGEN_REQUESTS_PER_WORKER="5",
             SOURCE_COMMIT=self.config["source_commit"],
             TGEN_ARTIFACT_SHA256=self.config["artifact_sha256"],
