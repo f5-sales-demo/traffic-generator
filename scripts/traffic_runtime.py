@@ -26,6 +26,27 @@ def validate_config(config: dict) -> None:
     if config.get("schema_version") != 1:
         msg = "unsupported configuration schema"
         raise ValueError(msg)
+    allowed = {
+        "schema_version",
+        "domains",
+        "protocol",
+        "http_rps",
+        "benign_rps",
+        "attack_rps",
+        "connection_rps",
+        "slow_connections",
+        "csd_enabled",
+        "protections_enabled",
+        "scenario_timeout_seconds",
+        "retention_days",
+        "retention_bytes",
+        "results_dir",
+        "source_commit",
+        "artifact_sha256",
+    }
+    if set(config) != allowed:
+        message = "configuration keys are missing or unknown"
+        raise ValueError(message)
     domains = config.get("domains", [])
     if (
         len(domains) != DOMAIN_COUNT

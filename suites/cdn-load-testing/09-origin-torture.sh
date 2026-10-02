@@ -97,7 +97,7 @@ echo ""
 # LAYER 2: hey sustained against key API endpoints
 # ================================================================
 echo "=== LAYER 2: HEY SUSTAINED (API throughput) ==="
-HEY_C=200
+HEY_C="${TGEN_CONCURRENCY:-200}"
 
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/juice-shop/rest/products/search?q=test" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
 echo "[+] hey: /juice-shop/rest/products/search (PID $!, ${HEY_C}c)"

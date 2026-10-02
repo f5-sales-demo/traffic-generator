@@ -80,8 +80,12 @@ def readiness(
         if tool not in ("playwright", "chromium")
     }
     missing = sorted(t for t in tools if not find_tool(t))
+    missing_assets = [
+        path for path in catalog.get("required_assets", []) if not Path(path).is_file()
+    ]
     return {
-        "ready": not missing,
+        "ready": not missing and not missing_assets,
+        "missing_assets": missing_assets,
         "missing_tools": missing,
         "scenario_count": len(catalog["scenarios"]),
     }

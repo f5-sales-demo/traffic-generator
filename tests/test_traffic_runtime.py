@@ -57,6 +57,12 @@ class RuntimeTests(unittest.TestCase):
             ):
                 runtime.validate_config(config)
 
+    def test_unknown_configuration_keys_fail_before_runtime(self):
+        config = self.config()
+        config["disable_waf"] = True
+        with pytest.raises(ValueError, match="unknown"):
+            runtime.validate_config(config)
+
     def test_shared_pacing_under_parallel_workers(self):
         pacer = __import__("traffic_common").Pacer(20)
         started = time.monotonic()

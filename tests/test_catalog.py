@@ -51,6 +51,13 @@ class CatalogTests(unittest.TestCase):
         assert not result["ready"]
         assert result["missing_tools"]
 
+    def test_missing_asset_is_readiness_failure(self):
+        catalog = self.module.load_catalog(ROOT)
+        catalog["required_assets"] = ["/absent-catalog-synthetic-fixture"]
+        result = self.module.readiness(ROOT, catalog, find_tool=lambda _: "/bin/true")
+        assert not result["ready"]
+        assert result["missing_assets"]
+
     def test_dry_run_has_no_writes_or_config_requirement(self):
         with tempfile.TemporaryDirectory() as tmp:
             env = {
