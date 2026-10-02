@@ -1,0 +1,41 @@
+"""Network worker and namespace cleanup regressions without live targets."""
+
+import pathlib
+import sys
+import unittest
+from unittest.mock import patch
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from traffic_network import NetworkBoundary  # noqa: E402 - scripts under test
+
+
+class BoundaryTests(unittest.TestCase):
+    def test_http_workers_cannot_reconfigure_network(self):
+        boundary = NetworkBoundary(
+            ROOT, {"domains": ["www.example.test", "api.example.test"]}, ROOT
+        )
+        command = boundary.wrap(["curl", "https://www.example.test/"])
+        assert "setpriv" in command
+        assert "--bounding-set=-all" in command
+        with (
+            patch("traffic_network.subprocess.run"),
+            patch("traffic_network.shutil.rmtree"),
+        ):
+            boundary.__exit__(None, None, None)
+
+    def test_worker_callback_belongs_to_boundary(self):
+        boundary = NetworkBoundary(
+            ROOT, {"domains": ["www.example.test", "api.example.test"]}, ROOT
+        )
+        assert callable(boundary.benign_loop)
+        assert not hasattr(boundary.state, "benign_loop")
+        with (
+            patch("traffic_network.subprocess.run"),
+            patch("traffic_network.shutil.rmtree"),
+        ):
+            boundary.__exit__(None, None, None)
+
+
+if __name__ == "__main__":
+    unittest.main()
