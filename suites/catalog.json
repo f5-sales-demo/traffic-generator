@@ -15231,7 +15231,7 @@
         ],
         "verify_behavior": true,
         "resource_profile": true,
-        "minimum_duration_seconds": 15
+        "minimum_duration": 15
       }
     },
     {
