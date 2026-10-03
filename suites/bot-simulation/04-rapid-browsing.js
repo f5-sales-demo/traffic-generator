@@ -71,6 +71,22 @@ const USER_AGENTS = [
     const page = await context.newPage();
     const requestState = observeRequests(page);
     let documentResponse;
+    const browserErrors = [];
+    page.on('pageerror', () => browserErrors.push({ kind: 'console-error' }));
+    page.on('requestfailed', (request) =>
+      browserErrors.push({
+        kind: 'request-failure',
+        path: new URL(request.url()).pathname,
+      }),
+    );
+    page.on('response', (response) => {
+      if (response.status() >= 400)
+        browserErrors.push({
+          kind: 'http-error',
+          path: new URL(response.url()).pathname,
+          status: response.status(),
+        });
+    });
     page.setDefaultTimeout(10000);
 
     const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
@@ -93,6 +109,9 @@ const USER_AGENTS = [
         if (!item.rendered && !item.mitigated) throw new Error('Declared navigation outcome was not rendered');
         visited++;
       } catch (err) {
+        const id = `ua-${identity}-route-${PAGES.indexOf(path)}`;
+        await page.screenshot({ path: require('node:path').join(directory, `${id}-failed.png`) }).catch(() => {});
+        receipt.actions.push({ id, performed: true, rendered: false, error: 'browser-route-failure' });
         console.log(`    ${path} -> ERR: ${err.message.substring(0, 60)}`);
         errors++;
       }
@@ -102,6 +121,10 @@ const USER_AGENTS = [
 
     await settleRequests(requestState).catch(() => {
       errors++;
+    });
+    receipt.browser_errors = [...(receipt.browser_errors || []), ...browserErrors];
+    fs.writeFileSync(require('node:path').join(directory, 'route-actions.json'), JSON.stringify(receipt), {
+      mode: 0o600,
     });
     await context.close();
     console.log('');
