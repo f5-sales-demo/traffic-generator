@@ -59,6 +59,16 @@ def match_requirements(contract: dict, request: dict) -> list[str]:
             for name, value in requirement.get("headers", {}).items()
         ):
             continue
+        if any(
+            not re.search(pattern, request.get("headers", {}).get(name.lower(), ""))
+            for name, pattern in requirement.get("header_regex", {}).items()
+        ):
+            continue
+        if any(
+            request.get("headers", {}).get(name.lower())
+            for name in requirement.get("absent_headers", [])
+        ):
+            continue
         if not structured_body_matches(requirement, request.get("body", "")):
             continue
         matched.append(requirement["id"])

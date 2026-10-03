@@ -590,7 +590,37 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "signup",
+            "method": "POST",
+            "minimum_dispatches": 1,
+            "payload_class": "registration",
+            "path": "/crapi/identity/api/auth/signup",
+            "body_regex": "\"email\".*\"password\""
+          },
+          {
+            "id": "otp",
+            "method": "POST",
+            "minimum_dispatches": 1,
+            "payload_class": "invalid-otp",
+            "path": "/crapi/identity/api/auth/v2/check-otp",
+            "body_regex": "\"otp\""
+          },
+          {
+            "id": "login",
+            "method": "POST",
+            "minimum_dispatches": 1,
+            "payload_class": "authentication",
+            "path": "/crapi/identity/api/auth/login",
+            "body_regex": "\"password\""
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/02-bola-vehicle-location",
@@ -603,7 +633,20 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "cross-account-location",
+            "method": "GET",
+            "minimum_dispatches": 1,
+            "payload_class": "bola-vehicle",
+            "path_regex": "/crapi/identity/api/v2/vehicle/[^/]+/location"
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/03-bola-mechanic-reports",
@@ -616,7 +659,22 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "unauthenticated-report",
+            "method": "GET",
+            "minimum_dispatches": 20,
+            "payload_class": "unauthenticated-report-id",
+            "path": "/crapi/workshop/api/mechanic/mechanic_report",
+            "query_regex": "(?:^|&)report_id=\\d+",
+            "absent_headers": ["authorization"]
+          }
+        ]
+      },
+      "prerequisites": [],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/04-otp-bruteforce",
@@ -629,7 +687,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "otp-guesses",
+            "method": "POST",
+            "minimum_dispatches": 10,
+            "payload_class": "otp-brute-force",
+            "path": "/crapi/identity/api/auth/v2/check-otp",
+            "body_regex": "\"otp\"\\s*:\\s*\"\\d{4}\""
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/05-data-exposure-mechanics",
@@ -642,7 +714,20 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "mechanic-list",
+            "method": "GET",
+            "minimum_dispatches": 1,
+            "payload_class": "mechanic-data-exposure",
+            "path": "/crapi/workshop/api/mechanic"
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/06-data-exposure-posts",
@@ -655,7 +740,20 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "community-posts",
+            "method": "GET",
+            "minimum_dispatches": 1,
+            "payload_class": "community-data-exposure",
+            "path_regex": "/crapi/community/api/v2/community/posts(?:/recent)?"
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/07-bfla-admin-video",
@@ -668,7 +766,27 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "admin-video-delete",
+            "method": "DELETE",
+            "minimum_dispatches": 1,
+            "payload_class": "bfla-video-delete",
+            "path_regex": "/crapi/identity/api/v2/admin/videos/[^/]+"
+          },
+          {
+            "id": "admin-video-list",
+            "method": "GET",
+            "minimum_dispatches": 1,
+            "payload_class": "bfla-video-list",
+            "path": "/crapi/identity/api/v2/admin/videos"
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/08-mass-assignment-orders",
@@ -681,7 +799,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "order-mutation",
+            "method": "PUT",
+            "minimum_dispatches": 2,
+            "payload_class": "order-mass-assignment",
+            "path_regex": "/crapi/workshop/api/shop/orders/[^/]+",
+            "body_regex": "\"(?:status|quantity|credit|price|user_id)\""
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/09-ssrf-contact-mechanic",
@@ -694,7 +826,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "ssrf-contact",
+            "method": "POST",
+            "minimum_dispatches": 3,
+            "payload_class": "mechanic-ssrf",
+            "path": "/crapi/workshop/api/merchant/contact_mechanic",
+            "body_regex": "\"mechanic_api\".*(?:169\\.254|127\\.0\\.0\\.1|localhost|internal)"
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/10-dos-contact-mechanic",
@@ -707,7 +853,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "contact-abuse",
+            "method": "POST",
+            "minimum_dispatches": 3,
+            "payload_class": "contact-resource-consumption",
+            "path": "/crapi/workshop/api/merchant/contact_mechanic",
+            "body_regex": "\"mechanic_api\""
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/11-nosql-injection-coupon",
@@ -720,7 +880,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "coupon-operators",
+            "method": "POST",
+            "minimum_dispatches": 3,
+            "payload_class": "nosql-operators",
+            "path": "/crapi/community/api/v2/coupon/validate-coupon",
+            "body_regex": "\\$(?:ne|gt|regex)"
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/12-sqli-apply-coupon",
@@ -733,7 +907,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "coupon-sqli",
+            "method": "POST",
+            "minimum_dispatches": 4,
+            "payload_class": "coupon-sqli",
+            "path": "/crapi/workshop/api/shop/apply_coupon",
+            "body_regex": "(?i)(?:OR |UNION |SELECT |SLEEP|--)"
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/13-command-injection-video",
@@ -746,7 +934,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "video-command",
+            "method": "PUT",
+            "minimum_dispatches": 3,
+            "payload_class": "video-command-injection",
+            "path_regex": "/crapi/identity/api/v2/user/videos/[^/]+",
+            "body_regex": "(?:;|&&|\\||\\$\\(|`)"
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/14-unauth-order-access",
@@ -759,7 +961,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "unauthenticated-order",
+            "method": "GET",
+            "minimum_dispatches": 20,
+            "payload_class": "unauthenticated-order-id",
+            "path_regex": "/crapi/workshop/api/shop/orders/[^/]+",
+            "absent_headers": ["authorization"]
+          }
+        ]
+      },
+      "prerequisites": [],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "crapi-exploits/15-jwt-algorithm-confusion",
@@ -772,7 +988,23 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "forged-dashboard",
+            "method": "GET",
+            "minimum_dispatches": 5,
+            "payload_class": "jwt-algorithm-confusion",
+            "path": "/crapi/identity/api/v2/user/dashboard",
+            "header_regex": {
+              "authorization": "^Bearer eyJ.*\\."
+            }
+          }
+        ]
+      },
+      "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
     },
     {
       "id": "csd-violations/login-credential-skimmer",

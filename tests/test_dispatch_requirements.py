@@ -193,3 +193,29 @@ def test_status_classification_does_not_label_unattributed_403_as_proven_mitigat
     )
     assert classify_outcome({"status": 502}) == "unexpected_application_response"
     assert classify_outcome({"transport_error": "TimeoutError"}) == "transport_failure"
+
+
+def test_unauthenticated_probe_cannot_be_satisfied_by_authenticated_setup():
+    """BOLA no-auth contracts require the actual absence of an authorization header."""
+    specification = {
+        "requirements": [
+            {
+                "id": "unauth",
+                "method": "GET",
+                "path": "/crapi/workshop/api/shop/orders/1",
+                "absent_headers": ["authorization"],
+                "minimum_dispatches": 1,
+                "payload_class": "unauthenticated-order",
+            }
+        ]
+    }
+    request = {
+        "kind": "scenario",
+        "method": "GET",
+        "path": "/crapi/workshop/api/shop/orders/1",
+        "headers": {},
+    }
+    assert match_requirements(specification, request) == ["unauth"]
+    assert not match_requirements(
+        specification, dict(request, headers={"authorization": "Bearer synthetic"})
+    )
