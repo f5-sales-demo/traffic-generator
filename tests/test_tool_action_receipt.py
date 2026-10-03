@@ -59,3 +59,11 @@ def test_native_tool_resolution_skips_owned_wrapper_chain(tmp_path):
     assert native_binary("curl", str(wrappers) + ":" + str(native), runtime) == str(
         native / "curl"
     )
+
+
+def test_zap_child_replacer_configuration_preserves_native_arguments():
+    args = ["-daemon", "-config", "api.disablekey=true"]
+    result = attributed_arguments("zap", args, "child-opaque")
+    assert result[: len(args)] == args
+    assert "replacer.full_list(0).matchstr=X-TGen-Child" in result
+    assert "replacer.full_list(0).replacement=child-opaque" in result

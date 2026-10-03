@@ -30,7 +30,17 @@ def attributed_arguments(tool: str, arguments: list[str], marker: str) -> list[s
     if not marker:
         return result
     value = "X-TGen-Child: " + marker
-    if tool == "sqlmap":
+    if tool == "zap":
+        for key, value in {
+            "description": "owned-child-attribution",
+            "enabled": "true",
+            "matchtype": "REQ_HEADER",
+            "matchstr": "X-TGen-Child",
+            "regex": "false",
+            "replacement": marker,
+        }.items():
+            result.extend(["-config", "replacer.full_list(0)." + key + "=" + value])
+    elif tool == "sqlmap":
         existing = next(
             (index for index, arg in enumerate(result) if arg.startswith("--headers=")),
             None,
