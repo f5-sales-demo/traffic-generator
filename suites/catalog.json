@@ -7352,7 +7352,7 @@
             "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
             "payload_class": "authorization-bypass",
             "minimum_dispatches": 2,
-            "body_exact": "{\"id\":1,\"first_name\":\"Hacked\",\"surname\":\"ByTest\"}",
+            "body_exact": "{\"id\":1,\"first_name\":\"Example\",\"surname\":\"ByTest\"}",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
@@ -7412,7 +7412,7 @@
             "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
             "payload_class": "unauthenticated-modification",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":1,\"first_name\":\"NoAuth\",\"surname\":\"Test\"}",
+            "body_exact": "{\"id\":1,\"first_name\":\"Example\",\"surname\":\"Test\"}",
             "absent_headers": ["cookie"],
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           }
