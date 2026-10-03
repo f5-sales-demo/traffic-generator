@@ -4,6 +4,8 @@ import json
 import re
 from urllib.parse import parse_qs
 
+SUCCESS_MIN, SUCCESS_MAX = 200, 300
+
 
 def match_requirements(contract: dict, request: dict) -> list[str]:
     """Match transient request data before storing redacted dispatch evidence."""
@@ -152,3 +154,17 @@ def validate_dispatch_contract(contract: dict) -> None:
     if "requirements" in contract and not identifiers:
         message = "dispatch contract requires at least one action"
         raise ValueError(message)
+
+
+def classify_outcome(event: dict) -> str:
+    """Keep observed HTTP outcomes distinct from attributed WAAP controls."""
+    if event.get("transport_error"):
+        return "transport_failure"
+    status = event.get("status")
+    if status in (403, 429):
+        return "mitigation_candidate"
+    if status in event.get("expected_statuses", []):
+        return "expected_application_response"
+    if isinstance(status, int) and SUCCESS_MIN <= status < SUCCESS_MAX:
+        return "application_response"
+    return "unexpected_application_response"

@@ -13,7 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
-from traffic_dispatch import match_requirements
+from traffic_dispatch import classify_outcome, match_requirements
 
 HTTPS_PORT = 443
 
@@ -222,8 +222,40 @@ class Budget:
         finally:
             connection.close()
 
+    def record_outcome(
+        self,
+        flow: http.HTTPFlow,
+        status: int | None = None,
+        transport_error: str | None = None,
+    ) -> None:
+        """Append request-scoped response evidence without retaining authentication headers."""
+        current = flow.metadata.get("tgen_scenario")
+        if not current or "dispatch_path" not in current:
+            return
+        destination = Path(current["dispatch_path"]).with_name("response-events.jsonl")
+        if not destination.resolve().is_relative_to(self.metrics_path.parent.resolve()):
+            message = "response evidence escaped the owned results directory"
+            raise ValueError(message)
+        event = {
+            "scenario": current["id"],
+            "kind": "scenario"
+            if current.get("phase") == "execution"
+            else "prerequisite",
+            "method": flow.request.method,
+            "path": flow.request.path.split("?", 1)[0],
+            "status": status,
+            "transport_error": transport_error,
+            "expected_statuses": current.get("expected_statuses", []),
+        }
+        event["outcome"] = classify_outcome(event)
+        with destination.open("a", encoding="utf-8") as stream:
+            destination.chmod(0o600)
+            stream.write(json.dumps(event) + "\n")
+
     def response(self, flow: http.HTTPFlow) -> None:
         """Mitigation is an HTTP outcome, separate from transport failure."""
+        if flow.response:
+            self.record_outcome(flow, status=flow.response.status_code)
         if flow.response and flow.response.status_code in (403, 429):
             self.counts["attack_mitigated"] += 1
         self.persist()
@@ -234,6 +266,7 @@ class Budget:
         if pending is not None and not pending.done():
             pending.cancel()
         if flow.error:
+            self.record_outcome(flow, transport_error=type(flow.error).__name__)
             with (self.metrics_path.parent / "error-events.jsonl").open(
                 "a", encoding="utf-8"
             ) as stream:

@@ -312,6 +312,7 @@ def _scenario(
             "phase": "prerequisite",
             "dispatch_path": str(directory / "dispatch-events.jsonl"),
             "dispatch_contract": scenario.get("dispatch_contract", {}),
+            "expected_statuses": scenario.get("expected_http_statuses", []),
         },
     )
     try:
@@ -338,6 +339,7 @@ def _scenario(
             "phase": "execution",
             "dispatch_path": str(directory / "dispatch-events.jsonl"),
             "dispatch_contract": scenario.get("dispatch_contract", {}),
+            "expected_statuses": scenario.get("expected_http_statuses", []),
         },
     )
     before = boundary.metrics()

@@ -9,6 +9,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from traffic_dispatch import (  # noqa: E402
+    classify_outcome,
     match_requirements,
     validate_dispatch_contract,
     verify_dispatch,
@@ -176,3 +177,19 @@ def test_invalid_contracts_fail_before_execution():
     }
     with pytest.raises(ValueError, match="unique"):
         validate_dispatch_contract({"requirements": [item, item]})
+
+
+def test_status_classification_does_not_label_unattributed_403_as_proven_mitigation():
+    """WAAP denial candidates, application errors and transport failures stay distinct."""
+    assert classify_outcome({"status": 403}) == "mitigation_candidate"
+    assert (
+        classify_outcome({"status": 404, "expected_statuses": [404]})
+        == "expected_application_response"
+    )
+    assert classify_outcome({"status": 404}) == "unexpected_application_response"
+    assert (
+        classify_outcome({"status": 500, "expected_statuses": [500]})
+        == "expected_application_response"
+    )
+    assert classify_outcome({"status": 502}) == "unexpected_application_response"
+    assert classify_outcome({"transport_error": "TimeoutError"}) == "transport_failure"
