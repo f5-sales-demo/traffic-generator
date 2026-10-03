@@ -5601,7 +5601,102 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "identity-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "identity-tagged-attack",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "q": "' OR '1'='1",
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "identity-tagged-attack",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "q": "<script>alert(1)</script>",
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "identity-tagged-attack",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "id": "1' OR '1'='1",
+              "Submit": "Submit",
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "identity-tagged-attack",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "ip": "127.0.0.1;cat /etc/passwd",
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-4",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "identity-tagged-attack",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "file": "../../../../etc/passwd",
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-5",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "identity-tagged-attack",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "x": "<img src=x onerror=alert(1)>",
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "malicious-user/02-forbidden-recon",
@@ -5614,7 +5709,165 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "identity-0",
+            "method": "GET",
+            "path": "/admin",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-1",
+            "method": "GET",
+            "path": "/.env",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-2",
+            "method": "GET",
+            "path": "/.git/config",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-3",
+            "method": "GET",
+            "path": "/wp-login.php",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-4",
+            "method": "GET",
+            "path": "/phpmyadmin/",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-5",
+            "method": "GET",
+            "path": "/actuator/env",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-6",
+            "method": "GET",
+            "path": "/api/v1/secrets",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-7",
+            "method": "GET",
+            "path": "/server-status",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-8",
+            "method": "GET",
+            "path": "/httpbin/status/401",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-9",
+            "method": "GET",
+            "path": "/httpbin/status/403",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          },
+          {
+            "id": "identity-10",
+            "method": "GET",
+            "path": "/httpbin/status/404",
+            "payload_class": "identity-tagged-reconnaissance",
+            "minimum_dispatches": 30,
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01",
+              "cookie": "x-mud-user=mud-attacker-01"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "malicious-user/03-credential-stuffing",
@@ -5627,7 +5880,1131 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "juice-1",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-1\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-1",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-1",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-2",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-2\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-2",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-2",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-3",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-3\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-3",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-3",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-4",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-4\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-4",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-4",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-5",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-5\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-5",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-5",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-6",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-6\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-6",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-6",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-7",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-7\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-7",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-7",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-8",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-8\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-8",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-8",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-9",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-9\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-9",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-9",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-10",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-10\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-10",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-10",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-11",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-11\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-11",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-11",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-12",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-12\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-12",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-12",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-13",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-13\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-13",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-13",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-14",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-14\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-14",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-14",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-15",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-15\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-15",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-15",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-16",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-16\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-16",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-16",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-17",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-17\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-17",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-17",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-18",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-18\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-18",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-18",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-19",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-19\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-19",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-19",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-20",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-20\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-20",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-20",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-21",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-21\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-21",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-21",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-22",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-22\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-22",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-22",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-23",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-23\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-23",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-23",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-24",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-24\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-24",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-24",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-25",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-25\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-25",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-25",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-26",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-26\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-26",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-26",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-27",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-27\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-27",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-27",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-28",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-28\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-28",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-28",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-29",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-29\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-29",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-29",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-30",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-30\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-30",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-30",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-31",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-31\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-31",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-31",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-32",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-32\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-32",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-32",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-33",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-33\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-33",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-33",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-34",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-34\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-34",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-34",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-35",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-35\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-35",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-35",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-36",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-36\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-36",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-36",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-37",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-37\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-37",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-37",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-38",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-38\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-38",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-38",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-39",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-39\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-39",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-39",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "juice-40",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-40\"}",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          },
+          {
+            "id": "dvwa-40",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "identity-credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "username=admin&password=wrong-40",
+            "query_values": {
+              "mud_user": "mud-attacker-01"
+            },
+            "headers": {
+              "x-mud-user": "mud-attacker-01"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "mitre-attack/01-reconnaissance",
@@ -7304,7 +8681,37 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "register",
+            "method": "POST",
+            "path": "/restaurant/register",
+            "payload_class": "account-registration",
+            "minimum_dispatches": 1,
+            "body_regex": "\"username\":\"testuser_[0-9]+\",\"password\":\"TestPass123\""
+          },
+          {
+            "id": "token",
+            "method": "POST",
+            "path": "/restaurant/token",
+            "payload_class": "account-authentication",
+            "minimum_dispatches": 1,
+            "body_regex": "username=testuser_[0-9]+&password=TestPass123"
+          },
+          {
+            "id": "profile",
+            "method": "GET",
+            "path": "/restaurant/profile",
+            "payload_class": "authenticated-profile",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/02-bola-profile",
@@ -7317,7 +8724,76 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "read-victim",
+            "method": "GET",
+            "path": "/restaurant/profile",
+            "payload_class": "victim-profile-read",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "cross-user",
+            "method": "PUT",
+            "path": "/restaurant/profile",
+            "payload_class": "cross-user-modification",
+            "minimum_dispatches": 1,
+            "body_regex": "\"username\":\"victim_[0-9]+\",\"phone_number\":\"hacked\"",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "privileged-admin",
+            "method": "PUT",
+            "path": "/restaurant/profile",
+            "payload_class": "privileged-profile-modification",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"phone_number\":\"bola_test\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "privileged-chef",
+            "method": "PUT",
+            "path": "/restaurant/profile",
+            "payload_class": "privileged-profile-modification",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"chef\",\"phone_number\":\"bola_test\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "privileged-manager",
+            "method": "PUT",
+            "path": "/restaurant/profile",
+            "payload_class": "privileged-profile-modification",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"manager\",\"phone_number\":\"bola_test\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "privileged-root",
+            "method": "PUT",
+            "path": "/restaurant/profile",
+            "payload_class": "privileged-profile-modification",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"root\",\"phone_number\":\"bola_test\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/03-bola-orders",
@@ -8113,7 +9589,61 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "escalation",
+            "method": "PATCH",
+            "path": "/restaurant/profile",
+            "payload_class": "chain-role-escalation",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"role\":\"Chef\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-0",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "chain-command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": ";whoami"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-1",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "chain-command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": ";id"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-2",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "chain-command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": ";cat /etc/passwd"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/09-jwt-secret-crack",
@@ -8126,7 +9656,21 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "forged-profile",
+            "method": "GET",
+            "path": "/restaurant/profile",
+            "payload_class": "cracked-secret-token-forgery",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.eyJzdWIiOiJhZG1pbiIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQ2hlZiJ9\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/10-api-discovery",
