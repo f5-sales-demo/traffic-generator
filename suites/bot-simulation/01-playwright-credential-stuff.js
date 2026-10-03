@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Credential stuffing simulation via headless Chrome
 // Tools: playwright (Node.js)
-// Targets: Juice Shop login page
+// Targets: DVWA native login form
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
@@ -72,15 +72,6 @@ const CREDENTIALS = [
       });
 
       const hasForm = await page.$('input[name="username"]');
-      if (!hasForm && process.env.TGEN_INHERITED_BOUNDARY === '1') {
-        const response = await context.request.post(`${BASE_URL}/dvwa/login.php`, {
-          form: { username: cred.user, password: cred.password, Login: 'Login' },
-          timeout: 15000,
-        });
-        launched++;
-        console.log(`    -> BROWSER REQUEST FALLBACK: credential submitted, HTTP ${response.status()}`);
-        continue;
-      }
       if (!hasForm) {
         const body = await page.textContent('body').catch(() => '');
         if (body.includes('Connection refused') || body.includes('Fatal error')) {

@@ -5,6 +5,7 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
+const { syntheticArithmetic } = require('../../scripts/synthetic_arithmetic.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
@@ -108,21 +109,12 @@ const IDENTITIES = [
       }
       await page.fill('#securityAnswerControl', 'bot answer');
 
-      const registration = await page.evaluate(async (identity) => {
-        const response = await fetch('/juice-shop/api/Users/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: identity.email,
-            password: identity.password,
-            passwordRepeat: identity.password,
-            securityQuestion: { id: 1 },
-            securityAnswer: 'synthetic answer',
-          }),
-        });
-        return response.status;
-      }, identity);
-      console.log(`    Registration HTTP ${registration} (browser submission)`);
+      const registration = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'POST' && new URL(response.url()).pathname === '/juice-shop/api/Users/',
+      );
+      await page.click('#registerButton');
+      console.log(`    Registration HTTP ${(await registration).status()} (native form submission)`);
       await page.waitForTimeout(1000);
       console.log(`    Registration submitted`);
       registrations++;
@@ -141,20 +133,18 @@ const IDENTITIES = [
       await page.fill('#comment', identity.comment);
 
       // Set rating
-      const stars = await page.$$('.br-unit');
-      if (stars.length > 0) {
-        await stars[stars.length - 1].click();
-      }
+      await page.locator('#rating input').focus();
+      await page.keyboard.press('End');
 
-      const contact = await page.evaluate(async (identity) => {
-        const response = await fetch('/juice-shop/api/Feedbacks/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ comment: identity.comment, rating: 5 }),
-        });
-        return response.status;
-      }, identity);
-      console.log(`    Contact HTTP ${contact} (browser submission)`);
+      const captcha = await page.textContent('#captcha');
+      const answer = syntheticArithmetic(captcha.trim());
+      await page.fill('#captchaControl', String(answer));
+      const contact = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'POST' && new URL(response.url()).pathname === '/juice-shop/api/Feedbacks/',
+      );
+      await page.click('#submitButton');
+      console.log(`    Contact HTTP ${(await contact).status()} (native form submission)`);
       await page.waitForTimeout(500);
       console.log(`    Contact form submitted`);
       contacts++;
@@ -172,4 +162,6 @@ const IDENTITIES = [
   console.log('[*] Form filling simulation complete');
   console.log(`    Registrations attempted: ${registrations}`);
   console.log(`    Contact forms submitted: ${contacts}`);
+  const expected = IDENTITIES.slice(0, Number(process.env.TGEN_BROWSER_IDENTITIES || IDENTITIES.length)).length;
+  if (registrations !== expected || contacts !== expected) process.exitCode = 1;
 })();
