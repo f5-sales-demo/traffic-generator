@@ -24,8 +24,21 @@ def structured_body_matches(requirement: dict, body: str) -> bool:
             re.search(requirement["graphql_operation"], document.get("query", ""))
         )
     if requirement["json_body_type"] == "array":
-        return isinstance(document, list) and len(document) >= requirement.get(
-            "json_array_min", 0
+        return (
+            isinstance(document, list)
+            and len(document) >= requirement.get("json_array_min", 0)
+            and (
+                "json_array_length" not in requirement
+                or len(document) == requirement["json_array_length"]
+            )
+            and all(
+                isinstance(item, dict)
+                and isinstance(item.get("query"), str)
+                and re.search(
+                    requirement.get("graphql_batch_operation", r".*"), item["query"]
+                )
+                for item in document
+            )
         )
     return False
 

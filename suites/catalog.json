@@ -5536,13 +5536,64 @@
       "dispatch_contract": {
         "requirements": [
           {
-            "id": "batch-escalation",
-            "json_body_type": "array",
-            "json_array_min": 2,
-            "minimum_dispatches": 4,
-            "payload_class": "graphql-batch",
+            "id": "single-update",
             "method": "POST",
             "path": "/dvga/graphql",
+            "graphql_operation": "^\\{systemUpdate\\}$",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-expensive-baseline",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "batch-2",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "json_body_type": "array",
+            "json_array_length": 2,
+            "graphql_batch_operation": "^\\{systemUpdate\\}$",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-expensive-batch",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "batch-5",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "json_body_type": "array",
+            "json_array_length": 5,
+            "graphql_batch_operation": "^\\{systemUpdate\\}$",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-expensive-batch",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "batch-10",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "json_body_type": "array",
+            "json_array_length": 10,
+            "graphql_batch_operation": "^\\{systemUpdate\\}$",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-expensive-batch",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "mixed-batch",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "json_body_type": "array",
+            "json_array_length": 5,
+            "body_regex": "systemHealth",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-mixed-expensive-batch",
             "headers": {
               "content-type": "application/json"
             }

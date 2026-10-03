@@ -308,3 +308,25 @@ def test_unmatched_application_error_cannot_be_hidden_by_one_matching_payload():
     event = {"kind": "scenario", "matched_requirements": ["payload"], "status": 200}
     unknown = {"kind": "scenario", "matched_requirements": [], "status": 502}
     assert not verify_responses(specification, [event, unknown])["passed"]
+
+
+def test_graphql_batch_requires_exact_size_and_declared_operations():
+    requirement = {
+        "id": "batch",
+        "method": "POST",
+        "path": "/dvga/graphql",
+        "json_body_type": "array",
+        "json_array_length": 2,
+        "graphql_batch_operation": r"^\{systemUpdate\}$",
+    }
+    request = {
+        "kind": "scenario",
+        "method": "POST",
+        "path": "/dvga/graphql",
+        "body": '[{"query":"{systemUpdate}"},{"query":"{systemUpdate}"}]',
+    }
+    assert match_requirements({"requirements": [requirement]}, request) == ["batch"]
+    request["body"] = '[{"query":"{__typename}"},{"query":"{__typename}"}]'
+    assert not match_requirements({"requirements": [requirement]}, request)
+    request["body"] = '[{"query":"{systemUpdate}"}]'
+    assert not match_requirements({"requirements": [requirement]}, request)
