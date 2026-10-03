@@ -176,7 +176,7 @@
       ],
       "workflows": ["styles-scripts-images", "navigation-and-forms", "graphql", "subscriptions", "seeded-pastes"],
       "benign_path": "",
-      "mutation_paths": ["difficulty/easy", "difficulty/hard", "logout"]
+      "mutation_paths": ["difficulty/easy", "difficulty/hard", "logout", "start_over"]
     },
     {
       "id": "restaurant",
