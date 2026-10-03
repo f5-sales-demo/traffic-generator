@@ -408,6 +408,18 @@ def verify_workload(contract: dict, receipt: dict) -> dict:
         }
         for level in contract["levels"]
     ]
+    checks.extend(
+        {
+            "batch": batch,
+            "passed": any(
+                sample.get("requests") == batch
+                and sample.get("transport_failures") == 0
+                and sample.get("content_failures", 0) == 0
+                for sample in receipt.get("levels", [])
+            ),
+        }
+        for batch in contract.get("batches", [])
+    )
     if "minimum_duration" in contract:
         checks.append(
             {

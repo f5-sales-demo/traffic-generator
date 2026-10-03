@@ -151,10 +151,11 @@ def main() -> int:
             domain,
             contract["paths"],
             level,
-            contract["minimum_requests"],
+            batch,
             "churn" not in identifier and "ephemeral" not in identifier,
         )
         for level in contract["levels"]
+        for batch in contract.get("batches", [contract["minimum_requests"]])
     ]
     if "sustained" in identifier or "profile" in identifier:
         while time.monotonic() - started < int(os.environ["TGEN_DURATION"]):

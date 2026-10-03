@@ -33,3 +33,19 @@ def test_profile_requires_baseline_under_load_and_cleanup():
         {"levels": [], "minimum_requests": 1, "resource_profile": True},
         {"levels": [], "cleanup": True},
     )["passed"]
+
+
+def test_each_declared_connection_churn_batch_is_required():
+    contract = {"levels": [20], "minimum_requests": 20, "batches": [20, 50, 100]}
+    sample = {
+        "concurrency": 20,
+        "requests": 100,
+        "transport_failures": 0,
+        "content_failures": 0,
+        "connections_closed": True,
+    }
+    assert not verify_workload(contract, {"levels": [sample], "cleanup": True})[
+        "passed"
+    ]
+    samples = [{**sample, "requests": count} for count in (20, 50, 100)]
+    assert verify_workload(contract, {"levels": samples, "cleanup": True})["passed"]
