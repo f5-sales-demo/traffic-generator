@@ -338,6 +338,8 @@ def _scenario(
             "http_requests": after.get("scenario_requests", 0)
             - before.get("scenario_requests", 0),
             "claim": scenario["expected_outcome"],
+            "dispatch_contract_verified": "dispatch_contract" in scenario
+            or scenario["budget"] == "connection",
         }
     )
     if "dispatch_contract" in scenario:
