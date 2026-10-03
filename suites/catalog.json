@@ -4298,7 +4298,7 @@
           {
             "id": "native-vegeta",
             "tool": "vegeta",
-            "argument_regex": "https://",
+            "argument_regex": "attack.*-targets=",
             "minimum": 5
           },
           {
