@@ -222,7 +222,8 @@
         "crapi-mailhog",
         "crapi-identity",
         "crapi-community",
-        "crapi-workshop"
+        "crapi-workshop",
+        "crapi-chatbot"
       ],
       "pages": [
         {
