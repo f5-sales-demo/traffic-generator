@@ -210,6 +210,78 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             assert future.cancelled()
             assert budget.counts["tool_cancellations"] == 1
 
+    async def test_raw_connect_receipt_records_forwarded_method(self):
+        """The carrier GET is not the intended CONNECT dispatch."""
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.dict(
+                os.environ,
+                {
+                    "TGEN_DOMAINS": '["www.example.test","api.example.test"]',
+                    "TGEN_PROXY_METRICS": tmp + "/metrics.json",
+                },
+            ),
+        ):
+            spec = importlib.util.spec_from_file_location(
+                "raw_proxy", ROOT / "scripts/traffic_proxy.py"
+            )
+            assert spec is not None
+            assert spec.loader is not None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            budget = module.Budget()
+            evidence = pathlib.Path(tmp) / "dispatch-events.jsonl"
+            budget.scenario_file.write_text(
+                json.dumps(
+                    {
+                        "id": "synthetic/connect",
+                        "phase": "execution",
+                        "dispatch_path": str(evidence),
+                        "dispatch_contract": {
+                            "requirements": [
+                                {
+                                    "id": "connect",
+                                    "method": "CONNECT",
+                                    "path": "/httpbin/get",
+                                    "payload_class": "method-probe",
+                                    "minimum_dispatches": 1,
+                                }
+                            ]
+                        },
+                    }
+                )
+            )
+            flow = SimpleNamespace(
+                metadata={},
+                request=SimpleNamespace(
+                    content=b"",
+                    headers={
+                        "Host": "www.example.test",
+                        "X-TGen-Raw-Method": "CONNECT",
+                    },
+                    host="www.example.test",
+                    port=443,
+                    method="GET",
+                    path="/httpbin/get",
+                    get_text=lambda **_: "",
+                ),
+            )
+            with patch.object(
+                budget,
+                "raw_connect",
+                return_value=module.http.Response.make(403, b"blocked"),
+            ):
+                pending = asyncio.create_task(budget.request(flow))
+                await asyncio.sleep(0)
+                budget.maximum_pending_fillers = 0
+                budget.running()
+                await pending
+                budget.done()
+            event = json.loads(evidence.read_text())
+            assert event["method"] == "CONNECT"
+            assert event["matched_requirements"] == ["connect"]
+            assert flow.metadata["tgen_dispatched_method"] == "CONNECT"
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -170,12 +170,17 @@ class Budget:
                 raise ValueError(message)
         except (OSError, KeyError):
             event_path = self.metrics_path.parent / "dispatch-events.jsonl"
+        raw_method = flow.request.headers.pop("X-TGen-Raw-Method", "")
+        dispatched_method = (
+            "CONNECT" if raw_method == "CONNECT" else flow.request.method
+        )
+        flow.metadata["tgen_dispatched_method"] = dispatched_method
         observed = {
             "body_hex": (flow.request.content or b"").hex(),
             "kind": "scenario"
             if current.get("phase") == "execution"
             else "prerequisite",
-            "method": flow.request.method,
+            "method": flow.metadata.get("tgen_dispatched_method", flow.request.method),
             "path": flow.request.path.split("?", 1)[0],
             "query": flow.request.path.partition("?")[2],
             "body": flow.request.get_text(strict=False) or ""
@@ -196,7 +201,9 @@ class Budget:
                         "scenario": current.get("id"),
                         "kind": observed["kind"],
                         "matched_requirements": matched,
-                        "method": flow.request.method,
+                        "method": flow.metadata.get(
+                            "tgen_dispatched_method", flow.request.method
+                        ),
                         "path": flow.request.path.split("?", 1)[0],
                         "query": flow.request.path.partition("?")[2],
                         "dispatched": time.time(),
@@ -204,7 +211,7 @@ class Budget:
                 )
                 + "\n"
             )
-        if flow.request.headers.pop("X-TGen-Raw-Method", "") == "CONNECT":
+        if raw_method == "CONNECT":
             flow.response = await asyncio.to_thread(
                 self.raw_connect, host, flow.request.path
             )
@@ -254,7 +261,7 @@ class Budget:
             "kind": "scenario"
             if current.get("phase") == "execution"
             else "prerequisite",
-            "method": flow.request.method,
+            "method": flow.metadata.get("tgen_dispatched_method", flow.request.method),
             "path": flow.request.path.split("?", 1)[0],
             "status": status,
             "matched_requirements": flow.metadata.get("tgen_matched_requirements", []),
@@ -300,7 +307,9 @@ class Budget:
                 stream.write(
                     json.dumps(
                         {
-                            "method": flow.request.method,
+                            "method": flow.metadata.get(
+                                "tgen_dispatched_method", flow.request.method
+                            ),
                             "path": flow.request.path,
                             "error": re.sub(
                                 r"b'[^']*'", "[redacted header]", flow.error.msg
