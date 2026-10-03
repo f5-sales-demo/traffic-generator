@@ -2242,7 +2242,7 @@
             "path": "/crapi/identity/api/v2/admin/users/debug",
             "payload_class": "intentional-undocumented-endpoint",
             "minimum_dispatches": 2,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [401, 404]
           },
           {
             "id": "shadow-1",
@@ -2250,7 +2250,7 @@
             "path": "/crapi/workshop/api/internal/metrics",
             "payload_class": "intentional-undocumented-endpoint",
             "minimum_dispatches": 2,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [401, 404]
           },
           {
             "id": "shadow-2",
@@ -2258,7 +2258,7 @@
             "path": "/vampi/_debug/config",
             "payload_class": "intentional-undocumented-endpoint",
             "minimum_dispatches": 2,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [401, 404]
           },
           {
             "id": "shadow-3",
@@ -2266,7 +2266,7 @@
             "path": "/vampi/users/v1/_internal/dump",
             "payload_class": "intentional-undocumented-endpoint",
             "minimum_dispatches": 2,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [401, 404]
           },
           {
             "id": "shadow-4",
@@ -2274,7 +2274,7 @@
             "path": "/api/internal/healthz-secret",
             "payload_class": "intentional-undocumented-endpoint",
             "minimum_dispatches": 2,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [401, 404]
           },
           {
             "id": "shadow-5",
@@ -2282,7 +2282,7 @@
             "path": "/api/v0/legacy/accounts/export",
             "payload_class": "intentional-undocumented-endpoint",
             "minimum_dispatches": 2,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [401, 404]
           }
         ]
       },
