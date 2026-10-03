@@ -95,6 +95,7 @@ const USER_AGENTS = [
       console.log(`[+] UA: ${uaShort}`);
 
       for (const path of PAGES) {
+        const errorOffset = browserErrors.length;
         try {
           const url = `${BASE_URL}${path}`;
           await settleRequests(requestState);
@@ -138,7 +139,7 @@ const USER_AGENTS = [
               .locator('script[src]')
               .count()
               .catch(() => 0),
-            browser_errors: [...browserErrors],
+            browser_errors: browserErrors.slice(errorOffset),
             body_characters: (
               await page
                 .locator('body')
