@@ -26,6 +26,19 @@ def validate_execution_contract(scenario: dict) -> None:
         raise ValueError(message)
 
 
+def validate_target_contract(scenario: dict) -> None:
+    """Every exact executable request target must be present in the published matrix."""
+    actual = {
+        requirement["path"]
+        for requirement in scenario.get("dispatch_contract", {}).get("requirements", [])
+        if "path" in requirement
+    }
+    actual.update(scenario.get("workload_contract", {}).get("paths", []))
+    if not actual <= set(scenario["target_paths"]):
+        message = "execution endpoint missing from scenario target matrix"
+        raise ValueError(message)
+
+
 def validate_catalog(root: Path, catalog: dict) -> None:
     """Reject missing entrypoints, duplicate IDs, and broken execution order."""
     if catalog.get("schema_version") != 1:
@@ -72,6 +85,7 @@ def validate_catalog(root: Path, catalog: dict) -> None:
             ):
                 message = "scenario target has no declared application"
                 raise ValueError(message)
+        validate_target_contract(scenario)
         seen.add(identifier)
         path = root / scenario["entrypoint"]
         if not path.is_file() or not path.resolve().is_relative_to(root.resolve()):
