@@ -6,6 +6,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from traffic_dispatch import verify_workload
+from traffic_workload import content_identity
 
 
 def test_ramp_requires_all_levels_with_requests_and_cleanup():
@@ -22,3 +23,8 @@ def test_ramp_requires_all_levels_with_requests_and_cleanup():
     assert verify_workload(contract, receipt)["passed"]
     receipt["cleanup"] = False
     assert not verify_workload(contract, receipt)["passed"]
+
+
+def test_wrong_content_200_is_a_workload_failure():
+    assert not content_identity("/vampi/", "text/html", b"Origin Server")
+    assert content_identity("/vampi/", "application/json", b'{"message":"VAmPI"}')

@@ -10,8 +10,33 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 from traffic_common import atomic_json
+
+
+def content_identity(path: str, content_type: str, body: bytes) -> bool:
+    """Require declared application content and type rather than an arbitrary 200."""
+    root = Path(__file__).resolve().parents[1]
+    applications = json.loads((root / "suites/applications.json").read_text())[
+        "applications"
+    ]
+    page = next(
+        (
+            page
+            for app in applications
+            for page in app["pages"]
+            if app["prefix"] + page["path"] == path
+        ),
+        None,
+    )
+    if page is None:
+        return False
+    return (
+        content_type.split(";", 1)[0] == page["content_type"]
+        and page["identity"].casefold()
+        in body.decode("utf-8", errors="replace").casefold()
+    )
 
 
 def run_level(
@@ -30,7 +55,11 @@ def run_level(
             active += 1
             maximum_active = max(maximum_active, active)
         started = time.monotonic()
-        result = {"path": paths[index % len(paths)], "transport_failure": False}
+        result: dict[str, Any] = {
+            "path": paths[index % len(paths)],
+            "transport_failure": False,
+            "content_valid": False,
+        }
         if not keepalive or not hasattr(local, "connection"):
             local.connection = http.client.HTTPSConnection(
                 domain, timeout=15, context=ssl.create_default_context()
@@ -49,6 +78,9 @@ def run_level(
                 status=response.status,
                 content_type=response.getheader("Content-Type"),
                 body_sha256=hashlib.sha256(body).hexdigest(),
+                content_valid=content_identity(
+                    result["path"], response.getheader("Content-Type", ""), body
+                ),
             )
         except (OSError, http.client.HTTPException):
             result["transport_failure"] = True
@@ -72,6 +104,7 @@ def run_level(
         "maximum_active": maximum_active,
         "requests": len(results),
         "transport_failures": sum(result["transport_failure"] for result in results),
+        "content_failures": sum(not result["content_valid"] for result in results),
         "elapsed": time.monotonic() - started,
         "connections_created": len(connections),
         "persistent": keepalive,
@@ -118,7 +151,12 @@ def main() -> int:
         "elapsed": time.monotonic() - started,
     }
     atomic_json(Path(os.environ["TGEN_RESULTS_DIR"]) / "workload.json", receipt)
-    return int(any(sample["transport_failures"] for sample in samples))
+    return int(
+        any(
+            sample["transport_failures"] or sample["content_failures"]
+            for sample in samples
+        )
+    )
 
 
 if __name__ == "__main__":

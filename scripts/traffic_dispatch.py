@@ -366,6 +366,7 @@ def verify_workload(contract: dict, receipt: dict) -> dict:
                 sample.get("concurrency") == level
                 and sample.get("requests", 0) >= contract["minimum_requests"]
                 and sample.get("transport_failures") == 0
+                and sample.get("content_failures", 0) == 0
                 for sample in receipt.get("levels", [])
             ),
         }

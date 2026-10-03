@@ -13985,7 +13985,7 @@
           {
             "id": "application-5",
             "method": "GET",
-            "path": "/csd-demo/health",
+            "path": "/csd-demo/",
             "payload_class": "bounded-01-concurrency-ramp",
             "minimum_dispatches": 10
           },
@@ -14022,7 +14022,7 @@
           "/dvwa/login.php",
           "/vampi/",
           "/whoami/",
-          "/csd-demo/health",
+          "/csd-demo/",
           "/dvga/",
           "/restaurant/openapi.json",
           "/crapi/"
@@ -14178,7 +14178,7 @@
           {
             "id": "application-5",
             "method": "GET",
-            "path": "/csd-demo/health",
+            "path": "/csd-demo/",
             "payload_class": "bounded-03-sustained-load",
             "minimum_dispatches": 10
           },
@@ -14215,7 +14215,7 @@
           "/dvwa/login.php",
           "/vampi/",
           "/whoami/",
-          "/csd-demo/health",
+          "/csd-demo/",
           "/dvga/",
           "/restaurant/openapi.json",
           "/crapi/"
@@ -14438,7 +14438,7 @@
           {
             "id": "application-5",
             "method": "GET",
-            "path": "/csd-demo/health",
+            "path": "/csd-demo/",
             "payload_class": "bounded-07-self-profile-under-load",
             "minimum_dispatches": 10
           },
@@ -14475,7 +14475,7 @@
           "/dvwa/login.php",
           "/vampi/",
           "/whoami/",
-          "/csd-demo/health",
+          "/csd-demo/",
           "/dvga/",
           "/restaurant/openapi.json",
           "/crapi/"
@@ -14534,7 +14534,7 @@
           {
             "id": "application-5",
             "method": "GET",
-            "path": "/csd-demo/health",
+            "path": "/csd-demo/",
             "payload_class": "bounded-08-ephemeral-port-stress",
             "minimum_dispatches": 10
           },
@@ -14571,7 +14571,7 @@
           "/dvwa/login.php",
           "/vampi/",
           "/whoami/",
-          "/csd-demo/health",
+          "/csd-demo/",
           "/dvga/",
           "/restaurant/openapi.json",
           "/crapi/"
