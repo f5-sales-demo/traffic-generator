@@ -103,7 +103,7 @@ const USER_AGENTS = [
         const errorOffset = browserErrors.length;
         try {
           const url = `${BASE_URL}${path}`;
-          await settleRequests(requestState);
+          await settleRequests(requestState, 15000, 100);
           if (new URL(url).hash) {
             await page.goto('about:blank');
             documentResponse = undefined;
@@ -115,7 +115,7 @@ const USER_AGENTS = [
           if (response) documentResponse = response;
           const status = response ? response.status() : 'N/A';
           console.log(`    ${path} -> ${status}`);
-          await settleRequests(requestState);
+          await settleRequests(requestState, 15000, 100);
           const item = await verifyNavigation(
             page,
             response || documentResponse,
@@ -159,7 +159,7 @@ const USER_AGENTS = [
         await page.waitForTimeout(50).catch(() => {});
       }
 
-      await settleRequests(requestState).catch(() => {
+      await settleRequests(requestState, 15000, 100).catch(() => {
         errors++;
       });
       receipt.browser_errors = [...(receipt.browser_errors || []), ...browserErrors];

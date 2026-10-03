@@ -13,10 +13,10 @@ function observeRequests(page) {
     });
   return state;
 }
-async function settleRequests(state, timeoutMs = 15000) {
+async function settleRequests(state, timeoutMs = 15000, quietMs = 500) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (!state.pending.size && Date.now() - state.changed >= Math.min(500, timeoutMs / 2)) return;
+    if (!state.pending.size && Date.now() - state.changed >= Math.min(quietMs, timeoutMs / 2)) return;
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   throw new Error('Application requests did not finish before browser navigation or cleanup');
