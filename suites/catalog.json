@@ -367,7 +367,19 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "credentials",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "body_regex": "(?:^|&)username=.+&password=",
+            "minimum_dispatches": 15,
+            "payload_class": "credential-stuffing"
+          }
+        ]
+      }
     },
     {
       "id": "bot-simulation/02-puppeteer-scraper",
@@ -380,7 +392,32 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "product-catalog",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "minimum_dispatches": 1,
+            "payload_class": "rendered-scraping"
+          },
+          {
+            "id": "api-users",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "minimum_dispatches": 1,
+            "payload_class": "rendered-scraping"
+          },
+          {
+            "id": "diagnostics",
+            "method": "GET",
+            "path": "/whoami/",
+            "minimum_dispatches": 1,
+            "payload_class": "rendered-scraping"
+          }
+        ]
+      }
     },
     {
       "id": "bot-simulation/03-headless-form-fill",
@@ -393,7 +430,27 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "registration",
+            "method": "POST",
+            "path": "/juice-shop/api/Users/",
+            "body_regex": "\"passwordRepeat\"",
+            "minimum_dispatches": 2,
+            "payload_class": "browser-registration"
+          },
+          {
+            "id": "contact",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "body_regex": "\"comment\"",
+            "minimum_dispatches": 2,
+            "payload_class": "browser-contact"
+          }
+        ]
+      }
     },
     {
       "id": "bot-simulation/04-rapid-browsing",
@@ -406,7 +463,32 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "rendered-app-navigation",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "minimum_dispatches": 2,
+            "payload_class": "rapid-browser-navigation"
+          },
+          {
+            "id": "html-navigation",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "minimum_dispatches": 2,
+            "payload_class": "rapid-browser-navigation"
+          },
+          {
+            "id": "json-navigation",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "minimum_dispatches": 2,
+            "payload_class": "rapid-browser-navigation"
+          }
+        ]
+      }
     },
     {
       "id": "bot-simulation/05-hydra-brute-force",
@@ -419,7 +501,35 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "dvwa-passwords",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "body_regex": "(?:^|&)password=",
+            "minimum_dispatches": 2,
+            "payload_class": "password-guessing"
+          },
+          {
+            "id": "juice-passwords",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "body_regex": "\"password\"",
+            "minimum_dispatches": 2,
+            "payload_class": "password-guessing"
+          },
+          {
+            "id": "vampi-passwords",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "body_regex": "\"password\"",
+            "minimum_dispatches": 2,
+            "payload_class": "password-guessing"
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/01-baseline-throughput",
@@ -1018,7 +1128,17 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "login-credential-skimmer",
+        "steps": [
+          "navigate-login",
+          "set-synthetic-login-values",
+          "observe-login-fields",
+          "post-login-field-counters",
+          "cleanup-login-controls"
+        ]
+      }
     },
     {
       "id": "csd-violations/registration-harvester",
@@ -1032,7 +1152,17 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "registration-harvester",
+        "steps": [
+          "navigate-registration",
+          "set-synthetic-registration-values",
+          "observe-registration-controls",
+          "post-registration-control-counter",
+          "cleanup-registration-controls"
+        ]
+      }
     },
     {
       "id": "csd-violations/payment-overlay-card-skimmer",
@@ -1046,7 +1176,17 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "payment-overlay-card-skimmer",
+        "steps": [
+          "navigate-login",
+          "count-original-login-fields",
+          "install-masked-payment-overlay",
+          "post-payment-field-counter",
+          "cleanup-payment-overlay"
+        ]
+      }
     },
     {
       "id": "csd-violations/obfuscated-loader",
@@ -1060,7 +1200,11 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "obfuscated-loader",
+        "steps": ["navigate-home", "decode-and-inject-reviewed-url", "cleanup-obfuscated-loader"]
+      }
     },
     {
       "id": "csd-violations/multi-cdn-injection",
@@ -1074,7 +1218,11 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "multi-cdn-injection",
+        "steps": ["navigate-home", "inject-four-cdn-candidates", "cleanup-multi-cdn-candidates"]
+      }
     },
     {
       "id": "csd-violations/tag-manager-hijack",
@@ -1088,7 +1236,11 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "tag-manager-hijack",
+        "steps": ["navigate-home", "inject-reviewed-tag-manager-candidate", "cleanup-tag-manager-candidate"]
+      }
     },
     {
       "id": "csd-violations/multi-channel-exfiltration",
@@ -1102,7 +1254,17 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "multi-channel-exfiltration",
+        "steps": [
+          "navigate-login",
+          "set-synthetic-login-values",
+          "observe-login-fields",
+          "attempt-three-benign-channels",
+          "cleanup-multi-channel-artifacts"
+        ]
+      }
     },
     {
       "id": "csd-violations/high-volume-domain-exfiltration",
@@ -1116,7 +1278,11 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "high-volume-domain-exfiltration",
+        "steps": ["navigate-login", "attempt-five-scripts-two-posts", "cleanup-high-volume-artifacts"]
+      }
     },
     {
       "id": "csd-violations/form-overlay",
@@ -1130,7 +1296,11 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "form-overlay",
+        "steps": ["navigate-login", "count-original-fields-and-install-overlay", "cleanup-form-overlay"]
+      }
     },
     {
       "id": "csd-violations/keylogger-simulation",
@@ -1144,7 +1314,11 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "keylogger-simulation",
+        "steps": ["navigate-login", "count-synthetic-key-events", "cleanup-keylogger-artifacts"]
+      }
     },
     {
       "id": "csd-violations/maximum-detection",
@@ -1158,7 +1332,19 @@
       "expected_outcome": "browser activity only; CSD disabled; no detection claim",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "browser_contract": {
+        "scenario": "maximum-detection",
+        "steps": [
+          "navigate-login",
+          "canonical-synthetic-login",
+          "canonical-field-observation",
+          "canonical-multi-cdn",
+          "canonical-multi-channel",
+          "canonical-banner",
+          "cleanup-maximum-artifacts"
+        ]
+      }
     },
     {
       "id": "demoapp-attacks/01-sqli-waf-endpoint",

@@ -176,3 +176,36 @@ def classify_outcome(event: dict) -> str:
     if isinstance(status, int) and SUCCESS_MIN <= status < SUCCESS_MAX:
         return "application_response"
     return "unexpected_application_response"
+
+
+def verify_browser_actions(contract: dict, receipt: dict) -> dict:
+    """Require the manifest's exact browser steps, assertions and cleanup receipt."""
+    scenarios = [
+        scenario
+        for scenario in receipt.get("scenarios", [])
+        if scenario.get("name") == contract["scenario"]
+    ]
+    if len(scenarios) != 1:
+        return {"passed": False, "reason": "browser scenario receipt missing"}
+    scenario = scenarios[0]
+    observed = {step["name"]: step for step in scenario.get("steps", [])}
+    checks = [
+        {
+            "name": name,
+            "passed": name in observed
+            and observed[name].get("status") == "passed"
+            and observed[name].get("assertions", {}).get("status") == "passed"
+            and observed[name].get("screenshot", {}).get("status", "passed")
+            == "passed",
+        }
+        for name in contract["steps"]
+    ]
+    cleanup = receipt.get("cleanup", {})
+    passed = (
+        bool(checks)
+        and all(check["passed"] for check in checks)
+        and scenario.get("status") == "passed"
+        and cleanup.get("browser") == "closed"
+        and not cleanup.get("errors")
+    )
+    return {"passed": passed, "steps": checks}

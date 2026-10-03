@@ -18,11 +18,12 @@ from pathlib import Path
 
 from traffic_catalog import load_catalog, readiness
 from traffic_common import atomic_json, terminate
-from traffic_dispatch import verify_dispatch
+from traffic_dispatch import verify_browser_actions, verify_dispatch
 from traffic_network import NetworkBoundary
 
 sys.dont_write_bytecode = True
 DOMAIN_COUNT = 2
+BROWSER_RECEIPT_VERSION = 2
 
 
 def validate_config(config: dict) -> None:
@@ -292,6 +293,23 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
     return int(failed)
 
 
+def browser_action_receipt(directory: Path, contract: dict) -> dict:
+    """Read one uniquely identified browser action receipt from the scenario directory."""
+    receipts = []
+    for candidate in directory.glob("*/receipt.json"):
+        try:
+            receipt = json.loads(candidate.read_text())
+        except (OSError, ValueError):
+            return {"passed": False, "reason": "browser receipt unreadable"}
+        if not isinstance(receipt, dict):
+            return {"passed": False, "reason": "browser receipt invalid"}
+        if receipt.get("schemaVersion") == BROWSER_RECEIPT_VERSION:
+            receipts.append(receipt)
+    if len(receipts) != 1:
+        return {"passed": False, "reason": "browser receipt missing or ambiguous"}
+    return verify_browser_actions(contract, receipts[0])
+
+
 def prerequisite_failure(
     identifier: str, directory: Path, state: dict, error: str
 ) -> dict:
@@ -309,6 +327,42 @@ def prerequisite_failure(
     )[-200:]
     atomic_json(directory / "receipt.json", result)
     return result
+
+
+def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Join actual dispatch, browser actions, and connection evidence to a launch."""
+    if "dispatch_contract" in scenario:
+        events = []
+        if (directory / "dispatch-events.jsonl").exists():
+            with (directory / "dispatch-events.jsonl").open() as stream:
+                events = [json.loads(line) for line in stream if line.strip()]
+        result["intended_dispatch"] = verify_dispatch(
+            scenario["dispatch_contract"], events
+        )
+        result["dispatch_contract_verified"] = result["intended_dispatch"]["passed"]
+        if (
+            result["outcome"] == "launched"
+            and not result["intended_dispatch"]["passed"]
+        ):
+            result["outcome"] = "fixture_failure"
+    if "browser_contract" in scenario:
+        result["browser_actions"] = browser_action_receipt(
+            directory, scenario["browser_contract"]
+        )
+        result["dispatch_contract_verified"] = result["browser_actions"]["passed"] and (
+            "dispatch_contract" not in scenario or result["intended_dispatch"]["passed"]
+        )
+        if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+    if scenario["budget"] == "connection":
+        connection_receipt = directory / "connections.json"
+        if connection_receipt.exists():
+            connection_data = json.loads(connection_receipt.read_text())
+            result["connection_attempts"] = connection_data["attempts"]
+            result["connection_limit"] = connection_data["attempt_limit_per_second"]
+            result["dispatch_contract_verified"] = connection_data["attempts"] > 0
+        else:
+            result["outcome"] = "tool_failure"
 
 
 def _scenario(
@@ -377,29 +431,7 @@ def _scenario(
             "dispatch_contract_verified": False,
         }
     )
-    if "dispatch_contract" in scenario:
-        events = []
-        if (directory / "dispatch-events.jsonl").exists():
-            with (directory / "dispatch-events.jsonl").open() as stream:
-                events = [json.loads(line) for line in stream if line.strip()]
-        result["intended_dispatch"] = verify_dispatch(
-            scenario["dispatch_contract"], events
-        )
-        result["dispatch_contract_verified"] = result["intended_dispatch"]["passed"]
-        if (
-            result["outcome"] == "launched"
-            and not result["intended_dispatch"]["passed"]
-        ):
-            result["outcome"] = "fixture_failure"
-    if scenario["budget"] == "connection":
-        connection_receipt = directory / "connections.json"
-        if connection_receipt.exists():
-            connection_data = json.loads(connection_receipt.read_text())
-            result["connection_attempts"] = connection_data["attempts"]
-            result["connection_limit"] = connection_data["attempt_limit_per_second"]
-            result["dispatch_contract_verified"] = connection_data["attempts"] > 0
-        else:
-            result["outcome"] = "tool_failure"
+    scenario_action_verification(directory, scenario, result)
     result["mitigated_requests"] = after.get("attack_mitigated", 0) - before.get(
         "attack_mitigated", 0
     )
