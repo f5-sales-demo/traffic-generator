@@ -39,7 +39,7 @@ INTERNAL_TARGETS=(
 )
 
 for ssrf_url in "${INTERNAL_TARGETS[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ssrf_url}'))")
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${ssrf_url}")
   send_ssrf "GET" "${BASE}/httpbin/get?url=${encoded}" "httpbin ?url=${ssrf_url}"
 done
 
@@ -54,7 +54,7 @@ METADATA_TARGETS=(
 )
 
 for ssrf_url in "${METADATA_TARGETS[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ssrf_url}'))")
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${ssrf_url}")
   send_ssrf "GET" "${BASE}/httpbin/get?url=${encoded}" "httpbin ?url=${ssrf_url}"
 done
 

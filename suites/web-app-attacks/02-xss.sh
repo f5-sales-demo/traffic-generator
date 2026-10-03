@@ -44,7 +44,7 @@ PAYLOADS=(
 )
 
 for payload in "${PAYLOADS[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${payload}'''))")
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${payload}")
 
   echo "  Payload: ${payload}"
 

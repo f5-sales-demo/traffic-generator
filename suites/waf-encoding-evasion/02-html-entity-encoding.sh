@@ -42,7 +42,7 @@ ENDPOINTS=(
 for entry in "${PAYLOADS[@]}"; do
   name="${entry%%|*}"
   payload="${entry#*|}"
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${payload}'''))")
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${payload}")
 
   echo "[+] ${name}: ${payload}"
   for ep in "${ENDPOINTS[@]}"; do
