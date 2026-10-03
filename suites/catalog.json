@@ -1717,13 +1717,10 @@
           },
           {
             "id": "method-132",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/vampi/users/v1",
             "payload_class": "api-method-fuzzing",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -1840,13 +1837,10 @@
           },
           {
             "id": "method-147",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/juice-shop/rest/products/search",
             "payload_class": "api-method-fuzzing",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -1963,13 +1957,10 @@
           },
           {
             "id": "method-162",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/dvwa/",
             "payload_class": "api-method-fuzzing",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -20190,13 +20181,10 @@
           },
           {
             "id": "CONNECT-8",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -20345,13 +20333,10 @@
           },
           {
             "id": "CONNECT-27",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/juice-shop/",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -20524,13 +20509,10 @@
           },
           {
             "id": "CONNECT-46",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/juice-shop/rest/products/search",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "query_values": {
               "q": "test"
             },
@@ -20712,13 +20694,10 @@
           },
           {
             "id": "CONNECT-65",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/dvwa/",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -20867,13 +20846,10 @@
           },
           {
             "id": "CONNECT-84",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/dvwa/login.php",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -21022,13 +20998,10 @@
           },
           {
             "id": "CONNECT-103",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/vampi/",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -21177,13 +21150,10 @@
           },
           {
             "id": "CONNECT-122",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/vampi/users/v1",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -21332,13 +21302,10 @@
           },
           {
             "id": "CONNECT-141",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/admin",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -21487,13 +21454,10 @@
           },
           {
             "id": "CONNECT-160",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/.env",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -21642,13 +21606,10 @@
           },
           {
             "id": "CONNECT-179",
-            "method": "GET",
+            "method": "CONNECT",
             "path": "/.git/config",
             "payload_class": "http-method-probe",
             "minimum_dispatches": 1,
-            "headers": {
-              "x-tgen-raw-method": "CONNECT"
-            },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
