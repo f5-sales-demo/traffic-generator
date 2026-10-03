@@ -243,6 +243,7 @@ class NetworkBoundary:
                 os.environ,
                 TGEN_DOMAINS=json.dumps(self.config["domains"]),
                 TGEN_PROXY_METRICS=str(self.state.proxy_metrics),
+                PYTHONPATH=str(self.root / "scripts"),
             )
             proxy_log = (self.runtime / "proxy.log").open("ab")
             self.state.proxy = subprocess.Popen(  # noqa: S603 - fixed verified proxy invocation

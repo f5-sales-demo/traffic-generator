@@ -13,6 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
+from traffic_dispatch import match_requirements
 
 HTTPS_PORT = 443
 
@@ -138,13 +139,18 @@ class Budget:
             flow.request.headers["X-MUD-User"] = (
                 "waap-scenario-" + self.current_scenario() + "-" + host
             )
+        try:
+            current = json.loads(self.scenario_file.read_text())
+        except (OSError, ValueError):
+            current = {"id": "catalog", "phase": "unattributed"}
+        flow.metadata["tgen_scenario"] = current
         event = asyncio.get_running_loop().create_future()
         flow.metadata["tgen_pending_slot"] = event
         await self.pending.put((event, host))
         await event
         flow.metadata.pop("tgen_pending_slot", None)
         try:
-            current = json.loads(self.scenario_file.read_text())
+            current = flow.metadata["tgen_scenario"]
             event_path = Path(current["dispatch_path"])
             if not event_path.resolve().is_relative_to(
                 self.metrics_path.parent.resolve()
@@ -153,14 +159,30 @@ class Budget:
                 raise ValueError(message)
         except (OSError, KeyError):
             event_path = self.metrics_path.parent / "dispatch-events.jsonl"
+        observed = {
+            "kind": "scenario"
+            if current.get("phase") == "execution"
+            else "prerequisite",
+            "method": flow.request.method,
+            "path": flow.request.path.split("?", 1)[0],
+            "query": flow.request.path.partition("?")[2],
+            "body": flow.request.get_text(strict=False) or ""
+            if hasattr(flow.request, "get_text")
+            else "",
+            "headers": {
+                name.lower(): value for name, value in flow.request.headers.items()
+            },
+        }
+        matched = match_requirements(current.get("dispatch_contract", {}), observed)
         with event_path.open("a", encoding="utf-8") as stream:
             event_path.chmod(0o600)
             # This private receipt records endpoint and payload class inputs, never headers/cookies.
             stream.write(
                 json.dumps(
                     {
-                        "scenario": self.current_scenario(),
-                        "kind": "scenario",
+                        "scenario": current.get("id"),
+                        "kind": observed["kind"],
+                        "matched_requirements": matched,
                         "method": flow.request.method,
                         "path": flow.request.path.split("?", 1)[0],
                         "query": flow.request.path.partition("?")[2],

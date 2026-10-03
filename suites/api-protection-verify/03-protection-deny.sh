@@ -1,6 +1,6 @@
 #!/bin/bash
 # API-protection deny traffic — hits the endpoint(s) an F5 XC LB api_protection_rules
-# "deny" rule targets (default SP3 rule: POST /api/admin), so the LB blocks the request
+# "deny" rule targets (default SP3 rule: POST /httpbin/anything/admin), so the LB blocks the request
 # and raises an API-protection security event (action BLOCK). Also sends an allowed
 # control request for contrast.
 # Tools: curl
@@ -16,12 +16,12 @@ CURL=(curl -sk --max-time 10 -o /dev/null -w '%{http_code}' -A "$UA" -H "X-SP5-V
 
 echo "[*] API-protection deny traffic against ${BASE}"
 
-# The SP3 default api_protection_rules deny target is POST /api/admin. Hit it a few
+# The SP3 default api_protection_rules deny target is POST /httpbin/anything/admin. Hit it a few
 # times so the block is unambiguous in the event log.
 for i in 1 2 3; do
-  echo -n "  [$i] POST /api/admin (expect deny/BLOCK) -> "
+  echo -n "  [$i] POST /httpbin/anything/admin (expect deny/BLOCK) -> "
   "${CURL[@]}" -X POST -H 'Content-Type: application/json' \
-    --data '{"op":"escalate"}' "${BASE}/api/admin" || true
+    --data '{"op":"escalate"}' "${BASE}/httpbin/anything/admin" || true
   echo ""
 done
 

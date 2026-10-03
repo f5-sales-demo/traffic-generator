@@ -309,11 +309,37 @@ def _scenario(
         Path(config["results_dir"]) / "current-scenario.json",
         {
             "id": scenario["id"],
+            "phase": "prerequisite",
             "dispatch_path": str(directory / "dispatch-events.jsonl"),
+            "dispatch_contract": scenario.get("dispatch_contract", {}),
         },
     )
-    boundary.refresh_fixtures(domain)
-    environment = boundary.environment(scenario, domain, directory)
+    try:
+        boundary.refresh_fixtures(domain)
+        environment = boundary.environment(scenario, domain, directory)
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+        result = {
+            "id": scenario["id"],
+            "outcome": "fixture_failure",
+            "phase": "prerequisite",
+            "error": type(error).__name__,
+            "dispatch_contract_verified": False,
+            "http_requests": 0,
+        }
+        state["failures"] = (
+            state["failures"] + [{"id": scenario["id"], "outcome": result["outcome"]}]
+        )[-200:]
+        atomic_json(directory / "receipt.json", result)
+        return result
+    atomic_json(
+        Path(config["results_dir"]) / "current-scenario.json",
+        {
+            "id": scenario["id"],
+            "phase": "execution",
+            "dispatch_path": str(directory / "dispatch-events.jsonl"),
+            "dispatch_contract": scenario.get("dispatch_contract", {}),
+        },
+    )
     before = boundary.metrics()
     dispatch_file = directory / "dispatch-events.jsonl"
     command = boundary.wrap(
@@ -338,8 +364,7 @@ def _scenario(
             "http_requests": after.get("scenario_requests", 0)
             - before.get("scenario_requests", 0),
             "claim": scenario["expected_outcome"],
-            "dispatch_contract_verified": "dispatch_contract" in scenario
-            or scenario["budget"] == "connection",
+            "dispatch_contract_verified": False,
         }
     )
     if "dispatch_contract" in scenario:
@@ -350,6 +375,7 @@ def _scenario(
         result["intended_dispatch"] = verify_dispatch(
             scenario["dispatch_contract"], events
         )
+        result["dispatch_contract_verified"] = result["intended_dispatch"]["passed"]
         if (
             result["outcome"] == "launched"
             and not result["intended_dispatch"]["passed"]
@@ -361,6 +387,7 @@ def _scenario(
             connection_data = json.loads(connection_receipt.read_text())
             result["connection_attempts"] = connection_data["attempts"]
             result["connection_limit"] = connection_data["attempt_limit_per_second"]
+            result["dispatch_contract_verified"] = connection_data["attempts"] > 0
         else:
             result["outcome"] = "tool_failure"
     result["mitigated_requests"] = after.get("attack_mitigated", 0) - before.get(
@@ -490,7 +517,10 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
                 == len(load_catalog(root)["scenarios"]),
                 "scenario_count": len(receipts),
                 "passed": len(receipts) == len(scenarios)
-                and all(r["outcome"] == "launched" for r in receipts),
+                and all(
+                    r["outcome"] == "launched" and r["dispatch_contract_verified"]
+                    for r in receipts
+                ),
                 "scenarios": receipts,
                 "completed": time.time(),
             }

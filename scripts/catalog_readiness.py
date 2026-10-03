@@ -23,6 +23,17 @@ def content_matches(page: dict | None, content_type: str, body: str) -> bool:
     )
 
 
+def application_readiness_paths(root: Path) -> dict[str, dict]:
+    """Probe declared healthy application pages independently of attack targets."""
+    return {
+        app["prefix"] + page["path"]: page
+        for app in json.loads((root / "suites/applications.json").read_text())[
+            "applications"
+        ]
+        for page in app["pages"]
+    }
+
+
 def main() -> int:
     """Missing prerequisites or invalid upstream certificates fail start."""
     parser = argparse.ArgumentParser()
@@ -48,17 +59,8 @@ def main() -> int:
     )
     result["browser_ready"] = browser.returncode == 0
     checks = []
-    application_pages = {
-        app["prefix"] + page["path"]: page
-        for app in json.loads((root / "suites/applications.json").read_text())[
-            "applications"
-        ]
-        for page in app["pages"]
-    }
-    paths = sorted(
-        {path for scenario in catalog["scenarios"] for path in scenario["target_paths"]}
-    )
-    paths = sorted(set(paths) | set(application_pages))
+    application_pages = application_readiness_paths(root)
+    paths = sorted(application_pages)
     for domain in config["domains"]:
         for protocol in ("http", "https"):
             for path in paths:

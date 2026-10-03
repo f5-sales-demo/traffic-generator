@@ -47,9 +47,13 @@ def validate_catalog(root: Path, catalog: dict) -> None:
             msg = "duplicate scenario or missing ordered dependency"
             raise ValueError(msg)
         for path in scenario["target_paths"]:
-            if path != "/" and not any(
-                path.startswith(prefix) or path == prefix.rstrip("/")
-                for prefix in prefixes
+            if (
+                path not in scenario.get("intentional_negative_paths", [])
+                and path != "/"
+                and not any(
+                    path.startswith(prefix) or path == prefix.rstrip("/")
+                    for prefix in prefixes
+                )
             ):
                 message = "scenario target has no declared application"
                 raise ValueError(message)

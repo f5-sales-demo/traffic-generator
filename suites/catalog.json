@@ -171,11 +171,68 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": [],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "target_paths": [
+        "/crapi/identity/api/auth/login",
+        "/crapi/identity/api/auth/signup",
+        "/vampi/books/v1/not-an-integer",
+        "/vampi/users/v1",
+        "/vampi/users/v1/register"
+      ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "malformed-json",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "body_exact": "{\"username\": \"sp5\", \"password\":",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "payload_class": "malformed-json",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "wrong-content-type",
+            "method": "POST",
+            "path": "/crapi/identity/api/auth/login",
+            "body_exact": "not-json",
+            "headers": {
+              "content-type": "text/plain"
+            },
+            "payload_class": "wrong-content-type",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "invalid-id",
+            "method": "GET",
+            "path": "/vampi/books/v1/not-an-integer",
+            "payload_class": "invalid-parameter-type",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "missing-required",
+            "method": "POST",
+            "path": "/crapi/identity/api/auth/signup",
+            "body_exact": "{}",
+            "payload_class": "missing-required-fields",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "unexpected-query",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "query_regex": "^a=1&b=2&c=3&d=4&e=5$",
+            "payload_class": "unexpected-query-properties",
+            "minimum_dispatches": 1
+          }
+        ]
+      },
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
+      "prerequisites": []
     },
     {
       "id": "api-protection-verify/02-shadow-endpoints",
@@ -184,11 +241,67 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": ["api-protection-verify/01-schema-violation"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "target_paths": [
+        "/api/internal/healthz-secret",
+        "/api/v0/legacy/accounts/export",
+        "/crapi/identity/api/v2/admin/users/debug",
+        "/crapi/workshop/api/internal/metrics",
+        "/vampi/_debug/config",
+        "/vampi/users/v1/_internal/dump"
+      ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "shadow-0",
+            "method": "GET",
+            "path": "/crapi/identity/api/v2/admin/users/debug",
+            "payload_class": "intentional-undocumented-endpoint",
+            "minimum_dispatches": 2
+          },
+          {
+            "id": "shadow-1",
+            "method": "GET",
+            "path": "/crapi/workshop/api/internal/metrics",
+            "payload_class": "intentional-undocumented-endpoint",
+            "minimum_dispatches": 2
+          },
+          {
+            "id": "shadow-2",
+            "method": "GET",
+            "path": "/vampi/_debug/config",
+            "payload_class": "intentional-undocumented-endpoint",
+            "minimum_dispatches": 2
+          },
+          {
+            "id": "shadow-3",
+            "method": "GET",
+            "path": "/vampi/users/v1/_internal/dump",
+            "payload_class": "intentional-undocumented-endpoint",
+            "minimum_dispatches": 2
+          },
+          {
+            "id": "shadow-4",
+            "method": "GET",
+            "path": "/api/internal/healthz-secret",
+            "payload_class": "intentional-undocumented-endpoint",
+            "minimum_dispatches": 2
+          },
+          {
+            "id": "shadow-5",
+            "method": "GET",
+            "path": "/api/v0/legacy/accounts/export",
+            "payload_class": "intentional-undocumented-endpoint",
+            "minimum_dispatches": 2
+          }
+        ]
+      },
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
+      "prerequisites": [],
+      "intentional_negative_paths": ["/api/internal/healthz-secret", "/api/v0/legacy/accounts/export"]
     },
     {
       "id": "api-protection-verify/03-protection-deny",
@@ -197,11 +310,25 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": ["api-protection-verify/02-shadow-endpoints"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "target_paths": ["/httpbin/anything/admin"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "protected-endpoint",
+            "method": "POST",
+            "path": "/httpbin/anything/admin",
+            "body_exact": "{\"op\":\"escalate\"}",
+            "payload_class": "endpoint-denial",
+            "minimum_dispatches": 3
+          }
+        ]
+      },
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
+      "prerequisites": []
     },
     {
       "id": "api-protection-verify/04-rate-limit-burst",
@@ -210,11 +337,24 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": ["api-protection-verify/03-protection-deny"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "target_paths": ["/httpbin/anything/rate-limit"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "hot-endpoint",
+            "method": "GET",
+            "path": "/httpbin/anything/rate-limit",
+            "payload_class": "rate-limit-burst",
+            "minimum_dispatches": 20
+          }
+        ]
+      },
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
+      "prerequisites": []
     },
     {
       "id": "bot-simulation/01-playwright-credential-stuff",

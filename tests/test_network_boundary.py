@@ -63,9 +63,15 @@ class BoundaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             receipt = root / "network-owner.json"
+            foreign_namespace = "foreign"
+            owned_namespace = "tgen-abcdef0"
             receipt.write_text(
                 json.dumps(
-                    {"namespace": "foreign", "host_link": "eth0", "chain": "INPUT"}
+                    {
+                        "namespace": foreign_namespace,
+                        "host_link": "eth0",
+                        "chain": "INPUT",
+                    }
                 )
             )
             with patch("cleanup_network.subprocess.run") as run:
@@ -75,7 +81,7 @@ class BoundaryTests(unittest.TestCase):
             receipt.write_text(
                 json.dumps(
                     {
-                        "namespace": "tgen-abcdef0",
+                        "namespace": owned_namespace,
                         "host_link": "tghabcdef0",
                         "chain": "TGENABCDEF0",
                     }
@@ -155,3 +161,12 @@ class BoundaryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProxyImportTests(unittest.TestCase):
+    """Installed proxy helpers are discoverable independently of caller cwd."""
+
+    def test_proxy_environment_contains_the_immutable_helper_directory(self):
+        """The proxy must import dispatch matchers from the installed source."""
+        source = (ROOT / "scripts/traffic_network.py").read_text()
+        assert 'PYTHONPATH=str(self.root / "scripts")' in source
