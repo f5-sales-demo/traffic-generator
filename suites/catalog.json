@@ -4453,7 +4453,7 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "python3"],
       "after": ["crapi-exploits/05-data-exposure-mechanics"],
-      "target_paths": ["/crapi/health", "/crapi/identity/api/auth/login", "/crapi/mailhog/api/v2/messages"],
+      "target_paths": ["/crapi/community/api/v2/community/posts/recent"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
@@ -4465,14 +4465,22 @@
             "method": "GET",
             "minimum_dispatches": 1,
             "payload_class": "community-data-exposure",
-            "path_regex": "/crapi/community/api/v2/community/posts(?:/recent)?",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "path": "/crapi/community/api/v2/community/posts/recent",
+            "query_values": {
+              "limit": "20",
+              "offset": "0"
+            },
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["posts", "total"]
+            }
           }
         ],
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 401, 403, 404, 405, 429]
     },
     {
       "id": "crapi-exploits/07-bfla-admin-video",

@@ -38,3 +38,10 @@ def test_server_errors_require_case_specific_reconciliation():
         for scenario in catalog["scenarios"]
         for requirement in scenario.get("dispatch_contract", {}).get("requirements", [])
     )
+
+
+def test_community_exposure_reads_seeded_posts_without_duplicate_creation():
+    source = (ROOT / "suites/crapi-exploits/06-data-exposure-posts.sh").read_text()
+    assert "Test Post ${RANDOM}" not in source
+    assert "Seeded community post prerequisite is missing" in source
+    assert "/community/api/v2/community/posts/recent?limit=20&offset=0" in source
