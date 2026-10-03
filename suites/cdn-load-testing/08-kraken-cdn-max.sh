@@ -67,16 +67,16 @@ echo ""
 echo "=== LAYER 2: hey SUSTAINED (diverse clients) ==="
 HEY_PIDS=""
 if command -v hey >/dev/null 2>&1; then
-  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/" >"$RESULTS_DIR/hey-juice-shop.log" 2>&1 &
+  hey -z "${DURATION}s" -t 60 -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/" >"$RESULTS_DIR/hey-juice-shop.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /juice-shop/ (PID $!, 200c)"
-  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/rest/products/search?q=apple" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
+  hey -z "${DURATION}s" -t 60 -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/rest/products/search?q=apple" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /juice-shop/rest/products/search (PID $!, 200c)"
-  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/httpbin/get" >"$RESULTS_DIR/hey-httpbin.log" 2>&1 &
+  hey -z "${DURATION}s" -t 60 -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/httpbin/get" >"$RESULTS_DIR/hey-httpbin.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /httpbin/get (PID $!, 200c)"
-  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/vampi/users/v1" >"$RESULTS_DIR/hey-vampi.log" 2>&1 &
+  hey -z "${DURATION}s" -t 60 -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/vampi/users/v1" >"$RESULTS_DIR/hey-vampi.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /vampi/users/v1 (PID $!, 200c)"
 fi
