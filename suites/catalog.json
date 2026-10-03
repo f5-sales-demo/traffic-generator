@@ -3220,7 +3220,7 @@
             "method": "GET",
             "path": "/httpbin/headers",
             "payload_class": "correlated-client-ip-headers",
-            "minimum_dispatches": 5,
+            "minimum_dispatches": 100,
             "header_regex": {
               "x-forwarded-for": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+",
               "true-client-ip": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+",
@@ -3230,7 +3230,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "adapter": "bounded-multiclient"
     },
     {
       "id": "cdn-load-testing/07-sustained-cache-expiry",

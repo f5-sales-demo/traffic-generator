@@ -243,6 +243,7 @@ def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
     adapters = {
         "dynamic-cache": "traffic_cache.py",
         "bounded-workload": "traffic_workload.py",
+        "bounded-multiclient": "traffic_multiclient.py",
     }
     if scenario.get("adapter") in adapters:
         return [
@@ -386,6 +387,19 @@ def cache_action_verification(directory: Path, scenario: dict, result: dict) -> 
             result["outcome"] = "fixture_failure"
 
 
+def multiclient_action_verification(
+    directory: Path, scenario: dict, result: dict
+) -> None:
+    """Require per-client echoed identity and cleanup evidence."""
+    if scenario.get("adapter") == "bounded-multiclient":
+        evidence = directory / "multiclient-evidence.json"
+        result["dispatch_contract_verified"] &= (
+            evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+
+
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
     if "tool_contract" in scenario:
@@ -467,6 +481,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "tool_failure"
     cache_action_verification(directory, scenario, result)
+    multiclient_action_verification(directory, scenario, result)
     connection_action_verification(directory, scenario, result)
 
 
