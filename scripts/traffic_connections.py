@@ -134,7 +134,9 @@ def main() -> int:
         "results": results,
         "elapsed_seconds": time.monotonic() - started,
         "slow_header_writes": slow_header_writes,
-        "connections_closed": all(connection.fileno() == -1 for connection in connections),
+        "connections_closed": all(
+            connection.fileno() == -1 for connection in connections
+        ),
     }
     path = Path(os.environ["TGEN_RESULTS_DIR"]) / "connections.json"
     path.write_text(json.dumps(receipt) + "\n")

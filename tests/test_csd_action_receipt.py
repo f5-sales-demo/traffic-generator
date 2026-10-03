@@ -1,8 +1,8 @@
 """Browser scenario actions require their own successful step assertions and cleanup."""
 
 import sys
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -20,7 +20,10 @@ def test_failed_or_missing_browser_action_cannot_pass():
                 "steps": [
                     {
                         "name": "navigate",
-                        "screenshot": {"captureStatus": "captured", "assertionStatus": "passed"},
+                        "screenshot": {
+                            "captureStatus": "captured",
+                            "assertionStatus": "passed",
+                        },
                         "status": "passed",
                         "assertions": {"status": "passed"},
                     },
@@ -28,7 +31,10 @@ def test_failed_or_missing_browser_action_cannot_pass():
                         "name": "set-fields",
                         "status": "passed",
                         "assertions": {"status": "passed"},
-                        "screenshot": {"captureStatus": "captured", "assertionStatus": "passed"},
+                        "screenshot": {
+                            "captureStatus": "captured",
+                            "assertionStatus": "passed",
+                        },
                     },
                 ],
             }
@@ -78,4 +84,6 @@ def test_corrupt_browser_receipt_fails_closed(tmp_path):
     directory = tmp_path / "browser-run"
     directory.mkdir()
     (directory / "receipt.json").write_text("{interrupted")
-    assert not browser_action_receipt(tmp_path, {"scenario": "fixture", "steps": ["action"]})["passed"]
+    assert not browser_action_receipt(
+        tmp_path, {"scenario": "fixture", "steps": ["action"]}
+    )["passed"]

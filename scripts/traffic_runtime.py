@@ -364,9 +364,14 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             connection_data = json.loads(connection_receipt.read_text())
             result["connection_attempts"] = connection_data["attempts"]
             result["connection_limit"] = connection_data["attempt_limit_per_second"]
-            result["connection_probe"] = verify_connection_probe(scenario["id"], connection_data)
+            result["connection_probe"] = verify_connection_probe(
+                scenario["id"], connection_data
+            )
             result["dispatch_contract_verified"] = result["connection_probe"]["passed"]
-            if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
+            if (
+                result["outcome"] == "launched"
+                and not result["dispatch_contract_verified"]
+            ):
                 result["outcome"] = "tool_failure"
         else:
             result["outcome"] = "tool_failure"
