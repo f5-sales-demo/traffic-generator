@@ -209,10 +209,15 @@ echo ""
 
 # Kill all background jobs
 kill $BURST_PID $POST_PID 2>/dev/null
+WORKER_FAILED=0
 for pid in $WRK_PIDS $HEY_PIDS $VEG_PIDS $AB_PIDS; do
-  kill "$pid" 2>/dev/null
+  wait "$pid" || WORKER_FAILED=1
 done
-sleep 2
+wait "$BURST_PID" "$POST_PID" 2>/dev/null || true
+if [[ "$WORKER_FAILED" -ne 0 ]]; then
+  echo "[FAIL] Native load worker failed"
+  exit 1
+fi
 
 # Collect results
 echo "=== wrk RESULTS ==="

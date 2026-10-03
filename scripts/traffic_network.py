@@ -540,7 +540,7 @@ class NetworkBoundary:
             TMPDIR=str(self.browser_temp),
             TGEN_CONNECTION_RATE=str(self.config["connection_rps"]),
             TGEN_SLOW_CONNECTIONS=str(self.config["slow_connections"]),
-            TGEN_DURATION="15",
+            TGEN_DURATION=str(scenario.get("duration_seconds", 15)),
             TGEN_DVWA_PASSWORD="password",  # noqa: S106 - public seeded DVWA lab credential
             TGEN_THREADS="2",
             TGEN_ATTACK_RATE="20",

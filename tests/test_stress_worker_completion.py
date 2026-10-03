@@ -1,0 +1,56 @@
+"""A completed stress parent must await native and nested worker results."""
+
+import os
+import pathlib
+import shutil
+import subprocess
+
+import pytest
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.parametrize("child_exit", [0, 1])
+def test_origin_stress_waits_for_child_completion(tmp_path, child_exit):
+    suites = tmp_path / "suites"
+    cdn = suites / "cdn-load-testing"
+    cdn.mkdir(parents=True)
+    script = cdn / "09-origin-torture.sh"
+    shutil.copyfile(ROOT / "suites/cdn-load-testing/09-origin-torture.sh", script)
+    (suites / "dvga-exploits").mkdir()
+    runner = suites / "runner.sh"
+    runner.write_text(
+        '#!/bin/sh\nmkdir -p "$TGEN_RESULTS_DIR"\n/bin/sleep 1.5\nprintf finished > "$TGEN_RESULTS_DIR/child-finished"\nexit '
+        + str(child_exit)
+        + "\n"
+    )
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    for name in ("wrk", "hey"):
+        tool = tools / name
+        tool.write_text(
+            "#!/bin/sh\n/bin/sleep 0.2\nprintf 'Requests/sec: 2\\nLatency 1ms\\n'\n"
+        )
+        tool.chmod(0o700)
+    for name, output in (("curl", "200"), ("ss", "estab 0"), ("sleep", "")):
+        tool = tools / name
+        tool.write_text("#!/bin/sh\nprintf '%s' '" + output + "'\n")
+        tool.chmod(0o700)
+    results = tmp_path / "results"
+    result = subprocess.run(  # noqa: S603 - owned shell with deterministic native/child fixtures
+        ["/bin/bash", str(script), "www.example.test"],
+        env=dict(
+            os.environ,
+            PATH=str(tools) + os.pathsep + os.environ["PATH"],
+            TGEN_INHERITED_BOUNDARY="1",
+            TGEN_DURATION="1",
+            TGEN_RESULTS_DIR=str(results),
+            TARGET_PROTOCOL="https",
+        ),
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert (results / "nested-dvga-exploits/child-finished").read_text() == "finished"
+    assert result.returncode == child_exit, result.stdout + result.stderr

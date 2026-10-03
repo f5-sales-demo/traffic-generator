@@ -71,11 +71,13 @@ ORIGIN_ENDPOINTS=(
   "/restaurant/menu"
 )
 
+LOAD_PIDS=""
 for ep in "${ORIGIN_ENDPOINTS[@]}"; do
   wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 10s \
     -H "Connection: keep-alive" \
     -H "X-Forwarded-For: 198.51.100.$((RANDOM % 256))" \
     "${BASE}${ep}" >"$RESULTS_DIR/wrk-$(echo "$ep" | tr '/' '_' | tr '?' '_').log" 2>&1 &
+  LOAD_PIDS="$LOAD_PIDS $!"
   echo "[+] wrk: $ep (PID $!, ${WRK_T}t/${WRK_C}c)"
 done
 
@@ -90,6 +92,7 @@ for ep in "${CRAPI_ENDPOINTS[@]}"; do
   wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 10s \
     -H "Connection: keep-alive" \
     "${CRAPI_BASE}${ep}" >"$RESULTS_DIR/wrk-crapi-$(echo "$ep" | tr '/' '_').log" 2>&1 &
+  LOAD_PIDS="$LOAD_PIDS $!"
   echo "[+] wrk crAPI: $ep (PID $!, ${WRK_T}t/${WRK_C}c)"
 done
 echo ""
@@ -101,12 +104,16 @@ echo "=== LAYER 2: HEY SUSTAINED (API throughput) ==="
 HEY_C="${TGEN_CONCURRENCY:-200}"
 
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/juice-shop/rest/products/search?q=test" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
+LOAD_PIDS="$LOAD_PIDS $!"
 echo "[+] hey: /juice-shop/rest/products/search (PID $!, ${HEY_C}c)"
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/vampi/users/v1" >"$RESULTS_DIR/hey-vampi.log" 2>&1 &
+LOAD_PIDS="$LOAD_PIDS $!"
 echo "[+] hey: /vampi/users/v1 (PID $!, ${HEY_C}c)"
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/httpbin/get" >"$RESULTS_DIR/hey-httpbin.log" 2>&1 &
+LOAD_PIDS="$LOAD_PIDS $!"
 echo "[+] hey: /httpbin/get (PID $!, ${HEY_C}c)"
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/restaurant/menu" >"$RESULTS_DIR/hey-restaurant.log" 2>&1 &
+LOAD_PIDS="$LOAD_PIDS $!"
 echo "[+] hey: /restaurant/menu (PID $!, ${HEY_C}c)"
 echo ""
 
@@ -220,12 +227,16 @@ done
 
 echo ""
 
-# Kill background loops
-[ -n "${GQL_PID:-}" ] && kill "$GQL_PID" 2>/dev/null
-[ -n "${REST_PID:-}" ] && kill "$REST_PID" 2>/dev/null
-[ -n "${CRAPI_PID:-}" ] && kill "$CRAPI_PID" 2>/dev/null
-for pid in $SUITE_PIDS; do kill "$pid" 2>/dev/null; done
-sleep 3
+# Wait for native reports and every declared nested suite. The supervisor's 900s
+# deadline remains the hard ceiling; incomplete children fail rather than becoming coverage.
+WORKER_FAILED=0
+for pid in $LOAD_PIDS ${GQL_PID:-} ${REST_PID:-} ${CRAPI_PID:-} $SUITE_PIDS; do
+  wait "$pid" || WORKER_FAILED=1
+done
+if [[ "$WORKER_FAILED" -ne 0 ]]; then
+  echo "[FAIL] Native load worker or nested suite failed"
+  exit 1
+fi
 
 # ================================================================
 # RESULTS

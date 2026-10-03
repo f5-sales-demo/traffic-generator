@@ -4279,7 +4279,36 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "duration_seconds": 600,
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "native-wrk",
+            "tool": "wrk",
+            "argument_regex": "https://",
+            "minimum": 9
+          },
+          {
+            "id": "native-hey",
+            "tool": "hey",
+            "argument_regex": "https://",
+            "minimum": 4
+          },
+          {
+            "id": "native-vegeta",
+            "tool": "vegeta",
+            "argument_regex": "https://",
+            "minimum": 5
+          },
+          {
+            "id": "native-ab",
+            "tool": "ab",
+            "argument_regex": "https://",
+            "minimum": 2
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/09-origin-torture",
@@ -4531,7 +4560,24 @@
           "mitre-attack/08-attck-coverage-report"
         ]
       },
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "duration_seconds": 600,
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "native-wrk",
+            "tool": "wrk",
+            "argument_regex": "https://",
+            "minimum": 19
+          },
+          {
+            "id": "native-hey",
+            "tool": "hey",
+            "argument_regex": "https://",
+            "minimum": 4
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/bench-keepalive",
