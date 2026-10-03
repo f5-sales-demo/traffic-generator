@@ -96,6 +96,14 @@ const IDENTITIES = [
         timeout: 15000,
       });
 
+      await page
+        .getByRole('button', { name: 'Dismiss close welcome banner' })
+        .click({ timeout: 2000 })
+        .catch(() => {});
+      await page
+        .getByRole('button', { name: 'dismiss cookie message' })
+        .click({ timeout: 2000 })
+        .catch(() => {});
       await page.fill('#emailControl', identity.email);
       await page.fill('#passwordControl', identity.password);
       await page.fill('#repeatPasswordControl', identity.password);
@@ -109,12 +117,14 @@ const IDENTITIES = [
       }
       await page.fill('#securityAnswerControl', 'bot answer');
 
-      const registration = page.waitForResponse(
-        (response) =>
-          response.request().method() === 'POST' && new URL(response.url()).pathname === '/juice-shop/api/Users/',
-      );
-      await page.click('#registerButton');
-      console.log(`    Registration HTTP ${(await registration).status()} (native form submission)`);
+      const [registration] = await Promise.all([
+        page.waitForResponse(
+          (response) =>
+            response.request().method() === 'POST' && new URL(response.url()).pathname === '/juice-shop/api/Users/',
+        ),
+        page.click('#registerButton'),
+      ]);
+      console.log(`    Registration HTTP ${registration.status()} (native form submission)`);
       await page.waitForTimeout(1000);
       console.log(`    Registration submitted`);
       registrations++;
@@ -130,6 +140,14 @@ const IDENTITIES = [
         timeout: 15000,
       });
 
+      await page
+        .getByRole('button', { name: 'Dismiss close welcome banner' })
+        .click({ timeout: 2000 })
+        .catch(() => {});
+      await page
+        .getByRole('button', { name: 'dismiss cookie message' })
+        .click({ timeout: 2000 })
+        .catch(() => {});
       await page.fill('#comment', identity.comment);
 
       // Set rating
@@ -139,12 +157,14 @@ const IDENTITIES = [
       const captcha = await page.textContent('#captcha');
       const answer = syntheticArithmetic(captcha.trim());
       await page.fill('#captchaControl', String(answer));
-      const contact = page.waitForResponse(
-        (response) =>
-          response.request().method() === 'POST' && new URL(response.url()).pathname === '/juice-shop/api/Feedbacks/',
-      );
-      await page.click('#submitButton');
-      console.log(`    Contact HTTP ${(await contact).status()} (native form submission)`);
+      const [contact] = await Promise.all([
+        page.waitForResponse(
+          (response) =>
+            response.request().method() === 'POST' && new URL(response.url()).pathname === '/juice-shop/api/Feedbacks/',
+        ),
+        page.click('#submitButton'),
+      ]);
+      console.log(`    Contact HTTP ${contact.status()} (native form submission)`);
       await page.waitForTimeout(500);
       console.log(`    Contact form submitted`);
       contacts++;
