@@ -12,12 +12,13 @@ function validOutcome(expectation, observation) {
   return true;
 }
 
-async function verifyNavigation(page, response, route, identity, directory) {
+async function verifyNavigation(page, response, route, identity, directory, freshDocumentResponse = false) {
   const expected = navigation.find((item) => item.path === route);
   if (!expected) throw new Error('Undeclared rapid navigation');
   const id = `ua-${identity}-route-${navigation.indexOf(expected)}`;
   if (response && [403, 429].includes(response.status())) {
-    if (new URL(route, page.url()).hash) throw new Error('blocked document cannot execute SPA route');
+    if (new URL(route, page.url()).hash && !freshDocumentResponse)
+      throw new Error('blocked document cannot execute SPA route');
     await page.screenshot({ path: path.join(directory, `${id}.png`) });
     return {
       id,
@@ -25,6 +26,7 @@ async function verifyNavigation(page, response, route, identity, directory) {
       rendered: false,
       mitigated: true,
       status: response.status(),
+      fresh_document_response: freshDocumentResponse,
       expected_outcome: 'mitigation-candidate',
     };
   }

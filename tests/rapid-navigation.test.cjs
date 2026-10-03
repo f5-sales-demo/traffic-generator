@@ -30,3 +30,13 @@ test('a previous block document cannot establish a newly requested SPA route act
     /blocked document cannot execute SPA route/,
   );
 });
+
+test('a fresh blocked document records the attempted route with its own response', async () => {
+  const { verifyNavigation } = require('../scripts/rapid_navigation.cjs');
+  const page = { url: () => 'https://example.com/juice-shop/#/login', screenshot: async () => {} };
+  const response = { status: () => 403, url: () => 'https://example.com/juice-shop/' };
+  const result = await verifyNavigation(page, response, '/juice-shop/#/login', 0, '/tmp', true);
+  assert.equal(result.performed, true);
+  assert.equal(result.mitigated, true);
+  assert.equal(result.fresh_document_response, true);
+});

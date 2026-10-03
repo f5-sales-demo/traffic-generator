@@ -110,7 +110,14 @@ const USER_AGENTS = [
           const status = response ? response.status() : 'N/A';
           console.log(`    ${path} -> ${status}`);
           await settleRequests(requestState);
-          const item = await verifyNavigation(page, response || documentResponse, path, identity, directory);
+          const item = await verifyNavigation(
+            page,
+            response || documentResponse,
+            path,
+            identity,
+            directory,
+            Boolean(response),
+          );
           receipt.actions.push(item);
           if (!item.rendered && !item.mitigated) throw new Error('Declared navigation outcome was not rendered');
           visited++;
