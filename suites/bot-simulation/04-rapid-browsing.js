@@ -63,77 +63,79 @@ const USER_AGENTS = [
   let errors = 0;
   const startTime = Date.now();
 
-  for (const [identity, ua] of USER_AGENTS.entries()) {
-    const context = await browser.newContext({
-      extraHTTPHeaders: childHeaders(),
-      ignoreHTTPSErrors: true,
-      userAgent: ua,
-    });
-    const page = await context.newPage();
-    const requestState = observeRequests(page);
-    let documentResponse;
-    const browserErrors = [];
-    page.on('pageerror', () => browserErrors.push({ kind: 'console-error' }));
-    page.on('requestfailed', (request) =>
-      browserErrors.push({
-        kind: 'request-failure',
-        path: new URL(request.url()).pathname,
-      }),
-    );
-    page.on('response', (response) => {
-      if (response.status() >= 400)
+  try {
+    for (const [identity, ua] of USER_AGENTS.entries()) {
+      const context = await browser.newContext({
+        extraHTTPHeaders: childHeaders(),
+        ignoreHTTPSErrors: true,
+        userAgent: ua,
+      });
+      const page = await context.newPage();
+      const requestState = observeRequests(page);
+      let documentResponse;
+      const browserErrors = [];
+      page.on('pageerror', () => browserErrors.push({ kind: 'console-error' }));
+      page.on('requestfailed', (request) =>
         browserErrors.push({
-          kind: 'http-error',
-          path: new URL(response.url()).pathname,
-          status: response.status(),
-        });
-    });
-    page.setDefaultTimeout(10000);
+          kind: 'request-failure',
+          path: new URL(request.url()).pathname,
+        }),
+      );
+      page.on('response', (response) => {
+        if (response.status() >= 400)
+          browserErrors.push({
+            kind: 'http-error',
+            path: new URL(response.url()).pathname,
+            status: response.status(),
+          });
+      });
+      page.setDefaultTimeout(10000);
 
-    const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
-    console.log(`[+] UA: ${uaShort}`);
+      const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
+      console.log(`[+] UA: ${uaShort}`);
 
-    for (const path of PAGES) {
-      try {
-        const url = `${BASE_URL}${path}`;
-        await settleRequests(requestState);
-        const response = await page.goto(url, {
-          waitUntil: 'domcontentloaded',
-          timeout: 20000,
-        });
-        if (response) documentResponse = response;
-        const status = response ? response.status() : 'N/A';
-        console.log(`    ${path} -> ${status}`);
-        await settleRequests(requestState);
-        const item = await verifyNavigation(page, response || documentResponse, path, identity, directory);
-        receipt.actions.push(item);
-        if (!item.rendered && !item.mitigated) throw new Error('Declared navigation outcome was not rendered');
-        visited++;
-      } catch (err) {
-        const id = `ua-${identity}-route-${PAGES.indexOf(path)}`;
-        await page.screenshot({ path: require('node:path').join(directory, `${id}-failed.png`) }).catch(() => {});
-        receipt.actions.push({ id, performed: true, rendered: false, error: 'browser-route-failure' });
-        console.log(`    ${path} -> ERR: ${err.message.substring(0, 60)}`);
-        errors++;
+      for (const path of PAGES) {
+        try {
+          const url = `${BASE_URL}${path}`;
+          await settleRequests(requestState);
+          const response = await page.goto(url, {
+            waitUntil: 'domcontentloaded',
+            timeout: 20000,
+          });
+          if (response) documentResponse = response;
+          const status = response ? response.status() : 'N/A';
+          console.log(`    ${path} -> ${status}`);
+          await settleRequests(requestState);
+          const item = await verifyNavigation(page, response || documentResponse, path, identity, directory);
+          receipt.actions.push(item);
+          if (!item.rendered && !item.mitigated) throw new Error('Declared navigation outcome was not rendered');
+          visited++;
+        } catch (err) {
+          const id = `ua-${identity}-route-${PAGES.indexOf(path)}`;
+          await page.screenshot({ path: require('node:path').join(directory, `${id}-failed.png`) }).catch(() => {});
+          receipt.actions.push({ id, performed: true, rendered: false, error: 'browser-route-failure' });
+          console.log(`    ${path} -> ERR: ${err.message.substring(0, 60)}`);
+          errors++;
+        }
+        // Minimal delay between requests (bot behavior)
+        await page.waitForTimeout(50).catch(() => {});
       }
-      // Minimal delay between requests (bot behavior)
-      await page.waitForTimeout(50).catch(() => {});
+
+      await settleRequests(requestState).catch(() => {
+        errors++;
+      });
+      receipt.browser_errors = [...(receipt.browser_errors || []), ...browserErrors];
+      fs.writeFileSync(require('node:path').join(directory, 'route-actions.json'), JSON.stringify(receipt), {
+        mode: 0o600,
+      });
+      await context.close();
+      console.log('');
     }
-
-    await settleRequests(requestState).catch(() => {
-      errors++;
-    });
-    receipt.browser_errors = [...(receipt.browser_errors || []), ...browserErrors];
-    fs.writeFileSync(require('node:path').join(directory, 'route-actions.json'), JSON.stringify(receipt), {
-      mode: 0o600,
-    });
-    await context.close();
-    console.log('');
+  } finally {
+    await browser.close();
+    receipt.browser_closed = true;
+    fs.writeFileSync(path.join(directory, 'route-actions.json'), JSON.stringify(receipt), { mode: 0o600 });
   }
-
-  await browser.close();
-  receipt.browser_closed = true;
-  fs.writeFileSync(path.join(directory, 'route-actions.json'), JSON.stringify(receipt), { mode: 0o600 });
   fs.rmSync(PROFILE_DIR, { recursive: true, force: true });
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
