@@ -4473,7 +4473,10 @@
             },
             "response_contract": {
               "content_type": "application/json",
-              "json_keys": ["posts", "total"]
+              "json_keys": ["posts", "total"],
+              "json_nonempty_lists": {
+                "posts": ["id", "title", "content"]
+              }
             }
           }
         ],

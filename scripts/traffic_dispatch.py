@@ -385,23 +385,48 @@ def verify_tool_actions(contract: dict, events: list[dict]) -> dict:
     }
 
 
+def required_response_lists(document: dict, specification: dict) -> bool:
+    """Seeded object lists must contain the fields needed by the declared workflow."""
+    return all(
+        isinstance(document.get(key), list)
+        and bool(document[key])
+        and all(
+            isinstance(item, dict)
+            and all(
+                isinstance(item.get(field), str) and item[field].strip()
+                for field in fields
+            )
+            for item in document[key]
+        )
+        for key, fields in specification.items()
+    )
+
+
 def response_content_matches(contract: dict, content_type: str, body: str) -> bool:
     """Evaluate transient response content and retain only assertion booleans."""
     if content_type.split(";", 1)[0] != contract.get("content_type"):
         return False
     if any(term not in body for term in contract.get("text_contains", [])):
         return False
-    if "json_equals" in contract or "json_keys" in contract:
+    if any(
+        key in contract for key in ("json_equals", "json_keys", "json_nonempty_lists")
+    ):
         try:
             document = json.loads(body)
         except ValueError:
             return False
         if not isinstance(document, dict):
             return False
-        return all(
-            document.get(key) == value
-            for key, value in contract.get("json_equals", {}).items()
-        ) and all(key in document for key in contract.get("json_keys", []))
+        return (
+            all(
+                document.get(key) == value
+                for key, value in contract.get("json_equals", {}).items()
+            )
+            and all(key in document for key in contract.get("json_keys", []))
+            and required_response_lists(
+                document, contract.get("json_nonempty_lists", {})
+            )
+        )
     return True
 
 

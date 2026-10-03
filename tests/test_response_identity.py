@@ -44,3 +44,17 @@ def test_transient_response_matcher_rejects_landing_and_wrong_actor():
     assert response_content_matches(
         contract, "application/json; charset=utf-8", '{"username":"tgen_bola_victim"}'
     )
+
+
+def test_seeded_response_requires_nonempty_object_list():
+    contract = {
+        "content_type": "application/json",
+        "json_nonempty_lists": {"posts": ["id", "title", "content"]},
+    }
+    assert not response_content_matches(contract, "application/json", '{"posts":[]}')
+    assert not response_content_matches(contract, "application/json", '{"posts":[{}]}')
+    assert response_content_matches(
+        contract,
+        "application/json",
+        '{"posts":[{"id":"fixture","title":"Synthetic","content":"Fixture"}]}',
+    )
