@@ -32,9 +32,9 @@ else:
     sleep = tmp_path / "sleep"
     sleep.write_text("#!/bin/sh\nexit 0\n")
     sleep.chmod(0o700)
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603 - repository shell with deterministic synthetic curl
         [
-            "bash",
+            "/bin/bash",
             str(ROOT / "suites/crapi-exploits/04-otp-bruteforce.sh"),
             "www.example.test",
         ],
