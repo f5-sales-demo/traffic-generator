@@ -109,8 +109,10 @@ const IDENTITIES = [
       await page.fill('#repeatPasswordControl', identity.password);
 
       // Select a real loaded question through the native combobox.
-      await page.getByRole('combobox', { name: 'Selection list for the security question' }).click();
-      await page.getByRole('option').first().click();
+      const question = page.getByRole('combobox', { name: 'Selection list for the security question' });
+      await question.focus();
+      await question.press('ArrowDown');
+      await question.press('Enter');
       await page.fill('#securityAnswerControl', 'bot answer');
 
       if (!(await page.locator('#registerButton').isEnabled()))
