@@ -5,7 +5,7 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
-const { observeRequests, settleRequests } = require('../../scripts/browser_requests.cjs');
+const { observeRequests, settleRequests, childHeaders } = require('../../scripts/browser_requests.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const { navigation, verifyNavigation } = require('../../scripts/rapid_navigation.cjs');
@@ -65,6 +65,7 @@ const USER_AGENTS = [
 
   for (const [identity, ua] of USER_AGENTS.entries()) {
     const context = await browser.newContext({
+      extraHTTPHeaders: childHeaders(),
       ignoreHTTPSErrors: true,
       userAgent: ua,
     });

@@ -18,6 +18,7 @@ from types import SimpleNamespace
 from typing import Self
 
 from traffic_common import Pacer, atomic_json, terminate
+from traffic_tool import native_binary
 from traffic_workload import content_identity
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
@@ -487,7 +488,7 @@ class NetworkBoundary:
             requirement["tool"]
             for requirement in scenario.get("tool_contract", {}).get("requirements", [])
         }:
-            binary = shutil.which(tool)
+            binary = native_binary(tool, os.environ["PATH"], self.runtime)
             if not binary:
                 message = "required native scanner missing"
                 raise ValueError(message)

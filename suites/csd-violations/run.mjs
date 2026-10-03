@@ -4,6 +4,7 @@ import { constants } from 'node:fs';
 import { access, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import browserRequests from '../../scripts/browser_requests.cjs';
 import { DEFAULT_POLICY } from './continuous.mjs';
 import { SCENARIOS, SUITE_MANIFEST } from './scenarios.mjs';
 
@@ -738,6 +739,7 @@ export async function runSuite(options = {}) {
       const context = await execute(() =>
         browser.newContext({
           ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? false,
+          extraHTTPHeaders: browserRequests.childHeaders(),
         }),
       );
       cleanup.contexts += 1;

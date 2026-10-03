@@ -5,7 +5,7 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
-const { observeRequests, settleRequests } = require('../../scripts/browser_requests.cjs');
+const { observeRequests, settleRequests, childHeaders } = require('../../scripts/browser_requests.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
@@ -59,6 +59,7 @@ const CREDENTIALS = [
 
   for (const cred of CREDENTIALS) {
     const context = await browser.newContext({
+      extraHTTPHeaders: childHeaders(),
       ignoreHTTPSErrors: true,
     });
     const page = await context.newPage();

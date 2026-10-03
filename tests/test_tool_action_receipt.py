@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from traffic_dispatch import verify_tool_actions
-from traffic_tool import attributed_arguments
+from traffic_tool import attributed_arguments, native_binary
 
 
 def test_tool_failure_missing_arguments_and_no_completion_fail():
@@ -44,3 +44,18 @@ def test_child_tool_marker_preserves_authentication_header():
     assert attributed_arguments("curl", ["--data", "synthetic"], "child-opaque")[
         -2:
     ] == ["-H", "X-TGen-Child: child-opaque"]
+
+
+def test_native_tool_resolution_skips_owned_wrapper_chain(tmp_path):
+    runtime = tmp_path / "runtime"
+    wrappers = runtime / "pass-active" / "parent" / "tool-bin"
+    wrappers.mkdir(parents=True)
+    native = tmp_path / "native"
+    native.mkdir()
+    for folder in (wrappers, native):
+        binary = folder / "curl"
+        binary.write_text("#!/bin/sh\nexit 0\n")
+        binary.chmod(0o700)
+    assert native_binary("curl", str(wrappers) + ":" + str(native), runtime) == str(
+        native / "curl"
+    )

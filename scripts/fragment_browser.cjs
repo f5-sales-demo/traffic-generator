@@ -2,11 +2,11 @@
 const { chromium } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
-const { observeRequests, settleRequests } = require('./browser_requests.cjs');
+const { observeRequests, settleRequests, childHeaders } = require('./browser_requests.cjs');
 (async () => {
   const actions = JSON.parse(fs.readFileSync(path.join(__dirname, '../suites/fragment-actions.json')));
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage({ ignoreHTTPSErrors: true });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, extraHTTPHeaders: childHeaders() });
   const state = observeRequests(page);
   const receipt = { actions: [], browser_closed: false };
   page.on('dialog', async (dialog) => {

@@ -5,7 +5,7 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
-const { observeRequests, settleRequests } = require('../../scripts/browser_requests.cjs');
+const { observeRequests, settleRequests, childHeaders } = require('../../scripts/browser_requests.cjs');
 const { syntheticArithmetic } = require('../../scripts/synthetic_arithmetic.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -85,7 +85,10 @@ const IDENTITIES = [
   let contacts = 0;
 
   for (const identity of IDENTITIES.slice(0, Number(process.env.TGEN_BROWSER_IDENTITIES || IDENTITIES.length))) {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    const context = await browser.newContext({
+      extraHTTPHeaders: childHeaders(),
+      ignoreHTTPSErrors: true,
+    });
     const page = await context.newPage();
     const requestState = observeRequests(page);
     page.setDefaultTimeout(10000);

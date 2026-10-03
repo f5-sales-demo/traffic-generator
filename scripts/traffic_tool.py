@@ -10,6 +10,20 @@ import time
 from pathlib import Path
 
 
+def native_binary(tool: str, search_path: str, runtime: Path) -> str:
+    """Resolve an executable outside owned receipt wrappers to avoid recursive attribution."""
+    for directory in search_path.split(os.pathsep):
+        if not directory:
+            continue
+        candidate = Path(directory) / tool
+        if candidate.resolve().is_relative_to(runtime.resolve()):
+            continue
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    message = "required native scanner missing"
+    raise ValueError(message)
+
+
 def attributed_arguments(tool: str, arguments: list[str], marker: str) -> list[str]:
     """Add opaque nested attribution without replacing an authentication header."""
     result = list(arguments)

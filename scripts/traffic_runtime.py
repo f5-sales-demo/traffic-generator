@@ -29,6 +29,7 @@ from traffic_dispatch import (
 )
 from traffic_network import NetworkBoundary
 from traffic_report import build_report
+from traffic_tool import native_binary
 
 sys.dont_write_bytecode = True
 DOMAIN_COUNT = 2
@@ -336,7 +337,7 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 )
             ],
         }:
-            binary = shutil.which(tool)
+            binary = native_binary(tool, os.environ["PATH"], runtime_directory)
             wrapper = tools / tool
             wrapper.write_text(
                 "#!/usr/bin/env python3\nimport os,sys\nos.execv(sys.executable,[sys.executable,"

@@ -21,4 +21,9 @@ async function settleRequests(state, timeoutMs = 15000) {
   }
   throw new Error('Application requests did not finish before browser navigation or cleanup');
 }
-module.exports = { observeRequests, settleRequests };
+function childHeaders(marker = process.env.TGEN_CHILD_MARKER || '') {
+  if (!marker) return {};
+  if (!/^[a-z0-9-]{1,80}$/.test(marker)) throw new Error('Invalid owned browser child marker');
+  return { 'X-TGen-Child': marker };
+}
+module.exports = { observeRequests, settleRequests, childHeaders };

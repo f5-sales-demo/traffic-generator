@@ -15,3 +15,10 @@ test('browser drain observes completion and fails unresolved application request
   setTimeout(() => page.emit('requestfinished', request), 10);
   await settleRequests(state, 100);
 });
+
+test('nested browser headers accept only opaque owned markers', () => {
+  const { childHeaders } = require('../scripts/browser_requests.cjs');
+  assert.deepEqual(childHeaders(''), {});
+  assert.deepEqual(childHeaders('child-opaque'), { 'X-TGen-Child': 'child-opaque' });
+  assert.throws(() => childHeaders('../foreign'));
+});
