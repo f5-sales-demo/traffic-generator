@@ -271,6 +271,18 @@ class NetworkBoundary:
                 start_new_session=True,
             )
             proxy_log.close()
+            owner_path = self.runtime / "network-owner.json"
+            owner = json.loads(owner_path.read_text())
+            owner.update(
+                proxy_pid=self.state.proxy.pid,
+                proxy_start_ticks=Path("/proc")
+                .joinpath(str(self.state.proxy.pid), "stat")
+                .read_text()
+                .rsplit(")", 1)[1]
+                .split()[19],
+                proxy_script=str(self.root / "scripts/traffic_proxy.py"),
+            )
+            atomic_json(owner_path, owner)
             time.sleep(2)
             if self.state.proxy.poll() is not None:
                 msg = "transparent pacing proxy failed to start"
