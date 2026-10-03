@@ -4234,49 +4234,80 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "parallel-load-engine",
-            "minimum_dispatches": 20
+            "minimum_dispatches": 20,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "text/html",
+              "text_contains": ["Juice Shop"]
+            }
           },
           {
             "id": "load-1",
             "method": "GET",
             "path": "/dvwa/login.php",
             "payload_class": "parallel-load-engine",
-            "minimum_dispatches": 20
+            "minimum_dispatches": 20,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "text/html",
+              "text_contains": ["DVWA"]
+            }
           },
           {
             "id": "load-2",
             "method": "GET",
             "path": "/vampi/users/v1",
             "payload_class": "parallel-load-engine",
-            "minimum_dispatches": 20
+            "minimum_dispatches": 20,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["users"]
+            }
           },
           {
             "id": "load-3",
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "parallel-load-engine",
-            "minimum_dispatches": 20
+            "minimum_dispatches": 20,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["args", "headers", "url"]
+            }
           },
           {
             "id": "load-4",
             "method": "GET",
             "path": "/csd-demo/health",
             "payload_class": "parallel-load-engine",
-            "minimum_dispatches": 20
+            "minimum_dispatches": 20,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["status"]
+            }
           },
           {
             "id": "load-5",
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "parallel-load-engine",
-            "minimum_dispatches": 20
+            "minimum_dispatches": 20,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "text/plain",
+              "text_contains": ["Hostname:"]
+            }
           },
           {
             "id": "load-6",
             "method": "GET",
             "path": "/health",
             "payload_class": "parallel-load-engine",
-            "minimum_dispatches": 20
+            "minimum_dispatches": 20,
+            "expected_statuses": [200, 404]
           },
           {
             "id": "scheduled-herd-burst",
@@ -4285,7 +4316,11 @@
             "query_regex": "burst-[1-9][0-9]*-[0-9]+",
             "payload_class": "scheduled-thundering-herd",
             "minimum_dispatches": 1,
-            "expected_statuses": [200]
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["args", "headers", "url"]
+            }
           },
           {
             "id": "mixed-post",
