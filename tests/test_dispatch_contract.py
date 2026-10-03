@@ -9,8 +9,11 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class DispatchTests(unittest.TestCase):
+    """Check intended dispatch and preserved scenario contracts."""
+
     def test_only_matching_method_path_and_payload_count(self):
-        from traffic_dispatch import verify_dispatch  # noqa: PLC0415, I001 - CLI import in isolated test
+        """Require evidence from the declared payload dispatch."""
+        from traffic_dispatch import verify_dispatch  # noqa: PLC0415, I001  # pylint: disable=import-outside-toplevel
 
         contract = {
             "method": "GET",
