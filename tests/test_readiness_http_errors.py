@@ -2,6 +2,7 @@
 
 import json
 import sys
+from email.message import Message
 from pathlib import Path
 from unittest.mock import patch
 from urllib.error import HTTPError
@@ -31,7 +32,7 @@ def test_healthy_page_405_fails_readiness(tmp_path, capsys):
             catalog_readiness,
             "urlopen",
             side_effect=HTTPError(
-                "https://www.example.test/fixture/", 405, "method", {}, None
+                "https://www.example.test/fixture/", 405, "method", Message(), None
             ),
         ),
     ):
