@@ -20,3 +20,13 @@ test('negative endpoints accept only their declared application outcome', () => 
   assert.equal(validOutcome(expected, { status: 405, urlMatches: true, contentMatches: true }), true);
   assert.equal(validOutcome(expected, { status: 404, urlMatches: true, contentMatches: true }), false);
 });
+
+test('a previous block document cannot establish a newly requested SPA route action', async () => {
+  const { verifyNavigation } = require('../scripts/rapid_navigation.cjs');
+  const page = { url: () => 'https://example.com/juice-shop/#/login', screenshot: async () => {} };
+  const response = { status: () => 403, url: () => 'https://example.com/juice-shop/' };
+  await assert.rejects(
+    verifyNavigation(page, response, '/juice-shop/#/login', 0, '/tmp'),
+    /blocked document cannot execute SPA route/,
+  );
+});

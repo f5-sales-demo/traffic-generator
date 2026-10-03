@@ -17,6 +17,7 @@ async function verifyNavigation(page, response, route, identity, directory) {
   if (!expected) throw new Error('Undeclared rapid navigation');
   const id = `ua-${identity}-route-${navigation.indexOf(expected)}`;
   if (response && [403, 429].includes(response.status())) {
+    if (new URL(route, page.url()).hash) throw new Error('blocked document cannot execute SPA route');
     await page.screenshot({ path: path.join(directory, `${id}.png`) });
     return {
       id,
