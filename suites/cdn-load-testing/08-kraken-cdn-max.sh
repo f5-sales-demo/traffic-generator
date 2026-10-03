@@ -135,7 +135,7 @@ echo "=== LAYER 5: THUNDERING HERD BURSTS (every 60s) ==="
     BURST_NUM=$((BURST_NUM + 1))
     STAMP="burst-${BURST_NUM}-$(date +%s%N)"
     if command -v hey >/dev/null 2>&1; then
-      hey -n "${TGEN_REQUESTS:-2000}" -c "${TGEN_CONCURRENCY:-500}" -t 60 "${BASE}/httpbin/get?${STAMP}" >/dev/null 2>&1
+      hey -n "${TGEN_REQUESTS:-2000}" -c "${TGEN_CONCURRENCY:-500}" -t 60 "${BASE}/httpbin/get?${STAMP}" >"$RESULTS_DIR/hey-${STAMP}.log" 2>&1
     fi
   done
 ) &
