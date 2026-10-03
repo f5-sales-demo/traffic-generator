@@ -228,7 +228,44 @@ def verify_browser_actions(contract: dict, receipt: dict) -> dict:
 
 CONNECTION_LIMIT = 20
 SLOW_PROBE_SECONDS = 15
+SLOW_WRITE_ROUNDS = 3
 HTTP_PORT = 80
+
+
+def slow_write_outcomes(receipt: dict, count: int) -> tuple[bool, int]:
+    """Peer TLS closure is an observed probe outcome, not an attributed mitigation."""
+    results = receipt.get("results", [])
+    if not any("write_events" in result for result in results):
+        return receipt.get("slow_header_writes", 0) == count * SLOW_WRITE_ROUNDS, 0
+    peer_errors = {
+        "SSLEOFError",
+        "SSLZeroReturnError",
+        "BrokenPipeError",
+        "ConnectionResetError",
+    }
+    complete = all(
+        result.get("connected") is True
+        and len(result.get("write_events", [])) == SLOW_WRITE_ROUNDS
+        and {event.get("round") for event in result["write_events"]} == {0, 1, 2}
+        and all(
+            event.get("sent") is True or event.get("error_type") in peer_errors
+            for event in result["write_events"]
+        )
+        for result in results
+    )
+    sent = sum(
+        event.get("sent") is True
+        for result in results
+        for event in result.get("write_events", [])
+    )
+    closed = sum(
+        any(
+            event.get("error_type") in peer_errors
+            for event in result.get("write_events", [])
+        )
+        for result in results
+    )
+    return complete and sent == receipt.get("slow_header_writes"), closed
 
 
 def verify_connection_probe(identifier: str, receipt: dict) -> dict:
@@ -241,12 +278,13 @@ def verify_connection_probe(identifier: str, receipt: dict) -> dict:
         "transport": not any(result.get("transport_failure") for result in results),
         "cleanup": receipt.get("connections_closed") is True,
     }
+    peer_closed = 0
     if "slowloris" in identifier:
         count = receipt.get("maximum_slow_connections", 0)
         checks["slow_connections"] = (
             0 < count <= CONNECTION_LIMIT and len(results) == count
         )
-        checks["partial_headers"] = receipt.get("slow_header_writes", 0) == count * 3
+        checks["partial_headers"], peer_closed = slow_write_outcomes(receipt, count)
         checks["duration"] = receipt.get("elapsed_seconds", 0) >= SLOW_PROBE_SECONDS
     else:
         checks["offerings"] = all(
@@ -263,7 +301,14 @@ def verify_connection_probe(identifier: str, receipt: dict) -> dict:
             checks["http_port"] = any(
                 result.get("port") == HTTP_PORT for result in results
             )
-    return {"passed": all(checks.values()), "checks": checks}
+    return {
+        "passed": all(checks.values()),
+        "checks": checks,
+        "peer_closed_connections": peer_closed,
+        "claim": "observed bounded slow-header probe; no control attribution"
+        if "slowloris" in identifier
+        else "observed bounded TLS probe; no control attribution",
+    }
 
 
 def declared_socket_cleanup(path: str, metadata: dict, marker: dict) -> bool:

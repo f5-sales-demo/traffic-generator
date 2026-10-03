@@ -78,3 +78,34 @@ def test_suppressed_slow_write_errors_cannot_establish_complete_probe():
         "elapsed_seconds": 15,
     }
     assert not verify_connection_probe(identifier, receipt)["passed"]
+
+
+def test_slow_probe_distinguishes_peer_close_from_tool_failure():
+    identifier = "traffic-generation/02-slowloris"
+    receipt = {
+        "scenario": identifier,
+        "results": [
+            {
+                "connected": True,
+                "write_events": [
+                    {"round": 0, "sent": True},
+                    {"round": 1, "sent": False, "error_type": "SSLEOFError"},
+                    {"round": 2, "sent": False, "error_type": "SSLEOFError"},
+                ],
+            }
+        ],
+        "attempts": 1,
+        "attempt_limit_per_second": 20,
+        "connections_closed": True,
+        "maximum_slow_connections": 1,
+        "slow_header_writes": 1,
+        "elapsed_seconds": 15,
+    }
+    result = verify_connection_probe(identifier, receipt)
+    assert result["passed"]
+    assert result["peer_closed_connections"] == 1
+    assert (
+        result["claim"] == "observed bounded slow-header probe; no control attribution"
+    )
+    receipt["results"][0]["write_events"][1]["error_type"] = "TimeoutError"
+    assert not verify_connection_probe(identifier, receipt)["passed"]
