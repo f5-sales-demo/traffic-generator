@@ -275,11 +275,24 @@ def test_binary_payload_contract_does_not_accept_decoded_replacement_characters(
 
 
 def test_matched_request_requires_declared_response_or_mitigation():
-    specification = {"requirements": [{"id": "actual-api", "expected_statuses": [200, 401]}]}
+    specification = {
+        "requirements": [{"id": "actual-api", "expected_statuses": [200, 401]}]
+    }
     event = {"kind": "scenario", "matched_requirements": ["actual-api"], "status": 404}
     assert not verify_responses(specification, [event])["passed"]
     assert verify_responses(specification, [dict(event, status=401)])["passed"]
     assert verify_responses(specification, [dict(event, status=403)])["passed"]
-    assert not verify_responses(specification, [dict(event, transport_error="timeout")])[
-        "passed"
-    ]
+    assert not verify_responses(
+        specification, [dict(event, transport_error="timeout")]
+    )["passed"]
+
+
+def test_every_declared_dispatch_requires_a_terminal_response():
+    specification = {
+        "requirements": [
+            {"id": "payload", "minimum_dispatches": 3, "expected_statuses": [200]}
+        ]
+    }
+    event = {"kind": "scenario", "matched_requirements": ["payload"], "status": 200}
+    assert not verify_responses(specification, [event])["passed"]
+    assert verify_responses(specification, [event] * 3)["passed"]

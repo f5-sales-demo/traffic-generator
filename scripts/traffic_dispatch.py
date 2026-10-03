@@ -345,7 +345,7 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
         checks.append(
             {
                 "id": requirement["id"],
-                "passed": bool(responses)
+                "passed": len(responses) >= requirement.get("minimum_dispatches", 1)
                 and all(
                     not event.get("transport_error")
                     and event.get("status")
