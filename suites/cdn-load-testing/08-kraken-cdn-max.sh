@@ -37,7 +37,7 @@ echo "=== LAYER 1: wrk SUSTAINED LOAD (deep path randomization) ==="
 WRK_PIDS=""
 if command -v wrk >/dev/null 2>&1; then
   for ep in "/juice-shop/" "/dvwa/login.php" "/vampi/users/v1" "/httpbin/get" "/csd-demo/health" "/whoami/" "/health"; do
-    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 10s \
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 60s \
       -H "X-Forwarded-For: $(rand_ip)" \
       -H "Accept-Encoding: $(rand_encoding)" \
       -H "User-Agent: $(rand_ua)" \
@@ -47,13 +47,13 @@ if command -v wrk >/dev/null 2>&1; then
   done
   # Combined Lua-randomized instance
   if [ -f "$LUA_BASELINE" ]; then
-    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 10s -s "$LUA_BASELINE" "${BASE}/" >"$RESULTS_DIR/wrk-lua-baseline.log" 2>&1 &
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 60s -s "$LUA_BASELINE" "${BASE}/" >"$RESULTS_DIR/wrk-lua-baseline.log" 2>&1 &
     WRK_PIDS="$WRK_PIDS $!"
     echo "[+] wrk Lua-randomized: all paths (PID $!, 4t/500c)"
   fi
   # Multi-client Lua instance
   if [ -f "$LUA_MULTI" ]; then
-    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 10s -s "$LUA_MULTI" "${BASE}/" >"$RESULTS_DIR/wrk-lua-multi.log" 2>&1 &
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 60s -s "$LUA_MULTI" "${BASE}/" >"$RESULTS_DIR/wrk-lua-multi.log" 2>&1 &
     WRK_PIDS="$WRK_PIDS $!"
     echo "[+] wrk Lua-multi-client: vendor headers (PID $!, 4t/500c)"
   fi
@@ -95,7 +95,7 @@ if command -v vegeta >/dev/null 2>&1; then
       echo "Accept-Encoding: $(rand_encoding)"
       echo "Cookie: session=vegeta-${RANDOM}"
     ) >"$RESULTS_DIR/vegeta-targets-$(echo "$ep" | tr '/' '_').txt"
-    vegeta attack -rate="${TGEN_ATTACK_RATE:-500}/s" -duration="${DURATION}s" -timeout=10s \
+    vegeta attack -workers=1 -max-workers=2 -rate="${TGEN_ATTACK_RATE:-500}/s" -duration="${DURATION}s" -timeout=60s \
       -targets="$RESULTS_DIR/vegeta-targets-$(echo "$ep" | tr '/' '_').txt" 2>/dev/null |
       vegeta encode >"$RESULTS_DIR/vegeta-$(echo "$ep" | tr '/' '_').bin" &
     VEG_PIDS="$VEG_PIDS $!"
@@ -110,10 +110,10 @@ echo ""
 echo "=== LAYER 4: ab KEEPALIVE BASELINE ==="
 AB_PIDS=""
 if command -v ab >/dev/null 2>&1; then
-  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 10 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
+  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /juice-shop/ (PID $!, 300c keepalive)"
-  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 10 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
+  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /httpbin/get (PID $!, 300c keepalive)"
 fi
@@ -130,7 +130,7 @@ echo "=== LAYER 5: THUNDERING HERD BURSTS (every 60s) ==="
     BURST_NUM=$((BURST_NUM + 1))
     STAMP="burst-${BURST_NUM}-$(date +%s%N)"
     if command -v hey >/dev/null 2>&1; then
-      hey -n "${TGEN_REQUESTS:-2000}" -c "${TGEN_CONCURRENCY:-500}" -t 10 "${BASE}/httpbin/get?${STAMP}" >/dev/null 2>&1
+      hey -n "${TGEN_REQUESTS:-2000}" -c "${TGEN_CONCURRENCY:-500}" -t 60 "${BASE}/httpbin/get?${STAMP}" >/dev/null 2>&1
     fi
   done
 ) &

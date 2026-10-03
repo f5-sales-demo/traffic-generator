@@ -73,7 +73,7 @@ ORIGIN_ENDPOINTS=(
 
 LOAD_PIDS=""
 for ep in "${ORIGIN_ENDPOINTS[@]}"; do
-  wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 60s \
     -H "Connection: keep-alive" \
     -H "X-Forwarded-For: 198.51.100.$((RANDOM % 256))" \
     "${BASE}${ep}" >"$RESULTS_DIR/wrk-$(echo "$ep" | tr '/' '_' | tr '?' '_').log" 2>&1 &
@@ -89,7 +89,7 @@ CRAPI_ENDPOINTS=(
   "/community/api/v2/community/posts"
 )
 for ep in "${CRAPI_ENDPOINTS[@]}"; do
-  wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 60s \
     -H "Connection: keep-alive" \
     "${CRAPI_BASE}${ep}" >"$RESULTS_DIR/wrk-crapi-$(echo "$ep" | tr '/' '_').log" 2>&1 &
   LOAD_PIDS="$LOAD_PIDS $!"
@@ -139,7 +139,7 @@ echo ""
 echo "=== LAYER 4: RESTAURANT ATTACKS (wrk Lua, keepalive) ==="
 REST_LUA="$(dirname "$0")/_restaurant-torture.lua"
 if [ -f "$REST_LUA" ]; then
-  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 60s \
     -s "$REST_LUA" "${BASE}/" >"$RESULTS_DIR/wrk-restaurant-torture.log" 2>&1 &
   REST_PID=$!
   echo "[+] wrk Restaurant torture: BOLA + BOPLA + SSRF + injection (PID $REST_PID, ${WRK_T}t/128c keepalive)"
@@ -155,7 +155,7 @@ echo ""
 echo "=== LAYER 5: CRAPI CHALLENGES (wrk Lua, keepalive) ==="
 CRAPI_LUA="$(dirname "$0")/_crapi-torture.lua"
 if [ -f "$CRAPI_LUA" ]; then
-  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 60s \
     -s "$CRAPI_LUA" "${CRAPI_BASE}/" >"$RESULTS_DIR/wrk-crapi-torture.log" 2>&1 &
   CRAPI_PID=$!
   echo "[+] wrk crAPI torture: BOLA + NoSQL + OTP + orders (PID $CRAPI_PID, ${WRK_T}t/128c keepalive)"

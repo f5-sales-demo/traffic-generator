@@ -543,7 +543,9 @@ class NetworkBoundary:
             TGEN_DURATION=str(scenario.get("duration_seconds", 15)),
             TGEN_DVWA_PASSWORD="password",  # noqa: S106 - public seeded DVWA lab credential
             TGEN_THREADS="2",
-            TGEN_ATTACK_RATE="20",
+            TGEN_ATTACK_RATE="1"
+            if scenario["id"] == "cdn-load-testing/08-kraken-cdn-max"
+            else "20",
             TGEN_CONNECTION_PORTS="80,443",
             TGEN_SQLMAP_LEVEL="1",
             TGEN_SQLMAP_RISK="1",
