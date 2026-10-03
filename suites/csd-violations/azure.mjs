@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { constants, realpathSync } from 'node:fs';
-import { access } from 'node:fs/promises';
+import { access, writeFile } from 'node:fs/promises';
 // Azure launches reuse the browser engine. AWS remains governed by validateAwsRuntime.
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
@@ -46,6 +46,14 @@ export async function runAzure(environment = process.env, options = {}) {
     },
     routeCleanup: async (context) => {
       await context.unrouteAll({ behavior: 'wait' });
+      await writeFile(
+        resolve(environment.TGEN_RESULTS_DIR, 'browser-cleanup.json'),
+        JSON.stringify({
+          sourceCommit: environment.SOURCE_COMMIT,
+          phase: 'closing-browser',
+        }),
+        { mode: 0o600 },
+      );
     },
     routeSetup: async (context) => {
       await context.route('**/*', async (route) => {

@@ -870,6 +870,10 @@ export async function runSuite(options = {}) {
         scenarioResult.completedAt = new Date().toISOString();
         try {
           if (options.routeCleanup) await cleanupOperation(() => options.routeCleanup(context));
+          if (options.drainRequests) {
+            scenarioResult.finalNetworkDrain = await cleanupOperation(() => waitForRequestsTerminal(requests));
+            if (!scenarioResult.finalNetworkDrain.passed) scenarioResult.status = 'failed';
+          }
           await cleanupOperation(() => context.close());
         } catch (error) {
           reportLocalError(`context cleanup ${scenario.name} failed`, error);

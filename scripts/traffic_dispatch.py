@@ -237,3 +237,15 @@ def verify_connection_probe(identifier: str, receipt: dict) -> dict:
         if "ssl-scanning" not in identifier:
             checks["http_port"] = any(result.get("port") == 80 for result in results)
     return {"passed": all(checks.values()), "checks": checks}
+
+
+def declared_socket_cleanup(path: str, metadata: dict, marker: dict) -> bool:
+    """Only a dispatched Socket.IO long poll closing during declared cleanup is expected."""
+    query = parse_qs(path.partition("?")[2])
+    return (
+        path.partition("?")[0] == "/juice-shop/socket.io/"
+        and query.get("transport") == ["polling"]
+        and bool(query.get("sid"))
+        and metadata.get("id", "").startswith("csd-violations/")
+        and marker.get("phase") == "closing-browser"
+    )

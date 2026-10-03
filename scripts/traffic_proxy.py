@@ -13,7 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
-from traffic_dispatch import classify_outcome, match_requirements
+from traffic_dispatch import classify_outcome, declared_socket_cleanup, match_requirements
 
 HTTPS_PORT = 443
 
@@ -33,6 +33,7 @@ class Budget:
             "attack_transport_failures": 0,
             "scenario_transport_failures": 0,
             "tool_cancellations": 0,
+            "browser_cleanup_cancellations": 0,
             "attack_mitigated": 0,
             "denied_destinations": 0,
             "error_categories": {},
@@ -306,6 +307,16 @@ class Budget:
             )
             errors = self.counts["error_categories"]
             errors[category] = errors.get(category, 0) + 1
+        metadata = flow.metadata.get("tgen_scenario", {})
+        marker = {}
+        try:
+            marker = json.loads(Path(metadata["dispatch_path"]).with_name("browser-cleanup.json").read_text())
+        except (OSError, ValueError, KeyError):
+            pass
+        if flow.error and declared_socket_cleanup(flow.request.path, metadata, marker):
+            self.counts["browser_cleanup_cancellations"] += 1
+            self.persist()
+            return
         if flow.error and any(
             word in flow.error.msg.lower()
             for word in (
