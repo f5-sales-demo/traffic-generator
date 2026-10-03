@@ -1,5 +1,6 @@
 """A completed stress parent must await native and nested worker results."""
 
+import json
 import os
 import pathlib
 import shutil
@@ -54,3 +55,25 @@ def test_origin_stress_waits_for_child_completion(tmp_path, child_exit):
     )
     assert (results / "nested-dvga-exploits/child-finished").read_text() == "finished"
     assert result.returncode == child_exit, result.stdout + result.stderr
+
+
+def test_stress_duration_and_native_actions_cannot_be_shortened():
+    catalog = json.loads((ROOT / "suites/catalog.json").read_text())
+    kraken = next(
+        item
+        for item in catalog["scenarios"]
+        if item["id"] == "cdn-load-testing/08-kraken-cdn-max"
+    )
+    assert kraken["duration_seconds"] == 600
+    assert {item["id"] for item in kraken["dispatch_contract"]["requirements"]} >= {
+        "scheduled-herd-burst",
+        "mixed-post",
+        "mixed-put",
+        "lua-client-diversity",
+    }
+    assert {item["tool"] for item in kraken["tool_contract"]["requirements"]} == {
+        "wrk",
+        "hey",
+        "vegeta",
+        "ab",
+    }

@@ -4216,6 +4216,8 @@
         "/health",
         "/httpbin/",
         "/httpbin/get",
+        "/httpbin/post",
+        "/httpbin/put",
         "/juice-shop/",
         "/vampi/",
         "/vampi/users/v1",
@@ -4275,6 +4277,46 @@
             "path": "/health",
             "payload_class": "parallel-load-engine",
             "minimum_dispatches": 20
+          },
+          {
+            "id": "scheduled-herd-burst",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "query_regex": "burst-[1-9][0-9]*-[0-9]+",
+            "payload_class": "scheduled-thundering-herd",
+            "minimum_dispatches": 1,
+            "expected_statuses": [200]
+          },
+          {
+            "id": "mixed-post",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "body_regex": "\"test\":true.*\"ts\":",
+            "payload_class": "mixed-json-post",
+            "minimum_dispatches": 1,
+            "expected_statuses": [200]
+          },
+          {
+            "id": "mixed-put",
+            "method": "PUT",
+            "path": "/httpbin/put",
+            "body_exact": "{\"test\":true}",
+            "payload_class": "mixed-json-put",
+            "minimum_dispatches": 1,
+            "expected_statuses": [200]
+          },
+          {
+            "id": "lua-client-diversity",
+            "method": "GET",
+            "path_regex": "/.*",
+            "header_regex": {
+              "x-akamai-edgescape": "country_code=.+,city=.+",
+              "cloudfront-viewer-address": "(?:192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+:443",
+              "cookie": "session=sess-[0-9]+-[0-9]+"
+            },
+            "payload_class": "native-lua-client-diversity",
+            "minimum_dispatches": 1,
+            "expected_statuses": [200, 201, 302, 400, 401, 404, 405, 422]
           }
         ],
         "reject_unmatched_errors": true
