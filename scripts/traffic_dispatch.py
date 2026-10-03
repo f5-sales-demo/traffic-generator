@@ -492,6 +492,25 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
     return True
 
 
+def unexpected_server_response(contract: dict, event: dict) -> bool:
+    """A matched dispatch cannot hide an undeclared application server failure."""
+    if event.get("kind") != "scenario" or event.get("status") not in (
+        500,
+        502,
+        503,
+        504,
+    ):
+        return False
+    matched = event.get("matched_requirements", [])
+    return not any(
+        requirement["id"] in matched
+        and event["status"] in requirement.get("expected_statuses", [])
+        and str(event["status"]) in requirement.get("response_contract_by_status", {})
+        and event.get("response_assertions", {}).get(requirement["id"]) is True
+        for requirement in contract.get("requirements", [])
+    )
+
+
 def verify_responses(contract: dict, events: list[dict]) -> dict:
     """Request actions require explicit application outcomes or a mitigation candidate."""
     checks = []
@@ -533,6 +552,14 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
                 ),
             }
         )
+    checks.append(
+        {
+            "id": "undeclared-server-failures",
+            "passed": not any(
+                unexpected_server_response(contract, event) for event in events
+            ),
+        }
+    )
     if contract.get("reject_unmatched_errors"):
         checks.append(
             {

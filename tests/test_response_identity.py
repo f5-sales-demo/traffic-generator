@@ -137,3 +137,11 @@ def test_expensive_graphql_batch_requires_each_nonempty_data_result():
     assert not response_content_matches(
         spec, "application/json", '{"message":"systemUpdate failed"}'
     )
+
+
+def test_matched_dispatch_without_response_spec_cannot_hide_server_timeout():
+    contract = {"requirements": [{"id": "query", "minimum_dispatches": 1}]}
+    event = {"kind": "scenario", "status": 504, "matched_requirements": ["query"]}
+    assert not verify_responses(contract, [event])["passed"]
+    assert not verify_responses(contract, [{**event, "status": 500}])["passed"]
+    assert verify_responses(contract, [{**event, "status": 200}])["passed"]
