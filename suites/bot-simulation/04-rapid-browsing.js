@@ -109,7 +109,7 @@ const USER_AGENTS = [
             documentResponse = undefined;
           }
           const response = await page.goto(url, {
-            waitUntil: 'domcontentloaded',
+            waitUntil: 'commit',
             timeout: 30000,
           });
           if (response) documentResponse = response;
