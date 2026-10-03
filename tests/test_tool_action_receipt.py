@@ -119,7 +119,7 @@ def test_native_apachebench_accepts_worker_header_before_final_target():
     assert binary is not None
 
     class Handler(BaseHTTPRequestHandler):
-        def do_GET(self):  # pylint: disable=invalid-name -- BaseHTTPRequestHandler protocol hook
+        def do_GET(self):  # pylint: disable=invalid-name
             body = b"synthetic"
             self.send_response(200)
             self.send_header("Content-Length", str(len(body)))
