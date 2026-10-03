@@ -67,7 +67,7 @@ class Budget:
         next_slot = time.monotonic()
         while True:
             await asyncio.sleep(max(0, next_slot - time.monotonic()))
-            next_slot = max(next_slot + 0.05, time.monotonic())
+            next_slot = time.monotonic() + 0.05
             event = None
             while not self.pending.empty():
                 candidate, host = self.pending.get_nowait()
