@@ -685,7 +685,7 @@ def _scenario(
         },
     )
     try:
-        boundary.refresh_fixtures(domain)
+        boundary.refresh_fixtures(domain, scenario.get("fixture_refresh", []))
         environment = boundary.environment(scenario, domain, directory)
     except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
         return prerequisite_failure(

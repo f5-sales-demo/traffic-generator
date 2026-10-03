@@ -449,63 +449,84 @@ class NetworkBoundary:
             raise ValueError(message)
         return document if status == SUCCESS_MIN and isinstance(document, dict) else {}
 
-    def refresh_fixtures(self, domain: str) -> None:
+    def refresh_fixtures(self, domain: str, families: list[str] | None = None) -> None:
         """Generate/renew real tokens for public seeded lab accounts without disabling WAAP."""
         fixture_path = self.runtime.parent / "fixtures.json"
         fixtures = json.loads(fixture_path.read_text()) if fixture_path.exists() else {}
-        vampi = self.fixture_login(
-            domain, "/vampi/users/v1/login", {"username": "name1", "password": "pass1"}
-        ).get("auth_token")
-        if vampi:
-            fixtures["vampi_token"] = vampi
-        crapi = []
-        for email, password in (
-            ("adam007@example.com", "adam007!123"),
-            ("pogba006@example.com", "pogba006!123"),
-        ):
-            token = self.fixture_login(
-                domain,
-                "/crapi/identity/api/auth/login",
-                {"email": email, "password": password},
-            ).get("token")
-            if token:
-                crapi.append(token)
-        if len(crapi) == CRAPI_ACCOUNT_COUNT:
-            fixtures["crapi_tokens"] = crapi
-        juice = (
-            self.fixture_login(
-                domain,
-                "/juice-shop/rest/user/login",
-                {
-                    "email": fixtures.get("juice_email", "tgen@example.com"),
-                    "password": fixtures.get(
-                        "juice_password", "synthetic-fixture-unavailable"
-                    ),
-                },
-            )
-            .get("authentication", {})
-            .get("token")
+        required = (
+            set(families)
+            if families is not None
+            else {"vampi", "crapi", "juice", "restaurant"}
         )
-        if juice:
-            fixtures["juice_token"] = juice
-        for role in ("customer", "chef"):
-            token = self.fixture_login(
+        if "vampi" in required:
+            vampi = self.fixture_login(
                 domain,
-                "/restaurant/token",
-                {"username": "tgen_" + role, "password": "password"},
-            ).get("access_token")
-            if token:
-                fixtures["restaurant_" + role + "_token"] = token
-        for actor in ("attacker", "victim", "admin", "bola_chef", "manager", "root"):
-            username = "tgen_bola_" + actor.removeprefix("bola_")
-            token = self.fixture_login(
-                domain,
-                "/restaurant/token",
-                {"username": username, "password": "password"},
-            ).get("access_token")
-            if token:
-                fixtures["restaurant_" + actor] = {"username": username, "token": token}
-                fixtures["restaurant_" + actor + "_token"] = token
+                "/vampi/users/v1/login",
+                {"username": "name1", "password": "pass1"},
+            ).get("auth_token")
+            if vampi:
+                fixtures["vampi_token"] = vampi
+        if "crapi" in required:
+            crapi = []
+            for email, password in (
+                ("adam007@example.com", "adam007!123"),
+                ("pogba006@example.com", "pogba006!123"),
+            ):
+                token = self.fixture_login(
+                    domain,
+                    "/crapi/identity/api/auth/login",
+                    {"email": email, "password": password},
+                ).get("token")
+                if token:
+                    crapi.append(token)
+            if len(crapi) == CRAPI_ACCOUNT_COUNT:
+                fixtures["crapi_tokens"] = crapi
+        if "juice" in required:
+            juice = (
+                self.fixture_login(
+                    domain,
+                    "/juice-shop/rest/user/login",
+                    {
+                        "email": fixtures.get("juice_email", "tgen@example.com"),
+                        "password": fixtures.get(
+                            "juice_password", "synthetic-fixture-unavailable"
+                        ),
+                    },
+                )
+                .get("authentication", {})
+                .get("token")
+            )
+            if juice:
+                fixtures["juice_token"] = juice
+        if "restaurant" in required:
+            for role in ("customer", "chef"):
+                token = self.fixture_login(
+                    domain,
+                    "/restaurant/token",
+                    {"username": "tgen_" + role, "password": "password"},
+                ).get("access_token")
+                if token:
+                    fixtures["restaurant_" + role + "_token"] = token
+            for actor in (
+                "attacker",
+                "victim",
+                "admin",
+                "bola_chef",
+                "manager",
+                "root",
+            ):
+                username = "tgen_bola_" + actor.removeprefix("bola_")
+                token = self.fixture_login(
+                    domain,
+                    "/restaurant/token",
+                    {"username": username, "password": "password"},
+                ).get("access_token")
+                if token:
+                    fixtures["restaurant_" + actor] = {
+                        "username": username,
+                        "token": token,
+                    }
+                    fixtures["restaurant_" + actor + "_token"] = token
         atomic_json(fixture_path, fixtures)
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:

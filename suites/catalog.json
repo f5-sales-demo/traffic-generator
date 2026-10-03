@@ -340,7 +340,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["vampi"]
     },
     {
       "id": "api-attacks/02-sqlmap-api",
@@ -411,7 +412,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": ["vampi"]
     },
     {
       "id": "api-attacks/03-arjun-param-discovery",
@@ -512,7 +514,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "api-attacks/04-ffuf-api-fuzz",
@@ -2056,7 +2059,8 @@
         "/swagger.json",
         "/users",
         "/version"
-      ]
+      ],
+      "fixture_refresh": []
     },
     {
       "id": "api-attacks/05-broken-auth",
@@ -2241,7 +2245,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "expected_http_statuses": [400, 401, 404, 405, 409, 422]
+      "expected_http_statuses": [400, 401, 404, 405, 409, 422],
+      "fixture_refresh": ["vampi"]
     },
     {
       "id": "api-attacks/06-mass-assignment",
@@ -2349,7 +2354,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "expected_http_statuses": [400, 401, 404, 405, 409, 422]
+      "expected_http_statuses": [400, 401, 404, 405, 409, 422],
+      "fixture_refresh": ["vampi"]
     },
     {
       "id": "api-protection-verify/01-schema-violation",
@@ -2425,7 +2431,8 @@
         "reject_unmatched_errors": true
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "prerequisites": []
+      "prerequisites": [],
+      "fixture_refresh": []
     },
     {
       "id": "api-protection-verify/02-shadow-endpoints",
@@ -2501,7 +2508,8 @@
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": [],
-      "intentional_negative_paths": ["/api/internal/healthz-secret", "/api/v0/legacy/accounts/export"]
+      "intentional_negative_paths": ["/api/internal/healthz-secret", "/api/v0/legacy/accounts/export"],
+      "fixture_refresh": []
     },
     {
       "id": "api-protection-verify/03-protection-deny",
@@ -2530,7 +2538,8 @@
         "reject_unmatched_errors": true
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "prerequisites": []
+      "prerequisites": [],
+      "fixture_refresh": []
     },
     {
       "id": "api-protection-verify/04-rate-limit-burst",
@@ -2558,7 +2567,8 @@
         "reject_unmatched_errors": true
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "prerequisites": []
+      "prerequisites": [],
+      "fixture_refresh": []
     },
     {
       "id": "bot-simulation/01-playwright-credential-stuff",
@@ -2584,7 +2594,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "bot-simulation/02-puppeteer-scraper",
@@ -2631,7 +2642,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "bot-simulation/03-headless-form-fill",
@@ -2672,7 +2684,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "bot-simulation/04-rapid-browsing",
@@ -3263,7 +3276,8 @@
           "ua-14-route-23"
         ],
         "allow_mitigation": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "bot-simulation/05-hydra-brute-force",
@@ -3313,7 +3327,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/01-baseline-throughput",
@@ -3390,7 +3405,8 @@
         "minimum_requests": 200,
         "verify_behavior": true,
         "paths": ["/juice-shop/", "/whoami/", "/httpbin/get", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/02-query-string-isolation",
@@ -3590,7 +3606,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "dynamic-cache"
+      "adapter": "dynamic-cache",
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/03-accept-encoding-variation",
@@ -3842,7 +3859,8 @@
         "reject_unmatched_errors": true
       },
       "adapter": "dynamic-cache",
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/04-thundering-herd",
@@ -3884,7 +3902,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/05-post-put-bypass",
@@ -4011,7 +4030,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/06-multi-client-simulation",
@@ -4121,7 +4141,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "bounded-multiclient"
+      "adapter": "bounded-multiclient",
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/07-sustained-cache-expiry",
@@ -4200,7 +4221,8 @@
         "minimum_duration": 15,
         "cache_mode": "dynamic-bypass",
         "paths": ["/juice-shop/", "/httpbin/get", "/whoami/", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/08-kraken-cdn-max",
@@ -4391,7 +4413,8 @@
         "hey": 4,
         "vegeta": 5,
         "ab": 2
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/09-origin-torture",
@@ -4664,7 +4687,8 @@
       "native_report_contract": {
         "wrk": 19,
         "hey": 4
-      }
+      },
+      "fixture_refresh": ["vampi", "crapi", "juice", "restaurant"]
     },
     {
       "id": "cdn-load-testing/bench-keepalive",
@@ -4723,7 +4747,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "cdn-load-testing/bench-vm-compare",
@@ -4782,7 +4807,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "challenge-verify/01-js-challenge-interstitial",
@@ -4810,7 +4836,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "crapi-exploits/01-register-auth",
@@ -4863,7 +4890,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/02-bola-vehicle-location",
@@ -4891,7 +4919,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/03-bola-mechanic-reports",
@@ -4926,7 +4955,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": [],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": []
     },
     {
       "id": "crapi-exploits/04-otp-bruteforce",
@@ -4969,7 +4999,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/05-data-exposure-mechanics",
@@ -5002,7 +5033,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/06-data-exposure-posts",
@@ -5041,7 +5073,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 401, 403, 404, 405, 429]
+      "expected_http_statuses": [200, 401, 403, 404, 405, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/07-bfla-admin-video",
@@ -5082,7 +5115,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/08-mass-assignment-orders",
@@ -5111,7 +5145,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/09-ssrf-contact-mechanic",
@@ -5145,7 +5180,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/10-dos-contact-mechanic",
@@ -5179,7 +5215,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/11-nosql-injection-coupon",
@@ -5246,7 +5283,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/12-sqli-apply-coupon",
@@ -5280,7 +5318,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/13-command-injection-video",
@@ -5346,7 +5385,8 @@
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "fixture_contract": {
         "restore_video": true
-      }
+      },
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "crapi-exploits/14-unauth-order-access",
@@ -5375,7 +5415,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": [],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": []
     },
     {
       "id": "crapi-exploits/15-jwt-algorithm-confusion",
@@ -5411,7 +5452,8 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_refresh": ["crapi"]
     },
     {
       "id": "csd-violations/login-credential-skimmer",
@@ -5435,7 +5477,8 @@
           "post-login-field-counters",
           "cleanup-login-controls"
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/registration-harvester",
@@ -5459,7 +5502,8 @@
           "post-registration-control-counter",
           "cleanup-registration-controls"
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/payment-overlay-card-skimmer",
@@ -5483,7 +5527,8 @@
           "post-payment-field-counter",
           "cleanup-payment-overlay"
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/obfuscated-loader",
@@ -5501,7 +5546,8 @@
       "browser_contract": {
         "scenario": "obfuscated-loader",
         "steps": ["navigate-home", "decode-and-inject-reviewed-url", "cleanup-obfuscated-loader"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/multi-cdn-injection",
@@ -5519,7 +5565,8 @@
       "browser_contract": {
         "scenario": "multi-cdn-injection",
         "steps": ["navigate-home", "inject-four-cdn-candidates", "cleanup-multi-cdn-candidates"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/tag-manager-hijack",
@@ -5537,7 +5584,8 @@
       "browser_contract": {
         "scenario": "tag-manager-hijack",
         "steps": ["navigate-home", "inject-reviewed-tag-manager-candidate", "cleanup-tag-manager-candidate"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/multi-channel-exfiltration",
@@ -5561,7 +5609,8 @@
           "attempt-three-benign-channels",
           "cleanup-multi-channel-artifacts"
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/high-volume-domain-exfiltration",
@@ -5579,7 +5628,8 @@
       "browser_contract": {
         "scenario": "high-volume-domain-exfiltration",
         "steps": ["navigate-login", "attempt-five-scripts-two-posts", "cleanup-high-volume-artifacts"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/form-overlay",
@@ -5597,7 +5647,8 @@
       "browser_contract": {
         "scenario": "form-overlay",
         "steps": ["navigate-login", "count-original-fields-and-install-overlay", "cleanup-form-overlay"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/keylogger-simulation",
@@ -5615,7 +5666,8 @@
       "browser_contract": {
         "scenario": "keylogger-simulation",
         "steps": ["navigate-login", "count-synthetic-key-events", "cleanup-keylogger-artifacts"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "csd-violations/maximum-detection",
@@ -5641,7 +5693,8 @@
           "canonical-banner",
           "cleanup-maximum-artifacts"
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "demoapp-attacks/01-sqli-waf-endpoint",
@@ -5680,7 +5733,8 @@
           "-1 OR 17-7=10"
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "demoapp-attacks/02-xss-waf-endpoint",
@@ -5722,7 +5776,8 @@
           "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//\";alert(String.fromCharCode(88,83,83))//"
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvga-exploits/01-batch-query-dos",
@@ -5833,7 +5888,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"]
+      "prerequisites": ["seeded-dvga-pastes"],
+      "fixture_refresh": []
     },
     {
       "id": "dvga-exploits/02-deep-recursion",
@@ -5863,7 +5919,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"]
+      "prerequisites": ["seeded-dvga-pastes"],
+      "fixture_refresh": []
     },
     {
       "id": "dvga-exploits/03-field-duplication",
@@ -5904,7 +5961,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"]
+      "prerequisites": ["seeded-dvga-pastes"],
+      "fixture_refresh": []
     },
     {
       "id": "dvga-exploits/04-sqli-filter",
@@ -5934,7 +5992,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"]
+      "prerequisites": ["seeded-dvga-pastes"],
+      "fixture_refresh": []
     },
     {
       "id": "dvga-exploits/05-xss-createpaste",
@@ -5964,7 +6023,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"]
+      "prerequisites": ["seeded-dvga-pastes"],
+      "fixture_refresh": []
     },
     {
       "id": "dvga-exploits/06-os-command-importpaste",
@@ -5994,7 +6054,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"]
+      "prerequisites": ["seeded-dvga-pastes"],
+      "fixture_refresh": []
     },
     {
       "id": "dvga-exploits/07-jwt-forgery-me",
@@ -6024,7 +6085,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"]
+      "prerequisites": ["seeded-dvga-pastes"],
+      "fixture_refresh": []
     },
     {
       "id": "dvga-exploits/08-path-traversal-upload",
@@ -6054,7 +6116,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"]
+      "prerequisites": ["seeded-dvga-pastes"],
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/01-brute-force",
@@ -6152,7 +6215,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/02-command-injection",
@@ -6278,7 +6342,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/03-csrf-password-change",
@@ -6331,7 +6396,8 @@
       },
       "fixture_contract": {
         "csrf_restore": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/04-file-inclusion",
@@ -6462,7 +6528,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/05-file-upload",
@@ -6528,7 +6595,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/06-sqli",
@@ -6636,7 +6704,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/07-sqli-blind",
@@ -6726,7 +6795,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/08-xss-dom",
@@ -6870,7 +6940,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/09-xss-reflected",
@@ -7070,7 +7141,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/10-xss-stored",
@@ -7159,7 +7231,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/11-csp-bypass",
@@ -7277,7 +7350,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/12-weak-session",
@@ -7307,7 +7381,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/13-authbypass",
@@ -7418,7 +7493,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "dvwa-exploits/14-open-redirect",
@@ -7590,7 +7666,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "juice-shop-exploits/01-sqli-login-bypass",
@@ -7653,7 +7730,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "juice-shop-exploits/02-sqli-search-union",
@@ -7880,7 +7958,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "juice-shop-exploits/03-xss-dom-reflected",
@@ -8084,7 +8163,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "juice-shop-exploits/04-xss-stored-api",
@@ -8254,7 +8334,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["juice"]
     },
     {
       "id": "juice-shop-exploits/05-idor-basket-access",
@@ -8470,7 +8551,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["juice"]
     },
     {
       "id": "juice-shop-exploits/06-admin-access",
@@ -8656,7 +8738,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["juice"]
     },
     {
       "id": "juice-shop-exploits/07-sensitive-data",
@@ -8814,7 +8897,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "juice-shop-exploits/08-nosql-injection",
@@ -9079,7 +9163,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["juice"]
     },
     {
       "id": "juice-shop-exploits/09-file-upload-xxe",
@@ -9291,7 +9376,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/etc/passwd"]
+      "intentional_negative_paths": ["/etc/passwd"],
+      "fixture_refresh": ["juice"]
     },
     {
       "id": "juice-shop-exploits/10-jwt-attacks",
@@ -9375,7 +9461,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["juice"]
     },
     {
       "id": "juice-shop-exploits/11-api-enumeration",
@@ -10929,7 +11016,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["juice"]
     },
     {
       "id": "juice-shop-exploits/12-automated-sqlmap",
@@ -11024,7 +11112,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "malicious-user/01-identified-violations",
@@ -11143,7 +11232,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "malicious-user/02-forbidden-recon",
@@ -11341,7 +11431,8 @@
         "/phpmyadmin/",
         "/server-status",
         "/wp-login.php"
-      ]
+      ],
+      "fixture_refresh": []
     },
     {
       "id": "malicious-user/03-credential-stuffing",
@@ -12486,7 +12577,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "mitre-attack/01-reconnaissance",
@@ -12910,7 +13002,8 @@
         "/swagger.json",
         "/users",
         "/web.config"
-      ]
+      ],
+      "fixture_refresh": []
     },
     {
       "id": "mitre-attack/02-initial-access",
@@ -13063,7 +13156,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "mitre-attack/03-execution",
@@ -13235,7 +13329,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "mitre-attack/04-credential-access",
@@ -13456,7 +13551,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "mitre-attack/05-discovery",
@@ -13697,7 +13793,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "mitre-attack/06-collection-exfiltration",
@@ -13879,7 +13976,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "mitre-attack/07-impact",
@@ -13948,7 +14046,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/01-zap-baseline",
@@ -14008,7 +14107,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/02-zap-active-scan",
@@ -14073,7 +14173,8 @@
         "phase": "active",
         "minimum_messages": 1,
         "paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/", "/csd-demo/"]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/03-nikto-full",
@@ -14161,7 +14262,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/04-nuclei-full",
@@ -14229,7 +14331,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/05-nmap-vuln-scan",
@@ -14242,7 +14345,8 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/06-sqlmap-comprehensive",
@@ -14347,7 +14451,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/07-ffuf-directory-discovery",
@@ -15840,7 +15945,8 @@
         "/web.config.swp",
         "/web.config.tmp",
         "/web.config~"
-      ]
+      ],
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/08-dalfox-xss-scan",
@@ -15936,7 +16042,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/09-arjun-param-discovery",
@@ -16077,7 +16184,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/01-concurrency-ramp",
@@ -16188,7 +16296,8 @@
           "/crapi/"
         ],
         "verify_behavior": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/02-per-app-throughput",
@@ -16301,7 +16410,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/03-sustained-load",
@@ -16412,7 +16522,8 @@
           "/crapi/"
         ],
         "verify_behavior": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/04-connection-churn",
@@ -16458,7 +16569,8 @@
         "paths": ["/httpbin/get"],
         "verify_behavior": true,
         "connection_modes": [true, false]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/05-mixed-attack-load",
@@ -16510,7 +16622,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/06-latency-heatmap",
@@ -16608,7 +16721,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/07-self-profile-under-load",
@@ -16721,7 +16835,8 @@
         "verify_behavior": true,
         "resource_profile": true,
         "minimum_duration": 15
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/08-ephemeral-port-stress",
@@ -16833,7 +16948,8 @@
         ],
         "verify_behavior": true,
         "batches": [20, 50, 100]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/09-parallel-suite-stress",
@@ -16896,7 +17012,8 @@
           "api-attacks/05-broken-auth",
           "api-attacks/06-mass-assignment"
         ]
-      }
+      },
+      "fixture_refresh": ["vampi", "crapi", "juice", "restaurant"]
     },
     {
       "id": "performance-testing/10-wrk-benchmark",
@@ -16967,7 +17084,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/11-vegeta-constant-rate",
@@ -17057,7 +17175,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "fixture_refresh": []
     },
     {
       "id": "performance-testing/12-hey-quick-bench",
@@ -17155,7 +17274,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "fixture_refresh": []
     },
     {
       "id": "reconnaissance/01-nmap-service-scan",
@@ -17168,7 +17288,8 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "fixture_refresh": []
     },
     {
       "id": "reconnaissance/02-masscan-port-sweep",
@@ -17181,7 +17302,8 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "fixture_refresh": []
     },
     {
       "id": "reconnaissance/03-gobuster-dir",
@@ -17486,7 +17608,8 @@
         "/swagger.json",
         "/users",
         "/web.config"
-      ]
+      ],
+      "fixture_refresh": []
     },
     {
       "id": "reconnaissance/04-feroxbuster-recurse",
@@ -17791,7 +17914,8 @@
         "/swagger.json",
         "/users",
         "/web.config"
-      ]
+      ],
+      "fixture_refresh": []
     },
     {
       "id": "reconnaissance/05-subfinder-enum",
@@ -17817,7 +17941,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/health"]
+      "intentional_negative_paths": ["/health"],
+      "fixture_refresh": []
     },
     {
       "id": "reconnaissance/06-sensitive-files",
@@ -18422,7 +18547,8 @@
         "/wp-admin",
         "/wp-config.php",
         "/wp-login.php"
-      ]
+      ],
+      "fixture_refresh": []
     },
     {
       "id": "reconnaissance/07-waf-fingerprint",
@@ -18575,7 +18701,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "restaurant-exploits/01-register-auth",
@@ -18622,7 +18749,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/02-bola-profile",
@@ -18753,7 +18881,8 @@
       },
       "fixture_contract": {
         "restore_profiles": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/03-bola-orders",
@@ -19073,7 +19202,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/04-bopla-mass-assign",
@@ -19166,7 +19296,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/05-bfla-privilege",
@@ -19328,7 +19459,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/06-ssrf-menu-image",
@@ -19502,7 +19634,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/07-command-injection",
@@ -19646,7 +19779,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/08-full-escalation-chain",
@@ -19718,7 +19852,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/09-jwt-secret-crack",
@@ -19747,7 +19882,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "restaurant-exploits/10-api-discovery",
@@ -20160,7 +20296,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": ["restaurant"]
     },
     {
       "id": "service-policy-verify/01-service-policy-deny",
@@ -20200,7 +20337,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/spol-denied"]
+      "intentional_negative_paths": ["/spol-denied"],
+      "fixture_refresh": []
     },
     {
       "id": "ssl-scanning/01-sslscan",
@@ -20213,7 +20351,8 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "fixture_refresh": []
     },
     {
       "id": "ssl-scanning/02-sslyze",
@@ -20226,7 +20365,8 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "fixture_refresh": []
     },
     {
       "id": "ssl-scanning/03-testssl",
@@ -20239,7 +20379,8 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "fixture_refresh": []
     },
     {
       "id": "traffic-generation/01-curl-flood",
@@ -20318,7 +20459,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "traffic-generation/02-slowloris",
@@ -20331,7 +20473,8 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "fixture_refresh": []
     },
     {
       "id": "traffic-generation/03-http-methods",
@@ -21939,7 +22082,8 @@
         ],
         "reject_unmatched_errors": true
       },
-      "intentional_negative_paths": ["/.env", "/.git/config", "/admin"]
+      "intentional_negative_paths": ["/.env", "/.git/config", "/admin"],
+      "fixture_refresh": []
     },
     {
       "id": "traffic-generation/04-ua-rotation",
@@ -23343,7 +23487,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "waf-encoding-evasion/01-url-encoding",
@@ -23769,7 +23914,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "waf-encoding-evasion/02-html-entity-encoding",
@@ -24175,7 +24321,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "waf-encoding-evasion/03-unicode-utf8-evasion",
@@ -24347,7 +24494,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "waf-encoding-evasion/04-mixed-nested-encoding",
@@ -24695,7 +24843,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "waf-encoding-evasion/05-null-byte-iis-base64",
@@ -24959,7 +25108,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "waf-encoding-evasion/06-case-chunked-evasion",
@@ -25151,7 +25301,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "waf-encoding-evasion/07-header-cookie-evasion",
@@ -25409,7 +25560,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/01-sqli",
@@ -25664,7 +25816,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/02-xss",
@@ -26072,7 +26225,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/03-command-injection",
@@ -26342,7 +26496,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/04-path-traversal",
@@ -27407,7 +27562,8 @@
         "/static/../../../etc/passwd%00.html",
         "/static/../../../etc/passwd%00.jpg",
         "/windows/system32/drivers/etc/hosts"
-      ]
+      ],
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/05-nikto-scan",
@@ -27446,7 +27602,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/06-nuclei-scan",
@@ -27485,7 +27642,8 @@
             "minimum": 1
           }
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/07-xxe",
@@ -27623,7 +27781,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/08-ssrf",
@@ -27808,7 +27967,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/09-csrf",
@@ -27949,7 +28109,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "web-app-attacks/10-file-upload",
@@ -28063,7 +28224,8 @@
           }
         ],
         "reject_unmatched_errors": true
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "mitre-attack/08-attck-coverage-report",
@@ -28095,7 +28257,8 @@
           "mitre-attack/06-collection-exfiltration",
           "mitre-attack/07-impact"
         ]
-      }
+      },
+      "fixture_refresh": []
     },
     {
       "id": "owasp-scanning/10-full-owasp-report",
@@ -28131,7 +28294,8 @@
           "owasp-scanning/08-dalfox-xss-scan",
           "owasp-scanning/09-arjun-param-discovery"
         ]
-      }
+      },
+      "fixture_refresh": []
     }
   ],
   "required_assets": [
