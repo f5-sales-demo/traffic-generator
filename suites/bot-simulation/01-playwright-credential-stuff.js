@@ -86,6 +86,7 @@ const CREDENTIALS = [
         continue;
       }
 
+      await settleRequests(requestState);
       await page.fill('input[name="username"]', cred.user);
       await page.fill('input[name="password"]', cred.password);
       await page.click('input[type="submit"]');
