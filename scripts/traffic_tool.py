@@ -10,10 +10,36 @@ import time
 from pathlib import Path
 
 
+def attributed_arguments(tool: str, arguments: list[str], marker: str) -> list[str]:
+    """Add opaque nested attribution without replacing an authentication header."""
+    result = list(arguments)
+    if not marker:
+        return result
+    value = "X-TGen-Child: " + marker
+    if tool == "sqlmap":
+        existing = next(
+            (index for index, arg in enumerate(result) if arg.startswith("--headers=")),
+            None,
+        )
+        if existing is not None:
+            result[existing] += "\n" + value
+        else:
+            result.append("--headers=" + value)
+    elif tool in ("curl", "ffuf", "dalfox"):
+        result.extend(["-H", value])
+    elif tool == "arjun":
+        result.extend(["--headers", value])
+    elif tool in ("gobuster", "feroxbuster", "nuclei"):
+        result.extend(["-H", value])
+    return result
+
+
 def main() -> int:
     """Execute the resolved native binary and retain only matched action identifiers."""
     binary, tool = sys.argv[1:3]
-    arguments = sys.argv[3:]
+    arguments = attributed_arguments(
+        tool, sys.argv[3:], os.environ.get("TGEN_CHILD_MARKER", "")
+    )
     contract = json.loads(os.environ["TGEN_TOOL_CONTRACT"])
     matched = [
         requirement["id"]

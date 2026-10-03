@@ -302,18 +302,27 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
         atomic_json(runtime_directory / "children" / (marker + ".json"), metadata)
         tools = directory / "child-tools"
         tools.mkdir(mode=0o700, exist_ok=True)
-        curl = shutil.which("curl")
-        wrapper = tools / "curl"
-        wrapper.write_text(
-            "#!/usr/bin/env python3\nimport os,sys\nos.execv("
-            + repr(curl)
-            + ",["
-            + repr(curl)
-            + ",'-H',"
-            + repr("X-TGen-Child: " + marker)
-            + ",*sys.argv[1:]])\n"
-        )
-        wrapper.chmod(0o700)
+        for tool in {
+            "curl",
+            *[
+                requirement["tool"]
+                for requirement in scenario.get("tool_contract", {}).get(
+                    "requirements", []
+                )
+            ],
+        }:
+            binary = shutil.which(tool)
+            wrapper = tools / tool
+            wrapper.write_text(
+                "#!/usr/bin/env python3\nimport os,sys\nos.execv(sys.executable,[sys.executable,"
+                + repr(str(root / "scripts/traffic_tool.py"))
+                + ","
+                + repr(binary)
+                + ","
+                + repr(tool)
+                + ",*sys.argv[1:]])\n"
+            )
+            wrapper.chmod(0o700)
         command = scenario_command(root, scenario, os.environ["TARGET_FQDN"])
         # Native connection tools cannot bypass the isolated HTTP egress from nested runs.
         if scenario["budget"] == "connection":
@@ -326,6 +335,10 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
             environment = dict(
                 os.environ,
                 TGEN_NESTED_EXECUTION="1",
+                TGEN_CHILD_MARKER=marker,
+                TGEN_TOOL_CONTRACT=json.dumps(
+                    scenario.get("tool_contract", {"requirements": []})
+                ),
                 PATH=str(tools) + os.pathsep + os.environ["PATH"],
                 TGEN_RESULTS_DIR=str(directory),
                 RESULTS_DIR=str(directory),

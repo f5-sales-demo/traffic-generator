@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from traffic_dispatch import verify_tool_actions
+from traffic_tool import attributed_arguments
 
 
 def test_tool_failure_missing_arguments_and_no_completion_fail():
@@ -26,3 +27,20 @@ def test_tool_failure_missing_arguments_and_no_completion_fail():
     assert not verify_tool_actions(contract, [dict(event, arguments=["--help"])])[
         "passed"
     ]
+
+
+def test_child_tool_marker_preserves_authentication_header():
+    args = [
+        "-u",
+        "https://www.example.test/vampi/users/v1",
+        "--headers=Authorization: Bearer synthetic",
+    ]
+    encoded = attributed_arguments("sqlmap", args, "child-opaque")
+    assert (
+        "--headers=Authorization: Bearer synthetic\nX-TGen-Child: child-opaque"
+        in encoded
+    )
+    assert args[-1] == "--headers=Authorization: Bearer synthetic"
+    assert attributed_arguments("curl", ["--data", "synthetic"], "child-opaque")[
+        -2:
+    ] == ["-H", "X-TGen-Child: child-opaque"]
