@@ -2553,53 +2553,53 @@
             "id": "baseline-0",
             "method": "GET",
             "path": "/juice-shop/",
-            "payload_class": "per-endpoint-throughput",
-            "minimum_dispatches": 20
+            "payload_class": "completed-throughput-baseline",
+            "minimum_dispatches": 30
           },
           {
             "id": "baseline-1",
             "method": "GET",
             "path": "/whoami/",
-            "payload_class": "per-endpoint-throughput",
-            "minimum_dispatches": 20
+            "payload_class": "completed-throughput-baseline",
+            "minimum_dispatches": 30
           },
           {
             "id": "baseline-2",
             "method": "GET",
             "path": "/httpbin/get",
-            "payload_class": "per-endpoint-throughput",
-            "minimum_dispatches": 20
+            "payload_class": "completed-throughput-baseline",
+            "minimum_dispatches": 30
           },
           {
             "id": "baseline-3",
             "method": "GET",
             "path": "/dvwa/login.php",
-            "payload_class": "per-endpoint-throughput",
-            "minimum_dispatches": 20
+            "payload_class": "completed-throughput-baseline",
+            "minimum_dispatches": 30
           },
           {
             "id": "baseline-4",
             "method": "GET",
             "path": "/vampi/users/v1",
-            "payload_class": "per-endpoint-throughput",
-            "minimum_dispatches": 20
+            "payload_class": "completed-throughput-baseline",
+            "minimum_dispatches": 30
           },
           {
             "id": "baseline-5",
             "method": "GET",
-            "path": "/csd-demo/health",
-            "payload_class": "per-endpoint-throughput",
-            "minimum_dispatches": 20
-          },
-          {
-            "id": "baseline-6",
-            "method": "GET",
-            "path": "/health",
-            "payload_class": "per-endpoint-throughput",
-            "minimum_dispatches": 20
+            "path": "/csd-demo/",
+            "payload_class": "completed-throughput-baseline",
+            "minimum_dispatches": 30
           }
         ],
         "reject_unmatched_errors": true
+      },
+      "adapter": "bounded-workload",
+      "workload_contract": {
+        "levels": [20],
+        "minimum_requests": 200,
+        "verify_behavior": true,
+        "paths": ["/juice-shop/", "/whoami/", "/httpbin/get", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"]
       }
     },
     {

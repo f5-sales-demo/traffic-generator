@@ -49,3 +49,22 @@ def test_workload_requires_actual_concurrency_and_connection_behavior():
     assert not verify_workload(specification, receipt)["passed"]
     receipt["levels"][0].update(maximum_active=10, connections_created=10)
     assert verify_workload(specification, receipt)["passed"]
+
+
+def test_duration_cutoff_cannot_substitute_for_completed_counted_requests():
+    specification = {"levels": [20], "minimum_requests": 100, "verify_behavior": True}
+    receipt = {
+        "levels": [
+            {
+                "concurrency": 20,
+                "maximum_active": 20,
+                "requests": 99,
+                "transport_failures": 0,
+                "content_failures": 0,
+                "persistent": True,
+                "connections_created": 20,
+            }
+        ],
+        "cleanup": True,
+    }
+    assert not verify_workload(specification, receipt)["passed"]
