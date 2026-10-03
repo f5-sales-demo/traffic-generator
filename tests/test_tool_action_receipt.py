@@ -6,7 +6,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from traffic_dispatch import verify_tool_actions
 from traffic_runtime import scenario_action_verification
-from traffic_tool import attributed_arguments, native_binary, nikto_configuration
+from traffic_tool import (
+    attributed_arguments,
+    native_binary,
+    nikto_configuration,
+    worker_arguments,
+)
 
 
 def test_tool_failure_missing_arguments_and_no_completion_fail():
@@ -89,3 +94,12 @@ def test_nikto_child_config_preserves_native_paths_and_test_identity(tmp_path):
     assert "TGen-Child/child-opaque" in text
     assert "UPDATES=no" in text
     assert output.stat().st_mode & 0o077 == 0
+
+
+def test_timed_native_workers_keep_original_arguments_and_add_opaque_attribution():
+    args = ["-c", "2", "https://example.com/httpbin/get"]
+    for tool in ("wrk", "hey", "ab"):
+        result = worker_arguments(tool, args, tool + "-123")
+        assert result[: len(args)] == args
+        assert result[-2:] == ["-H", "X-TGen-Worker: " + tool + "-123"]
+    assert worker_arguments("vegeta", args, "vegeta-123") == args

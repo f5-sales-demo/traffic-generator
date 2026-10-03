@@ -161,6 +161,11 @@ class Budget:
                 marker = native_marker.group(1)
         if marker:
             current = child_metadata(self.metrics_path.parent, marker, current)
+        worker_marker = flow.request.headers.pop("X-TGen-Worker", "")
+        if worker_marker and not re.fullmatch(r"(?:wrk|hey|ab)-[0-9]+", worker_marker):
+            message = "invalid native worker attribution"
+            raise ValueError(message)
+        flow.metadata["tgen_worker"] = worker_marker
         flow.metadata["tgen_scenario"] = current
         event = asyncio.get_running_loop().create_future()
         flow.metadata["tgen_pending_slot"] = event
@@ -205,6 +210,7 @@ class Budget:
             stream.write(
                 json.dumps(
                     {
+                        "worker_marker": flow.metadata.get("tgen_worker", ""),
                         "scenario": current.get("id"),
                         "kind": observed["kind"],
                         "matched_requirements": matched,
@@ -264,6 +270,7 @@ class Budget:
             message = "response evidence escaped the owned results directory"
             raise ValueError(message)
         event = {
+            "worker_marker": flow.metadata.get("tgen_worker", ""),
             "scenario": current["id"],
             "kind": "scenario"
             if current.get("phase") == "execution"
@@ -334,6 +341,8 @@ class Budget:
                             "error": re.sub(
                                 r"b'[^']*'", "[redacted header]", flow.error.msg
                             ),
+                            "worker_marker": flow.metadata.get("tgen_worker", ""),
+                            "observed_at": time.time(),
                             "scenario": self.current_scenario(),
                         }
                     )

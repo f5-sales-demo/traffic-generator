@@ -58,6 +58,16 @@ def attributed_arguments(tool: str, arguments: list[str], marker: str) -> list[s
     return result
 
 
+def worker_arguments(tool: str, arguments: list[str], marker: str) -> list[str]:
+    """Bind timed native HTTP workers to opaque request receipts without changing payloads."""
+    if tool not in {"wrk", "hey", "ab"}:
+        return list(arguments)
+    if not re.fullmatch(r"[a-z0-9-]{1,80}", marker):
+        message = "invalid native worker marker"
+        raise ValueError(message)
+    return [*arguments, "-H", "X-TGen-Worker: " + marker]
+
+
 def nikto_configuration(source: Path, directory: Path, marker: str) -> Path:
     """Use pinned Nikto's supported config interface while preserving native test IDs."""
     if not re.fullmatch(r"[a-z0-9-]{1,80}", marker):
@@ -95,7 +105,10 @@ def main() -> int:
         if requirement["tool"] == tool
         and re.search(requirement["argument_regex"], " ".join(arguments))
     ]
+    worker_marker = tool + "-" + str(os.getpid())
+    arguments = worker_arguments(tool, arguments, worker_marker)
     event = {
+        "worker_marker": worker_marker,
         "tool": tool,
         "binary_sha256": hashlib.sha256(Path(binary).read_bytes()).hexdigest(),
         "matched_requirements": matched,
