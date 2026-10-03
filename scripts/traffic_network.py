@@ -502,6 +502,7 @@ class NetworkBoundary:
             REQUESTS_CA_BUNDLE=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             NODE_EXTRA_CA_CERTS=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             TGEN_INHERITED_BOUNDARY="1",
+            TGEN_RUNTIME_DIR=str(self.runtime),
             TGEN_NUCLEI_CONFIG=str(self.root / "suites/nuclei-config.yaml"),
             TGEN_NUCLEI_TEMPLATES=",".join(
                 "/opt/nuclei-templates/http/" + name

@@ -6,11 +6,13 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import traffic_runtime as runtime
+from traffic_attribution import child_metadata
 
 
 def test_nested_exit_zero_without_dispatch_is_failure(tmp_path, monkeypatch):
     monkeypatch.setenv("TGEN_RESULTS_DIR", str(tmp_path))
     monkeypatch.setenv("TARGET_FQDN", "www.example.test")
+    monkeypatch.setenv("TGEN_RUNTIME_DIR", str(tmp_path))
     scenario = {
         "id": "synthetic/action",
         "entrypoint": "scripts/traffic_dispatch.py",
@@ -31,3 +33,17 @@ def test_nested_exit_zero_without_dispatch_is_failure(tmp_path, monkeypatch):
     }
     with patch.object(runtime, "execute", return_value={"outcome": "launched"}):
         assert runtime.run_nested(Path(__file__).resolve().parents[1], [scenario]) == 1
+
+
+def test_child_marker_cannot_escape_owned_runtime(tmp_path):
+    parent = {"id": "parent/workload"}
+    assert child_metadata(tmp_path, "../foreign", parent) == parent
+    assert child_metadata(tmp_path, "unknown", parent) == parent
+    child = tmp_path / "children"
+    child.mkdir()
+    (child / "opaque-marker.json").write_text(
+        '{"id":"suite/action","dispatch_path":"'
+        + str(tmp_path / "child-events.jsonl")
+        + '"}'
+    )
+    assert child_metadata(tmp_path, "opaque-marker", parent)["id"] == "suite/action"

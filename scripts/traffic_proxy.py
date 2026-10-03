@@ -14,6 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
+from traffic_attribution import child_metadata
 from traffic_dispatch import (
     classify_outcome,
     declared_socket_cleanup,
@@ -149,6 +150,9 @@ class Budget:
             current = json.loads(self.scenario_file.read_text())
         except (OSError, ValueError):
             current = {"id": "catalog", "phase": "unattributed"}
+        marker = flow.request.headers.pop("X-TGen-Child", "")
+        if marker:
+            current = child_metadata(self.metrics_path.parent, marker, current)
         flow.metadata["tgen_scenario"] = current
         event = asyncio.get_running_loop().create_future()
         flow.metadata["tgen_pending_slot"] = event
