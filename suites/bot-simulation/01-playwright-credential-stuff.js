@@ -71,7 +71,7 @@ const CREDENTIALS = [
 
       for (let setupAttempt = 0; setupAttempt < 3; setupAttempt++) {
         const setup = await page.goto(`${BASE_URL}/dvwa/login.php`, {
-          waitUntil: domcontentloaded,
+          waitUntil: 'domcontentloaded',
           timeout: 30000,
         });
         if (![502, 503, 504].includes(setup.status())) break;
