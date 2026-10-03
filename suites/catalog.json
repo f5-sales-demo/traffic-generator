@@ -5665,6 +5665,11 @@
             "payload_class": "graphql-expensive-baseline",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "text_contains": ["systemUpdate"]
             }
           },
           {
@@ -5678,6 +5683,11 @@
             "payload_class": "graphql-expensive-batch",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "text_contains": ["systemUpdate"]
             }
           },
           {
@@ -5691,6 +5701,11 @@
             "payload_class": "graphql-expensive-batch",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "text_contains": ["systemUpdate"]
             }
           },
           {
@@ -5704,6 +5719,11 @@
             "payload_class": "graphql-expensive-batch",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "text_contains": ["systemUpdate"]
             }
           },
           {
@@ -5717,6 +5737,11 @@
             "payload_class": "graphql-mixed-expensive-batch",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "text_contains": ["systemUpdate"]
             }
           }
         ],
