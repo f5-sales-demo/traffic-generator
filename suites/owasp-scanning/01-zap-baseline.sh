@@ -49,7 +49,7 @@ run_zap_daemon_mode() {
     -config api.disablekey=true \
     -config autoupdate.checkOnStart=false \
     -config autoupdate.checkAddonUpdates=false \
-    -config spider.maxDuration="${TGEN_ZAP_SPIDER_MINUTES:-2}" \
+    -config spider.maxDuration=0 \
     -config scanner.maxScanDurationInMins=0 &
   ZAP_PID=$!
 
@@ -81,7 +81,7 @@ run_zap_daemon_mode() {
       python3 -c "import sys,json; print(json.load(sys.stdin)['scan'])" 2>/dev/null)
 
     # Wait for spider to finish (max 120s)
-    for j in $(seq 1 "${TGEN_ZAP_POLL_COUNT:-40}"); do
+    for j in $(seq 1 "${TGEN_ZAP_BASELINE_POLL_COUNT:-40}"); do
       STATUS=$(curl -s "${ZAP_API}/JSON/spider/view/status/?scanId=${SCAN_ID}" |
         python3 -c "import sys,json; print(int(json.load(sys.stdin)['status']))" 2>/dev/null)
       if [[ "${STATUS}" -ge 100 ]]; then
@@ -101,7 +101,7 @@ run_zap_daemon_mode() {
   # Wait for passive scan to finish
   echo ""
   echo "[*] Waiting for passive scan to complete..."
-  for k in $(seq 1 "${TGEN_ZAP_POLL_COUNT:-40}"); do
+  for k in $(seq 1 "${TGEN_ZAP_BASELINE_POLL_COUNT:-40}"); do
     RECORDS=$(curl -s "${ZAP_API}/JSON/pscan/view/recordsToScan/" |
       python3 -c "import sys,json; print(int(json.load(sys.stdin)['recordsToScan']))" 2>/dev/null)
     if [[ "${RECORDS}" -eq 0 ]]; then
