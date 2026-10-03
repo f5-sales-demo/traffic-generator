@@ -22,6 +22,17 @@ from traffic_common import Pacer, atomic_json, terminate
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 CRAPI_ACCOUNT_COUNT = 2
 BENIGN_CONNECTION_MAX_AGE = 10
+BENIGN_PATHS = (
+    "/juice-shop/rest/products/search",
+    "/dvwa/login.php",
+    "/vampi/",
+    "/httpbin/get",
+    "/whoami/",
+    "/csd-demo/",
+    "/dvga/",
+    "/restaurant/openapi.json",
+    "/crapi/",
+)
 PROXY_HEARTBEAT_MAX_AGE = 30
 
 
@@ -39,7 +50,8 @@ class NetworkBoundary:
         self.state = SimpleNamespace()
         self.browser_temp = Path(tempfile.mkdtemp(prefix="tgen-"))
         suffix = uuid.uuid4().hex[:7]
-        self.state.namespace = "tgen-" + suffix
+        namespace_prefix = "tgen-"
+        self.state.namespace = namespace_prefix + suffix
         self.state.host_link, self.state.guest_link = "tgh" + suffix, "tgg" + suffix
         self.state.chain = "TGEN" + suffix.upper()
         self.state.gateway, self.state.guest = "169.254.240.1", "169.254.240.2"
@@ -54,6 +66,7 @@ class NetworkBoundary:
             "benign_success": 0,
             "benign_transport_failures": 0,
             "benign_per_domain": dict.fromkeys(config["domains"], 0),
+            "benign_per_application": dict.fromkeys(BENIGN_PATHS, 0),
         }
         self.state.pacers = {domain: Pacer(90) for domain in config["domains"]}
         self.state.capacity = {
@@ -301,11 +314,14 @@ class NetworkBoundary:
         self.state.pacers[domain].acquire()
         with self.state.lock:
             self.state.benign["benign_requests"] += 1
+            index = self.state.benign["benign_per_domain"][domain]
+            path = BENIGN_PATHS[index % len(BENIGN_PATHS)]
             self.state.benign["benign_per_domain"][domain] += 1
+            self.state.benign["benign_per_application"][path] += 1
         try:
             connection.request(
                 "GET",
-                "/httpbin/get",
+                path,
                 headers={
                     "X-TGen-Class": "benign",
                     "X-MUD-User": "waap-benign-" + domain,
@@ -413,7 +429,12 @@ class NetworkBoundary:
             self.fixture_login(
                 domain,
                 "/juice-shop/rest/user/login",
-                {"email": "admin@juice-sh.op", "password": "admin123"},
+                {
+                    "email": fixtures.get("juice_email", "tgen@example.com"),
+                    "password": fixtures.get(
+                        "juice_password", "synthetic-fixture-unavailable"
+                    ),
+                },
             )
             .get("authentication", {})
             .get("token")

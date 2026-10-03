@@ -44,7 +44,11 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                 flow = SimpleNamespace(
                     metadata={},
                     request=SimpleNamespace(
-                        headers={"Host": "www.example.test"}, host="192.0.2.1", port=443
+                        headers={"Host": "www.example.test"},
+                        host="192.0.2.1",
+                        port=443,
+                        method="GET",
+                        path="/httpbin/get",
                     ),
                 )
                 await budget.request(flow)

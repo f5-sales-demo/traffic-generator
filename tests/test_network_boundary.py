@@ -116,6 +116,28 @@ class BoundaryTests(unittest.TestCase):
         ):
             boundary.__exit__(None, None, None)
 
+    def test_benign_rotation_dispatches_each_application_once(self):
+        boundary = NetworkBoundary(
+            ROOT, {"domains": ["www.example.test", "api.example.test"]}, ROOT
+        )
+        with patch("traffic_network.http.client.HTTPSConnection") as connection:
+            connection.return_value.getresponse.return_value.status = 200
+            for _ in range(9):
+                boundary.request("www.example.test")
+            paths = [
+                call.args[1] for call in connection.return_value.request.call_args_list
+            ]
+        assert len(set(paths)) == 9
+        assert all(
+            count == 1
+            for count in boundary.state.benign["benign_per_application"].values()
+        )
+        with (
+            patch("traffic_network.subprocess.run"),
+            patch("traffic_network.shutil.rmtree"),
+        ):
+            boundary.__exit__(None, None, None)
+
     def test_stalled_gateway_fails_supervisor_health(self):
         with tempfile.TemporaryDirectory() as tmp:
             runtime = pathlib.Path(tmp)

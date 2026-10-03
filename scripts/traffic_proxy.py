@@ -143,6 +143,32 @@ class Budget:
         await self.pending.put((event, host))
         await event
         flow.metadata.pop("tgen_pending_slot", None)
+        try:
+            current = json.loads(self.scenario_file.read_text())
+            event_path = Path(current["dispatch_path"])
+            if not event_path.resolve().is_relative_to(
+                self.metrics_path.parent.resolve()
+            ):
+                message = "dispatch receipt escaped the owned results directory"
+                raise ValueError(message)
+        except (OSError, KeyError):
+            event_path = self.metrics_path.parent / "dispatch-events.jsonl"
+        with event_path.open("a", encoding="utf-8") as stream:
+            event_path.chmod(0o600)
+            # This private receipt records endpoint and payload class inputs, never headers/cookies.
+            stream.write(
+                json.dumps(
+                    {
+                        "scenario": self.current_scenario(),
+                        "kind": "scenario",
+                        "method": flow.request.method,
+                        "path": flow.request.path.split("?", 1)[0],
+                        "query": flow.request.path.partition("?")[2],
+                        "dispatched": time.time(),
+                    }
+                )
+                + "\n"
+            )
         if flow.request.headers.pop("X-TGen-Raw-Method", "") == "CONNECT":
             flow.response = await asyncio.to_thread(
                 self.raw_connect, host, flow.request.path

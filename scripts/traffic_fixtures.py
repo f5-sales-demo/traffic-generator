@@ -17,6 +17,22 @@ def main() -> int:
         message = "unsafe private fixture permissions"
         raise ValueError(message)
     fixtures = json.loads(path.read_text())
+    if sys.argv[1] == "dvwa-session":
+        domain = sys.argv[2]
+        sessions = fixtures.get("dvwa_sessions", {})
+        cookie = sessions.get(domain)
+        if (
+            not isinstance(cookie, str)
+            or not cookie
+            or "\n" in cookie
+            or "\r" in cookie
+        ):
+            message = "missing real origin-authenticated DVWA fixture"
+            raise ValueError(message)
+        print("# Netscape HTTP Cookie File")
+        print(f"{domain}\tFALSE\t/dvwa/\tFALSE\t0\tPHPSESSID\t{cookie}")
+        print(f"{domain}\tFALSE\t/dvwa/\tFALSE\t0\tsecurity\tlow")
+        return 0
     if sys.argv[1] != "crapi-token":
         message = "unknown fixture selection"
         raise ValueError(message)

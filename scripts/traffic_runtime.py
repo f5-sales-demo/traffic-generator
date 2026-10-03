@@ -18,6 +18,7 @@ from pathlib import Path
 
 from traffic_catalog import load_catalog, readiness
 from traffic_common import atomic_json, terminate
+from traffic_dispatch import verify_dispatch
 from traffic_network import NetworkBoundary
 
 sys.dont_write_bytecode = True
@@ -302,14 +303,20 @@ def _scenario(
 ) -> dict:
     """Launch one scenario and record meaningful network dispatch independently of filler."""
     config = boundary.config
-    atomic_json(
-        Path(config["results_dir"]) / "current-scenario.json", {"id": scenario["id"]}
-    )
     directory = active / scenario["id"].replace("/", "--")
     directory.mkdir(mode=0o700)
+    atomic_json(
+        Path(config["results_dir"]) / "current-scenario.json",
+        {
+            "id": scenario["id"],
+            "dispatch_path": str(directory / "dispatch-events.jsonl"),
+        },
+    )
     boundary.refresh_fixtures(domain)
     environment = boundary.environment(scenario, domain, directory)
     before = boundary.metrics()
+    dispatch_file = directory / "dispatch-events.jsonl"
+    dispatch_offset = dispatch_file.stat().st_size if dispatch_file.exists() else 0
     command = boundary.wrap(
         scenario_command(root, scenario, domain),
         connection=scenario["budget"] == "connection",
@@ -334,6 +341,20 @@ def _scenario(
             "claim": scenario["expected_outcome"],
         }
     )
+    if "dispatch_contract" in scenario:
+        events = []
+        if dispatch_file.exists():
+            with dispatch_file.open() as stream:
+                stream.seek(dispatch_offset)
+                events = [json.loads(line) for line in stream if line.strip()]
+        result["intended_dispatch"] = verify_dispatch(
+            scenario["dispatch_contract"], events
+        )
+        if (
+            result["outcome"] == "launched"
+            and not result["intended_dispatch"]["passed"]
+        ):
+            result["outcome"] = "fixture_failure"
     if scenario["budget"] == "connection":
         connection_receipt = directory / "connections.json"
         if connection_receipt.exists():
