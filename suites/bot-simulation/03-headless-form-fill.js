@@ -108,15 +108,13 @@ const IDENTITIES = [
       await page.fill('#passwordControl', identity.password);
       await page.fill('#repeatPasswordControl', identity.password);
 
-      // Select security question
-      await page.click('[name="securityQuestion"]').catch(() => {});
-      await page.waitForTimeout(500);
-      const options = await page.$$('mat-option');
-      if (options.length > 0) {
-        await options[0].click();
-      }
+      // Select a real loaded question through the native combobox.
+      await page.getByRole('combobox', { name: 'Selection list for the security question' }).click();
+      await page.getByRole('option').first().click();
       await page.fill('#securityAnswerControl', 'bot answer');
 
+      if (!(await page.locator('#registerButton').isEnabled()))
+        throw new Error('Registration form validation remains incomplete');
       const [registration] = await Promise.all([
         page.waitForResponse(
           (response) =>
