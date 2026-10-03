@@ -27,44 +27,44 @@ const BASE_URL = `${process.env.TARGET_PROTOCOL || 'http'}://${TARGET_FQDN}`;
 // Fake identities for form filling
 const IDENTITIES = [
   {
-    email: 'bot1@spam.example',
+    email: 'bot1@example.com',
     password: 'BotPass1!',
     name: 'Bot User One',
     comment: 'Great products, buy now at spam.example',
   },
   {
-    email: 'bot2@spam.example',
+    email: 'bot2@example.com',
     password: 'BotPass2!',
     name: 'Bot User Two',
     comment: 'Check out these deals at phishing.example',
   },
   {
-    email: 'bot3@spam.example',
+    email: 'bot3@example.com',
     password: 'BotPass3!',
     name: 'Bot User Three',
     comment: 'Free gift cards at malware.example',
   },
-  { email: 'bot4@spam.example', password: 'BotPass4!', name: 'Bot User Four', comment: 'You won a prize, click here' },
+  { email: 'bot4@example.com', password: 'BotPass4!', name: 'Bot User Four', comment: 'You won a prize, click here' },
   {
-    email: 'bot5@spam.example',
+    email: 'bot5@example.com',
     password: 'BotPass5!',
     name: 'Bot User Five',
     comment: 'Earn money from home at scam.example',
   },
   {
-    email: 'bot6@spam.example',
+    email: 'bot6@example.com',
     password: 'BotPass6!',
     name: 'Bot User Six',
     comment: 'Hot singles in your area at phish.example',
   },
   {
-    email: 'bot7@spam.example',
+    email: 'bot7@example.com',
     password: 'BotPass7!',
     name: 'Bot User Seven',
     comment: 'Crypto investment at ponzi.example',
   },
   {
-    email: 'bot8@spam.example',
+    email: 'bot8@example.com',
     password: 'BotPass8!',
     name: 'Bot User Eight',
     comment: 'Congratulations winner at 419.example',

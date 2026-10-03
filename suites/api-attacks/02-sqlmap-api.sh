@@ -61,7 +61,7 @@ echo ""
 echo "[+] SQLMap against register endpoint (POST)..."
 sqlmap --batch --level=1 --risk=1 \
   -u "${BASE}/users/v1/register" \
-  --data='{"username":"*","password":"test123","email":"test@test.com"}' \
+  --data='{"username":"*","password":"test123","email":"test@example.com"}' \
   --method=POST \
   -H "Content-Type: application/json" \
   --timeout=30 --retries=1 --threads=3 \

@@ -58,7 +58,7 @@ run_sqlmap "Juice Shop — Product Search" \
 
 run_sqlmap "Juice Shop — Login Endpoint" \
   -u "${BASE}/juice-shop/rest/user/login" \
-  --method=POST --data='{"email":"test@test.com","password":"test"}' \
+  --method=POST --data='{"email":"test@example.com","password":"test"}' \
   --level="${TGEN_SQLMAP_LEVEL:-1}" --risk="${TGEN_SQLMAP_RISK:-1}" --threads=4 \
   ${SQLMAP_COMMON}
 

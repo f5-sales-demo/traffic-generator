@@ -38,9 +38,9 @@ def test_role_fixture_restores_only_its_original_actor(tmp_path, monkeypatch):
     monkeypatch.setenv("TGEN_RESULTS_DIR", str(tmp_path))
     profile = {
         "username": "tgen_bola_attacker",
-        "phone_number": "5550100003",
-        "first_name": "Synthetic",
-        "last_name": "Actor",
+        "phone_number": "2025550103",
+        "first_name": "Example",
+        "last_name": "Example",
         "role": "Customer",
     }
     with (
