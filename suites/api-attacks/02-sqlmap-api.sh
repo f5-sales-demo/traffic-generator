@@ -16,7 +16,7 @@ echo "[+] Obtaining auth token..."
 LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
   -H "Content-Type: application/json" \
   -d '{"username":"attacker","password":"attacker123"}' \
-  --max-time 10) || true
+  --max-time 30) || true
 
 TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // empty' 2>/dev/null || true)
 if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
@@ -38,7 +38,7 @@ echo "[+] SQLMap against user lookup endpoint..."
 sqlmap --batch --level=1 --risk=1 \
   -u "${BASE}/users/v1/admin" \
   ${AUTH_FLAG:+"$AUTH_FLAG"} \
-  --timeout=10 --retries=1 --threads=3 \
+  --timeout=30 --retries=1 --threads=3 \
   --output-dir="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-vampi-users" ||
   echo "WARN: sqlmap user lookup scan returned non-zero"
 
@@ -51,7 +51,7 @@ sqlmap --batch --level=1 --risk=1 \
   --data='{"username":"*","password":"test"}' \
   --method=POST \
   -H "Content-Type: application/json" \
-  --timeout=10 --retries=1 --threads=3 \
+  --timeout=30 --retries=1 --threads=3 \
   --output-dir="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-vampi-login" ||
   echo "WARN: sqlmap login scan returned non-zero"
 
@@ -64,7 +64,7 @@ sqlmap --batch --level=1 --risk=1 \
   --data='{"username":"*","password":"test123","email":"test@test.com"}' \
   --method=POST \
   -H "Content-Type: application/json" \
-  --timeout=10 --retries=1 --threads=3 \
+  --timeout=30 --retries=1 --threads=3 \
   --output-dir="${TGEN_RESULTS_DIR:-/tmp}/sqlmap-vampi-register" ||
   echo "WARN: sqlmap register scan returned non-zero"
 
