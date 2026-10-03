@@ -70,6 +70,7 @@ const USER_AGENTS = [
     });
     const page = await context.newPage();
     const requestState = observeRequests(page);
+    let documentResponse;
     page.setDefaultTimeout(10000);
 
     const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
@@ -83,10 +84,11 @@ const USER_AGENTS = [
           waitUntil: 'domcontentloaded',
           timeout: 20000,
         });
+        if (response) documentResponse = response;
         const status = response ? response.status() : 'N/A';
         console.log(`    ${path} -> ${status}`);
         await settleRequests(requestState);
-        const item = await verifyNavigation(page, response, path, identity, directory);
+        const item = await verifyNavigation(page, response || documentResponse, path, identity, directory);
         receipt.actions.push(item);
         if (!item.rendered && !item.mitigated) throw new Error('Declared navigation outcome was not rendered');
         visited++;
