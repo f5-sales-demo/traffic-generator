@@ -102,9 +102,9 @@ variables {
   aws_cli_version                 = "2.31.21"
   aws_cli_archive_url             = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.31.21.zip"
   aws_cli_archive_sha256          = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
-  cloudwatch_agent_version        = "1.300073.1b1859-1"
-  cloudwatch_agent_package_url    = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb"
-  cloudwatch_agent_package_sha256 = "243da09e1af783d24299ab7948a550f235278c8eae51a4b84c61343382e1af2b"
+  cloudwatch_agent_version        = "1.300073.2b1889-1"
+  cloudwatch_agent_package_url    = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb?versionId=gBsjqYJfnfEGrqGYPyWw1Ct8qjfwnNSz"
+  cloudwatch_agent_package_sha256 = "f25c81f42627ac481b51215e8e6f989208ab266f8b224ffd66a208061e790f1c"
   node_archive_url                = "https://nodejs.org/dist/v22.20.0/node-v22.20.0-linux-x64.tar.xz"
   node_archive_sha256             = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   chrome_archive_url              = "https://storage.googleapis.com/chrome-for-testing-public/140.0.7339.207/linux64/chrome-linux64.zip"
@@ -195,6 +195,78 @@ run "reject_unpinned_cloudwatch_agent" {
   expect_failures = [var.cloudwatch_agent_package_url]
 }
 
+
+run "reject_cloudwatch_bare_latest" {
+  command = plan
+  variables { cloudwatch_agent_package_url = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb" }
+  expect_failures = [var.cloudwatch_agent_package_url]
+}
+
+run "reject_cloudwatch_empty_version_id" {
+  command = plan
+  variables { cloudwatch_agent_package_url = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb?versionId=" }
+  expect_failures = [var.cloudwatch_agent_package_url]
+}
+
+run "reject_cloudwatch_null_version_id" {
+  command = plan
+  variables { cloudwatch_agent_package_url = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb?versionId=null" }
+  expect_failures = [var.cloudwatch_agent_package_url]
+}
+
+run "reject_cloudwatch_wrong_origin" {
+  command = plan
+  variables { cloudwatch_agent_package_url = "https://example.invalid/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb?versionId=gBsjqYJfnfEGrqGYPyWw1Ct8qjfwnNSz" }
+  expect_failures = [var.cloudwatch_agent_package_url]
+}
+
+run "reject_cloudwatch_wrong_path" {
+  command = plan
+  variables { cloudwatch_agent_package_url = "https://amazoncloudwatch-agent.s3.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb?versionId=gBsjqYJfnfEGrqGYPyWw1Ct8qjfwnNSz" }
+  expect_failures = [var.cloudwatch_agent_package_url]
+}
+
+run "reject_cloudwatch_wrong_architecture" {
+  command = plan
+  variables { cloudwatch_agent_package_url = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb?versionId=gBsjqYJfnfEGrqGYPyWw1Ct8qjfwnNSz" }
+  expect_failures = [var.cloudwatch_agent_package_url]
+}
+
+run "reject_cloudwatch_extra_query" {
+  command = plan
+  variables { cloudwatch_agent_package_url = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb?versionId=gBsjqYJfnfEGrqGYPyWw1Ct8qjfwnNSz&download=1" }
+  expect_failures = [var.cloudwatch_agent_package_url]
+}
+
+run "reject_cloudwatch_fragment" {
+  command = plan
+  variables { cloudwatch_agent_package_url = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb?versionId=gBsjqYJfnfEGrqGYPyWw1Ct8qjfwnNSz#download" }
+  expect_failures = [var.cloudwatch_agent_package_url]
+}
+
+run "reject_cloudwatch_version_without_revision" {
+  command = plan
+  variables { cloudwatch_agent_version = "1.300073.2b1889" }
+  expect_failures = [var.cloudwatch_agent_version]
+}
+
+run "reject_cloudwatch_wrong_version_major" {
+  command = plan
+  variables { cloudwatch_agent_version = "2.300073.2b1889-1" }
+  expect_failures = [var.cloudwatch_agent_version]
+}
+
+run "reject_cloudwatch_version_without_build" {
+  command = plan
+  variables { cloudwatch_agent_version = "1.300073.2-1" }
+  expect_failures = [var.cloudwatch_agent_version]
+}
+
+run "reject_cloudwatch_version_suffix" {
+  command = plan
+  variables { cloudwatch_agent_version = "1.300073.2b1889-1extra" }
+  expect_failures = [var.cloudwatch_agent_version]
+}
 
 run "reject_unpinned_node_archive" {
   command = plan
@@ -427,6 +499,21 @@ run "verify_scoped_execution_contract" {
       strcontains(local.worker_cloud_init, "amazon-cloudwatch-agent-ctl")
     )
     error_message = "Bootstrap must normalize the pinned AWS CLI tree to root:tgen with no world access, preserve executable files and symlinks, and verify the exact version as tgen; runtime health must repeat the tgen version gate."
+  }
+
+  assert {
+    condition = (
+      strcontains(local.worker_cloud_init, "curl -fSL --retry 4 -o \"$3\" \"$1\"") &&
+      strcontains(local.worker_cloud_init, "echo \"$2  $3\" | sha256sum -c") &&
+      strcontains(local.worker_cloud_init, "dpkg-deb --field \"$package_path\" Package") &&
+      strcontains(local.worker_cloud_init, "dpkg-deb --field \"$package_path\" Architecture") &&
+      strcontains(local.worker_cloud_init, "dpkg-deb --field \"$package_path\" Version") &&
+      strcontains(local.worker_cloud_init, "test \"$package_name\" = amazon-cloudwatch-agent") &&
+      strcontains(local.worker_cloud_init, "test \"$architecture\" = amd64") &&
+      strcontains(local.worker_cloud_init, "test \"$version\" = \"$expected_version\"") &&
+      length(regexall("fetch '${replace(var.cloudwatch_agent_package_url, "?", "\\?")}' '${var.cloudwatch_agent_package_sha256}' /tmp/cw\\.deb\\s+verify_cloudwatch_agent_package /tmp/cw\\.deb '${var.cloudwatch_agent_version}'\\s+dpkg -i /tmp/cw\\.deb", local.worker_cloud_init)) == 1
+    )
+    error_message = "CloudWatch installation must checksum the pinned package and verify its exact name, amd64 architecture, and Debian version before dpkg installs it."
   }
 
   assert {
