@@ -624,8 +624,21 @@ def _scenario(
         }
     )
     scenario_action_verification(directory, scenario, result)
-    result["mitigated_requests"] = after.get("attack_mitigated", 0) - before.get(
-        "attack_mitigated", 0
+    response_path = directory / "response-events.jsonl"
+    responses = (
+        [
+            json.loads(line)
+            for line in response_path.read_text().splitlines()
+            if line.strip()
+        ]
+        if response_path.exists()
+        else []
+    )
+    result["mitigated_requests"] = sum(
+        event.get("scenario") == scenario["id"]
+        and event.get("kind") == "scenario"
+        and event.get("status") in (403, 429)
+        for event in responses
     )
     result["transport_failures"] = after.get(
         "scenario_transport_failures", 0

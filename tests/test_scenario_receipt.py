@@ -1,5 +1,6 @@
 """Observed dispatch and prerequisite failures must drive scenario receipts."""
 
+import json
 import sys
 import tempfile
 import threading
@@ -131,3 +132,56 @@ def test_cancelled_tool_requests_cannot_establish_success():
                 threading.Event(),
             )  # pylint: disable=protected-access
         assert result["outcome"] == "tool_failure"
+
+
+def test_scenario_mitigation_count_excludes_filler_and_prerequisites(tmp_path):
+    """Aggregate filler counters cannot inflate a scenario's attributed responses."""
+    active = tmp_path / "pass-test"
+    active.mkdir()
+    snapshots = iter(
+        [
+            {"scenario_requests": 0, "attack_mitigated": 0},
+            {"scenario_requests": 1, "attack_mitigated": 999},
+        ]
+    )
+    boundary = SimpleNamespace(
+        config={"results_dir": str(tmp_path), "scenario_timeout_seconds": 10},
+        refresh_fixtures=lambda _: None,
+        environment=lambda *_: {},
+        metrics=lambda: next(snapshots),
+        wrap=lambda command, **_options: command,
+    )
+
+    def observed_execution(*_args, **_kwargs):
+        directory = active / "synthetic--action"
+        (directory / "dispatch-events.jsonl").write_text(
+            json.dumps({"kind": "scenario", "matched_requirements": ["action"]}) + "\n"
+        )
+        (directory / "response-events.jsonl").write_text(
+            "\n".join(
+                json.dumps(event)
+                for event in [
+                    {"scenario": "synthetic/action", "kind": "scenario", "status": 403},
+                    {
+                        "scenario": "synthetic/action",
+                        "kind": "prerequisite",
+                        "status": 403,
+                    },
+                    {"scenario": "child/action", "kind": "scenario", "status": 429},
+                ]
+            )
+            + "\n"
+        )
+        return {"outcome": "launched"}
+
+    with patch.object(runtime, "execute", side_effect=observed_execution):
+        result = runtime._scenario(
+            ROOT,
+            scenario(),
+            "www.example.test",
+            active,
+            cast("runtime.NetworkBoundary", boundary),
+            {"failures": []},
+            threading.Event(),
+        )
+    assert result["mitigated_requests"] == 1
