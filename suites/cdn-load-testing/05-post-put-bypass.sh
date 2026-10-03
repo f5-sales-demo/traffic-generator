@@ -61,7 +61,7 @@ echo ""
 
 # Juice Shop endpoints
 echo "[+] Juice Shop testing"
-check_method_bypass "POST" "/juice-shop/rest/user/login" '{"email":"admin@juice-sh.op","password":"admin123"}'
+check_method_bypass "POST" "/juice-shop/rest/user/login" '{"email":"admin@example.com","password":"admin123"}'
 check_method_bypass "POST" "/juice-shop/api/Feedbacks/" '{"comment":"CDN test","rating":5}'
 echo ""
 

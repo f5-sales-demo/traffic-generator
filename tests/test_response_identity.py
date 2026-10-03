@@ -145,3 +145,31 @@ def test_matched_dispatch_without_response_spec_cannot_hide_server_timeout():
     assert not verify_responses(contract, [event])["passed"]
     assert not verify_responses(contract, [{**event, "status": 500}])["passed"]
     assert verify_responses(contract, [{**event, "status": 200}])["passed"]
+
+
+def test_mixed_graphql_requires_every_ordered_result_without_errors():
+    spec = {
+        "content_type": "application/json",
+        "graphql_response_fields": ["systemUpdate", "systemHealth", "pastes"],
+    }
+    good = '[{"data":{"systemUpdate":"done"}},{"data":{"systemHealth":"healthy"}},{"data":{"pastes":[]}}]'
+    assert response_content_matches(spec, "application/json", good)
+    assert not response_content_matches(
+        spec, "application/json", '[{"data":{"systemUpdate":"done"}}]'
+    )
+    assert not response_content_matches(
+        spec, "application/json", good.replace('"pastes":[]', '"wrong":[]')
+    )
+    assert not response_content_matches(
+        spec,
+        "application/json",
+        good.replace('"systemHealth":"healthy"', '"systemHealth":null'),
+    )
+    assert not response_content_matches(
+        spec,
+        "application/json",
+        good.replace(
+            '{"data":{"pastes":[]}}',
+            '{"data":{"pastes":[]},"errors":[{"message":"failed"}]}',
+        ),
+    )

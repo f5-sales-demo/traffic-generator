@@ -441,6 +441,27 @@ def graphql_response_matches(document: object, count: int, field: str) -> bool:
     )
 
 
+def graphql_mixed_body_matches(contract: dict, body: str) -> bool:
+    """Require each ordered mixed operation's data and reject any GraphQL errors."""
+    try:
+        document = json.loads(body)
+    except ValueError:
+        return False
+    fields = contract["graphql_response_fields"]
+    return (
+        isinstance(document, list)
+        and len(document) == len(fields)
+        and all(
+            isinstance(row, dict)
+            and not row.get("errors")
+            and isinstance(row.get("data"), dict)
+            and field in row["data"]
+            and row["data"][field] is not None
+            for row, field in zip(document, fields, strict=True)
+        )
+    )
+
+
 def graphql_body_matches(contract: dict, body: str) -> bool:
     """Decode a native GraphQL response without accepting malformed JSON."""
     try:
@@ -458,8 +479,13 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
         term not in body for term in contract.get("text_contains", [])
     ):
         return False
-    if "graphql_data_field" in contract:
-        return graphql_body_matches(contract, body)
+    if "graphql_data_field" in contract or "graphql_response_fields" in contract:
+        matcher = (
+            graphql_body_matches
+            if "graphql_data_field" in contract
+            else graphql_mixed_body_matches
+        )
+        return matcher(contract, body)
     if any(
         key in contract
         for key in (
