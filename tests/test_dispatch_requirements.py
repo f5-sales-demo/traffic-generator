@@ -4,9 +4,15 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from traffic_dispatch import match_requirements, verify_dispatch  # noqa: E402
+from traffic_dispatch import (  # noqa: E402
+    match_requirements,
+    validate_dispatch_contract,
+    verify_dispatch,
+)
 
 
 def contract():
@@ -155,3 +161,18 @@ def test_graphql_contract_rejects_invalid_json_and_other_operations():
     assert not match_requirements(
         specification, dict(event, body='{"query":"{pastes{id}}"}')
     )
+
+
+def test_invalid_contracts_fail_before_execution():
+    """Empty or duplicated requirements cannot silently become passing contracts."""
+    with pytest.raises(ValueError, match="at least one action"):
+        validate_dispatch_contract({"requirements": []})
+    item = {
+        "id": "same",
+        "method": "GET",
+        "path": "/httpbin/get",
+        "minimum_dispatches": 1,
+        "payload_class": "probe",
+    }
+    with pytest.raises(ValueError, match="unique"):
+        validate_dispatch_contract({"requirements": [item, item]})

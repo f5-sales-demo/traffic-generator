@@ -5,7 +5,7 @@ import tempfile
 import threading
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, cast
+from typing import cast
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,7 +54,7 @@ def test_failed_prerequisite_is_recorded_without_aborting_remaining_catalog():
             scenario(),
             "www.example.test",
             active,
-            cast("Any", boundary),
+            cast("runtime.NetworkBoundary", boundary),
             state,
             threading.Event(),
         )
@@ -90,7 +90,7 @@ def test_existing_contract_without_observed_action_cannot_be_verified():
                 scenario(),
                 "www.example.test",
                 active,
-                cast("Any", boundary),
+                cast("runtime.NetworkBoundary", boundary),
                 {"failures": []},
                 threading.Event(),
             )
