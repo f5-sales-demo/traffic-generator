@@ -420,6 +420,21 @@ def verify_workload(contract: dict, receipt: dict) -> dict:
         }
         for batch in contract.get("batches", [])
     )
+    checks.extend(
+        {
+            "persistent": mode,
+            "passed": any(
+                sample.get("persistent") is mode
+                and sample.get("requests", 0) >= contract["minimum_requests"]
+                and sample.get("connections_created")
+                == (sample["concurrency"] if mode else sample["requests"])
+                and sample.get("transport_failures") == 0
+                and sample.get("content_failures", 0) == 0
+                for sample in receipt.get("levels", [])
+            ),
+        }
+        for mode in contract.get("connection_modes", [])
+    )
     if "minimum_duration" in contract:
         checks.append(
             {

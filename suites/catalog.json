@@ -14974,7 +14974,7 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": ["performance-testing/03-sustained-load"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "target_paths": ["/httpbin/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
@@ -14984,7 +14984,7 @@
           {
             "id": "keepalive",
             "method": "GET",
-            "path": "/health",
+            "path": "/httpbin/get",
             "payload_class": "persistent-connection-comparison",
             "minimum_dispatches": 100,
             "headers": {
@@ -14994,7 +14994,7 @@
           {
             "id": "close",
             "method": "GET",
-            "path": "/health",
+            "path": "/httpbin/get",
             "payload_class": "new-connection-comparison",
             "minimum_dispatches": 100,
             "headers": {
@@ -15003,6 +15003,14 @@
           }
         ],
         "reject_unmatched_errors": true
+      },
+      "adapter": "bounded-workload",
+      "workload_contract": {
+        "levels": [1],
+        "minimum_requests": 100,
+        "paths": ["/httpbin/get"],
+        "verify_behavior": true,
+        "connection_modes": [true, false]
       }
     },
     {

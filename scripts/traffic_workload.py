@@ -152,10 +152,14 @@ def main() -> int:
             contract["paths"],
             level,
             batch,
-            "churn" not in identifier and "ephemeral" not in identifier,
+            persistent,
         )
         for level in contract["levels"]
         for batch in contract.get("batches", [contract["minimum_requests"]])
+        for persistent in contract.get(
+            "connection_modes",
+            ["churn" not in identifier and "ephemeral" not in identifier],
+        )
     ]
     if "sustained" in identifier or "profile" in identifier:
         while time.monotonic() - started < int(os.environ["TGEN_DURATION"]):
