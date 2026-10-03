@@ -468,8 +468,33 @@ class NetworkBoundary:
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
         """Provide structured inputs and private per-scenario output paths."""
         fixtures = json.loads((self.runtime.parent / "fixtures.json").read_text())
+        tool_path = directory / "tool-bin"
+        tool_path.mkdir(mode=0o700)
+        for tool in {
+            requirement["tool"]
+            for requirement in scenario.get("tool_contract", {}).get("requirements", [])
+        }:
+            binary = shutil.which(tool)
+            if not binary:
+                message = "required native scanner missing"
+                raise ValueError(message)
+            wrapper = tool_path / tool
+            wrapper.write_text(
+                "#!/usr/bin/env python3\nimport os,sys\nos.execv(sys.executable,[sys.executable,"
+                + repr(str(self.root / "scripts/traffic_tool.py"))
+                + ","
+                + repr(binary)
+                + ","
+                + repr(tool)
+                + ",*sys.argv[1:]])\n"
+            )
+            wrapper.chmod(0o700)
         return dict(
             os.environ,
+            PATH=str(tool_path) + os.pathsep + os.environ["PATH"],
+            TGEN_TOOL_CONTRACT=json.dumps(
+                scenario.get("tool_contract", {"requirements": []})
+            ),
             SSL_CERT_FILE=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             REQUESTS_CA_BUNDLE=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             NODE_EXTRA_CA_CERTS=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),

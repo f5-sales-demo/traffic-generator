@@ -23,6 +23,7 @@ from traffic_dispatch import (
     verify_connection_probe,
     verify_dispatch,
     verify_route_actions,
+    verify_tool_actions,
 )
 from traffic_network import NetworkBoundary
 
@@ -336,8 +337,41 @@ def prerequisite_failure(
     return result
 
 
+def connection_action_verification(
+    directory: Path, scenario: dict, result: dict
+) -> None:
+    """Validate a separately budgeted concrete connection probe."""
+    if scenario["budget"] == "connection":
+        connection_receipt = directory / "connections.json"
+        if connection_receipt.exists():
+            connection_data = json.loads(connection_receipt.read_text())
+            result["connection_attempts"] = connection_data["attempts"]
+            result["connection_limit"] = connection_data["attempt_limit_per_second"]
+            result["connection_probe"] = verify_connection_probe(
+                scenario["id"], connection_data
+            )
+            result["dispatch_contract_verified"] = result["connection_probe"]["passed"]
+            if (
+                result["outcome"] == "launched"
+                and not result["dispatch_contract_verified"]
+            ):
+                result["outcome"] = "tool_failure"
+        else:
+            result["outcome"] = "tool_failure"
+
+
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
+    if "tool_contract" in scenario:
+        evidence = directory / "tool-events.jsonl"
+        result["tool_actions"] = (
+            verify_tool_actions(
+                scenario["tool_contract"],
+                [json.loads(line) for line in evidence.read_text().splitlines()],
+            )
+            if evidence.exists()
+            else {"passed": False}
+        )
     if "route_contract" in scenario:
         evidence = directory / "route-actions.json"
         result["route_actions"] = (
@@ -377,29 +411,19 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         )
         if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
             result["outcome"] = "fixture_failure"
+    if "tool_contract" in scenario:
+        result["dispatch_contract_verified"] = (
+            result["dispatch_contract_verified"] and result["tool_actions"]["passed"]
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
     if "route_contract" in scenario:
         result["dispatch_contract_verified"] = (
             result["dispatch_contract_verified"] and result["route_actions"]["passed"]
         )
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "fixture_failure"
-    if scenario["budget"] == "connection":
-        connection_receipt = directory / "connections.json"
-        if connection_receipt.exists():
-            connection_data = json.loads(connection_receipt.read_text())
-            result["connection_attempts"] = connection_data["attempts"]
-            result["connection_limit"] = connection_data["attempt_limit_per_second"]
-            result["connection_probe"] = verify_connection_probe(
-                scenario["id"], connection_data
-            )
-            result["dispatch_contract_verified"] = result["connection_probe"]["passed"]
-            if (
-                result["outcome"] == "launched"
-                and not result["dispatch_contract_verified"]
-            ):
-                result["outcome"] = "tool_failure"
-        else:
-            result["outcome"] = "tool_failure"
+    connection_action_verification(directory, scenario, result)
 
 
 def _scenario(

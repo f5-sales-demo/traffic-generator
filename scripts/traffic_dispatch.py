@@ -7,6 +7,7 @@ from urllib.parse import parse_qs
 from traffic_connections import tls_matrix
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
+SHA256_LENGTH = 64
 
 
 def structured_body_matches(requirement: dict, body: str) -> bool:
@@ -291,5 +292,39 @@ def verify_route_actions(contract: dict, receipt: dict) -> dict:
         "passed": bool(checks)
         and all(check["passed"] for check in checks)
         and receipt.get("browser_closed") is True,
+        "checks": checks,
+    }
+
+
+def verify_tool_actions(contract: dict, events: list[dict]) -> dict:
+    """Verify intended scanner invocation and completion separately from HTTP probes."""
+    checks = []
+    for requirement in contract["requirements"]:
+        observed = sum(
+            event.get("tool") == requirement["tool"]
+            and event.get("completed") is True
+            and event.get("exit_code") == 0
+            and len(event.get("binary_sha256", "")) == SHA256_LENGTH
+            and (
+                requirement.get("id") in event.get("matched_requirements", [])
+                if "id" in requirement
+                else bool(
+                    re.search(
+                        requirement["argument_regex"],
+                        " ".join(event.get("arguments", [])),
+                    )
+                )
+            )
+            for event in events
+        )
+        checks.append(
+            {
+                "tool": requirement["tool"],
+                "observed": observed,
+                "passed": observed >= requirement["minimum"],
+            }
+        )
+    return {
+        "passed": bool(checks) and all(check["passed"] for check in checks),
         "checks": checks,
     }
