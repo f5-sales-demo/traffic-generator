@@ -64,15 +64,21 @@ const CREDENTIALS = [
     });
     const page = await context.newPage();
     const requestState = observeRequests(page);
-    page.setDefaultTimeout(10000);
+    page.setDefaultTimeout(30000);
 
     try {
       console.log(`[+] Trying: ${cred.user} / ${cred.password}`);
 
-      await page.goto(`${BASE_URL}/dvwa/login.php`, {
-        waitUntil: 'domcontentloaded',
-        timeout: 10000,
-      });
+      for (let setupAttempt = 0; setupAttempt < 3; setupAttempt++) {
+        const setup = await page.goto(`${BASE_URL}/dvwa/login.php`, {
+          waitUntil: domcontentloaded,
+          timeout: 30000,
+        });
+        if (![502, 503, 504].includes(setup.status())) break;
+        console.log(`    -> SETUP FAILURE: HTTP ${setup.status()} on attempt ${setupAttempt + 1}`);
+        await settleRequests(requestState);
+        await page.waitForTimeout(1000);
+      }
 
       const hasForm = await page.$('input[name="username"]');
       if (!hasForm) {
