@@ -135,6 +135,9 @@ if [[ "${RECORDS}" -ne 0 ]]; then
 fi
 echo "[*] Phase 2: Running active scans..."
 ACTIVE_SCAN_IDS=()
+SCAN_EVIDENCE="${REPORT_DIR}/scanner-phases.jsonl"
+: >"${SCAN_EVIDENCE}"
+chmod 600 "${SCAN_EVIDENCE}"
 
 for app in "${APPS[@]}"; do
   APP_URL="${BASE}${app}"
@@ -145,6 +148,7 @@ for app in "${APPS[@]}"; do
     python3 -c "import sys,json; print(json.load(sys.stdin)['scan'])" 2>/dev/null)
   ACTIVE_SCAN_IDS+=("${ASCAN_ID}")
   echo "    Active scan ID: ${ASCAN_ID}"
+  python3 -c "import json,sys; print(json.dumps({'phase':'active','path':sys.argv[1],'scan_id':sys.argv[2],'started':True}))" "${app}" "${ASCAN_ID}" >>"${SCAN_EVIDENCE}"
 done
 
 # Wait for all active scans to complete
@@ -176,6 +180,9 @@ if [[ "${ALL_DONE}" -eq 0 ]]; then
   exit 1
 fi
 
+for sid in "${ACTIVE_SCAN_IDS[@]}"; do
+  python3 -c "import json,sys; print(json.dumps({'phase':'active','scan_id':sys.argv[1],'completed':True,'status':100}))" "${sid}" >>"${SCAN_EVIDENCE}"
+done
 echo "[*] Active scanning complete."
 
 ########################################################################
