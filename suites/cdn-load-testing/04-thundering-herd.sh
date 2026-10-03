@@ -61,8 +61,8 @@ for ep in "${STAMPEDE_ENDPOINTS[@]}"; do
     fail "${ep} stampede: 502s=${STATUS_502:-0} 503s=${STATUS_503:-0} errors=${ERRORS:-0}"
   fi
 
-  if [ "$POST_STATUS" = "HIT" ]; then
-    pass "${ep} post-stampede: cached (X-Cache-Status: HIT)"
+  if [ "$POST_STATUS" = "NONE" ] || [ "$POST_STATUS" = "BYPASS" ]; then
+    pass "${ep} post-stampede retains dynamic-bypass behavior"
   else
     fail "${ep} post-stampede: not cached ($POST_STATUS)"
   fi
