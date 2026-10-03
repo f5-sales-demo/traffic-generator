@@ -93,3 +93,17 @@ def test_sustained_workload_requires_declared_duration_and_cache_samples():
     assert not verify_workload(specification, receipt)["passed"]
     receipt["elapsed"] = 15
     assert verify_workload(specification, receipt)["passed"]
+
+
+def test_successful_sample_cannot_hide_later_sustained_failure():
+    contract = {"levels": [20], "minimum_requests": 100}
+    good = {
+        "concurrency": 20,
+        "requests": 100,
+        "transport_failures": 0,
+        "content_failures": 0,
+    }
+    bad = {**good, "transport_failures": 1}
+    assert not verify_workload(contract, {"levels": [good, bad], "cleanup": True})[
+        "passed"
+    ]

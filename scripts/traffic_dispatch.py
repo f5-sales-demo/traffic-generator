@@ -459,6 +459,17 @@ def verify_workload(contract: dict, receipt: dict) -> dict:
                 "passed": verify_profile(receipt.get("resource_profile", {})),
             }
         )
+    checks.append(
+        {
+            "id": "all-workload-samples",
+            "passed": bool(receipt.get("levels"))
+            and all(
+                sample.get("transport_failures") == 0
+                and sample.get("content_failures", 0) == 0
+                for sample in receipt.get("levels", [])
+            ),
+        }
+    )
     return {
         "passed": bool(checks)
         and all(check["passed"] for check in checks)
