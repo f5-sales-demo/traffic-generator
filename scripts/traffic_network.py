@@ -420,9 +420,15 @@ class NetworkBoundary:
         content, _, code = result.stdout.rpartition("\n")
         try:
             status = int(code)
+        except ValueError:
+            status = 0
+        try:
             document = json.loads(content)
         except ValueError:
-            status, document = 0, {}
+            document = {}
+        if status == SUCCESS_MIN and not document:
+            message = "synthetic authentication response identity missing"
+            raise ValueError(message)
         outcome = (
             "transport_failure"
             if result.returncode or status == 0
