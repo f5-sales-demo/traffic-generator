@@ -58,12 +58,36 @@ def attributed_arguments(tool: str, arguments: list[str], marker: str) -> list[s
     return result
 
 
+def nikto_configuration(source: Path, directory: Path, marker: str) -> Path:
+    """Use pinned Nikto's supported config interface while preserving native test IDs."""
+    if not re.fullmatch(r"[a-z0-9-]{1,80}", marker):
+        message = "invalid owned scanner marker"
+        raise ValueError(message)
+    text = source.read_text()
+    if len(re.findall(r"(?m)^USERAGENT=", text)) != 1:
+        message = "native Nikto user-agent contract changed"
+        raise ValueError(message)
+    text = re.sub(r"(?m)^(USERAGENT=.*)$", r"\1 TGen-Child/" + marker, text)
+    text = re.sub(r"(?m)^UPDATES=.*$", "UPDATES=no", text)
+    path = directory / ("nikto-" + marker + ".conf")
+    path.write_text(text)
+    path.chmod(0o600)
+    return path
+
+
 def main() -> int:
     """Execute the resolved native binary and retain only matched action identifiers."""
     binary, tool = sys.argv[1:3]
     arguments = attributed_arguments(
         tool, sys.argv[3:], os.environ.get("TGEN_CHILD_MARKER", "")
     )
+    if tool == "nikto" and os.environ.get("TGEN_CHILD_MARKER"):
+        config = nikto_configuration(
+            Path("/etc/nikto/config.txt"),
+            Path(os.environ["TGEN_RESULTS_DIR"]),
+            os.environ["TGEN_CHILD_MARKER"],
+        )
+        arguments.extend(["-config", str(config)])
     contract = json.loads(os.environ["TGEN_TOOL_CONTRACT"])
     matched = [
         requirement["id"]

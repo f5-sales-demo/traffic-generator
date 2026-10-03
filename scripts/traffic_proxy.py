@@ -152,6 +152,13 @@ class Budget:
         except (OSError, ValueError):
             current = {"id": "catalog", "phase": "unattributed"}
         marker = flow.request.headers.pop("X-TGen-Child", "")
+        if not marker:
+            native_marker = re.search(
+                r"(?:^| )TGen-Child/([a-z0-9-]{1,80})(?: |$)",
+                flow.request.headers.get("User-Agent", ""),
+            )
+            if native_marker:
+                marker = native_marker.group(1)
         if marker:
             current = child_metadata(self.metrics_path.parent, marker, current)
         flow.metadata["tgen_scenario"] = current

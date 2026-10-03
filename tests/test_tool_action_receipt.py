@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from traffic_dispatch import verify_tool_actions
 from traffic_runtime import scenario_action_verification
-from traffic_tool import attributed_arguments, native_binary
+from traffic_tool import attributed_arguments, native_binary, nikto_configuration
 
 
 def test_tool_failure_missing_arguments_and_no_completion_fail():
@@ -74,3 +74,18 @@ def test_failed_scanner_cannot_keep_aggregate_dispatch_acceptance(tmp_path):
     result = {"outcome": "tool_failure", "dispatch_contract_verified": True}
     scenario_action_verification(tmp_path, {"id": "scanner", "budget": "http"}, result)
     assert not result["dispatch_contract_verified"]
+
+
+def test_nikto_child_config_preserves_native_paths_and_test_identity(tmp_path):
+    source = tmp_path / "native.conf"
+    source.write_text(
+        "USERAGENT=Mozilla/5.00 (Nikto/@VERSION) (Test:@TESTID)\nPLUGINDIR=/native/plugins\nUPDATES=yes\n"
+    )
+    output = nikto_configuration(source, tmp_path, "child-opaque")
+    text = output.read_text()
+    assert "PLUGINDIR=/native/plugins" in text
+    assert "Nikto/@VERSION" in text
+    assert "Test:@TESTID" in text
+    assert "TGen-Child/child-opaque" in text
+    assert "UPDATES=no" in text
+    assert output.stat().st_mode & 0o077 == 0
