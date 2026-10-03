@@ -29,7 +29,7 @@ def request(
     ):
         message = "unauthorized video fixture target"
         raise ValueError(message)
-    req = Request(
+    req = Request(  # noqa: S310 - validated authorized HTTPS target
         base + path,
         data=body,
         method=method,
@@ -38,7 +38,7 @@ def request(
             "Content-Type": content_type,
             "X-MUD-User": "waap-fixture-benign",
         },
-    )  # noqa: S310 - exact authorized native API target
+    )
     with urlopen(req, timeout=60) as response:  # noqa: S310 - validated owned target
         return json.load(response)
 
