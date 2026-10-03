@@ -38,13 +38,13 @@ for payload in "${PAYLOADS[@]}"; do
     continue
   fi
   case "$code" in
-    200) outcome=application_response ;;
-    403 | 429) outcome=mitigation_candidate ;;
-    400 | 422 | 500) outcome=application_rejection ;;
-    *)
-      outcome=unexpected_application_response
-      failed=1
-      ;;
+  200) outcome=application_response ;;
+  403 | 429) outcome=mitigation_candidate ;;
+  400 | 422 | 500) outcome=application_rejection ;;
+  *)
+    outcome=unexpected_application_response
+    failed=1
+    ;;
   esac
   printf '  [%s] %s
 ' "$code" "$outcome"
