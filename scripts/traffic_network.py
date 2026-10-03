@@ -328,6 +328,7 @@ class NetworkBoundary:
             path = BENIGN_PATHS[index % len(BENIGN_PATHS)]
             self.state.benign["benign_per_domain"][domain] += 1
             self.state.benign["benign_per_application"][path] += 1
+        started_request = time.monotonic()
         try:
             connection.request(
                 "GET",
@@ -354,6 +355,21 @@ class NetworkBoundary:
                 category = type(error).__name__
                 errors = self.state.benign["benign_error_categories"]
                 errors[category] = errors.get(category, 0) + 1
+                receipt = self.runtime / "benign-error-events.jsonl"
+                with receipt.open("a") as stream:
+                    receipt.chmod(0o600)
+                    stream.write(
+                        json.dumps(
+                            {
+                                "domain": domain,
+                                "path": path,
+                                "error_type": category,
+                                "elapsed_seconds": time.monotonic() - started_request,
+                                "observed_at": time.time(),
+                            }
+                        )
+                        + "\n"
+                    )
             connection.close()
             self.state.local.connections.pop(domain, None)
         with self.state.lock:
