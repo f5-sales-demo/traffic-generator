@@ -145,11 +145,158 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "jq"],
       "after": ["api-attacks/04-ffuf-api-fuzz"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "target_paths": ["/vampi/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "no-auth-users",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "missing-auth",
+            "minimum_dispatches": 1,
+            "absent_headers": ["authorization"]
+          },
+          {
+            "id": "no-auth-admin",
+            "method": "GET",
+            "path": "/vampi/users/v1/admin",
+            "payload_class": "missing-auth",
+            "minimum_dispatches": 1,
+            "absent_headers": ["authorization"]
+          },
+          {
+            "id": "invalid-jwt",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "invalid-jwt",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer .+invalid-signature"
+            }
+          },
+          {
+            "id": "expired-jwt",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "expired-jwt",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer .+fake-expired"
+            }
+          },
+          {
+            "id": "bola-admin",
+            "method": "GET",
+            "path": "/vampi/users/v1/admin",
+            "payload_class": "authenticated-object-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "bola-user1",
+            "method": "GET",
+            "path": "/vampi/users/v1/user1",
+            "payload_class": "authenticated-object-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "bola-root",
+            "method": "GET",
+            "path": "/vampi/users/v1/root",
+            "payload_class": "authenticated-object-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "bola-superadmin",
+            "method": "GET",
+            "path": "/vampi/users/v1/superadmin",
+            "payload_class": "authenticated-object-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "username-sqli",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "body_regex": "admin.*OR 1=1--"
+          },
+          {
+            "id": "password-sqli",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "body_regex": "password.*OR.*1"
+          },
+          {
+            "id": "query-token",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "token-in-query",
+            "minimum_dispatches": 1,
+            "query_regex": "(?:^|&)token=.+",
+            "absent_headers": ["authorization"]
+          },
+          {
+            "id": "query-access-token",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "token-in-query",
+            "minimum_dispatches": 1,
+            "query_regex": "(?:^|&)access_token=.+",
+            "absent_headers": ["authorization"]
+          },
+          {
+            "id": "default-admin-admin",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "default-credentials",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"admin\"}"
+          },
+          {
+            "id": "default-admin-password",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "default-credentials",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"password\"}"
+          },
+          {
+            "id": "default-admin-admin123",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "default-credentials",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "default-root-root",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "default-credentials",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"root\",\"password\":\"root\"}"
+          }
+        ]
+      },
+      "expected_http_statuses": [400, 401, 404, 405, 409, 422]
     },
     {
       "id": "api-attacks/06-mass-assignment",
@@ -158,11 +305,92 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "jq"],
       "after": ["api-attacks/05-broken-auth"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "target_paths": ["/vampi/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "registration-1",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"masstest1\",\"password\":\"Test1234\",\"email\":\"mass1@evil.example\",\"admin\":true}"
+          },
+          {
+            "id": "registration-2",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"masstest2\",\"password\":\"Test1234\",\"email\":\"mass2@evil.example\",\"role\":\"admin\"}"
+          },
+          {
+            "id": "registration-3",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"masstest3\",\"password\":\"Test1234\",\"email\":\"mass3@evil.example\",\"balance\":99999}"
+          },
+          {
+            "id": "registration-4",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"masstest4\",\"password\":\"Test1234\",\"email\":\"mass4@evil.example\",\"admin\":true,\"role\":\"superadmin\",\"is_staff\":true,\"is_superuser\":true,\"balance\":99999}"
+          },
+          {
+            "id": "privilege",
+            "method": "PUT",
+            "path": "/vampi/users/v1/massput",
+            "payload_class": "mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"admin\":true,\"role\":\"admin\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "prototype",
+            "method": "PUT",
+            "path": "/vampi/users/v1/massput",
+            "payload_class": "mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"massput\",\"__class__\":{\"admin\":true},\"constructor\":{\"prototype\":{\"admin\":true}}}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "roles",
+            "method": "PATCH",
+            "path": "/vampi/users/v1/massput",
+            "payload_class": "mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"roles\":[\"admin\",\"superadmin\"],\"permissions\":[\"read\",\"write\",\"delete\",\"admin\"]}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "email",
+            "method": "PUT",
+            "path": "/vampi/users/v1/massput/email",
+            "payload_class": "mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@target.local\",\"admin\":true,\"verified\":true}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      },
+      "expected_http_statuses": [400, 401, 404, 405, 409, 422]
     },
     {
       "id": "api-protection-verify/01-schema-violation",
