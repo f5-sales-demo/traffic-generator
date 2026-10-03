@@ -28,3 +28,13 @@ class ApplicationCoverageTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_server_errors_require_case_specific_reconciliation():
+    """Generated payload-class status lists cannot accept arbitrary application crashes."""
+    catalog = load_catalog(ROOT)
+    assert not any(
+        500 in requirement.get("expected_statuses", [])
+        for scenario in catalog["scenarios"]
+        for requirement in scenario.get("dispatch_contract", {}).get("requirements", [])
+    )
