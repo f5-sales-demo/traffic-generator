@@ -324,7 +324,67 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "parameters-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "hidden-parameter-discovery",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "parameters-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "hidden-parameter-discovery",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "parameters-2",
+            "method": "GET",
+            "path": "/juice-shop/api/Users/",
+            "payload_class": "hidden-parameter-discovery",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "parameters-3",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "hidden-parameter-discovery",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "parameters-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "hidden-parameter-discovery",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "parameters-5",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "hidden-parameter-discovery",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          },
+          {
+            "id": "parameters-6",
+            "method": "GET",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "hidden-parameter-discovery",
+            "minimum_dispatches": 1,
+            "query_regex": ".+=.+"
+          }
+        ]
+      }
     },
     {
       "id": "api-attacks/04-ffuf-api-fuzz",
@@ -337,7 +397,1203 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "path-0",
+            "method": "GET",
+            "path": "/api",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-1",
+            "method": "GET",
+            "path": "/api/v1",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-2",
+            "method": "GET",
+            "path": "/api/v2",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-3",
+            "method": "GET",
+            "path": "/api/v3",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-4",
+            "method": "GET",
+            "path": "/rest",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-5",
+            "method": "GET",
+            "path": "/graphql",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-6",
+            "method": "GET",
+            "path": "/swagger",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-7",
+            "method": "GET",
+            "path": "/swagger.json",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-8",
+            "method": "GET",
+            "path": "/openapi.json",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-9",
+            "method": "GET",
+            "path": "/docs",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-10",
+            "method": "GET",
+            "path": "/admin",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-11",
+            "method": "GET",
+            "path": "/users",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-12",
+            "method": "GET",
+            "path": "/login",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-13",
+            "method": "GET",
+            "path": "/register",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-14",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-15",
+            "method": "GET",
+            "path": "/healthz",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-16",
+            "method": "GET",
+            "path": "/status",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-17",
+            "method": "GET",
+            "path": "/metrics",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-18",
+            "method": "GET",
+            "path": "/debug",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-19",
+            "method": "GET",
+            "path": "/console",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-20",
+            "method": "GET",
+            "path": "/config",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-21",
+            "method": "GET",
+            "path": "/env",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-22",
+            "method": "GET",
+            "path": "/info",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-23",
+            "method": "GET",
+            "path": "/version",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-24",
+            "method": "GET",
+            "path": "/actuator",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-25",
+            "method": "GET",
+            "path": "/actuator/health",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-26",
+            "method": "GET",
+            "path": "/.env",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-27",
+            "method": "GET",
+            "path": "/.git",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-28",
+            "method": "GET",
+            "path": "/.git/config",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-29",
+            "method": "GET",
+            "path": "/robots.txt",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-30",
+            "method": "GET",
+            "path": "/sitemap.xml",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-31",
+            "method": "GET",
+            "path": "/vampi/api",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-32",
+            "method": "GET",
+            "path": "/vampi/api/v1",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-33",
+            "method": "GET",
+            "path": "/vampi/api/v2",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-34",
+            "method": "GET",
+            "path": "/vampi/api/v3",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-35",
+            "method": "GET",
+            "path": "/vampi/rest",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-36",
+            "method": "GET",
+            "path": "/vampi/graphql",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-37",
+            "method": "GET",
+            "path": "/vampi/swagger",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-38",
+            "method": "GET",
+            "path": "/vampi/swagger.json",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-39",
+            "method": "GET",
+            "path": "/vampi/openapi.json",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-40",
+            "method": "GET",
+            "path": "/vampi/docs",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-41",
+            "method": "GET",
+            "path": "/vampi/admin",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-42",
+            "method": "GET",
+            "path": "/vampi/users",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-43",
+            "method": "GET",
+            "path": "/vampi/login",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-44",
+            "method": "GET",
+            "path": "/vampi/register",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-45",
+            "method": "GET",
+            "path": "/vampi/health",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-46",
+            "method": "GET",
+            "path": "/vampi/healthz",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-47",
+            "method": "GET",
+            "path": "/vampi/status",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-48",
+            "method": "GET",
+            "path": "/vampi/metrics",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-49",
+            "method": "GET",
+            "path": "/vampi/debug",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-50",
+            "method": "GET",
+            "path": "/vampi/console",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-51",
+            "method": "GET",
+            "path": "/vampi/config",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-52",
+            "method": "GET",
+            "path": "/vampi/env",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-53",
+            "method": "GET",
+            "path": "/vampi/info",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-54",
+            "method": "GET",
+            "path": "/vampi/version",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-55",
+            "method": "GET",
+            "path": "/vampi/actuator",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-56",
+            "method": "GET",
+            "path": "/vampi/actuator/health",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-57",
+            "method": "GET",
+            "path": "/vampi/.env",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-58",
+            "method": "GET",
+            "path": "/vampi/.git",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-59",
+            "method": "GET",
+            "path": "/vampi/.git/config",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-60",
+            "method": "GET",
+            "path": "/vampi/robots.txt",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-61",
+            "method": "GET",
+            "path": "/vampi/sitemap.xml",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-62",
+            "method": "GET",
+            "path": "/juice-shop/api",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-63",
+            "method": "GET",
+            "path": "/juice-shop/api/v1",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-64",
+            "method": "GET",
+            "path": "/juice-shop/api/v2",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-65",
+            "method": "GET",
+            "path": "/juice-shop/api/v3",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-66",
+            "method": "GET",
+            "path": "/juice-shop/rest",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-67",
+            "method": "GET",
+            "path": "/juice-shop/graphql",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-68",
+            "method": "GET",
+            "path": "/juice-shop/swagger",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-69",
+            "method": "GET",
+            "path": "/juice-shop/swagger.json",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-70",
+            "method": "GET",
+            "path": "/juice-shop/openapi.json",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-71",
+            "method": "GET",
+            "path": "/juice-shop/docs",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-72",
+            "method": "GET",
+            "path": "/juice-shop/admin",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-73",
+            "method": "GET",
+            "path": "/juice-shop/users",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-74",
+            "method": "GET",
+            "path": "/juice-shop/login",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-75",
+            "method": "GET",
+            "path": "/juice-shop/register",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-76",
+            "method": "GET",
+            "path": "/juice-shop/health",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-77",
+            "method": "GET",
+            "path": "/juice-shop/healthz",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-78",
+            "method": "GET",
+            "path": "/juice-shop/status",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-79",
+            "method": "GET",
+            "path": "/juice-shop/metrics",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-80",
+            "method": "GET",
+            "path": "/juice-shop/debug",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-81",
+            "method": "GET",
+            "path": "/juice-shop/console",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-82",
+            "method": "GET",
+            "path": "/juice-shop/config",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-83",
+            "method": "GET",
+            "path": "/juice-shop/env",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-84",
+            "method": "GET",
+            "path": "/juice-shop/info",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-85",
+            "method": "GET",
+            "path": "/juice-shop/version",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-86",
+            "method": "GET",
+            "path": "/juice-shop/actuator",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-87",
+            "method": "GET",
+            "path": "/juice-shop/actuator/health",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-88",
+            "method": "GET",
+            "path": "/juice-shop/.env",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-89",
+            "method": "GET",
+            "path": "/juice-shop/.git",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-90",
+            "method": "GET",
+            "path": "/juice-shop/.git/config",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-91",
+            "method": "GET",
+            "path": "/juice-shop/robots.txt",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-92",
+            "method": "GET",
+            "path": "/juice-shop/sitemap.xml",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-93",
+            "method": "GET",
+            "path": "/dvwa/api",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-94",
+            "method": "GET",
+            "path": "/dvwa/api/v1",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-95",
+            "method": "GET",
+            "path": "/dvwa/api/v2",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-96",
+            "method": "GET",
+            "path": "/dvwa/api/v3",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-97",
+            "method": "GET",
+            "path": "/dvwa/rest",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-98",
+            "method": "GET",
+            "path": "/dvwa/graphql",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-99",
+            "method": "GET",
+            "path": "/dvwa/swagger",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-100",
+            "method": "GET",
+            "path": "/dvwa/swagger.json",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-101",
+            "method": "GET",
+            "path": "/dvwa/openapi.json",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-102",
+            "method": "GET",
+            "path": "/dvwa/docs",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-103",
+            "method": "GET",
+            "path": "/dvwa/admin",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-104",
+            "method": "GET",
+            "path": "/dvwa/users",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-105",
+            "method": "GET",
+            "path": "/dvwa/login",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-106",
+            "method": "GET",
+            "path": "/dvwa/register",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-107",
+            "method": "GET",
+            "path": "/dvwa/health",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-108",
+            "method": "GET",
+            "path": "/dvwa/healthz",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-109",
+            "method": "GET",
+            "path": "/dvwa/status",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-110",
+            "method": "GET",
+            "path": "/dvwa/metrics",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-111",
+            "method": "GET",
+            "path": "/dvwa/debug",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-112",
+            "method": "GET",
+            "path": "/dvwa/console",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-113",
+            "method": "GET",
+            "path": "/dvwa/config",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-114",
+            "method": "GET",
+            "path": "/dvwa/env",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-115",
+            "method": "GET",
+            "path": "/dvwa/info",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-116",
+            "method": "GET",
+            "path": "/dvwa/version",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-117",
+            "method": "GET",
+            "path": "/dvwa/actuator",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-118",
+            "method": "GET",
+            "path": "/dvwa/actuator/health",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-119",
+            "method": "GET",
+            "path": "/dvwa/.env",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-120",
+            "method": "GET",
+            "path": "/dvwa/.git",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-121",
+            "method": "GET",
+            "path": "/dvwa/.git/config",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-122",
+            "method": "GET",
+            "path": "/dvwa/robots.txt",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-123",
+            "method": "GET",
+            "path": "/dvwa/sitemap.xml",
+            "payload_class": "api-path-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-124",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-125",
+            "method": "POST",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-126",
+            "method": "PUT",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-127",
+            "method": "DELETE",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-128",
+            "method": "PATCH",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-129",
+            "method": "OPTIONS",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-130",
+            "method": "HEAD",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-131",
+            "method": "TRACE",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-132",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "method-133",
+            "method": "PROPFIND",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-134",
+            "method": "MOVE",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-135",
+            "method": "COPY",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-136",
+            "method": "LOCK",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-137",
+            "method": "UNLOCK",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-138",
+            "method": "MKCOL",
+            "path": "/vampi/users/v1",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-139",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-140",
+            "method": "POST",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-141",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-142",
+            "method": "DELETE",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-143",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-144",
+            "method": "OPTIONS",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-145",
+            "method": "HEAD",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-146",
+            "method": "TRACE",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-147",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "method-148",
+            "method": "PROPFIND",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-149",
+            "method": "MOVE",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-150",
+            "method": "COPY",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-151",
+            "method": "LOCK",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-152",
+            "method": "UNLOCK",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-153",
+            "method": "MKCOL",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-154",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-155",
+            "method": "POST",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-156",
+            "method": "PUT",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-157",
+            "method": "DELETE",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-158",
+            "method": "PATCH",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-159",
+            "method": "OPTIONS",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-160",
+            "method": "HEAD",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-161",
+            "method": "TRACE",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-162",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "method-163",
+            "method": "PROPFIND",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-164",
+            "method": "MOVE",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-165",
+            "method": "COPY",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-166",
+            "method": "LOCK",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-167",
+            "method": "UNLOCK",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-168",
+            "method": "MKCOL",
+            "path": "/dvwa/",
+            "payload_class": "api-method-fuzzing",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "api-attacks/05-broken-auth",
@@ -1116,7 +2372,21 @@
       "expected_outcome": "launch challenge probe and record interstitial presence; absent challenge is an observation under fixed enabled WAAP controls",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "interstitial-probe",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "js-challenge-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "challenge-verify"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "crapi-exploits/01-register-auth",
@@ -3487,7 +4757,221 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "word-0",
+            "method": "GET",
+            "path": "/admin",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-1",
+            "method": "GET",
+            "path": "/login",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-2",
+            "method": "GET",
+            "path": "/register",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-3",
+            "method": "GET",
+            "path": "/api",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-4",
+            "method": "GET",
+            "path": "/api/v1",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-5",
+            "method": "GET",
+            "path": "/api/v2",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-6",
+            "method": "GET",
+            "path": "/users",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-7",
+            "method": "GET",
+            "path": "/products",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-8",
+            "method": "GET",
+            "path": "/orders",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-9",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-10",
+            "method": "GET",
+            "path": "/status",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-11",
+            "method": "GET",
+            "path": "/metrics",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-12",
+            "method": "GET",
+            "path": "/debug",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-13",
+            "method": "GET",
+            "path": "/console",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-14",
+            "method": "GET",
+            "path": "/config",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-15",
+            "method": "GET",
+            "path": "/.env",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-16",
+            "method": "GET",
+            "path": "/.git/config",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-17",
+            "method": "GET",
+            "path": "/robots.txt",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-18",
+            "method": "GET",
+            "path": "/sitemap.xml",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-19",
+            "method": "GET",
+            "path": "/swagger.json",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-20",
+            "method": "GET",
+            "path": "/openapi.json",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-21",
+            "method": "GET",
+            "path": "/docs",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-22",
+            "method": "GET",
+            "path": "/backup",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-23",
+            "method": "GET",
+            "path": "/index.php.bak",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-24",
+            "method": "GET",
+            "path": "/web.config",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-25",
+            "method": "GET",
+            "path": "/.htaccess",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-26",
+            "method": "GET",
+            "path": "/security.php",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-27",
+            "method": "GET",
+            "path": "/setup.php",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-28",
+            "method": "GET",
+            "path": "/ftp",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-29",
+            "method": "GET",
+            "path": "/graphql",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "reconnaissance/04-feroxbuster-recurse",
@@ -3500,7 +4984,221 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "word-0",
+            "method": "GET",
+            "path": "/admin",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-1",
+            "method": "GET",
+            "path": "/login",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-2",
+            "method": "GET",
+            "path": "/register",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-3",
+            "method": "GET",
+            "path": "/api",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-4",
+            "method": "GET",
+            "path": "/api/v1",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-5",
+            "method": "GET",
+            "path": "/api/v2",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-6",
+            "method": "GET",
+            "path": "/users",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-7",
+            "method": "GET",
+            "path": "/products",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-8",
+            "method": "GET",
+            "path": "/orders",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-9",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-10",
+            "method": "GET",
+            "path": "/status",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-11",
+            "method": "GET",
+            "path": "/metrics",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-12",
+            "method": "GET",
+            "path": "/debug",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-13",
+            "method": "GET",
+            "path": "/console",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-14",
+            "method": "GET",
+            "path": "/config",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-15",
+            "method": "GET",
+            "path": "/.env",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-16",
+            "method": "GET",
+            "path": "/.git/config",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-17",
+            "method": "GET",
+            "path": "/robots.txt",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-18",
+            "method": "GET",
+            "path": "/sitemap.xml",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-19",
+            "method": "GET",
+            "path": "/swagger.json",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-20",
+            "method": "GET",
+            "path": "/openapi.json",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-21",
+            "method": "GET",
+            "path": "/docs",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-22",
+            "method": "GET",
+            "path": "/backup",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-23",
+            "method": "GET",
+            "path": "/index.php.bak",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-24",
+            "method": "GET",
+            "path": "/web.config",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-25",
+            "method": "GET",
+            "path": "/.htaccess",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-26",
+            "method": "GET",
+            "path": "/security.php",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-27",
+            "method": "GET",
+            "path": "/setup.php",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-28",
+            "method": "GET",
+            "path": "/ftp",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "word-29",
+            "method": "GET",
+            "path": "/graphql",
+            "payload_class": "directory-wordlist-probe",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "reconnaissance/05-subfinder-enum",
@@ -3526,7 +5224,417 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "path-0",
+            "method": "GET",
+            "path": "/.bak",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-1",
+            "method": "GET",
+            "path": "/backup.sql",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-2",
+            "method": "GET",
+            "path": "/backup.zip",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-3",
+            "method": "GET",
+            "path": "/backup.tar.gz",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-4",
+            "method": "GET",
+            "path": "/db.sql",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-5",
+            "method": "GET",
+            "path": "/dump.sql",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-6",
+            "method": "GET",
+            "path": "/database.sql.gz",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-7",
+            "method": "GET",
+            "path": "/.old",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-8",
+            "method": "GET",
+            "path": "/.swp",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-9",
+            "method": "GET",
+            "path": "/.DS_Store",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-10",
+            "method": "GET",
+            "path": "/.git/config",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-11",
+            "method": "GET",
+            "path": "/.git/HEAD",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-12",
+            "method": "GET",
+            "path": "/.gitignore",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-13",
+            "method": "GET",
+            "path": "/.svn/entries",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-14",
+            "method": "GET",
+            "path": "/.hg/hgrc",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-15",
+            "method": "GET",
+            "path": "/.env",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-16",
+            "method": "GET",
+            "path": "/.env.local",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-17",
+            "method": "GET",
+            "path": "/.env.production",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-18",
+            "method": "GET",
+            "path": "/web.config",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-19",
+            "method": "GET",
+            "path": "/wp-config.php",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-20",
+            "method": "GET",
+            "path": "/config.php",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-21",
+            "method": "GET",
+            "path": "/configuration.php",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-22",
+            "method": "GET",
+            "path": "/settings.py",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-23",
+            "method": "GET",
+            "path": "/application.yml",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-24",
+            "method": "GET",
+            "path": "/appsettings.json",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-25",
+            "method": "GET",
+            "path": "/debug",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-26",
+            "method": "GET",
+            "path": "/trace",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-27",
+            "method": "GET",
+            "path": "/actuator",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-28",
+            "method": "GET",
+            "path": "/actuator/health",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-29",
+            "method": "GET",
+            "path": "/actuator/env",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-30",
+            "method": "GET",
+            "path": "/actuator/beans",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-31",
+            "method": "GET",
+            "path": "/metrics",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-32",
+            "method": "GET",
+            "path": "/info",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-33",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-34",
+            "method": "GET",
+            "path": "/status",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-35",
+            "method": "GET",
+            "path": "/.well-known/security.txt",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-36",
+            "method": "GET",
+            "path": "/.well-known/openid-configuration",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-37",
+            "method": "GET",
+            "path": "/server-status",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-38",
+            "method": "GET",
+            "path": "/server-info",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-39",
+            "method": "GET",
+            "path": "/phpinfo.php",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-40",
+            "method": "GET",
+            "path": "/elmah.axd",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-41",
+            "method": "GET",
+            "path": "/admin",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-42",
+            "method": "GET",
+            "path": "/admin.php",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-43",
+            "method": "GET",
+            "path": "/administrator",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-44",
+            "method": "GET",
+            "path": "/wp-admin",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-45",
+            "method": "GET",
+            "path": "/wp-login.php",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-46",
+            "method": "GET",
+            "path": "/manager/html",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-47",
+            "method": "GET",
+            "path": "/phpmyadmin",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-48",
+            "method": "GET",
+            "path": "/adminer.php",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-49",
+            "method": "GET",
+            "path": "/swagger",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-50",
+            "method": "GET",
+            "path": "/swagger.json",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-51",
+            "method": "GET",
+            "path": "/swagger-ui.html",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-52",
+            "method": "GET",
+            "path": "/api-docs",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-53",
+            "method": "GET",
+            "path": "/openapi.json",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-54",
+            "method": "GET",
+            "path": "/graphql",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-55",
+            "method": "GET",
+            "path": "/graphiql",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-56",
+            "method": "GET",
+            "path": "/v1/docs",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-57",
+            "method": "GET",
+            "path": "/redoc",
+            "payload_class": "sensitive-discovery",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "reconnaissance/07-waf-fingerprint",
@@ -4796,7 +6904,63 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "http-flood",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "path-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-flood",
+            "minimum_dispatches": 20,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "path-2",
+            "method": "GET",
+            "path": "/juice-shop/api/Products/",
+            "payload_class": "http-flood",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "path-3",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "http-flood",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "path-4",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-flood",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "path-5",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "http-flood",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "path-6",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-flood",
+            "minimum_dispatches": 20
+          }
+        ]
+      }
     },
     {
       "id": "traffic-generation/02-slowloris",
@@ -6256,7 +8420,1387 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "ua-0-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          },
+          {
+            "id": "ua-0-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          },
+          {
+            "id": "ua-0-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          },
+          {
+            "id": "ua-0-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-1-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+            }
+          },
+          {
+            "id": "ua-1-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+            }
+          },
+          {
+            "id": "ua-1-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+            }
+          },
+          {
+            "id": "ua-1-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-2-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0"
+            }
+          },
+          {
+            "id": "ua-2-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0"
+            }
+          },
+          {
+            "id": "ua-2-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0"
+            }
+          },
+          {
+            "id": "ua-2-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-3-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
+            }
+          },
+          {
+            "id": "ua-3-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
+            }
+          },
+          {
+            "id": "ua-3-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
+            }
+          },
+          {
+            "id": "ua-3-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-4-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+            }
+          },
+          {
+            "id": "ua-4-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+            }
+          },
+          {
+            "id": "ua-4-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+            }
+          },
+          {
+            "id": "ua-4-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-5-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"
+            }
+          },
+          {
+            "id": "ua-5-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"
+            }
+          },
+          {
+            "id": "ua-5-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"
+            }
+          },
+          {
+            "id": "ua-5-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-6-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)"
+            }
+          },
+          {
+            "id": "ua-6-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)"
+            }
+          },
+          {
+            "id": "ua-6-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)"
+            }
+          },
+          {
+            "id": "ua-6-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-7-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "DuckDuckBot/1.1; (+http://duckduckgo.com/duckduckbot.html)"
+            }
+          },
+          {
+            "id": "ua-7-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "DuckDuckBot/1.1; (+http://duckduckgo.com/duckduckbot.html)"
+            }
+          },
+          {
+            "id": "ua-7-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "DuckDuckBot/1.1; (+http://duckduckgo.com/duckduckbot.html)"
+            }
+          },
+          {
+            "id": "ua-7-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "DuckDuckBot/1.1; (+http://duckduckgo.com/duckduckbot.html)"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-8-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
+            }
+          },
+          {
+            "id": "ua-8-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
+            }
+          },
+          {
+            "id": "ua-8-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
+            }
+          },
+          {
+            "id": "ua-8-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-9-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "curl/8.0.0"
+            }
+          },
+          {
+            "id": "ua-9-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "curl/8.0.0"
+            }
+          },
+          {
+            "id": "ua-9-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "curl/8.0.0"
+            }
+          },
+          {
+            "id": "ua-9-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "curl/8.0.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-10-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Wget/1.21"
+            }
+          },
+          {
+            "id": "ua-10-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Wget/1.21"
+            }
+          },
+          {
+            "id": "ua-10-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Wget/1.21"
+            }
+          },
+          {
+            "id": "ua-10-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Wget/1.21"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-11-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "python-requests/2.31.0"
+            }
+          },
+          {
+            "id": "ua-11-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "python-requests/2.31.0"
+            }
+          },
+          {
+            "id": "ua-11-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "python-requests/2.31.0"
+            }
+          },
+          {
+            "id": "ua-11-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "python-requests/2.31.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-12-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Go-http-client/2.0"
+            }
+          },
+          {
+            "id": "ua-12-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Go-http-client/2.0"
+            }
+          },
+          {
+            "id": "ua-12-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Go-http-client/2.0"
+            }
+          },
+          {
+            "id": "ua-12-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Go-http-client/2.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-13-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Java/17.0.1"
+            }
+          },
+          {
+            "id": "ua-13-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Java/17.0.1"
+            }
+          },
+          {
+            "id": "ua-13-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Java/17.0.1"
+            }
+          },
+          {
+            "id": "ua-13-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Java/17.0.1"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-14-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "axios/1.6.0"
+            }
+          },
+          {
+            "id": "ua-14-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "axios/1.6.0"
+            }
+          },
+          {
+            "id": "ua-14-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "axios/1.6.0"
+            }
+          },
+          {
+            "id": "ua-14-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "axios/1.6.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-15-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "httpx/0.25.0"
+            }
+          },
+          {
+            "id": "ua-15-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "httpx/0.25.0"
+            }
+          },
+          {
+            "id": "ua-15-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "httpx/0.25.0"
+            }
+          },
+          {
+            "id": "ua-15-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "httpx/0.25.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-16-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Apache-HttpClient/4.5.14"
+            }
+          },
+          {
+            "id": "ua-16-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Apache-HttpClient/4.5.14"
+            }
+          },
+          {
+            "id": "ua-16-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Apache-HttpClient/4.5.14"
+            }
+          },
+          {
+            "id": "ua-16-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Apache-HttpClient/4.5.14"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-17-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "okhttp/4.12.0"
+            }
+          },
+          {
+            "id": "ua-17-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "okhttp/4.12.0"
+            }
+          },
+          {
+            "id": "ua-17-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "okhttp/4.12.0"
+            }
+          },
+          {
+            "id": "ua-17-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "okhttp/4.12.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-18-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Scrapy/2.11"
+            }
+          },
+          {
+            "id": "ua-18-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Scrapy/2.11"
+            }
+          },
+          {
+            "id": "ua-18-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Scrapy/2.11"
+            }
+          },
+          {
+            "id": "ua-18-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Scrapy/2.11"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-19-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "PhantomJS/2.1.1"
+            }
+          },
+          {
+            "id": "ua-19-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "PhantomJS/2.1.1"
+            }
+          },
+          {
+            "id": "ua-19-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "PhantomJS/2.1.1"
+            }
+          },
+          {
+            "id": "ua-19-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "PhantomJS/2.1.1"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-20-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "HeadlessChrome/120.0.0.0"
+            }
+          },
+          {
+            "id": "ua-20-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "HeadlessChrome/120.0.0.0"
+            }
+          },
+          {
+            "id": "ua-20-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "HeadlessChrome/120.0.0.0"
+            }
+          },
+          {
+            "id": "ua-20-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "HeadlessChrome/120.0.0.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-21-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Selenium/4.15.0"
+            }
+          },
+          {
+            "id": "ua-21-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Selenium/4.15.0"
+            }
+          },
+          {
+            "id": "ua-21-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Selenium/4.15.0"
+            }
+          },
+          {
+            "id": "ua-21-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Selenium/4.15.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-22-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nikto/2.5.0"
+            }
+          },
+          {
+            "id": "ua-22-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nikto/2.5.0"
+            }
+          },
+          {
+            "id": "ua-22-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nikto/2.5.0"
+            }
+          },
+          {
+            "id": "ua-22-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nikto/2.5.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-23-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "sqlmap/1.7"
+            }
+          },
+          {
+            "id": "ua-23-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "sqlmap/1.7"
+            }
+          },
+          {
+            "id": "ua-23-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "sqlmap/1.7"
+            }
+          },
+          {
+            "id": "ua-23-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "sqlmap/1.7"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-24-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nmap Scripting Engine"
+            }
+          },
+          {
+            "id": "ua-24-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nmap Scripting Engine"
+            }
+          },
+          {
+            "id": "ua-24-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nmap Scripting Engine"
+            }
+          },
+          {
+            "id": "ua-24-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nmap Scripting Engine"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-25-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "WPScan v3.8.0"
+            }
+          },
+          {
+            "id": "ua-25-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "WPScan v3.8.0"
+            }
+          },
+          {
+            "id": "ua-25-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "WPScan v3.8.0"
+            }
+          },
+          {
+            "id": "ua-25-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "WPScan v3.8.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-26-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nuclei v3.0.0"
+            }
+          },
+          {
+            "id": "ua-26-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nuclei v3.0.0"
+            }
+          },
+          {
+            "id": "ua-26-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nuclei v3.0.0"
+            }
+          },
+          {
+            "id": "ua-26-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Nuclei v3.0.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-27-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": ""
+            }
+          },
+          {
+            "id": "ua-27-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": ""
+            }
+          },
+          {
+            "id": "ua-27-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": ""
+            }
+          },
+          {
+            "id": "ua-27-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": ""
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-28-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "-"
+            }
+          },
+          {
+            "id": "ua-28-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "-"
+            }
+          },
+          {
+            "id": "ua-28-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "-"
+            }
+          },
+          {
+            "id": "ua-28-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "-"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-29-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/4.0"
+            }
+          },
+          {
+            "id": "ua-29-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/4.0"
+            }
+          },
+          {
+            "id": "ua-29-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/4.0"
+            }
+          },
+          {
+            "id": "ua-29-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "Mozilla/4.0"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-30-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "test"
+            }
+          },
+          {
+            "id": "ua-30-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "test"
+            }
+          },
+          {
+            "id": "ua-30-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "test"
+            }
+          },
+          {
+            "id": "ua-30-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "test"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "ua-31-path-0",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "\\x00"
+            }
+          },
+          {
+            "id": "ua-31-path-1",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "\\x00"
+            }
+          },
+          {
+            "id": "ua-31-path-2",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "\\x00"
+            }
+          },
+          {
+            "id": "ua-31-path-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "user-agent-rotation",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "\\x00"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "waf-encoding-evasion/01-url-encoding",
