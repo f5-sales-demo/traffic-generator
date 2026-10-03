@@ -1,5 +1,5 @@
 #!/bin/bash
-set -uo pipefail
+set -euo pipefail
 
 ########################################################################
 # 01-zap-baseline.sh — OWASP ZAP Baseline Scan (Passive)
@@ -78,12 +78,12 @@ run_zap_daemon_mode() {
     echo ""
     echo "[*] Spidering: ${APP_URL}"
     SCAN_ID=$(curl -s "${ZAP_API}/JSON/spider/action/scan/?url=${APP_URL}&maxChildren=50&recurse=true" |
-      python3 -c "import sys,json; print(json.load(sys.stdin).get('scan','0'))" 2>/dev/null || echo "0")
+      python3 -c "import sys,json; print(json.load(sys.stdin)['scan'])" 2>/dev/null)
 
     # Wait for spider to finish (max 120s)
     for j in $(seq 1 "${TGEN_ZAP_POLL_COUNT:-40}"); do
       STATUS=$(curl -s "${ZAP_API}/JSON/spider/view/status/?scanId=${SCAN_ID}" |
-        python3 -c "import sys,json; print(json.load(sys.stdin).get('status','100'))" 2>/dev/null || echo "100")
+        python3 -c "import sys,json; print(int(json.load(sys.stdin)['status']))" 2>/dev/null)
       if [[ "${STATUS}" -ge 100 ]]; then
         break
       fi
@@ -91,7 +91,11 @@ run_zap_daemon_mode() {
       sleep 3
     done
     curl -sf "${ZAP_API}/JSON/spider/action/stop/?scanId=${SCAN_ID}" >/dev/null
-    echo "    Spider stopped after bounded traversal for ${app}"
+    if [[ "${STATUS}" -lt 100 ]]; then
+      echo "[!] Spider incomplete for ${app}" >&2
+      return 1
+    fi
+    echo "    Spider complete for ${app}"
   done
 
   # Wait for passive scan to finish
@@ -99,13 +103,17 @@ run_zap_daemon_mode() {
   echo "[*] Waiting for passive scan to complete..."
   for k in $(seq 1 "${TGEN_ZAP_POLL_COUNT:-40}"); do
     RECORDS=$(curl -s "${ZAP_API}/JSON/pscan/view/recordsToScan/" |
-      python3 -c "import sys,json; print(json.load(sys.stdin).get('recordsToScan','0'))" 2>/dev/null || echo "0")
+      python3 -c "import sys,json; print(int(json.load(sys.stdin)['recordsToScan']))" 2>/dev/null)
     if [[ "${RECORDS}" -eq 0 ]]; then
       break
     fi
     echo "    Records remaining: ${RECORDS}"
     sleep 3
   done
+  if [[ "${RECORDS}" -ne 0 ]]; then
+    echo "[!] Passive scan incomplete" >&2
+    return 1
+  fi
   echo "[*] Passive scan complete."
 
   # Retrieve alerts
