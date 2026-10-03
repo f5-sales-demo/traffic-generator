@@ -780,6 +780,43 @@ def _heartbeat(
     return worker
 
 
+def catalog_pass_receipt(
+    pass_id: str,
+    started: float,
+    receipts: list[dict],
+    expected: dict,
+    catalog: dict,
+    config: dict,
+) -> dict:
+    """Bind exact scenario identity, source and terminal execution to a complete pass."""
+    observed = {receipt.get("id"): receipt for receipt in receipts}
+    complete = len(receipts) == len(observed) and set(observed) == set(expected)
+    verified = complete and all(
+        receipt.get("source_sha256") == expected[identifier]
+        and receipt.get("source_commit") == config["source_commit"]
+        and receipt.get("artifact_sha256") == config["artifact_sha256"]
+        and receipt.get("outcome") == "launched"
+        and receipt.get("dispatch_contract_verified") is True
+        and not receipt.get("transport_failures", 0)
+        and not receipt.get("tool_cancellations", 0)
+        for identifier, receipt in observed.items()
+    )
+    catalog_complete = complete and set(expected) == set(catalog)
+    return {
+        "id": pass_id,
+        "started": started,
+        "completed": time.time(),
+        "source_commit": config["source_commit"],
+        "artifact_sha256": config["artifact_sha256"],
+        "complete": complete,
+        "catalog_complete": catalog_complete,
+        "catalog_accepted": catalog_complete and verified,
+        "passed": verified,
+        "scenario_count": len(receipts),
+        "scenarios": receipts,
+    }
+
+
 def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) -> int:
     """Supervise perpetual passes; failures remain visible while subsequent launches continue."""
     config = json.loads(config_path.read_text())
@@ -840,21 +877,16 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
                 retain(
                     runtime, active, config["retention_days"], config["retention_bytes"]
                 )
-            receipt = {
-                "id": pass_id,
-                "started": state["pass_started"],
-                "complete": len(receipts) == len(scenarios),
-                "catalog_complete": len(receipts)
-                == len(load_catalog(root)["scenarios"]),
-                "scenario_count": len(receipts),
-                "passed": len(receipts) == len(scenarios)
-                and all(
-                    r["outcome"] == "launched" and r["dispatch_contract_verified"]
-                    for r in receipts
-                ),
-                "scenarios": receipts,
-                "completed": time.time(),
+            digests = {
+                item["id"]: hashlib.sha256(
+                    (root / item["entrypoint"]).read_bytes()
+                ).hexdigest()
+                for item in load_catalog(root)["scenarios"]
             }
+            expected = {item["id"]: digests[item["id"]] for item in scenarios}
+            receipt = catalog_pass_receipt(
+                pass_id, state["pass_started"], receipts, expected, digests, config
+            )
             atomic_json(active / "receipt.json", receipt)
             if receipt["catalog_complete"]:
                 state["completed_passes"] += 1
