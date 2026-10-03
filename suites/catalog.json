@@ -2219,7 +2219,7 @@
         ],
         "reject_unmatched_errors": true
       },
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": []
     },
     {
@@ -2294,7 +2294,7 @@
         ],
         "reject_unmatched_errors": true
       },
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": [],
       "intentional_negative_paths": ["/api/internal/healthz-secret", "/api/v0/legacy/accounts/export"]
     },
@@ -2324,7 +2324,7 @@
         ],
         "reject_unmatched_errors": true
       },
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": []
     },
     {
@@ -2352,7 +2352,7 @@
         ],
         "reject_unmatched_errors": true
       },
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": []
     },
     {
@@ -4402,7 +4402,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/02-bola-vehicle-location",
@@ -4430,7 +4430,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/03-bola-mechanic-reports",
@@ -4460,7 +4460,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": [],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/04-otp-bruteforce",
@@ -4489,7 +4489,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/05-data-exposure-mechanics",
@@ -4517,7 +4517,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/06-data-exposure-posts",
@@ -4592,7 +4592,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/08-mass-assignment-orders",
@@ -4621,7 +4621,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/09-ssrf-contact-mechanic",
@@ -4650,7 +4650,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/10-dos-contact-mechanic",
@@ -4679,7 +4679,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/11-nosql-injection-coupon",
@@ -4708,7 +4708,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/12-sqli-apply-coupon",
@@ -4737,7 +4737,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/13-command-injection-video",
@@ -4766,7 +4766,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/14-unauth-order-access",
@@ -4795,7 +4795,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": [],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "crapi-exploits/15-jwt-algorithm-confusion",
@@ -4826,7 +4826,7 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
     },
     {
       "id": "csd-violations/login-credential-skimmer",
