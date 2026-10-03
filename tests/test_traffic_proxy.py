@@ -42,10 +42,11 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             budget = module.Budget()
             dispatched = []
 
-            async def request(index):
+            async def request(_index):
                 flow = SimpleNamespace(
                     metadata={},
                     request=SimpleNamespace(
+                        content=b"synthetic",
                         headers={"Host": "www.example.test"},
                         host="192.0.2.1",
                         port=443,
@@ -66,7 +67,9 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             assert budget.counts["filler_requests"] == 0
             escaped = SimpleNamespace(
                 request=SimpleNamespace(
-                    headers={"Host": "outside.example.test"}, port=443
+                    content=b"synthetic",
+                    headers={"Host": "outside.example.test"},
+                    port=443,
                 )
             )
             await budget.request(escaped)
@@ -121,6 +124,7 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             flow = SimpleNamespace(
                 metadata={},
                 request=SimpleNamespace(
+                    content=b"synthetic",
                     headers={"Host": "www.example.test"},
                     host="www.example.test",
                     port=443,

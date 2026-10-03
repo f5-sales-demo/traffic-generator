@@ -166,6 +166,7 @@ class Budget:
         except (OSError, KeyError):
             event_path = self.metrics_path.parent / "dispatch-events.jsonl"
         observed = {
+            "body_hex": (flow.request.content or b"").hex(),
             "kind": "scenario"
             if current.get("phase") == "execution"
             else "prerequisite",

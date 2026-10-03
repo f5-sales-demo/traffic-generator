@@ -44,6 +44,11 @@ def match_requirements(contract: dict, request: dict) -> list[str]:
         ):
             continue
         if (
+            "body_hex" in requirement
+            and request.get("body_hex") != requirement["body_hex"]
+        ):
+            continue
+        if (
             "body_exact" in requirement
             and request.get("body", "") != requirement["body_exact"]
         ):

@@ -245,3 +245,29 @@ def test_exact_decoded_query_contract_rejects_filler_and_changed_payload():
     event["query"] = "q=test%27%29%29UNION%20SELECT%20%271%27--"
     assert match_requirements(specification, event) == ["union"]
     assert not match_requirements(specification, dict(event, kind="prerequisite"))
+
+
+def test_binary_payload_contract_does_not_accept_decoded_replacement_characters():
+    """Invalid UTF-8 offerings must match bytes, not a lossy decoded string."""
+    specification = {
+        "requirements": [
+            {
+                "id": "overlong",
+                "method": "POST",
+                "path": "/",
+                "body_hex": "713dc0af",
+                "minimum_dispatches": 1,
+                "payload_class": "overlong-utf8",
+            }
+        ]
+    }
+    event = {
+        "kind": "scenario",
+        "method": "POST",
+        "path": "/",
+        "body": "q=�/",
+        "body_hex": "713defbfbd2f",
+    }
+    assert not match_requirements(specification, event)
+    event["body_hex"] = "713dc0af"
+    assert match_requirements(specification, event) == ["overlong"]
