@@ -219,3 +219,29 @@ def test_unauthenticated_probe_cannot_be_satisfied_by_authenticated_setup():
     assert not match_requirements(
         specification, dict(request, headers={"authorization": "Bearer synthetic"})
     )
+
+
+def test_exact_decoded_query_contract_rejects_filler_and_changed_payload():
+    """Every SQL expression requires its exact decoded parameter, not a broad regex."""
+    specification = {
+        "requirements": [
+            {
+                "id": "union",
+                "method": "GET",
+                "path": "/juice-shop/rest/products/search",
+                "query_values": {"q": "test'))UNION SELECT '1'--"},
+                "minimum_dispatches": 1,
+                "payload_class": "sql-union",
+            }
+        ]
+    }
+    event = {
+        "kind": "scenario",
+        "method": "GET",
+        "path": "/juice-shop/rest/products/search",
+        "query": "q=test",
+    }
+    assert not match_requirements(specification, event)
+    event["query"] = "q=test%27%29%29UNION%20SELECT%20%271%27--"
+    assert match_requirements(specification, event) == ["union"]
+    assert not match_requirements(specification, dict(event, kind="prerequisite"))

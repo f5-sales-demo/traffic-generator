@@ -56,6 +56,12 @@ def match_requirements(contract: dict, request: dict) -> list[str]:
             requirement["query_regex"], request.get("query", "")
         ):
             continue
+        query = parse_qs(request.get("query", ""), keep_blank_values=True)
+        if any(
+            query.get(name) != [value]
+            for name, value in requirement.get("query_values", {}).items()
+        ):
+            continue
         if any(
             request.get("headers", {}).get(name.lower()) != value
             for name, value in requirement.get("headers", {}).items()

