@@ -98,7 +98,7 @@ const USER_AGENTS = [
         try {
           const url = `${BASE_URL}${path}`;
           await settleRequests(requestState);
-          if (new URL(url).hash && documentResponse && [403, 429].includes(documentResponse.status())) {
+          if (new URL(url).hash) {
             await page.goto('about:blank');
             documentResponse = undefined;
           }
