@@ -5289,7 +5289,12 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "python3", "flock"],
       "after": ["crapi-exploits/12-sqli-apply-coupon"],
-      "target_paths": ["/crapi/health", "/crapi/identity/api/auth/login", "/crapi/mailhog/api/v2/messages"],
+      "target_paths": [
+        "/crapi/health",
+        "/crapi/identity/api/auth/login",
+        "/crapi/mailhog/api/v2/messages",
+        "/crapi/identity/api/v2/user/videos/convert_video"
+      ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
@@ -5304,6 +5309,35 @@
             "path_regex": "/crapi/identity/api/v2/user/videos/[^/]+",
             "body_regex": "(?:;|&&|\\||\\$\\(|`)",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+          },
+          {
+            "id": "video-conversion-trigger",
+            "method": "GET",
+            "path": "/crapi/identity/api/v2/user/videos/convert_video",
+            "query_regex": "(?:^|&)video_id=[1-9][0-9]*(?:&|$)",
+            "minimum_dispatches": 3,
+            "payload_class": "video-conversion-trigger",
+            "expected_statuses": [200, 400, 500],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["message", "status"]
+            },
+            "response_contract_by_status": {
+              "400": {
+                "content_type": "application/json",
+                "json_equals": {
+                  "message": "Video_id param is missing",
+                  "status": 400
+                }
+              },
+              "500": {
+                "content_type": "application/json",
+                "json_equals": {
+                  "message": "Error occured while executing.",
+                  "status": 500
+                }
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
