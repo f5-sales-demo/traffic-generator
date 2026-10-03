@@ -30,6 +30,23 @@ def restaurant_actors(fixtures: dict) -> tuple[dict, dict]:
     ):
         message = "BOLA requires distinct synthetic actor identities and tokens"
         raise ValueError(message)
+
+    for actor in actors:
+        try:
+            encoded = actor["token"].split(".")[1]
+            payload = json.loads(
+                base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
+            )
+            expires = payload["exp"]
+        except (ValueError, IndexError, KeyError, TypeError) as error:
+            message = "BOLA actor issued token invalid"
+            raise ValueError(message) from error
+        if payload.get("sub") != actor["username"]:
+            message = "BOLA actor token identity mismatch"
+            raise ValueError(message)
+        if not isinstance(expires, (int, float)) or expires <= time.time():
+            message = "BOLA actor token expired; refresh required"
+            raise ValueError(message)
     return actors[0], actors[1]
 
 
