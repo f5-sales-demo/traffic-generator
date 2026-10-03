@@ -3497,6 +3497,107 @@
           }
         ],
         "reject_unmatched_errors": true
+      },
+      "nested_contract": {
+        "dvga-exploits": [
+          "dvga-exploits/01-batch-query-dos",
+          "dvga-exploits/02-deep-recursion",
+          "dvga-exploits/03-field-duplication",
+          "dvga-exploits/04-sqli-filter",
+          "dvga-exploits/05-xss-createpaste",
+          "dvga-exploits/06-os-command-importpaste",
+          "dvga-exploits/07-jwt-forgery-me",
+          "dvga-exploits/08-path-traversal-upload"
+        ],
+        "restaurant-exploits": [
+          "restaurant-exploits/01-register-auth",
+          "restaurant-exploits/02-bola-profile",
+          "restaurant-exploits/03-bola-orders",
+          "restaurant-exploits/04-bopla-mass-assign",
+          "restaurant-exploits/05-bfla-privilege",
+          "restaurant-exploits/06-ssrf-menu-image",
+          "restaurant-exploits/07-command-injection",
+          "restaurant-exploits/08-full-escalation-chain",
+          "restaurant-exploits/09-jwt-secret-crack",
+          "restaurant-exploits/10-api-discovery"
+        ],
+        "crapi-exploits": [
+          "crapi-exploits/01-register-auth",
+          "crapi-exploits/02-bola-vehicle-location",
+          "crapi-exploits/03-bola-mechanic-reports",
+          "crapi-exploits/04-otp-bruteforce",
+          "crapi-exploits/05-data-exposure-mechanics",
+          "crapi-exploits/06-data-exposure-posts",
+          "crapi-exploits/07-bfla-admin-video",
+          "crapi-exploits/08-mass-assignment-orders",
+          "crapi-exploits/09-ssrf-contact-mechanic",
+          "crapi-exploits/10-dos-contact-mechanic",
+          "crapi-exploits/11-nosql-injection-coupon",
+          "crapi-exploits/12-sqli-apply-coupon",
+          "crapi-exploits/13-command-injection-video",
+          "crapi-exploits/14-unauth-order-access",
+          "crapi-exploits/15-jwt-algorithm-confusion"
+        ],
+        "web-app-attacks": [
+          "web-app-attacks/01-sqli",
+          "web-app-attacks/02-xss",
+          "web-app-attacks/03-command-injection",
+          "web-app-attacks/04-path-traversal",
+          "web-app-attacks/05-nikto-scan",
+          "web-app-attacks/06-nuclei-scan",
+          "web-app-attacks/07-xxe",
+          "web-app-attacks/08-ssrf",
+          "web-app-attacks/09-csrf",
+          "web-app-attacks/10-file-upload"
+        ],
+        "api-attacks": [
+          "api-attacks/01-vampi-owasp-top10",
+          "api-attacks/02-sqlmap-api",
+          "api-attacks/03-arjun-param-discovery",
+          "api-attacks/04-ffuf-api-fuzz",
+          "api-attacks/05-broken-auth",
+          "api-attacks/06-mass-assignment"
+        ],
+        "juice-shop-exploits": [
+          "juice-shop-exploits/01-sqli-login-bypass",
+          "juice-shop-exploits/02-sqli-search-union",
+          "juice-shop-exploits/03-xss-dom-reflected",
+          "juice-shop-exploits/04-xss-stored-api",
+          "juice-shop-exploits/05-idor-basket-access",
+          "juice-shop-exploits/06-admin-access",
+          "juice-shop-exploits/07-sensitive-data",
+          "juice-shop-exploits/08-nosql-injection",
+          "juice-shop-exploits/09-file-upload-xxe",
+          "juice-shop-exploits/10-jwt-attacks",
+          "juice-shop-exploits/11-api-enumeration",
+          "juice-shop-exploits/12-automated-sqlmap"
+        ],
+        "dvwa-exploits": [
+          "dvwa-exploits/01-brute-force",
+          "dvwa-exploits/02-command-injection",
+          "dvwa-exploits/03-csrf-password-change",
+          "dvwa-exploits/04-file-inclusion",
+          "dvwa-exploits/05-file-upload",
+          "dvwa-exploits/06-sqli",
+          "dvwa-exploits/07-sqli-blind",
+          "dvwa-exploits/08-xss-dom",
+          "dvwa-exploits/09-xss-reflected",
+          "dvwa-exploits/10-xss-stored",
+          "dvwa-exploits/11-csp-bypass",
+          "dvwa-exploits/12-weak-session",
+          "dvwa-exploits/13-authbypass",
+          "dvwa-exploits/14-open-redirect"
+        ],
+        "mitre-attack": [
+          "mitre-attack/01-reconnaissance",
+          "mitre-attack/02-initial-access",
+          "mitre-attack/03-execution",
+          "mitre-attack/04-credential-access",
+          "mitre-attack/05-discovery",
+          "mitre-attack/06-collection-exfiltration",
+          "mitre-attack/07-impact",
+          "mitre-attack/08-attck-coverage-report"
+        ]
       }
     },
     {
@@ -14723,6 +14824,28 @@
           }
         ],
         "reject_unmatched_errors": true
+      },
+      "nested_contract": {
+        "web-app-attacks": [
+          "web-app-attacks/01-sqli",
+          "web-app-attacks/02-xss",
+          "web-app-attacks/03-command-injection",
+          "web-app-attacks/04-path-traversal",
+          "web-app-attacks/05-nikto-scan",
+          "web-app-attacks/06-nuclei-scan",
+          "web-app-attacks/07-xxe",
+          "web-app-attacks/08-ssrf",
+          "web-app-attacks/09-csrf",
+          "web-app-attacks/10-file-upload"
+        ],
+        "api-attacks": [
+          "api-attacks/01-vampi-owasp-top10",
+          "api-attacks/02-sqlmap-api",
+          "api-attacks/03-arjun-param-discovery",
+          "api-attacks/04-ffuf-api-fuzz",
+          "api-attacks/05-broken-auth",
+          "api-attacks/06-mass-assignment"
+        ]
       }
     },
     {

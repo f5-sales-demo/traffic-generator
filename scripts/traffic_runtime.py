@@ -28,6 +28,7 @@ from traffic_dispatch import (
     verify_workload,
 )
 from traffic_network import NetworkBoundary
+from traffic_report import build_report
 
 sys.dont_write_bytecode = True
 DOMAIN_COUNT = 2
@@ -349,6 +350,10 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 environment,
                 scenario["timeout_seconds"],
             )
+        result["id"] = scenario["id"]
+        result["source_sha256"] = hashlib.sha256(
+            (root / scenario["entrypoint"]).read_bytes()
+        ).hexdigest()
         result["dispatch_contract_verified"] = False
         scenario_action_verification(directory, scenario, result)
         atomic_json(directory / "receipt.json", result)
@@ -439,6 +444,21 @@ def multiclient_action_verification(
             result["outcome"] = "fixture_failure"
 
 
+def nested_action_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Require each declared child receipt, independent of aggregate parent traffic."""
+    if "nested_contract" in scenario:
+        reports = [
+            build_report(directory / ("nested-" + suite), identifiers)
+            for suite, identifiers in scenario["nested_contract"].items()
+        ]
+        result["nested_actions"] = reports
+        result["dispatch_contract_verified"] &= bool(reports) and all(
+            report["passed"] for report in reports
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
+
+
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
     if "tool_contract" in scenario:
@@ -521,6 +541,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             result["outcome"] = "tool_failure"
     cache_action_verification(directory, scenario, result)
     multiclient_action_verification(directory, scenario, result)
+    nested_action_verification(directory, scenario, result)
     connection_action_verification(directory, scenario, result)
 
 

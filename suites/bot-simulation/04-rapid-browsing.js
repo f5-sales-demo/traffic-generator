@@ -102,7 +102,7 @@ const USER_AGENTS = [
         await settleRequests(requestState);
         const response = await page.goto(url, {
           waitUntil: 'domcontentloaded',
-          timeout: 5000,
+          timeout: 20000,
         });
         const status = response ? response.status() : 'N/A';
         console.log(`    ${path} -> ${status}`);
@@ -130,5 +130,6 @@ const USER_AGENTS = [
 
   console.log('[*] Rapid browsing simulation complete');
   console.log(`    Pages visited: ${visited} | Errors: ${errors}`);
+  if (errors) process.exitCode = 1;
   console.log(`    Duration: ${elapsed}s | Rate: ${rate} req/s`);
 })();
