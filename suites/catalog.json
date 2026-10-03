@@ -2594,7 +2594,7 @@
       "dependencies": ["bash", "curl", "ip"],
       "after": ["cdn-load-testing/01-baseline-throughput"],
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
-      "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
+      "expected_outcome": "declared dynamic cache bypass, correct application content, query isolation and encoding responses verified",
       "budget": "http",
       "parallel": true,
       "timeout_seconds": 900,
@@ -2775,7 +2775,8 @@
             "query_regex": "iso=bravo-[0-9]+"
           }
         ]
-      }
+      },
+      "adapter": "dynamic-cache"
     },
     {
       "id": "cdn-load-testing/03-accept-encoding-variation",
@@ -2785,7 +2786,7 @@
       "dependencies": ["bash", "curl", "ip"],
       "after": ["cdn-load-testing/02-query-string-isolation"],
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
-      "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
+      "expected_outcome": "declared dynamic cache bypass, correct application content, query isolation and encoding responses verified",
       "budget": "http",
       "parallel": true,
       "timeout_seconds": 900,
@@ -3024,7 +3025,8 @@
             "absent_headers": ["accept-encoding"]
           }
         ]
-      }
+      },
+      "adapter": "dynamic-cache"
     },
     {
       "id": "cdn-load-testing/04-thundering-herd",

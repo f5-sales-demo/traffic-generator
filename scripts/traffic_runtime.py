@@ -240,10 +240,14 @@ def evidence_monitor(
 
 def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
     """Use explicit interpreters; connection probes use separately paced equivalents."""
-    if scenario.get("adapter") == "bounded-workload":
+    adapters = {
+        "dynamic-cache": "traffic_cache.py",
+        "bounded-workload": "traffic_workload.py",
+    }
+    if scenario.get("adapter") in adapters:
         return [
             "python3",
-            str(root / "scripts/traffic_workload.py"),
+            str(root / "scripts" / adapters[scenario["adapter"]]),
             scenario["id"],
             domain,
         ]
@@ -371,6 +375,17 @@ def connection_action_verification(
             result["outcome"] = "tool_failure"
 
 
+def cache_action_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Require cache content and isolation receipts when declared."""
+    if scenario.get("adapter") == "dynamic-cache":
+        evidence = directory / "cache-evidence.json"
+        result["dispatch_contract_verified"] &= (
+            evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+
+
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
     if "tool_contract" in scenario:
@@ -451,6 +466,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         result["dispatch_contract_verified"] &= result["workload"]["passed"]
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "tool_failure"
+    cache_action_verification(directory, scenario, result)
     connection_action_verification(directory, scenario, result)
 
 
