@@ -386,10 +386,61 @@ Active and pending evidence is not silently pruned. Local append-open logs rotat
 with seven rotations, compression/delayed compression, and copytruncate. Diagnose disk blocks and
 preserve evidence before authorized cleanup; never remove active or pending runs to bypass bounds.
 
-Acceptance on a later approved fresh deployment requires committed hash-validated evidence for all
+Acceptance on each approved fresh deployment requires committed hash-validated evidence for all
 eleven names over two cycles, monotonic counters, bounded disk, no owned-child leaks, and controlled
 reboot recurrence. Ready health, active units, browser success, and committed uploads do not guarantee
-CSD detection. This documentation describes the source contract, not completed live deployment evidence.
+CSD detection. The dated proof below records one deployment's measured execution and evidence results;
+it does not replace acceptance checks on another deployment.
+
+### Live Execution and Evidence Proof — 2026-10-03
+
+The approved AWS worker ran the published source pin
+`243d3eddae28e235fc8cb115962ae6e36792c6ba`. Implementation provenance is
+[unattended dispatch (PR 710)](https://github.com/f5-sales-demo/traffic-generator/pull/710),
+[root-owned bootstrap ancestors (PR 714)](https://github.com/f5-sales-demo/traffic-generator/pull/714),
+[immutable CloudWatch package version (PR 716)](https://github.com/f5-sales-demo/traffic-generator/pull/716),
+and [native control-state cleanup (PR 718)](https://github.com/f5-sales-demo/traffic-generator/pull/718).
+This documentation contribution changes neither that runtime pin nor deployment inputs;
+`continuous_enabled = true` remained configured. Private evidence is summarized without host identities,
+object keys, private paths, credentials, or raw receipts.
+
+| Measured boundary (UTC) | Verified result |
+| --- | --- |
+| Two cycles, verified at 14:32:41 | Each of the eleven canonical scenarios completed twice: 22 successful browser runs with S3 upload commits and 284 assertion checks. |
+| Broader evidence audit, summarized at 14:36:54 | 26 committed runs had actual S3 content checksums and single-version proof covering 316 objects. This broader total is not the object count for the strict 22-run two-cycle scope. |
+| Controlled idle reboot, requested at 14:34:23 | The boot identity changed. The first automatic post-reboot `obfuscated-loader` upload committed at 14:35:35; persisted committed counters advanced from 25 to 26 without a manual scenario start or source/guest patch. The timer was enabled and active. |
+| Normal owner no-op workflow | Terraform 1.16.3 with AWS provider 6.66.0 completed read-only-lockfile initialization, validation, full normal plan, apply, and replan. Both plans and apply exited 0: 67 managed resource no-ops, 17 output no-ops, and 0 added / 0 changed / 0 destroyed. |
+| Passive observation during that workflow, 14:43:23–14:45:12 | Attempted, browser-passed, and committed counters each advanced from 38 to 41. Failures, timeouts, interruptions, and pending uploads were all zero; timer enabled and health ready. No manual scenarios or source edits were used. |
+
+The normal apply persisted provider-observed state refresh, advancing backend serial 33 to 34.
+Observed differences were the Elastic IP's instance association, root-block-device values, and network
+interface attachment. The post-apply replan had no remaining refresh drift. **No infrastructure actions**
+is not the same as **no state write**: idempotence here means zero managed actions with refreshed state
+persisted, not an unchanged backend serial. Direct worker SSH timed out; passive Systems Manager
+checks supplied the successful operational observations.
+
+Browser assertions include the native control-state cleanup introduced by PR 718; the scenario contract
+requires zero residual controls after cleanup. These are execution, cleanup, recurrence, and upload
+measurements, not evidence that CSD raised an alert. The scenario named `maximum-detection` is a
+scenario identifier, not a detection verdict. Page Tamper's separate `NO_ALERT_WITHIN_WINDOW` result
+remains separate; this proof establishes neither a Page Tamper detection nor a completed header matrix.
+
+#### Next-Day Observation Is Not a Manual Start
+
+For an enabled deployment, use the sanitized status and unit checks above to observe readiness,
+timer enablement/activity, persisted monotonic counters, current work, fatal blocks, and pending uploads.
+An inactive oneshot between firings is normal. Compare counters across a measured interval; do not
+manually launch a scenario or invoke `tick` just to make the system appear active. Investigate unhealthy
+runtime, stalled counters, or queued evidence before claiming continued operation. The dated reboot
+and no-op observations are not a next-day measurement or a guarantee of future uninterrupted traffic.
+
+#### Paused UAT Is a Separate Operating Mode
+
+Dedicated Page Tamper UAT must stop scheduling and drain active work before its quiet, baseline,
+canary, and recovery window, and keep recurrence inhibited throughout that window. Follow the pause,
+lock, cancellation-evidence, and reboot-spanning maintenance guidance above. Resume the reviewed
+enabled timer only after UAT and runtime health checks. Autonomous scenario cycling neither reserves
+that quiet window nor substitutes for its separate detection and recovery evidence.
 
 ## AWS Systems Manager Run Flow
 
