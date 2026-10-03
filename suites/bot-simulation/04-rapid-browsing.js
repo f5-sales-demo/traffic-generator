@@ -124,7 +124,27 @@ const USER_AGENTS = [
         } catch (err) {
           const id = `ua-${identity}-route-${PAGES.indexOf(path)}`;
           await page.screenshot({ path: require('node:path').join(directory, `${id}-failed.png`) }).catch(() => {});
-          receipt.actions.push({ id, performed: true, rendered: false, error: 'browser-route-failure' });
+          receipt.actions.push({
+            id,
+            performed: false,
+            attempted: true,
+            rendered: false,
+            error: 'browser-route-failure',
+            status: documentResponse?.status(),
+            document_bytes: documentResponse
+              ? (await documentResponse.body().catch(() => Buffer.alloc(0))).length
+              : null,
+            scripts: await page
+              .locator('script[src]')
+              .count()
+              .catch(() => 0),
+            body_characters: (
+              await page
+                .locator('body')
+                .innerText()
+                .catch(() => '')
+            ).length,
+          });
           console.log(`    ${path} -> ERR: ${err.message.substring(0, 60)}`);
           errors++;
         }
