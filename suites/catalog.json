@@ -4350,6 +4350,12 @@
             "minimum": 2
           }
         ]
+      },
+      "native_report_contract": {
+        "wrk": 9,
+        "hey": 4,
+        "vegeta": 5,
+        "ab": 2
       }
     },
     {
@@ -4619,6 +4625,10 @@
             "minimum": 4
           }
         ]
+      },
+      "native_report_contract": {
+        "wrk": 19,
+        "hey": 4
       }
     },
     {

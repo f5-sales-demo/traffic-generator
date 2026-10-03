@@ -17,6 +17,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from scanner_phase_contract import verify_scanner_phases
+from stress_reports import verify_native_reports
 from traffic_catalog import load_catalog, readiness
 from traffic_common import atomic_json, terminate
 from traffic_dispatch import (
@@ -622,6 +623,13 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         )
         result["dispatch_contract_verified"] &= result["scanner_phases"]["passed"]
         if not result["scanner_phases"]["passed"]:
+            result["outcome"] = "tool_failure"
+    if "native_report_contract" in scenario:
+        result["native_reports"] = verify_native_reports(
+            directory, scenario["native_report_contract"]
+        )
+        result["dispatch_contract_verified"] &= result["native_reports"]["passed"]
+        if not result["native_reports"]["passed"]:
             result["outcome"] = "tool_failure"
     fixture_action_verification(directory, scenario, result)
     cache_action_verification(directory, scenario, result)
