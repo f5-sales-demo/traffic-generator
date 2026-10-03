@@ -114,10 +114,10 @@ AB_PIDS=""
 AB_BASE="$BASE"
 [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]] && AB_BASE="http://${TARGET}"
 if command -v ab >/dev/null 2>&1; then
-  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${AB_BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
+  ab -l -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${AB_BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /juice-shop/ (PID $!, 300c keepalive)"
-  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${AB_BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
+  ab -l -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${AB_BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /httpbin/get (PID $!, 300c keepalive)"
 fi
