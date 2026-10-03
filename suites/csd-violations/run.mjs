@@ -159,6 +159,14 @@ function networkOutcome(request) {
   };
 }
 
+export async function waitForRequestsTerminal(requests, timeoutMs = 20000) {
+  const deadline = Date.now() + timeoutMs;
+  const pending = () =>
+    [...requests.values()].filter((request) => request.terminal === 'pending' && !request.path.includes('/socket.io/'));
+  while (pending().length && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 25));
+  return { passed: pending().length === 0, pending: pending().length };
+}
+
 function safeFilename(value) {
   return value
     .replace(/[^a-z0-9-]+/gi, '-')
@@ -833,6 +841,10 @@ export async function runSuite(options = {}) {
             ...persistedError('pageCleanup'),
           });
           scenarioResult.status = 'failed';
+        }
+        if (options.drainRequests) {
+          scenarioResult.networkDrain = await cleanupOperation(() => waitForRequestsTerminal(requests));
+          if (!scenarioResult.networkDrain.passed) scenarioResult.status = 'failed';
         }
         scenarioResult.finalScreenshot = await captureWithinDeadline(() =>
           captureScreenshot(

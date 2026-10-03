@@ -35,6 +35,7 @@ export async function runAzure(environment = process.env, options = {}) {
     scenario: environment.CSD_SCENARIO,
     executablePath: chrome,
     headless: true,
+    drainRequests: true,
     browserArgs: ['--disable-dev-shm-usage', '--no-sandbox'],
     ignoreHTTPSErrors: true, // Only the task-owned pacing proxy certificate is intercepted.
     runtime: {
