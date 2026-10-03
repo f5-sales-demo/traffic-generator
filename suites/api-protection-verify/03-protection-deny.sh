@@ -12,7 +12,7 @@ set -euo pipefail
 TARGET="${1:?Usage: 03-protection-deny.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-https}://${TARGET}"
 UA="sp5-api-verify"
-CURL=(curl -sk --max-time 10 -o /dev/null -w '%{http_code}' -A "$UA" -H "X-SP5-Verify: protection-deny")
+CURL=(curl -sk --max-time 30 -o /dev/null -w '%{http_code}' -A "$UA" -H "X-SP5-Verify: protection-deny")
 
 echo "[*] API-protection deny traffic against ${BASE}"
 

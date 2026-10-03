@@ -817,6 +817,29 @@ def catalog_pass_receipt(
     }
 
 
+def current_pass_receipt(
+    root: Path,
+    scenarios: list[dict],
+    state: dict,
+    active: Path,
+    receipts: list[dict],
+    config: dict,
+) -> dict:
+    """Resolve source digests outside the supervisor's lifecycle state."""
+    digests = {
+        item["id"]: hashlib.sha256((root / item["entrypoint"]).read_bytes()).hexdigest()
+        for item in load_catalog(root)["scenarios"]
+    }
+    return catalog_pass_receipt(
+        active.name,
+        state["pass_started"],
+        receipts,
+        {item["id"]: digests[item["id"]] for item in scenarios},
+        digests,
+        config,
+    )
+
+
 def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) -> int:
     """Supervise perpetual passes; failures remain visible while subsequent launches continue."""
     config = json.loads(config_path.read_text())
@@ -877,15 +900,8 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
                 retain(
                     runtime, active, config["retention_days"], config["retention_bytes"]
                 )
-            digests = {
-                item["id"]: hashlib.sha256(
-                    (root / item["entrypoint"]).read_bytes()
-                ).hexdigest()
-                for item in load_catalog(root)["scenarios"]
-            }
-            expected = {item["id"]: digests[item["id"]] for item in scenarios}
-            receipt = catalog_pass_receipt(
-                pass_id, state["pass_started"], receipts, expected, digests, config
+            receipt = current_pass_receipt(
+                root, scenarios, state, active, receipts, config
             )
             atomic_json(active / "receipt.json", receipt)
             if receipt["catalog_complete"]:
