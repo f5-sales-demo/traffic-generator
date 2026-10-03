@@ -348,7 +348,23 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
       tracked.timers.add(timer);
       document.head.appendChild(script);
     });
+  const isCheckable = (control) => control instanceof HTMLInputElement && ['checkbox', 'radio'].includes(control.type);
+  const hasControlValue = (control) =>
+    isCheckable(control)
+      ? control.checked || Boolean(control.value)
+      : control instanceof HTMLSelectElement
+        ? [...control.options].some((option) => option.selected)
+        : Boolean(control.value);
   const setNativeValue = (control, value) => {
+    if (isCheckable(control)) {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'checked')?.set?.call(control, Boolean(value));
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(control, '');
+      return;
+    }
+    if (control instanceof HTMLSelectElement && value === '') {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex')?.set?.call(control, -1);
+      return;
+    }
     const prototype =
       control instanceof HTMLInputElement
         ? HTMLInputElement.prototype
@@ -456,14 +472,14 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
     do {
       for (const control of controls) {
         setNativeValue(control, '');
-        control.removeAttribute('value');
+        if (!isCheckable(control)) control.removeAttribute('value');
         control.removeAttribute('placeholder');
         dispatchValueEvents(control);
       }
       await new Promise((resolve) => setTimeout(resolve, CLEANUP_POLL_MS));
       controls = managedControls();
-    } while (controls.some((control) => control.value) && Date.now() < deadline);
-    const managedControlValueCount = controls.filter((control) => control.value).length;
+    } while (controls.some(hasControlValue) && Date.now() < deadline);
+    const managedControlValueCount = controls.filter(hasControlValue).length;
     if (managedControlValueCount === 0)
       for (const control of controls) {
         control.removeAttribute('data-csd-synthetic');
@@ -497,7 +513,11 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
         if (control instanceof HTMLSelectElement) continue;
         syntheticFill(
           control,
-          control.type === 'password' ? 'Synthetic-Only-Password-42!' : `synthetic-${index}@example.com`,
+          isCheckable(control)
+            ? false
+            : control.type === 'password'
+              ? 'Synthetic-Only-Password-42!'
+              : `synthetic-${index}@example.com`,
         );
         setCount += 1;
       }

@@ -681,3 +681,109 @@ test('one shared lock and external execution result govern browser and upload re
   assert.match(source, /timeout --signal=TERM --kill-after=2 "\$budget"/);
   assert.match(source, /DEFAULT_POLICY: p/);
 });
+
+test('real Chrome reverses owned native controls after asynchronous rehydration', {
+  skip: !process.env.CSD_TEST_CHROME_PATH || !process.env.CSD_TEST_PLAYWRIGHT_MODULE,
+}, async () => {
+  const { chromium } = await import(process.env.CSD_TEST_PLAYWRIGHT_MODULE);
+  const browser = await chromium.launch({ executablePath: process.env.CSD_TEST_CHROME_PATH, headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(`
+      <input id="emailControl" type="email"><input id="passwordControl" type="password">
+      <input id="toggle" type="checkbox"><input id="radio" type="radio">
+      <textarea id="answer"></textarea><select id="question"><option value="">Choose</option></select>
+      <input id="foreign" value="application-owned"><input id="other" type="checkbox" checked>
+    `);
+    await page.evaluate(pageHelpers, { runId: 'browser-regression', scenarioName: 'registration-harvester' });
+    await page.evaluate(() => {
+      const foreign = document.querySelector('#foreign');
+      const other = document.querySelector('#other');
+      foreign.remove();
+      other.remove();
+      window.__csdSim.setSyntheticRegistration();
+      const select = document.querySelector('#question');
+      select.setAttribute('data-csd-synthetic', 'true');
+      select.setAttribute('data-csd-run', 'browser-regression');
+      select.setAttribute('data-csd-scenario', 'registration-harvester');
+      document.body.append(foreign, other);
+      other.setAttribute('data-csd-synthetic', 'true');
+      other.setAttribute('data-csd-run', 'different-run');
+      other.setAttribute('data-csd-scenario', 'registration-harvester');
+      window.controlEvents = [];
+      const owned = [...document.querySelectorAll('[data-csd-run="browser-regression"]')];
+      for (const control of owned) {
+        for (const name of ['input', 'change', 'blur']) {
+          control.addEventListener(name, () => window.controlEvents.push(name));
+        }
+        control.addEventListener('change', () => {
+          if (control.dataset.resetDone) return;
+          control.dataset.resetDone = 'true';
+          setTimeout(() => {
+            if (control.type === 'checkbox' || control.type === 'radio') control.checked = true;
+            else if (control.tagName === 'SELECT') control.selectedIndex = 0;
+            else control.value = 'synthetic-framework-rehydration';
+          }, 10);
+        });
+      }
+    });
+    const cleanup = await page.evaluate(() => window.__csdSim.cleanupPage());
+    assert.deepEqual(cleanup, {
+      artifactCount: 0,
+      managedControlValueCount: 0,
+      sensitiveValueCount: 0,
+      timerCount: 0,
+      listenerAttached: false,
+    });
+    const state = await page.evaluate(() => ({
+      owned: [...document.querySelectorAll('#emailControl,#passwordControl,#toggle,#radio,#answer,#question')].map(
+        (control) => ({
+          value: control.value,
+          checked: control.checked ?? false,
+          selectedIndex: control.selectedIndex ?? -1,
+          marked: control.hasAttribute('data-csd-synthetic'),
+        }),
+      ),
+      foreign: document.querySelector('#foreign').value,
+      otherChecked: document.querySelector('#other').checked,
+      events: [...new Set(window.controlEvents)].sort(),
+    }));
+    assert.ok(
+      state.owned.every(
+        (control) => !control.value && !control.checked && control.selectedIndex === -1 && !control.marked,
+      ),
+    );
+    assert.equal(state.foreign, 'application-owned');
+    assert.equal(state.otherChecked, true);
+    assert.deepEqual(state.events, ['blur', 'change', 'input']);
+    await page.evaluate(() => {
+      const toggle = document.querySelector('#toggle');
+      toggle.setAttribute('data-csd-synthetic', 'true');
+      toggle.setAttribute('data-csd-run', 'browser-regression');
+      toggle.setAttribute('data-csd-scenario', 'registration-harvester');
+      toggle.addEventListener('change', () => {
+        toggle.checked = true;
+      });
+    });
+    const retained = await page.evaluate(() => window.__csdSim.cleanupPage());
+    assert.equal(retained.managedControlValueCount, 1);
+    assert.equal(await page.locator('#toggle').getAttribute('data-csd-synthetic'), 'true');
+    await page.evaluate(() => {
+      const toggle = document.querySelector('#toggle');
+      toggle.removeAttribute('data-csd-synthetic');
+      toggle.checked = false;
+      const select = document.querySelector('#question');
+      select.setAttribute('data-csd-synthetic', 'true');
+      select.setAttribute('data-csd-run', 'browser-regression');
+      select.setAttribute('data-csd-scenario', 'registration-harvester');
+      select.addEventListener('change', () => {
+        select.selectedIndex = 0;
+      });
+    });
+    const selected = await page.evaluate(() => window.__csdSim.cleanupPage());
+    assert.equal(selected.managedControlValueCount, 1);
+    assert.equal(await page.locator('#question').getAttribute('data-csd-synthetic'), 'true');
+  } finally {
+    await browser.close();
+  }
+});
