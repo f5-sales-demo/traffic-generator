@@ -24,3 +24,9 @@ def test_cdn_summary_propagates_failed_assertion():
         check=False,
     )
     assert result.returncode != 0
+
+
+def test_method_cache_probe_requires_response_not_only_missing_cache_header():
+    source = (ROOT / "suites/cdn-load-testing/05-post-put-bypass.sh").read_text()
+    assert 'No HTTP response for' in source
+    assert 'dynamic-bypass' in source

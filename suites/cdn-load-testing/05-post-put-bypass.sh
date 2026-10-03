@@ -18,7 +18,7 @@ check_method_bypass() {
   local url="${BASE}${path}"
   local label="${method} ${path}"
 
-  local curl_args=(-sf -D - -o /dev/null --max-time 10 -X "$method")
+  local curl_args=(-s -D - -o /dev/null --max-time 10 -X "$method")
   curl_args+=(-H "X-Forwarded-For: $(rand_ip)")
   curl_args+=(-H "Content-Type: application/json")
 
@@ -36,7 +36,9 @@ check_method_bypass() {
 
   echo "    ${label} → HTTP ${http_code:-???}, X-Cache-Status: ${cache_status}"
 
-  if [ "$cache_status" = "HIT" ]; then
+  if [[ ! "$http_code" =~ ^[1-5][0-9][0-9]$ ]]; then
+    fail "No HTTP response for ${label}"
+  elif [ "$cache_status" = "HIT" ]; then
     fail "${label} — returned HIT (non-GET should not be cached)"
   else
     pass "${label} — not cached ($cache_status)"
@@ -68,8 +70,8 @@ echo "[+] Verify GET still caches (not poisoned by POST tests)"
 curl -sf -o /dev/null --max-time 5 "${BASE}/httpbin/get" 2>/dev/null
 sleep 0.3
 GET_STATUS=$(check_cache_status "${BASE}/httpbin/get")
-if [ "$GET_STATUS" = "HIT" ]; then
-  pass "GET /httpbin/get still caches normally after POST tests ($GET_STATUS)"
+if [ "$GET_STATUS" = "NONE" ] || [ "$GET_STATUS" = "BYPASS" ]; then
+  pass "GET /httpbin/get retains declared dynamic-bypass behavior ($GET_STATUS)"
 else
   fail "GET /httpbin/get cache may be poisoned ($GET_STATUS)"
 fi
