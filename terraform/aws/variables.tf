@@ -163,18 +163,21 @@ variable "cloudwatch_agent_version" {
   type        = string
 
   validation {
-    condition     = can(regex("^[0-9]+\\.[0-9]+[0-9A-Za-z.+~-]*$", var.cloudwatch_agent_version))
-    error_message = "cloudwatch_agent_version must be an exact package version."
+    condition     = can(regex("^1\\.[0-9]+\\.[0-9]+b[0-9]+-[0-9]+$", var.cloudwatch_agent_version))
+    error_message = "cloudwatch_agent_version must be an exact Debian package version: 1.<release>.<release>b<build>-<revision>, with numeric components."
   }
 }
 
 variable "cloudwatch_agent_package_url" {
-  description = "Official AWS Ubuntu amd64 Amazon CloudWatch agent package URL. Exact package version and SHA-256 are verified separately."
+  description = "Official AWS Ubuntu amd64 Amazon CloudWatch agent S3 object-version URL. Package identity, exact version and SHA-256 are verified before installation."
   type        = string
 
   validation {
-    condition     = var.cloudwatch_agent_package_url == "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb"
-    error_message = "cloudwatch_agent_package_url must use the official AWS Ubuntu amd64 package URL."
+    condition = (
+      can(regex("^https://amazoncloudwatch-agent\\.s3\\.amazonaws\\.com/ubuntu/amd64/latest/amazon-cloudwatch-agent\\.deb\\?versionId=[A-Za-z0-9._~-]+$", var.cloudwatch_agent_package_url)) &&
+      var.cloudwatch_agent_package_url != "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb?versionId=null"
+    )
+    error_message = "cloudwatch_agent_package_url must use the exact official AWS Ubuntu amd64 key with exactly one non-empty, non-null versionId containing only letters, digits, dot, underscore, tilde or hyphen; no other query, fragment or path is allowed."
   }
 }
 
@@ -190,11 +193,8 @@ variable "cloudwatch_agent_package_sha256" {
 
 check "pinned_runtime_artifact_urls" {
   assert {
-    condition = (
-      var.aws_cli_archive_url == "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${var.aws_cli_version}.zip" &&
-      var.cloudwatch_agent_package_url == "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb"
-    )
-    error_message = "AWS CLI URL must contain its exact version and CloudWatch Agent must use the official package URL."
+    condition     = var.aws_cli_archive_url == "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${var.aws_cli_version}.zip"
+    error_message = "AWS CLI URL must contain its exact version."
   }
 }
 

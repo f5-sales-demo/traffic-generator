@@ -271,6 +271,15 @@ write_files:
           /opt/traffic-generator/.config /opt/traffic-generator/.npm
       }
       fetch() { curl -fSL --retry 4 -o "$3" "$1"; echo "$2  $3" | sha256sum -c; }
+      verify_cloudwatch_agent_package() {
+        local package_path=$1 expected_version=$2 package_name architecture version
+        package_name=$(dpkg-deb --field "$package_path" Package) || return 1
+        architecture=$(dpkg-deb --field "$package_path" Architecture) || return 1
+        version=$(dpkg-deb --field "$package_path" Version) || return 1
+        test "$package_name" = amazon-cloudwatch-agent &&
+          test "$architecture" = amd64 &&
+          test "$version" = "$expected_version"
+      }
       normalize_aws_cli_permissions() {
         local aws_cli_root=$1 owner=$${2:-root} group=$${3:-tgen}
         find -P "$aws_cli_root" -type d -exec chown "$owner:$group" {} + -exec chmod 00750 {} +
@@ -324,6 +333,7 @@ write_files:
       stage=cloudwatch-agent
       if test "$(dpkg-query -W -f='$${Version}' amazon-cloudwatch-agent 2>/dev/null || true)" != '${cloudwatch_agent_version}'; then
         fetch '${cloudwatch_agent_package_url}' '${cloudwatch_agent_package_sha256}' /tmp/cw.deb
+        verify_cloudwatch_agent_package /tmp/cw.deb '${cloudwatch_agent_version}'
         dpkg -i /tmp/cw.deb
         rm /tmp/cw.deb
       fi
