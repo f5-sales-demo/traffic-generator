@@ -19,6 +19,7 @@ from traffic_dispatch import (
     classify_outcome,
     declared_socket_cleanup,
     match_requirements,
+    response_content_matches,
 )
 
 HTTPS_PORT = 443
@@ -260,6 +261,19 @@ class Budget:
             "transport_error": transport_error,
             "expected_statuses": current.get("expected_statuses", []),
         }
+        if flow.response:
+            content_type = flow.response.headers.get("content-type", "")
+            body = flow.response.get_text(strict=False) or ""
+            event["response_assertions"] = {
+                requirement["id"]: response_content_matches(
+                    requirement["response_contract"], content_type, body
+                )
+                for requirement in current.get("dispatch_contract", {}).get(
+                    "requirements", []
+                )
+                if requirement["id"] in event["matched_requirements"]
+                and "response_contract" in requirement
+            }
         event["outcome"] = classify_outcome(event)
         with destination.open("a", encoding="utf-8") as stream:
             destination.chmod(0o600)

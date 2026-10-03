@@ -385,6 +385,26 @@ def verify_tool_actions(contract: dict, events: list[dict]) -> dict:
     }
 
 
+def response_content_matches(contract: dict, content_type: str, body: str) -> bool:
+    """Evaluate transient response content and retain only assertion booleans."""
+    if content_type.split(";", 1)[0] != contract.get("content_type"):
+        return False
+    if any(term not in body for term in contract.get("text_contains", [])):
+        return False
+    if "json_equals" in contract or "json_keys" in contract:
+        try:
+            document = json.loads(body)
+        except ValueError:
+            return False
+        if not isinstance(document, dict):
+            return False
+        return all(
+            document.get(key) == value
+            for key, value in contract.get("json_equals", {}).items()
+        ) and all(key in document for key in contract.get("json_keys", []))
+    return True
+
+
 def verify_responses(contract: dict, events: list[dict]) -> dict:
     """Request actions require explicit application outcomes or a mitigation candidate."""
     checks = []
@@ -405,6 +425,12 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
                     not event.get("transport_error")
                     and event.get("status")
                     in [*requirement["expected_statuses"], 403, 429]
+                    and (
+                        "response_contract" not in requirement
+                        or event.get("status") in (403, 429)
+                        or event.get("response_assertions", {}).get(requirement["id"])
+                        is True
+                    )
                     for event in responses
                 ),
             }

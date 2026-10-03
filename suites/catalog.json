@@ -16850,7 +16850,11 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200]
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["username", "phone_number"]
+            }
           },
           {
             "id": "cross-user",
@@ -16862,7 +16866,14 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 400, 401, 422]
+            "expected_statuses": [200, 400, 401, 422],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_victim",
+                "phone_number": "5550199004"
+              }
+            }
           },
           {
             "id": "privileged-admin",
@@ -16874,7 +16885,14 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "expected_statuses": [200, 400, 401, 422],
-            "body_regex": "\"username\":\"(?:admin|tgen_bola_admin)\",\"phone_number\":\"5550199011\""
+            "body_regex": "\"username\":\"(?:admin|tgen_bola_admin)\",\"phone_number\":\"5550199011\"",
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_admin",
+                "phone_number": "5550199011"
+              }
+            }
           },
           {
             "id": "privileged-chef",
@@ -16886,7 +16904,14 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "expected_statuses": [200, 400, 401, 422],
-            "body_regex": "\"username\":\"(?:chef|tgen_bola_chef)\",\"phone_number\":\"5550199012\""
+            "body_regex": "\"username\":\"(?:chef|tgen_bola_chef)\",\"phone_number\":\"5550199012\"",
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_chef",
+                "phone_number": "5550199012"
+              }
+            }
           },
           {
             "id": "privileged-manager",
@@ -16898,7 +16923,14 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "expected_statuses": [200, 400, 401, 422],
-            "body_regex": "\"username\":\"(?:manager|tgen_bola_manager)\",\"phone_number\":\"5550199013\""
+            "body_regex": "\"username\":\"(?:manager|tgen_bola_manager)\",\"phone_number\":\"5550199013\"",
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_manager",
+                "phone_number": "5550199013"
+              }
+            }
           },
           {
             "id": "privileged-root",
@@ -16910,7 +16942,14 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "expected_statuses": [200, 400, 401, 422],
-            "body_regex": "\"username\":\"(?:root|tgen_bola_root)\",\"phone_number\":\"5550199014\""
+            "body_regex": "\"username\":\"(?:root|tgen_bola_root)\",\"phone_number\":\"5550199014\"",
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_root",
+                "phone_number": "5550199014"
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
