@@ -121,7 +121,7 @@ def test_cancelled_tool_requests_cannot_establish_success():
             patch.object(runtime, "execute", return_value={"outcome": "launched"}),
             patch.object(runtime, "evidence_monitor", return_value=lambda: None),
         ):
-            result = runtime._scenario(
+            result = runtime._scenario(  # pylint: disable=protected-access
                 ROOT,
                 scenario(),
                 "www.example.test",

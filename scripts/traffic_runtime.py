@@ -292,6 +292,25 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
     return int(failed)
 
 
+def prerequisite_failure(
+    identifier: str, directory: Path, state: dict, error: str
+) -> dict:
+    """Retain a redacted fixture failure without stopping independent catalog work."""
+    result = {
+        "id": identifier,
+        "outcome": "fixture_failure",
+        "phase": "prerequisite",
+        "error": error,
+        "dispatch_contract_verified": False,
+        "http_requests": 0,
+    }
+    state["failures"] = (
+        state["failures"] + [{"id": identifier, "outcome": result["outcome"]}]
+    )[-200:]
+    atomic_json(directory / "receipt.json", result)
+    return result
+
+
 def _scenario(
     root: Path,
     scenario: dict,
@@ -319,19 +338,9 @@ def _scenario(
         boundary.refresh_fixtures(domain)
         environment = boundary.environment(scenario, domain, directory)
     except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
-        result = {
-            "id": scenario["id"],
-            "outcome": "fixture_failure",
-            "phase": "prerequisite",
-            "error": type(error).__name__,
-            "dispatch_contract_verified": False,
-            "http_requests": 0,
-        }
-        state["failures"] = (
-            state["failures"] + [{"id": scenario["id"], "outcome": result["outcome"]}]
-        )[-200:]
-        atomic_json(directory / "receipt.json", result)
-        return result
+        return prerequisite_failure(
+            scenario["id"], directory, state, type(error).__name__
+        )
     atomic_json(
         Path(config["results_dir"]) / "current-scenario.json",
         {
