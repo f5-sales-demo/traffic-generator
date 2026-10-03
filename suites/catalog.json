@@ -13836,6 +13836,10 @@
           }
         ],
         "reject_unmatched_errors": true
+      },
+      "scanner_contract": {
+        "phase": "active",
+        "paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/", "/csd-demo/"]
       }
     },
     {

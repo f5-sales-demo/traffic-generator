@@ -16,6 +16,7 @@ import uuid
 from collections.abc import Callable
 from pathlib import Path
 
+from scanner_phase_contract import verify_scanner_phases
 from traffic_catalog import load_catalog, readiness
 from traffic_common import atomic_json, terminate
 from traffic_dispatch import (
@@ -610,6 +611,17 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         )
         result["dispatch_contract_verified"] &= result["workload"]["passed"]
         if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
+    if "scanner_contract" in scenario:
+        evidence = directory / "scanner-phases.jsonl"
+        result["scanner_phases"] = verify_scanner_phases(
+            scenario["scanner_contract"],
+            [json.loads(line) for line in evidence.read_text().splitlines()]
+            if evidence.exists()
+            else [],
+        )
+        result["dispatch_contract_verified"] &= result["scanner_phases"]["passed"]
+        if not result["scanner_phases"]["passed"]:
             result["outcome"] = "tool_failure"
     fixture_action_verification(directory, scenario, result)
     cache_action_verification(directory, scenario, result)
