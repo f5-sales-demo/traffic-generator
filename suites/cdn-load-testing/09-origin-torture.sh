@@ -51,9 +51,10 @@ echo ""
 # LAYER 1: Sustained wrk load against ALL app endpoints (keepalive)
 # ================================================================
 echo "=== LAYER 1: SUSTAINED WRK LOAD (all apps, keepalive) ==="
-WRK_T=$((NCPU / 2))
+WRK_T="${TGEN_THREADS:-$((NCPU / 2))}"
 [ "$WRK_T" -lt 2 ] && WRK_T=2
 WRK_C="${TGEN_CONCURRENCY:-256}"
+[ "$WRK_T" -gt "$WRK_C" ] && WRK_T="$WRK_C"
 
 ORIGIN_ENDPOINTS=(
   "/juice-shop/"

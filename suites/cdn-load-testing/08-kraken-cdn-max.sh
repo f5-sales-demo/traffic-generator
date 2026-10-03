@@ -26,6 +26,9 @@ echo ""
 
 LUA_BASELINE="$(dirname "$0")/_baseline.lua"
 LUA_MULTI="$(dirname "$0")/_multi-client.lua"
+WRK_THREADS="${TGEN_THREADS:-4}"
+WRK_CONNECTIONS="${TGEN_CONCURRENCY:-500}"
+[ "$WRK_THREADS" -gt "$WRK_CONNECTIONS" ] && WRK_THREADS="$WRK_CONNECTIONS"
 
 # ================================================================
 # LAYER 1: wrk with deep path randomization (7 instances)
@@ -34,7 +37,7 @@ echo "=== LAYER 1: wrk SUSTAINED LOAD (deep path randomization) ==="
 WRK_PIDS=""
 if command -v wrk >/dev/null 2>&1; then
   for ep in "/juice-shop/" "/dvwa/login.php" "/vampi/users/v1" "/httpbin/get" "/csd-demo/health" "/whoami/" "/health"; do
-    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s \
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 10s \
       -H "X-Forwarded-For: $(rand_ip)" \
       -H "Accept-Encoding: $(rand_encoding)" \
       -H "User-Agent: $(rand_ua)" \
@@ -44,13 +47,13 @@ if command -v wrk >/dev/null 2>&1; then
   done
   # Combined Lua-randomized instance
   if [ -f "$LUA_BASELINE" ]; then
-    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s -s "$LUA_BASELINE" "${BASE}/" >"$RESULTS_DIR/wrk-lua-baseline.log" 2>&1 &
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 10s -s "$LUA_BASELINE" "${BASE}/" >"$RESULTS_DIR/wrk-lua-baseline.log" 2>&1 &
     WRK_PIDS="$WRK_PIDS $!"
     echo "[+] wrk Lua-randomized: all paths (PID $!, 4t/500c)"
   fi
   # Multi-client Lua instance
   if [ -f "$LUA_MULTI" ]; then
-    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s -s "$LUA_MULTI" "${BASE}/" >"$RESULTS_DIR/wrk-lua-multi.log" 2>&1 &
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 10s -s "$LUA_MULTI" "${BASE}/" >"$RESULTS_DIR/wrk-lua-multi.log" 2>&1 &
     WRK_PIDS="$WRK_PIDS $!"
     echo "[+] wrk Lua-multi-client: vendor headers (PID $!, 4t/500c)"
   fi
