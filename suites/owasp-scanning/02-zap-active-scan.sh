@@ -182,7 +182,8 @@ if [[ "${ALL_DONE}" -eq 0 ]]; then
 fi
 
 for sid in "${ACTIVE_SCAN_IDS[@]}"; do
-  python3 -c "import json,sys; print(json.dumps({'phase':'active','scan_id':sys.argv[1],'completed':True,'status':100}))" "${sid}" >>"${SCAN_EVIDENCE}"
+  curl -sf "${ZAP_API}/JSON/ascan/view/messagesIds/?scanId=${sid}" |
+    python3 -c "import json,sys; ids=json.load(sys.stdin)['messagesIds']; assert isinstance(ids,list) and ids and all(str(i).isdigit() for i in ids); print(json.dumps({'phase':'active','scan_id':sys.argv[1],'completed':True,'status':100,'message_ids':[str(i) for i in ids]}))" "${sid}" >>"${SCAN_EVIDENCE}"
 done
 echo "[*] Active scanning complete."
 

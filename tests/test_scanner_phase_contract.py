@@ -17,3 +17,17 @@ def test_missing_unfinished_or_foreign_scans_fail():
     ]
     assert not verify_scanner_phases(contract, [start, {**end, "status": 50}])["passed"]
     assert verify_scanner_phases(contract, [start, end])["passed"]
+
+
+def test_completed_scan_without_native_attack_messages_fails():
+    """A 100-percent phase with no attack traffic cannot establish active coverage."""
+    contract = {"phase": "active", "paths": ["/dvwa/"], "minimum_messages": 1}
+    start = {"phase": "active", "path": "/dvwa/", "scan_id": "1", "started": True}
+    end = {"phase": "active", "scan_id": "1", "completed": True, "status": 100}
+    for messages in [None, [], ["not-an-id"], ["1", "1"]]:
+        assert not verify_scanner_phases(
+            contract, [start, {**end, "message_ids": messages}]
+        )["passed"]
+    assert verify_scanner_phases(contract, [start, {**end, "message_ids": ["1", "2"]}])[
+        "passed"
+    ]
