@@ -18846,6 +18846,7 @@
       "budget": "http",
       "parallel": false,
       "timeout_seconds": 900,
+      "fixture_contract": { "restore_profiles": true },
       "dispatch_contract": {
         "requirements": [
           {
