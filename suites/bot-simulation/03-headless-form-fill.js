@@ -113,6 +113,7 @@ const IDENTITIES = [
       await question.focus();
       await question.press('ArrowDown');
       await question.press('Enter');
+      await question.press('Escape');
       await page.fill('#securityAnswerControl', 'bot answer');
 
       if (!(await page.locator('#registerButton').isEnabled()))
