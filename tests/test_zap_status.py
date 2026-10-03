@@ -28,3 +28,12 @@ def test_zap_status_parser_rejects_missing_and_malformed_completion(script):
         else:
             assert result.returncode != 0
     assert "did not complete within the timeout" not in source or "exit 1" in source
+
+
+@pytest.mark.parametrize("script", ["01-zap-baseline.sh", "02-zap-active-scan.sh"])
+def test_pinned_scanner_startup_prevents_unsolicited_update_requests(script):
+    """ZAP startup checks run before automation config is applied; silent mode gates them."""
+    source = (ROOT / "suites/owasp-scanning" / script).read_text()
+    daemon = re.search(r"zap (.*?)-daemon", source)
+    assert daemon is not None
+    assert "-silent" in daemon.group(1).split()

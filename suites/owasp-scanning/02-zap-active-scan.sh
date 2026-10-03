@@ -45,7 +45,7 @@ echo ""
 # Start ZAP daemon
 ########################################################################
 echo "[*] Starting ZAP daemon on port ${ZAP_PORT}..."
-JVM_ARGS="-Xmx512m" zap -daemon -port "${ZAP_PORT}" \
+JVM_ARGS="-Xmx512m" zap -silent -daemon -port "${ZAP_PORT}" \
   -config api.disablekey=true \
   -config start.checkForUpdates=false \
   -config start.checkAddonUpdates=false \
