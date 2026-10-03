@@ -17,9 +17,11 @@ source_commit = "<40_CHARACTER_SOURCE_COMMIT>"
 aws_cli_version                 = "<EXACT_AWS_CLI_V2_VERSION>"
 aws_cli_archive_url             = "<PINNED_AWS_CLI_V2_LINUX_X86_64_ARCHIVE_URL>"
 aws_cli_archive_sha256          = "<PINNED_AWS_CLI_ARCHIVE_SHA256>"
-cloudwatch_agent_version        = "<EXACT_CLOUDWATCH_AGENT_VERSION>"
-cloudwatch_agent_package_url    = "<PINNED_CLOUDWATCH_AGENT_UBUNTU_AMD64_PACKAGE_URL>"
-cloudwatch_agent_package_sha256 = "<PINNED_CLOUDWATCH_AGENT_PACKAGE_SHA256>"
+# S3 version retrieval: https://docs.aws.amazon.com/AmazonS3/latest/userguide/RetrievingObjectVersions.html
+# This object version passed AWS GPG signature, Debian package identity/version and SHA-256 validation.
+cloudwatch_agent_version        = "1.300073.2b1889-1"
+cloudwatch_agent_package_url    = "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb?versionId=gBsjqYJfnfEGrqGYPyWw1Ct8qjfwnNSz"
+cloudwatch_agent_package_sha256 = "f25c81f42627ac481b51215e8e6f989208ab266f8b224ffd66a208061e790f1c"
 
 # Pin reviewed Node.js 22 and Chrome for Testing archives and their published SHA-256 values.
 # Select an exact stable playwright-core release compatible with that pinned Chrome build.
