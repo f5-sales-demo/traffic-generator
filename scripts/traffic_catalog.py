@@ -26,6 +26,19 @@ def validate_execution_contract(scenario: dict) -> None:
         raise ValueError(message)
 
 
+def validate_fixture_refresh(scenario: dict) -> None:
+    """Explicit fixture families cannot silently expand or disappear at runtime."""
+    families = scenario.get("fixture_refresh")
+    if (
+        not isinstance(families, list)
+        or any(not isinstance(family, str) for family in families)
+        or len(set(families)) != len(families)
+        or not set(families) <= {"vampi", "crapi", "juice", "restaurant"}
+    ):
+        message = "scenario fixture refresh contract missing or invalid"
+        raise ValueError(message)
+
+
 def validate_target_contract(scenario: dict) -> None:
     """Every exact executable request target must be present in the published matrix."""
     actual = {
@@ -69,6 +82,7 @@ def validate_catalog(root: Path, catalog: dict) -> None:
     for scenario in catalog["scenarios"]:
         identifier = scenario["id"]
         validate_execution_contract(scenario)
+        validate_fixture_refresh(scenario)
         if "dispatch_contract" in scenario:
             validate_dispatch_contract(scenario["dispatch_contract"])
         if identifier in seen or not set(scenario["after"]) <= seen:

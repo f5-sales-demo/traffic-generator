@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+from traffic_catalog import validate_fixture_refresh
 from traffic_network import NetworkBoundary
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,3 +51,11 @@ def test_shadow_endpoints_declare_no_authentication_fixture():
         set(item["fixture_refresh"]) <= {"vampi", "crapi", "juice", "restaurant"}
         for item in catalog["scenarios"]
     )
+
+
+@pytest.mark.parametrize(
+    "families", [None, "crapi", ["unknown"], ["crapi", "crapi"], [1]]
+)
+def test_invalid_fixture_refresh_contract_fails(families):
+    with pytest.raises(ValueError, match="fixture refresh contract"):
+        validate_fixture_refresh({"fixture_refresh": families})
