@@ -338,7 +338,11 @@ def declared_socket_cleanup(path: str, metadata: dict, marker: dict) -> bool:
 
 def verify_route_actions(contract: dict, receipt: dict) -> dict:
     """Require every actual fragment navigation and rendered route, plus cleanup."""
-    observed = {action["id"]: action for action in receipt.get("actions", [])}
+    actions = receipt.get("actions", [])
+    observed = {action["id"]: action for action in actions}
+    exact_inventory = len(actions) == len(observed) and set(observed) == set(
+        contract["actions"]
+    )
     checks = [
         {
             "id": identifier,
@@ -358,6 +362,7 @@ def verify_route_actions(contract: dict, receipt: dict) -> dict:
     ]
     return {
         "passed": bool(checks)
+        and exact_inventory
         and all(check["passed"] for check in checks)
         and receipt.get("browser_closed") is True,
         "checks": checks,

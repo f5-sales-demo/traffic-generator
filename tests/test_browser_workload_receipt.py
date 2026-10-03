@@ -90,3 +90,24 @@ def test_explicit_mitigated_navigation_is_distinct_from_rendered_content():
     assert not verify_route_actions({"actions": ["navigate"]}, receipt)["passed"]
     receipt["actions"][0]["status"] = 500
     assert not verify_route_actions(contract, receipt)["passed"]
+
+
+def test_duplicate_actions_cannot_hide_an_earlier_failure():
+    contract = {"actions": ["navigate"]}
+    failed = {"id": "navigate", "performed": False, "rendered": False}
+    passed = {"id": "navigate", "performed": True, "rendered": True}
+    for actions in [[failed, passed], [passed, failed], [passed, passed]]:
+        assert not verify_route_actions(
+            contract, {"actions": actions, "browser_closed": True}
+        )["passed"]
+
+
+def test_undeclared_action_cannot_count_as_catalog_coverage():
+    contract = {"actions": ["navigate"]}
+    actions = [
+        {"id": identifier, "performed": True, "rendered": True}
+        for identifier in ["navigate", "foreign"]
+    ]
+    assert not verify_route_actions(
+        contract, {"actions": actions, "browser_closed": True}
+    )["passed"]
