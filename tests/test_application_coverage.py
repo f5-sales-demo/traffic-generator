@@ -9,7 +9,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from traffic_catalog import load_catalog, validate_catalog  # noqa: E402
+from traffic_catalog import (  # noqa: E402  # pylint: disable=wrong-import-position
+    load_catalog,
+    validate_catalog,
+)
 
 
 class ApplicationCoverageTests(unittest.TestCase):

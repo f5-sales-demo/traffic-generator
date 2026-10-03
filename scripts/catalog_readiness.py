@@ -15,6 +15,14 @@ from traffic_runtime import validate_config
 HTTP_ERROR_START, METHOD_NOT_ALLOWED = 400, 405
 
 
+def content_matches(page: dict | None, content_type: str, body: str) -> bool:
+    """Verify page identity independently of status-only readiness."""
+    return page is None or (
+        content_type == page["content_type"]
+        and page["identity"].casefold() in body.casefold()
+    )
+
+
 def main() -> int:
     """Missing prerequisites or invalid upstream certificates fail start."""
     parser = argparse.ArgumentParser()
@@ -70,11 +78,10 @@ def main() -> int:
                         )
                     with urlopen(request, timeout=10) as response:  # noqa: S310 - fixed HTTP(S) schemes
                         code = response.status
-                        body = response.read(1024 * 1024).decode("utf-8")
-                        page = application_pages.get(path)
-                        content_ready = page is None or (
-                            response.headers.get_content_type() == page["content_type"]
-                            and page["identity"].casefold() in body.casefold()
+                        content_ready = content_matches(
+                            application_pages.get(path),
+                            response.headers.get_content_type(),
+                            response.read(1024 * 1024).decode("utf-8"),
                         )
                     checks.append(
                         {
