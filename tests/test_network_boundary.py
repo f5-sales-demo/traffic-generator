@@ -245,7 +245,9 @@ def test_blocked_fixture_authentication_retains_mitigation_receipt(tmp_path):
     try:
         with patch(
             "traffic_network.subprocess.run",
-            return_value=SimpleNamespace(returncode=0, stdout="<html>Request Rejected</html>\n403"),
+            return_value=SimpleNamespace(
+                returncode=0, stdout="<html>Request Rejected</html>\n403"
+            ),
         ):
             assert (
                 boundary.fixture_login(
