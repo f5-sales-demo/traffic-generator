@@ -61,7 +61,7 @@ write_files:
       NoNewPrivileges=true
       ProtectSystem=strict
       ProtectHome=true
-      ReadWritePaths=/opt/traffic-generator /tmp /var/log/csd-xvfb.log
+      ReadWritePaths=/opt/traffic-generator/runtime/results /opt/traffic-generator/runtime/npm /opt/traffic-generator/browser-profile /opt/traffic-generator/.cache /opt/traffic-generator/.config /opt/traffic-generator/.npm /tmp /var/log/csd-xvfb.log
       [Install]
       WantedBy=multi-user.target
   - path: /usr/local/bin/csd-log-event
@@ -149,11 +149,11 @@ write_files:
           --arg manifest_sha256 "$DEPLOYMENT_MANIFEST_SHA256" \
           '{status:$status,runtime:"aws",repository:$repository,source_commit:$source_commit,chrome_version:$chrome_version,node_version:$node_version,ami_id:$ami_id,instance_id:$instance_id,region:$region,manifest:{version:$manifest_version,sha256:$manifest_sha256}}' \
           >/opt/traffic-generator/status.json
-        chown tgen:tgen /opt/traffic-generator/status.json
-        chmod 0600 /opt/traffic-generator/status.json
+        chown root:root /opt/traffic-generator/status.json
+        chmod 0644 /opt/traffic-generator/status.json
       }
       write_status verifying
-      sudo -u tgen env DISPLAY=:99 NODE_PATH=/opt/traffic-generator/node_modules \
+      sudo -u tgen env HOME=/opt/traffic-generator/browser-profile DISPLAY=:99 NODE_PATH=/opt/traffic-generator/node_modules \
         /opt/node/bin/node -e 'const { chromium } = require("playwright-core"); (async () => { const browser = await chromium.launch({ headless: false, executablePath: "/opt/chrome/chrome", args: ["--disable-dev-shm-usage"] }); const page = await browser.newPage(); await page.goto("about:blank"); if (page.url() !== "about:blank") throw new Error("unexpected health URL"); await browser.close(); })().catch(error => { console.error(error); process.exit(1); });'
       write_status ready
   - path: /etc/systemd/system/csd-worker-health.service
@@ -220,6 +220,8 @@ write_files:
     owner: root:root
     permissions: '0644'
     content: |
+      d /opt/traffic-generator 0755 root root -
+      d /opt/traffic-generator/runtime 0755 root root -
       f /run/lock/csd-traffic-generator.lock 0660 root tgen -
       d /opt/traffic-generator/runtime/continuous 0700 root root -
   - path: /etc/logrotate.d/csd-traffic-generator
@@ -246,10 +248,10 @@ write_files:
       status_file=/opt/traffic-generator/status.json
       stage=initializing
       write_status() {
-        install -d -o tgen -g tgen -m 0750 /opt/traffic-generator
+        install -d -o root -g root -m 0755 /opt/traffic-generator
         printf '{"status":"%s","stage":"%s","error_stage":"%s"}\n' "$1" "$stage" "$${2:-}" >"$status_file.tmp"
-        chown tgen:tgen "$status_file.tmp"
-        chmod 0600 "$status_file.tmp"
+        chown root:root "$status_file.tmp"
+        chmod 0644 "$status_file.tmp"
         mv -f "$status_file.tmp" "$status_file"
       }
       fail_bootstrap() {
@@ -257,10 +259,17 @@ write_files:
         trap - ERR
         set +e
         write_status failed "$stage"
-        /usr/local/bin/csd-log-event "bootstrap status=failed stage=$stage exit=$rc" || true
+        printf 'bootstrap status=failed stage=%.128s exit=%s\n' "$stage" "$rc" >&2
         exit "$rc"
       }
       trap fail_bootstrap ERR
+      setup_runtime_directories() {
+        install -d -o root -g root -m 0755 /opt/traffic-generator /opt/traffic-generator/runtime
+        install -d -o tgen -g tgen -m 0750 \
+          /opt/traffic-generator/runtime/results /opt/traffic-generator/runtime/npm \
+          /opt/traffic-generator/browser-profile /opt/traffic-generator/.cache \
+          /opt/traffic-generator/.config /opt/traffic-generator/.npm
+      }
       fetch() { curl -fSL --retry 4 -o "$3" "$1"; echo "$2  $3" | sha256sum -c; }
       normalize_aws_cli_permissions() {
         local aws_cli_root=$1 owner=$${2:-root} group=$${3:-tgen}
@@ -297,7 +306,7 @@ write_files:
       install -o root -g root -m 0640 /dev/null /var/log/csd-worker-health.log
       install -o tgen -g tgen -m 0640 /dev/null /var/log/csd-xvfb.log
       install -o root -g root -m 0640 /dev/null /var/log/csd-scenario.log
-      install -d -o tgen -g tgen -m 0750 /opt/traffic-generator /opt/traffic-generator/runtime/results /opt/traffic-generator/browser-profile
+      setup_runtime_directories
       systemd-tmpfiles --create /etc/tmpfiles.d/csd-traffic-generator.conf
       install -d -o root -g root -m 0755 /opt/{node,chrome}
       stage=aws-cli
@@ -329,12 +338,15 @@ write_files:
       fi
       test "$(/opt/node/bin/node --version | cut -d. -f1)" = v22
       stage=npm
-      cd /opt/traffic-generator
-      npm_env=(env PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
-      test -f package.json || sudo -u tgen "$${npm_env[@]}" /opt/node/bin/npm init --yes >/dev/null
-      if ! test -f node_modules/playwright-core/package.json || test "$(jq -r .version node_modules/playwright-core/package.json)" != '${playwright_core_version}'; then
+      cd /opt/traffic-generator/runtime/npm
+      npm_env=(env HOME=/opt/traffic-generator/browser-profile PATH=/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin)
+      if ! test -f /opt/traffic-generator/node_modules/playwright-core/package.json || test "$(jq -r .version /opt/traffic-generator/node_modules/playwright-core/package.json)" != '${playwright_core_version}'; then
+        test -f package.json || sudo -u tgen "$${npm_env[@]}" /opt/node/bin/npm init --yes >/dev/null
         sudo -u tgen "$${npm_env[@]}" /opt/node/bin/npm install --ignore-scripts --omit=dev --save-exact 'playwright-core@${playwright_core_version}'
+        rm -rf /opt/traffic-generator/node_modules
+        mv node_modules /opt/traffic-generator/node_modules
       fi
+      cd /opt/traffic-generator
       test "$(jq -r .version node_modules/playwright-core/package.json)" = '${playwright_core_version}'
       stage=chrome
       normalize_chrome_permissions() {
