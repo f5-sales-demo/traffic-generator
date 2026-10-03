@@ -8,6 +8,7 @@ const { chromium } = require('playwright');
 const { observeRequests, settleRequests, childHeaders } = require('../../scripts/browser_requests.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
+const crypto = require('node:crypto');
 const { navigation, verifyNavigation } = require('../../scripts/rapid_navigation.cjs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
 process.on('exit', () => {
@@ -62,11 +63,15 @@ const USER_AGENTS = [
   let visited = 0;
   let errors = 0;
   const startTime = Date.now();
+  const actorRun = crypto.randomUUID().replaceAll('-', '');
 
   try {
     for (const [identity, ua] of USER_AGENTS.entries()) {
       const context = await browser.newContext({
-        extraHTTPHeaders: childHeaders(),
+        extraHTTPHeaders: {
+          ...childHeaders(),
+          'X-MUD-User': `showcase-${actorRun}-rapid-ua-${identity}`,
+        },
         ignoreHTTPSErrors: true,
         userAgent: ua,
       });
