@@ -6067,7 +6067,23 @@
             "method": "GET",
             "path": "/dvwa/vulnerabilities/csrf/",
             "payload_class": "csrf-password-change",
-            "minimum_dispatches": 2,
+            "minimum_dispatches": 1,
+            "query_values": {
+              "password_new": "synthetic-csrf-change",
+              "password_conf": "synthetic-csrf-change",
+              "Change": "Change"
+            },
+            "header_regex": {
+              "cookie": "PHPSESSID=.+"
+            },
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+          },
+          {
+            "id": "password-restore",
+            "method": "GET",
+            "path": "/dvwa/vulnerabilities/csrf/",
+            "payload_class": "synthetic-password-restoration",
+            "minimum_dispatches": 1,
             "query_values": {
               "password_new": "password",
               "password_conf": "password",
@@ -6080,6 +6096,9 @@
           }
         ],
         "reject_unmatched_errors": true
+      },
+      "fixture_contract": {
+        "csrf_restore": true
       }
     },
     {

@@ -23,3 +23,10 @@ test('rapid browser closes and persists receipt on early action failure', () => 
   const source = readFileSync('suites/bot-simulation/04-rapid-browsing.js', 'utf8');
   assert.match(source, /finally\s*\{\s*await browser\.close\(\);\s*receipt\.browser_closed = true/);
 });
+
+test('CSRF result requires observed mutation and authentication', () => {
+  const source = readFileSync('suites/dvwa-exploits/03-csrf-password-change.sh', 'utf8');
+  assert.match(source, /CHANGE_OBSERVED/);
+  assert.match(source, /NEW_LOGIN_OBSERVED/);
+  assert.doesNotMatch(source, /vulnerability confirmed — no CSRF token/);
+});

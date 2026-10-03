@@ -17,9 +17,14 @@ def main() -> int:
         message = "unsafe private fixture permissions"
         raise ValueError(message)
     fixtures = json.loads(path.read_text())
-    if sys.argv[1] == "dvwa-session":
+    if sys.argv[1] in ("dvwa-session", "dvwa-csrf-session"):
         domain = sys.argv[2]
-        sessions = fixtures.get("dvwa_sessions", {})
+        sessions = fixtures.get(
+            "dvwa_csrf_sessions"
+            if sys.argv[1] == "dvwa-csrf-session"
+            else "dvwa_sessions",
+            {},
+        )
         cookie = sessions.get(domain)
         if (
             not isinstance(cookie, str)

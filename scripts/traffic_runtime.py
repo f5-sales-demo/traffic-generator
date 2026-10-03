@@ -502,6 +502,15 @@ def nested_action_verification(directory: Path, scenario: dict, result: dict) ->
 
 def fixture_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Require mutation restoration independently of the attack response."""
+    if scenario.get("fixture_contract", {}).get("csrf_restore"):
+        evidence = directory / "csrf-restoration.json"
+        restored = (
+            evidence.exists()
+            and json.loads(evidence.read_text()).get("restored") is True
+        )
+        result["dispatch_contract_verified"] &= restored
+        if not restored:
+            result["outcome"] = "fixture_failure"
     if scenario.get("fixture_contract", {}).get("restore_profiles"):
         evidence = directory / "fixture-restoration.json"
         result["fixture_restoration"] = (
