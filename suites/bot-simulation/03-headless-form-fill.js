@@ -97,7 +97,7 @@ const IDENTITIES = [
       });
 
       await page
-        .getByRole('button', { name: 'Dismiss close welcome banner' })
+        .getByRole('button', { name: 'Close Welcome Banner' })
         .click({ timeout: 2000 })
         .catch(() => {});
       await page
@@ -141,7 +141,7 @@ const IDENTITIES = [
       });
 
       await page
-        .getByRole('button', { name: 'Dismiss close welcome banner' })
+        .getByRole('button', { name: 'Close Welcome Banner' })
         .click({ timeout: 2000 })
         .catch(() => {});
       await page
