@@ -4346,7 +4346,7 @@
           {
             "id": "native-ab",
             "tool": "ab",
-            "argument_regex": "https://",
+            "argument_regex": "http://",
             "minimum": 2
           }
         ]

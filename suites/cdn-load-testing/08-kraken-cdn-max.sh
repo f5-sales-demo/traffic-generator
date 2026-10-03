@@ -19,6 +19,7 @@ echo "  Mode: ALL layers simultaneous"
 echo "================================================================"
 echo ""
 
+RUN_DEADLINE=$(($(date +%s) + DURATION))
 CPU_PRE=$(awk '{printf "%.2f", $1}' /proc/loadavg)
 RAM_PRE=$(free -m | awk '/Mem:/{print $3}')
 echo "Pre-storm: CPU=$CPU_PRE RAM=${RAM_PRE}MB"
@@ -109,11 +110,14 @@ echo ""
 # ================================================================
 echo "=== LAYER 4: ab KEEPALIVE BASELINE ==="
 AB_PIDS=""
+# Exercise ApacheBench against the owned HTTP companion while other engines use HTTPS.
+AB_BASE="$BASE"
+[[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]] && AB_BASE="http://${TARGET}"
 if command -v ab >/dev/null 2>&1; then
-  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
+  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${AB_BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /juice-shop/ (PID $!, 300c keepalive)"
-  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
+  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 60 -H "X-Forwarded-For: $(rand_ip)" "${AB_BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /httpbin/get (PID $!, 300c keepalive)"
 fi
@@ -125,8 +129,9 @@ echo ""
 echo "=== LAYER 5: THUNDERING HERD BURSTS (every 60s) ==="
 (
   BURST_NUM=0
-  while true; do
+  while [ "$(date +%s)" -lt "$RUN_DEADLINE" ]; do
     sleep 60
+    [ "$(date +%s)" -ge "$RUN_DEADLINE" ] && break
     BURST_NUM=$((BURST_NUM + 1))
     STAMP="burst-${BURST_NUM}-$(date +%s%N)"
     if command -v hey >/dev/null 2>&1; then
@@ -143,13 +148,13 @@ echo ""
 # ================================================================
 echo "=== LAYER 6: POST/PUT MIXED TRAFFIC ==="
 (
-  while true; do
-    curl -sf -o /dev/null --max-time 5 -X POST \
+  while [ "$(date +%s)" -lt "$RUN_DEADLINE" ]; do
+    curl -sf -o /dev/null --max-time 30 -X POST \
       -H "Content-Type: application/json" \
       -H "X-Forwarded-For: $(rand_ip)" \
       -d '{"test":true,"ts":"'"$(date +%s)"'"}' \
       "${BASE}/httpbin/post" 2>/dev/null
-    curl -sf -o /dev/null --max-time 5 -X PUT \
+    curl -sf -o /dev/null --max-time 30 -X PUT \
       -H "Content-Type: application/json" \
       -H "X-Forwarded-For: $(rand_ip)" \
       -d '{"test":true}' \
@@ -207,13 +212,14 @@ echo "  KRAKEN CDN MAX RESULTS — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "================================================================"
 echo ""
 
-# Kill all background jobs
-kill $BURST_PID $POST_PID 2>/dev/null
+# Drain every bounded worker so shutdown does not cancel an in-flight request.
 WORKER_FAILED=0
 for pid in $WRK_PIDS $HEY_PIDS $VEG_PIDS $AB_PIDS; do
   wait "$pid" || WORKER_FAILED=1
 done
-wait "$BURST_PID" "$POST_PID" 2>/dev/null || true
+for pid in "$BURST_PID" "$POST_PID"; do
+  wait "$pid" || WORKER_FAILED=1
+done
 if [[ "$WORKER_FAILED" -ne 0 ]]; then
   echo "[FAIL] Native load worker failed"
   exit 1
