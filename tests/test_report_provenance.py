@@ -40,3 +40,25 @@ def test_report_rejects_receipt_from_a_different_source_digest(tmp_path):
     assert not build_report(tmp_path, ["suite/action"], {"suite/action": "b" * 64})[
         "passed"
     ]
+
+
+def test_report_rejects_foreign_symlink_receipt(tmp_path):
+    owned = tmp_path / "pass-owned"
+    owned.mkdir()
+    foreign = tmp_path / "foreign.json"
+    foreign.write_text(
+        json.dumps(
+            {
+                "id": "suite/action",
+                "outcome": "launched",
+                "dispatch_contract_verified": True,
+                "source_sha256": "a" * 64,
+            }
+        )
+    )
+    child = owned / "suite--action"
+    child.mkdir()
+    (child / "receipt.json").symlink_to(foreign)
+    assert not build_report(owned, ["suite/action"], {"suite/action": "a" * 64})[
+        "passed"
+    ]

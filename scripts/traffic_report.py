@@ -18,6 +18,12 @@ def build_report(
         path = pass_directory / identifier.replace("/", "--") / "receipt.json"
         result = {"id": identifier, "passed": False}
         try:
+            if path.is_symlink() or not path.resolve().is_relative_to(
+                pass_directory.resolve()
+            ):
+                result["error"] = "dependency receipt outside owned current pass"
+                checks.append(result)
+                continue
             payload = path.read_bytes()
             receipt = json.loads(payload)
             result.update(
