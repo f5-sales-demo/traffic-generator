@@ -65,7 +65,10 @@ def worker_arguments(tool: str, arguments: list[str], marker: str) -> list[str]:
     if not re.fullmatch(r"[a-z0-9-]{1,80}", marker):
         message = "invalid native worker marker"
         raise ValueError(message)
-    return [*arguments, "-H", "X-TGen-Worker: " + marker]
+    if not arguments or not arguments[-1].startswith(("http://", "https://")):
+        message = "native worker target must be final argument"
+        raise ValueError(message)
+    return [*arguments[:-1], "-H", "X-TGen-Worker: " + marker, arguments[-1]]
 
 
 def nikto_configuration(source: Path, directory: Path, marker: str) -> Path:

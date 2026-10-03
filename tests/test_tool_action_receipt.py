@@ -1,7 +1,13 @@
 """Observed tool actions require intended invocation, verified binary and successful completion."""
 
+import shutil
+import subprocess
 import sys
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from traffic_dispatch import verify_tool_actions
@@ -100,6 +106,43 @@ def test_timed_native_workers_keep_original_arguments_and_add_opaque_attribution
     args = ["-c", "2", "https://example.com/httpbin/get"]
     for tool in ("wrk", "hey", "ab"):
         result = worker_arguments(tool, args, tool + "-123")
-        assert result[: len(args)] == args
-        assert result[-2:] == ["-H", "X-TGen-Worker: " + tool + "-123"]
+        assert result[: len(args) - 1] == args[:-1]
+        assert result[-3:-1] == ["-H", "X-TGen-Worker: " + tool + "-123"]
+        assert result[-1] == args[-1]
     assert worker_arguments("vegeta", args, "vegeta-123") == args
+
+
+def test_native_apachebench_accepts_worker_header_before_final_target():
+    binary = shutil.which("ab")
+    if binary is None:
+        pytest.skip("native ApacheBench unavailable")
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = b"synthetic"
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        args = worker_arguments(
+            "ab",
+            ["-n", "2", "-c", "1", f"http://127.0.0.1:{server.server_port}/"],
+            "ab-123",
+        )
+        result = subprocess.run(
+            [binary, *args], capture_output=True, text=True, timeout=10, check=False
+        )  # noqa: S603 - native tool against owned loopback fixture
+        assert result.returncode == 0, result.stderr
+        assert "Complete requests:      2" in result.stdout
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
