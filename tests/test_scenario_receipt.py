@@ -96,3 +96,38 @@ def test_existing_contract_without_observed_action_cannot_be_verified():
             )
         assert result["outcome"] == "fixture_failure"
         assert not result["dispatch_contract_verified"]
+
+
+def test_cancelled_tool_requests_cannot_establish_success():
+    """A timed-out scanner request is not an accepted application rejection."""
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        active = root / "pass-test"
+        active.mkdir()
+        snapshots = iter(
+            [
+                {"scenario_requests": 0, "tool_cancellations": 0},
+                {"scenario_requests": 1, "tool_cancellations": 1},
+            ]
+        )
+        boundary = SimpleNamespace(
+            config={"results_dir": temporary, "scenario_timeout_seconds": 10},
+            refresh_fixtures=lambda _: None,
+            environment=lambda *_: {},
+            metrics=lambda: next(snapshots),
+            wrap=lambda command, **_options: command,
+        )
+        with (
+            patch.object(runtime, "execute", return_value={"outcome": "launched"}),
+            patch.object(runtime, "evidence_monitor", return_value=lambda: None),
+        ):
+            result = runtime._scenario(
+                ROOT,
+                scenario(),
+                "www.example.test",
+                active,
+                cast("runtime.NetworkBoundary", boundary),
+                {"failures": []},
+                threading.Event(),
+            )  # pylint: disable=protected-access
+        assert result["outcome"] == "tool_failure"

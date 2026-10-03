@@ -35,7 +35,8 @@
         "supporting-pages",
         "socket-io-affinity"
       ],
-      "benign_path": "rest/products/search"
+      "benign_path": "rest/products/search",
+      "mutation_paths": []
     },
     {
       "id": "dvwa",
@@ -54,7 +55,8 @@
         }
       ],
       "workflows": ["authenticated-navigation", "styles-and-forms", "security-settings", "seeded-vulnerability-pages"],
-      "benign_path": "login.php"
+      "benign_path": "login.php",
+      "mutation_paths": ["logout.php", "setup.php"]
     },
     {
       "id": "vampi",
@@ -83,7 +85,8 @@
         }
       ],
       "workflows": ["api-definition", "authentication", "users", "seeded-books"],
-      "benign_path": ""
+      "benign_path": "",
+      "mutation_paths": []
     },
     {
       "id": "httpbin",
@@ -112,7 +115,8 @@
         }
       ],
       "workflows": ["local-swagger-assets", "specification", "links-and-forms"],
-      "benign_path": "get"
+      "benign_path": "get",
+      "mutation_paths": []
     },
     {
       "id": "whoami",
@@ -131,7 +135,8 @@
         }
       ],
       "workflows": ["diagnostic-content", "proxy-headers"],
-      "benign_path": ""
+      "benign_path": "",
+      "mutation_paths": []
     },
     {
       "id": "csd-demo",
@@ -150,7 +155,8 @@
         }
       ],
       "workflows": ["dashboard", "checkout", "receiver", "counter", "clear-log", "replica-state"],
-      "benign_path": ""
+      "benign_path": "",
+      "mutation_paths": ["exfil/clear"]
     },
     {
       "id": "dvga",
@@ -169,7 +175,8 @@
         }
       ],
       "workflows": ["styles-scripts-images", "navigation-and-forms", "graphql", "subscriptions", "seeded-pastes"],
-      "benign_path": ""
+      "benign_path": "",
+      "mutation_paths": ["difficulty/easy", "difficulty/hard", "logout"]
     },
     {
       "id": "restaurant",
@@ -198,7 +205,8 @@
         }
       ],
       "workflows": ["swagger", "redoc", "local-assets", "authentication", "seeded-roles"],
-      "benign_path": "openapi.json"
+      "benign_path": "openapi.json",
+      "mutation_paths": []
     },
     {
       "id": "crapi",
@@ -224,7 +232,8 @@
         }
       ],
       "workflows": ["login", "signup", "seeded-vehicle", "community", "workshop", "deep-link-refresh", "mailhog"],
-      "benign_path": ""
+      "benign_path": "",
+      "mutation_paths": []
     }
   ]
 }

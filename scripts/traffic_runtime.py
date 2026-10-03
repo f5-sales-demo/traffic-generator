@@ -398,6 +398,11 @@ def _scenario(
     result["tool_cancellations"] = after.get("tool_cancellations", 0) - before.get(
         "tool_cancellations", 0
     )
+    if result["tool_cancellations"] and result["outcome"] in (
+        "launched",
+        "fixture_failure",
+    ):
+        result["outcome"] = "tool_failure"
     if scenario["kind"] == "javascript":
         log_text = (directory / "scenario.log").read_text(errors="replace")
         if re.search(
