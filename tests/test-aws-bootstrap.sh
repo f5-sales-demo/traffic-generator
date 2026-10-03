@@ -118,6 +118,8 @@ for fixture in valid wrong-name wrong-architecture wrong-version; do
   wrong-version) package_version=1.300073.1b1859-1 ;;
   esac
   mkdir -p "$TMP/$fixture/DEBIAN"
+  # Shared CI parents may carry setgid; Debian control metadata must not inherit it.
+  chmod 00755 "$TMP/$fixture/DEBIAN"
   printf 'Package: %s\nArchitecture: %s\nVersion: %s\nMaintainer: Fixture <fixture@example.invalid>\nDescription: Offline CloudWatch metadata regression\n' \
     "$package_name" "$package_architecture" "$package_version" >"$TMP/$fixture/DEBIAN/control"
   dpkg-deb --build "$TMP/$fixture" "$TMP/$fixture.deb" >/dev/null
