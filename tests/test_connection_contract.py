@@ -110,3 +110,13 @@ def test_slow_probe_distinguishes_peer_close_from_tool_failure():
     )
     receipt["results"][0]["write_events"][1]["error_type"] = "TimeoutError"
     assert not verify_connection_probe(identifier, receipt)["passed"]
+
+
+def test_rapid_navigation_socket_cleanup_is_scoped_to_long_poll_and_phase():
+    path = "/juice-shop/socket.io/?transport=polling&sid=synthetic"
+    metadata = {"id": "bot-simulation/04-rapid-browsing"}
+    assert declared_socket_cleanup(path, metadata, {"phase": "navigating"})
+    assert not declared_socket_cleanup(path, metadata, {"phase": "execution"})
+    assert not declared_socket_cleanup(
+        "/juice-shop/main.js", metadata, {"phase": "navigating"}
+    )

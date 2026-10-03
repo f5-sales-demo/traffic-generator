@@ -103,6 +103,11 @@ const USER_AGENTS = [
         const errorOffset = browserErrors.length;
         try {
           const url = `${BASE_URL}${path}`;
+          fs.writeFileSync(
+            require('node:path').join(directory, 'browser-cleanup.json'),
+            JSON.stringify({ phase: 'navigating', route: path }),
+            { mode: 0o600 },
+          );
           await settleRequests(requestState, 30000, 100);
           if (new URL(url).hash) {
             await page.goto('about:blank');
@@ -115,6 +120,11 @@ const USER_AGENTS = [
           if (response) documentResponse = response;
           const status = response ? response.status() : 'N/A';
           console.log(`    ${path} -> ${status}`);
+          fs.writeFileSync(
+            require('node:path').join(directory, 'browser-cleanup.json'),
+            JSON.stringify({ phase: 'execution', route: path }),
+            { mode: 0o600 },
+          );
           await settleRequests(requestState, 30000, 100);
           const item = await verifyNavigation(
             page,
@@ -170,6 +180,11 @@ const USER_AGENTS = [
       fs.writeFileSync(require('node:path').join(directory, 'route-actions.json'), JSON.stringify(receipt), {
         mode: 0o600,
       });
+      fs.writeFileSync(
+        require('node:path').join(directory, 'browser-cleanup.json'),
+        JSON.stringify({ phase: 'closing-browser' }),
+        { mode: 0o600 },
+      );
       await context.close();
       console.log('');
     }

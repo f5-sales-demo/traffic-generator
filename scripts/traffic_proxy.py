@@ -306,6 +306,18 @@ class Budget:
         pending = flow.metadata.pop("tgen_pending_slot", None)
         if pending is not None and not pending.done():
             pending.cancel()
+        metadata = flow.metadata.get("tgen_scenario", {})
+        marker = {}
+        with contextlib.suppress(OSError, ValueError, KeyError):
+            marker = json.loads(
+                Path(metadata["dispatch_path"])
+                .with_name("browser-cleanup.json")
+                .read_text()
+            )
+        if flow.error and declared_socket_cleanup(flow.request.path, metadata, marker):
+            self.counts["browser_cleanup_cancellations"] += 1
+            self.persist()
+            return
         if flow.error:
             self.record_outcome(flow, transport_error=type(flow.error).__name__)
             with (self.metrics_path.parent / "error-events.jsonl").open(
@@ -349,18 +361,6 @@ class Budget:
             )
             errors = self.counts["error_categories"]
             errors[category] = errors.get(category, 0) + 1
-        metadata = flow.metadata.get("tgen_scenario", {})
-        marker = {}
-        with contextlib.suppress(OSError, ValueError, KeyError):
-            marker = json.loads(
-                Path(metadata["dispatch_path"])
-                .with_name("browser-cleanup.json")
-                .read_text()
-            )
-        if flow.error and declared_socket_cleanup(flow.request.path, metadata, marker):
-            self.counts["browser_cleanup_cancellations"] += 1
-            self.persist()
-            return
         if flow.error and any(
             word in flow.error.msg.lower()
             for word in (
