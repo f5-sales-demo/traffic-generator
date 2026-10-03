@@ -35,8 +35,8 @@ PAYLOADS=(
 
 ENDPOINTS=(
   "/?q="
-  "/search?q="
-  "/rest/products/search?q="
+  "/httpbin/get?q="
+  "/juice-shop/rest/products/search?q="
 )
 
 for entry in "${PAYLOADS[@]}"; do

