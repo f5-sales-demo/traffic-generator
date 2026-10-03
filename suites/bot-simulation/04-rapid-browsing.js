@@ -145,6 +145,10 @@ const USER_AGENTS = [
               .count()
               .catch(() => 0),
             browser_errors: browserErrors.slice(errorOffset),
+            pending_requests: [...requestState.pending].map((request) => ({
+              path: new URL(request.url()).pathname,
+              host: new URL(request.url()).hostname,
+            })),
             body_characters: (
               await page
                 .locator('body')
