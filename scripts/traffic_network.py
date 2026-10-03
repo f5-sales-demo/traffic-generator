@@ -67,6 +67,7 @@ class NetworkBoundary:
             "benign_transport_failures": 0,
             "benign_per_domain": dict.fromkeys(config["domains"], 0),
             "benign_per_application": dict.fromkeys(BENIGN_PATHS, 0),
+            "benign_status_by_application": {},
         }
         self.state.pacers = {domain: Pacer(90) for domain in config["domains"]}
         self.state.capacity = {
@@ -329,6 +330,12 @@ class NetworkBoundary:
             )
             response = connection.getresponse()
             success = SUCCESS_MIN <= response.status < SUCCESS_MAX
+            with self.state.lock:
+                statuses = self.state.benign["benign_status_by_application"].setdefault(
+                    path, {}
+                )
+                code = str(response.status)
+                statuses[code] = statuses.get(code, 0) + 1
             response.read()
         except (OSError, http.client.HTTPException) as error:
             failed = True
