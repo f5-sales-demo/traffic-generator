@@ -14026,7 +14026,8 @@
           "/dvga/",
           "/restaurant/openapi.json",
           "/crapi/"
-        ]
+        ],
+        "verify_behavior": true
       }
     },
     {
@@ -14219,7 +14220,8 @@
           "/dvga/",
           "/restaurant/openapi.json",
           "/crapi/"
-        ]
+        ],
+        "verify_behavior": true
       }
     },
     {
@@ -14479,7 +14481,8 @@
           "/dvga/",
           "/restaurant/openapi.json",
           "/crapi/"
-        ]
+        ],
+        "verify_behavior": true
       }
     },
     {
@@ -14575,7 +14578,8 @@
           "/dvga/",
           "/restaurant/openapi.json",
           "/crapi/"
-        ]
+        ],
+        "verify_behavior": true
       }
     },
     {
