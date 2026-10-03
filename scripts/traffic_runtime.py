@@ -628,6 +628,10 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
     multiclient_action_verification(directory, scenario, result)
     nested_action_verification(directory, scenario, result)
     connection_action_verification(directory, scenario, result)
+    result["dispatch_contract_verified"] = (
+        result.get("dispatch_contract_verified", False)
+        and result.get("outcome") == "launched"
+    )
 
 
 def _scenario(

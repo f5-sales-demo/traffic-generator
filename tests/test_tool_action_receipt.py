@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from traffic_dispatch import verify_tool_actions
+from traffic_runtime import scenario_action_verification
 from traffic_tool import attributed_arguments, native_binary
 
 
@@ -67,3 +68,9 @@ def test_zap_child_replacer_configuration_preserves_native_arguments():
     assert result[: len(args)] == args
     assert "replacer.full_list(0).matchstr=X-TGen-Child" in result
     assert "replacer.full_list(0).replacement=child-opaque" in result
+
+
+def test_failed_scanner_cannot_keep_aggregate_dispatch_acceptance(tmp_path):
+    result = {"outcome": "tool_failure", "dispatch_contract_verified": True}
+    scenario_action_verification(tmp_path, {"id": "scanner", "budget": "http"}, result)
+    assert not result["dispatch_contract_verified"]
