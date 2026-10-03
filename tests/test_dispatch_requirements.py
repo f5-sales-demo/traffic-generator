@@ -1,5 +1,6 @@
 """Precise scenario contracts reject setup, wrong payloads and missing actions."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -123,3 +124,34 @@ def test_requirement_match_checks_declared_header_and_query():
     assert match_requirements(specification, event) == ["typed"]
     assert not match_requirements(specification, dict(event, headers={}))
     assert not match_requirements(specification, dict(event, query=""))
+
+
+def test_graphql_contract_rejects_invalid_json_and_other_operations():
+    """Query tokens alone do not prove a valid dispatched GraphQL document."""
+    specification = {
+        "requirements": [
+            {
+                "id": "mutation",
+                "method": "POST",
+                "path": "/dvga/graphql",
+                "graphql_operation": r"createPaste\(",
+                "minimum_dispatches": 1,
+                "payload_class": "stored-xss",
+            }
+        ]
+    }
+    event = {
+        "kind": "scenario",
+        "method": "POST",
+        "path": "/dvga/graphql",
+        "body": json.dumps(
+            {"query": 'mutation{createPaste(title:"synthetic"){paste{id}}}'}
+        ),
+    }
+    assert match_requirements(specification, event) == ["mutation"]
+    assert not match_requirements(
+        specification, dict(event, body='{"query":"createPaste("')
+    )
+    assert not match_requirements(
+        specification, dict(event, body='{"query":"{pastes{id}}"}')
+    )

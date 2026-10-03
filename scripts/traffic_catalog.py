@@ -10,6 +10,8 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
+from traffic_dispatch import validate_dispatch_contract
+
 MAX_SCENARIO_SECONDS = 900
 APPLICATION_COUNT = 9
 
@@ -43,6 +45,8 @@ def validate_catalog(root: Path, catalog: dict) -> None:
     recorded: set[str] = set()
     for scenario in catalog["scenarios"]:
         identifier = scenario["id"]
+        if "dispatch_contract" in scenario:
+            validate_dispatch_contract(scenario["dispatch_contract"])
         if identifier in seen or not set(scenario["after"]) <= seen:
             msg = "duplicate scenario or missing ordered dependency"
             raise ValueError(msg)

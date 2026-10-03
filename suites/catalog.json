@@ -1014,11 +1014,28 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "jq"],
       "after": [],
-      "target_paths": ["/dvga/", "/dvga/graphql"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "batch-escalation",
+            "json_body_type": "array",
+            "json_array_min": 2,
+            "minimum_dispatches": 4,
+            "payload_class": "graphql-batch",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      },
+      "prerequisites": ["seeded-dvga-pastes"]
     },
     {
       "id": "dvga-exploits/02-deep-recursion",
@@ -1027,11 +1044,27 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": ["dvga-exploits/01-batch-query-dos"],
-      "target_paths": ["/dvga/", "/dvga/graphql"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "recursive-query",
+            "graphql_operation": "owner\\{pastes\\{owner",
+            "minimum_dispatches": 3,
+            "payload_class": "graphql-recursion",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      },
+      "prerequisites": ["seeded-dvga-pastes"]
     },
     {
       "id": "dvga-exploits/03-field-duplication",
@@ -1040,11 +1073,38 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": ["dvga-exploits/02-deep-recursion"],
-      "target_paths": ["/dvga/", "/dvga/graphql"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "repeated-fields",
+            "graphql_operation": "title\\s+title",
+            "minimum_dispatches": 2,
+            "payload_class": "graphql-duplicate-fields",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          },
+          {
+            "id": "aliased-fields",
+            "graphql_operation": "a50:title",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-alias-duplication",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      },
+      "prerequisites": ["seeded-dvga-pastes"]
     },
     {
       "id": "dvga-exploits/04-sqli-filter",
@@ -1053,11 +1113,27 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "jq", "python3"],
       "after": ["dvga-exploits/03-field-duplication"],
-      "target_paths": ["/dvga/", "/dvga/graphql"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "injected-filter",
+            "graphql_operation": "pastes\\(filter:.*(?:OR |UNION |AND |DROP |sqlite_master)",
+            "minimum_dispatches": 10,
+            "payload_class": "graphql-sqli",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      },
+      "prerequisites": ["seeded-dvga-pastes"]
     },
     {
       "id": "dvga-exploits/05-xss-createpaste",
@@ -1066,11 +1142,27 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "jq", "python3"],
       "after": ["dvga-exploits/04-sqli-filter"],
-      "target_paths": ["/dvga/", "/dvga/graphql"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "xss-mutation",
+            "graphql_operation": "createPaste\\(.*(?:onerror|script|onload|javascript|constructor)",
+            "minimum_dispatches": 7,
+            "payload_class": "graphql-stored-xss",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      },
+      "prerequisites": ["seeded-dvga-pastes"]
     },
     {
       "id": "dvga-exploits/06-os-command-importpaste",
@@ -1079,11 +1171,27 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": ["dvga-exploits/05-xss-createpaste"],
-      "target_paths": ["/dvga/", "/dvga/graphql"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "command-mutation",
+            "graphql_operation": "importPaste\\(.*(?:;|\\| |\\$\\(|`id`)",
+            "minimum_dispatches": 10,
+            "payload_class": "graphql-command-injection",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      },
+      "prerequisites": ["seeded-dvga-pastes"]
     },
     {
       "id": "dvga-exploits/07-jwt-forgery-me",
@@ -1092,11 +1200,27 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "python3"],
       "after": ["dvga-exploits/06-os-command-importpaste"],
-      "target_paths": ["/dvga/", "/dvga/graphql"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "forged-token",
+            "graphql_operation": "me\\(token:",
+            "minimum_dispatches": 16,
+            "payload_class": "graphql-jwt-forgery",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      },
+      "prerequisites": ["seeded-dvga-pastes"]
     },
     {
       "id": "dvga-exploits/08-path-traversal-upload",
@@ -1105,11 +1229,27 @@
       "kind": "shell",
       "dependencies": ["bash", "curl"],
       "after": ["dvga-exploits/07-jwt-forgery-me"],
-      "target_paths": ["/dvga/", "/dvga/graphql"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "traversal-mutation",
+            "graphql_operation": "uploadPaste\\(filename:.*(?:\\.\\.|%2e|%252f)",
+            "minimum_dispatches": 7,
+            "payload_class": "graphql-path-traversal",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            }
+          }
+        ]
+      },
+      "prerequisites": ["seeded-dvga-pastes"]
     },
     {
       "id": "dvwa-exploits/01-brute-force",

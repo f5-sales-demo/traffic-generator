@@ -1,5 +1,6 @@
 """Verify intended dispatch independently of setup and filler traffic."""
 
+import json
 import re
 from urllib.parse import parse_qs
 
@@ -37,6 +38,29 @@ def match_requirements(contract: dict, request: dict) -> list[str]:
             for name, value in requirement.get("headers", {}).items()
         ):
             continue
+        if "graphql_operation" in requirement:
+            try:
+                document = json.loads(request.get("body", ""))
+            except ValueError:
+                continue
+            if not isinstance(document, dict) or not re.search(
+                requirement["graphql_operation"], document.get("query", "")
+            ):
+                continue
+        if "json_body_type" in requirement:
+            try:
+                document = json.loads(request.get("body", ""))
+            except ValueError:
+                continue
+            if requirement["json_body_type"] == "array" and not isinstance(
+                document, list
+            ):
+                continue
+            if (
+                "json_array_min" in requirement
+                and len(document) < requirement["json_array_min"]
+            ):
+                continue
         matched.append(requirement["id"])
     return matched
 
@@ -102,3 +126,29 @@ def verify_dispatch(contract: dict, events: list[dict]) -> dict:
         "required": contract["minimum_dispatches"],
         "payload_class": contract["payload_class"],
     }
+
+
+def validate_dispatch_contract(contract: dict) -> None:
+    """Reject assertions that cannot identify a concrete request action."""
+    identifiers = set()
+    for requirement in contract.get("requirements", []):
+        if requirement.get("id") in identifiers or not requirement.get("id"):
+            message = "dispatch requirement identifiers must be unique"
+            raise ValueError(message)
+        identifiers.add(requirement["id"])
+        if (
+            not requirement.get("method")
+            or not (requirement.get("path") or requirement.get("path_regex"))
+            or not requirement.get("payload_class")
+            or requirement.get("minimum_dispatches", 0) <= 0
+        ):
+            message = (
+                "dispatch requirement must identify method endpoint payload and count"
+            )
+            raise ValueError(message)
+        for field in ("path_regex", "body_regex", "query_regex", "graphql_operation"):
+            if field in requirement:
+                re.compile(requirement[field])
+    if "requirements" in contract and not identifiers:
+        message = "dispatch contract requires at least one action"
+        raise ValueError(message)
