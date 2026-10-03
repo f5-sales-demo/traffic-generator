@@ -5679,7 +5679,8 @@
             "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "text_contains": ["systemUpdate"]
+              "graphql_data_field": "systemUpdate",
+              "graphql_response_count": 1
             }
           },
           {
@@ -5697,7 +5698,8 @@
             "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "text_contains": ["systemUpdate"]
+              "graphql_data_field": "systemUpdate",
+              "graphql_response_count": 2
             }
           },
           {
@@ -5715,7 +5717,8 @@
             "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "text_contains": ["systemUpdate"]
+              "graphql_data_field": "systemUpdate",
+              "graphql_response_count": 5
             }
           },
           {
@@ -5733,7 +5736,8 @@
             "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "text_contains": ["systemUpdate"]
+              "graphql_data_field": "systemUpdate",
+              "graphql_response_count": 10
             }
           },
           {

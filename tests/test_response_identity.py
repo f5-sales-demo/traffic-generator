@@ -113,3 +113,27 @@ def test_missing_coupon_contract_rejects_database_errors_and_blocked_control():
         {"requirements": [requirement]},
         [{**event, "response_assertions": {"control": False}}],
     )["passed"]
+
+
+def test_expensive_graphql_batch_requires_each_nonempty_data_result():
+    spec = {
+        "content_type": "application/json",
+        "graphql_data_field": "systemUpdate",
+        "graphql_response_count": 2,
+    }
+    assert response_content_matches(
+        spec,
+        "application/json",
+        '[{"data":{"systemUpdate":"done"}},{"data":{"systemUpdate":"done"}}]',
+    )
+    assert not response_content_matches(
+        spec, "application/json", '[{"data":{"systemUpdate":"done"}}]'
+    )
+    assert not response_content_matches(
+        spec,
+        "application/json",
+        '[{"data":{"systemUpdate":"done"}},{"data":{"systemUpdate":null},"errors":[{"message":"failed"}]}]',
+    )
+    assert not response_content_matches(
+        spec, "application/json", '{"message":"systemUpdate failed"}'
+    )

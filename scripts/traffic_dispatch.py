@@ -428,12 +428,38 @@ def required_response_lists(document: dict, specification: dict) -> bool:
     )
 
 
+def graphql_response_matches(document: object, count: int, field: str) -> bool:
+    """Every declared expensive operation must return its own nonempty data value."""
+    rows = document if isinstance(document, list) else [document]
+    return len(rows) == count and all(
+        isinstance(row, dict)
+        and not row.get("errors")
+        and isinstance(row.get("data"), dict)
+        and isinstance(row["data"].get(field), str)
+        and bool(row["data"][field].strip())
+        for row in rows
+    )
+
+
+def graphql_body_matches(contract: dict, body: str) -> bool:
+    """Decode a native GraphQL response without accepting malformed JSON."""
+    try:
+        document = json.loads(body)
+    except ValueError:
+        return False
+    return graphql_response_matches(
+        document, contract["graphql_response_count"], contract["graphql_data_field"]
+    )
+
+
 def response_content_matches(contract: dict, content_type: str, body: str) -> bool:
     """Evaluate transient response content and retain only assertion booleans."""
-    if content_type.split(";", 1)[0] != contract.get("content_type"):
+    if content_type.split(";", 1)[0] != contract.get("content_type") or any(
+        term not in body for term in contract.get("text_contains", [])
+    ):
         return False
-    if any(term not in body for term in contract.get("text_contains", [])):
-        return False
+    if "graphql_data_field" in contract:
+        return graphql_body_matches(contract, body)
     if any(
         key in contract
         for key in (
