@@ -5,6 +5,7 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
+const { observeRequests, settleRequests } = require('../../scripts/browser_requests.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
@@ -61,6 +62,7 @@ const CREDENTIALS = [
       ignoreHTTPSErrors: true,
     });
     const page = await context.newPage();
+    const requestState = observeRequests(page);
     page.setDefaultTimeout(10000);
 
     try {
@@ -104,6 +106,9 @@ const CREDENTIALS = [
       failures++;
       transportFailures++;
     } finally {
+      await settleRequests(requestState).catch(() => {
+        transportFailures++;
+      });
       await context.close();
     }
   }

@@ -5,6 +5,7 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
+const { observeRequests, settleRequests } = require('../../scripts/browser_requests.cjs');
 const { syntheticArithmetic } = require('../../scripts/synthetic_arithmetic.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -86,6 +87,7 @@ const IDENTITIES = [
   for (const identity of IDENTITIES.slice(0, Number(process.env.TGEN_BROWSER_IDENTITIES || IDENTITIES.length))) {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const page = await context.newPage();
+    const requestState = observeRequests(page);
     page.setDefaultTimeout(10000);
 
     // --- Registration form ---
@@ -136,6 +138,7 @@ const IDENTITIES = [
     // --- Contact form ---
     try {
       console.log(`[+] Submitting contact form as: ${identity.name}`);
+      await settleRequests(requestState);
       await page.goto(`${BASE_URL}/juice-shop/#/contact`, {
         waitUntil: 'domcontentloaded',
         timeout: 15000,
@@ -173,6 +176,10 @@ const IDENTITIES = [
       console.log(`    Contact form error: ${err.message}`);
     }
 
+    await settleRequests(requestState).catch((error) => {
+      console.error(error.message);
+      process.exitCode = 1;
+    });
     await context.close();
     console.log('');
   }
