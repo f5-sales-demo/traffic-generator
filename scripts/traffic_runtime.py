@@ -534,6 +534,17 @@ def route_action_verification(scenario: dict, result: dict) -> None:
             result["outcome"] = "fixture_failure"
 
 
+def native_report_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Supplement dispatch with every declared native worker completion report."""
+    if "native_report_contract" in scenario:
+        result["native_reports"] = verify_native_reports(
+            directory, scenario["native_report_contract"]
+        )
+        result["dispatch_contract_verified"] &= result["native_reports"]["passed"]
+        if not result["native_reports"]["passed"]:
+            result["outcome"] = "tool_failure"
+
+
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
     if "tool_contract" in scenario:
@@ -624,13 +635,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         result["dispatch_contract_verified"] &= result["scanner_phases"]["passed"]
         if not result["scanner_phases"]["passed"]:
             result["outcome"] = "tool_failure"
-    if "native_report_contract" in scenario:
-        result["native_reports"] = verify_native_reports(
-            directory, scenario["native_report_contract"]
-        )
-        result["dispatch_contract_verified"] &= result["native_reports"]["passed"]
-        if not result["native_reports"]["passed"]:
-            result["outcome"] = "tool_failure"
+    native_report_verification(directory, scenario, result)
     fixture_action_verification(directory, scenario, result)
     cache_action_verification(directory, scenario, result)
     multiclient_action_verification(directory, scenario, result)
