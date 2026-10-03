@@ -16,6 +16,16 @@ MAX_SCENARIO_SECONDS = 900
 APPLICATION_COUNT = 9
 
 
+def validate_execution_contract(scenario: dict) -> None:
+    """Missing observed-action contracts fail catalog discovery."""
+    if scenario["budget"] != "connection" and not any(
+        key in scenario
+        for key in ("dispatch_contract", "browser_contract", "report_contract")
+    ):
+        message = "scenario execution contract missing"
+        raise ValueError(message)
+
+
 def validate_catalog(root: Path, catalog: dict) -> None:
     """Reject missing entrypoints, duplicate IDs, and broken execution order."""
     if catalog.get("schema_version") != 1:
@@ -45,6 +55,7 @@ def validate_catalog(root: Path, catalog: dict) -> None:
     recorded: set[str] = set()
     for scenario in catalog["scenarios"]:
         identifier = scenario["id"]
+        validate_execution_contract(scenario)
         if "dispatch_contract" in scenario:
             validate_dispatch_contract(scenario["dispatch_contract"])
         if identifier in seen or not set(scenario["after"]) <= seen:

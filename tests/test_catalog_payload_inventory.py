@@ -1,9 +1,14 @@
 """Reconciled action contracts retain the actual payload inventory."""
 
 import json
+import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from traffic_catalog import validate_catalog  # noqa: E402
 
 
 def test_expanded_scenario_contracts_preserve_distinct_actions():
@@ -26,3 +31,11 @@ def test_expanded_scenario_contracts_preserve_distinct_actions():
     assert all("query_values" in requirement for requirement in queries)
     assert len(catalog["scenarios"]) == 164
     assert len(catalog["suites"]) == 22
+
+
+def test_missing_scenario_execution_contract_fails_validation():
+    catalog = json.loads((ROOT / "suites/catalog.json").read_text())
+    scenario = catalog["scenarios"][0]
+    scenario.pop("dispatch_contract", None)
+    with pytest.raises(ValueError, match="execution contract"):
+        validate_catalog(ROOT, catalog)

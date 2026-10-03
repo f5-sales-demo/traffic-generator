@@ -13075,7 +13075,40 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "ramp-requests",
+            "method": "GET",
+            "path_regex": "(?:/health|/juice-shop/|/vampi/users/v1|/httpbin/get|/whoami/|/csd-demo/health)",
+            "payload_class": "concurrency-ramp",
+            "minimum_dispatches": 300
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "hey-1",
+            "tool": "hey",
+            "argument_regex": "-c 1(?: |$)",
+            "minimum": 1
+          },
+          {
+            "id": "hey-10",
+            "tool": "hey",
+            "argument_regex": "-c 10(?: |$)",
+            "minimum": 1
+          },
+          {
+            "id": "hey-20",
+            "tool": "hey",
+            "argument_regex": "-c 20(?: |$)",
+            "minimum": 1
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/02-per-app-throughput",
@@ -13185,7 +13218,18 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "sustained-requests",
+            "method": "GET",
+            "path_regex": "(?:/health|/juice-shop/|/juice-shop/rest/products/search|/vampi/users/v1|/httpbin/get|/whoami/|/csd-demo/health|/dvwa/login.php)",
+            "payload_class": "sustained-load",
+            "minimum_dispatches": 20
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/04-connection-churn",
@@ -13198,7 +13242,31 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "keepalive",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "persistent-connection-comparison",
+            "minimum_dispatches": 100,
+            "headers": {
+              "connection": "keep-alive"
+            }
+          },
+          {
+            "id": "close",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "new-connection-comparison",
+            "minimum_dispatches": 100,
+            "headers": {
+              "connection": "close"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/05-mixed-attack-load",
@@ -13211,7 +13279,38 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "benign",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "mixed-benign-request",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "sqli",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-sql-attack",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "' OR 1=1--"
+            }
+          },
+          {
+            "id": "xss",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "mixed-xss-attack",
+            "minimum_dispatches": 1,
+            "query_values": {
+              "q": "<script>alert(1)</script>"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/06-latency-heatmap",
@@ -13307,7 +13406,18 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "profile-load",
+            "method": "GET",
+            "path_regex": "(?:/health|/juice-shop/|/juice-shop/rest/products/search|/vampi/users/v1|/httpbin/get|/whoami/|/csd-demo/health|/dvwa/login.php)",
+            "payload_class": "resource-profile-workload",
+            "minimum_dispatches": 40
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/08-ephemeral-port-stress",
@@ -13320,7 +13430,28 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "churn",
+            "method": "GET",
+            "path": "/health",
+            "payload_class": "ephemeral-connection-churn",
+            "minimum_dispatches": 170
+          }
+        ]
+      },
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "new-connections",
+            "tool": "hey",
+            "argument_regex": "-disable-keepalive",
+            "minimum": 3
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/09-parallel-suite-stress",
@@ -13333,7 +13464,27 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "nested-api",
+            "method": "POST",
+            "path": "/vampi/users/v1/login",
+            "payload_class": "nested-api-workload",
+            "minimum_dispatches": 1,
+            "body_regex": "\"password\""
+          },
+          {
+            "id": "nested-web",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "nested-sql-workload",
+            "minimum_dispatches": 1,
+            "query_regex": "(?i)(UNION|%27|OR)"
+          }
+        ]
+      }
     },
     {
       "id": "performance-testing/10-wrk-benchmark",
@@ -20579,7 +20730,185 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "case-xss-mixed",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "q": "<sCrIpT>alert(1)</ScRiPt>"
+            },
+            "payload_class": "mixed-case-encoding",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "case-sqli-mixed",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "q": "SeLeCt * FrOm users"
+            },
+            "payload_class": "mixed-case-encoding",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "case-union-mixed",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "q": "UnIoN SeLeCt NuLl,NuLl--"
+            },
+            "payload_class": "mixed-case-encoding",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "case-double-enc",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "q": "%3CScRiPt%3Ealert(1)%3C%2FsCrIpT%3E"
+            },
+            "payload_class": "mixed-case-encoding",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "case-cmd-inject",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "q": "; WhoAmI"
+            },
+            "payload_class": "mixed-case-encoding",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "case-xss-event",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "q": "<iMg SrC=x OnErRoR=alert(1)>"
+            },
+            "payload_class": "mixed-case-encoding",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "case-sqli-or",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "q": "' oR '1'='1"
+            },
+            "payload_class": "mixed-case-encoding",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "case-traversal",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "q": "..\\..\\..\\etc\\passwd"
+            },
+            "payload_class": "mixed-case-encoding",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "separator-0",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "file": "..\\..\\..\\etc\\passwd"
+            },
+            "payload_class": "alternate-path-separator",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "separator-1",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "file": "..\\..\\..\\etc\\passwd"
+            },
+            "payload_class": "alternate-path-separator",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "separator-2",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "file": "....//....//etc/passwd"
+            },
+            "payload_class": "alternate-path-separator",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "separator-3",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "file": "..%2f..%2f..%2fetc%2fpasswd"
+            },
+            "payload_class": "alternate-path-separator",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "separator-4",
+            "method": "GET",
+            "path": "/",
+            "query_values": {
+              "file": "..\ufffd\ufffd..\ufffd\ufffdetc\ufffd\ufffdpasswd"
+            },
+            "payload_class": "alternate-path-separator",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "chunked-0",
+            "method": "POST",
+            "path": "/",
+            "body_hex": "620d0a713d756e696f6e2073656c0d0a340d0a656374200d0a300d0a0d0a",
+            "payload_class": "chunked-framing-or-cl-te",
+            "minimum_dispatches": 1,
+            "headers": {
+              "transfer-encoding": "chunked"
+            }
+          },
+          {
+            "id": "chunked-1",
+            "method": "POST",
+            "path": "/",
+            "body_hex": "390d0a713d3c7363726970740d0a610d0a3e616c6572742831290d0a300d0a0d0a",
+            "payload_class": "chunked-framing-or-cl-te",
+            "minimum_dispatches": 1,
+            "headers": {
+              "transfer-encoding": "chunked"
+            }
+          },
+          {
+            "id": "chunked-2",
+            "method": "POST",
+            "path": "/",
+            "body_hex": "610d0a66696c653d2e2e2f2e2e2f0d0a650d0a6574632f706173737764000d0a300d0a0d0a",
+            "payload_class": "chunked-framing-or-cl-te",
+            "minimum_dispatches": 1,
+            "headers": {
+              "transfer-encoding": "chunked"
+            }
+          },
+          {
+            "id": "chunked-3",
+            "method": "POST",
+            "path": "/",
+            "body_hex": "300d0a0d0a58",
+            "payload_class": "chunked-framing-or-cl-te",
+            "minimum_dispatches": 1,
+            "headers": {
+              "transfer-encoding": "chunked"
+            }
+          }
+        ]
+      }
     },
     {
       "id": "waf-encoding-evasion/07-header-cookie-evasion",
