@@ -1,0 +1,35 @@
+"""Self-profile coverage requires measurements during load, not only HTTP counts."""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from traffic_dispatch import verify_workload
+from traffic_profile import sample_resources, verify_profile
+
+
+def test_resource_samples_include_cpu_memory_disk_network_sockets_and_descriptors():
+    sample = sample_resources()
+    assert sample["memory_total_bytes"] >= sample["memory_available_bytes"] > 0
+    assert sample["cpu_total_ticks"] >= sample["cpu_idle_ticks"] > 0
+    assert sample["network_rx_bytes"] >= 0
+    assert sample["disk_read_sectors"] >= 0
+    assert sample["process_fds"] > 0
+    assert sample["tcp_established"] >= 0
+
+
+def test_profile_requires_baseline_under_load_and_cleanup():
+    sample = sample_resources()
+    profile = {
+        "samples": [
+            {**sample, "phase": phase}
+            for phase in ("baseline", "under-load", "cleanup")
+        ]
+    }
+    assert verify_profile(profile)
+    profile["samples"].pop(1)
+    assert not verify_profile(profile)
+    assert not verify_workload(
+        {"levels": [], "minimum_requests": 1, "resource_profile": True},
+        {"levels": [], "cleanup": True},
+    )["passed"]

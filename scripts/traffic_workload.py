@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from traffic_common import atomic_json
+from traffic_profile import sample_resources
 
 
 def content_identity(path: str, content_type: str, body: bytes) -> bool:
@@ -130,6 +131,21 @@ def main() -> int:
     scenario = next(item for item in catalog["scenarios"] if item["id"] == identifier)
     contract = scenario["workload_contract"]
     started = time.monotonic()
+    profile: dict[str, Any] = {"samples": []}
+    profile_stop = threading.Event()
+
+    def profile_sample(phase: str) -> None:
+        profile["samples"].append({**sample_resources(), "phase": phase})
+
+    def monitor() -> None:
+        while not profile_stop.wait(0.5):
+            profile_sample("under-load")
+
+    profiler = None
+    if contract.get("resource_profile"):
+        profile_sample("baseline")
+        profiler = threading.Thread(target=monitor, daemon=True)
+        profiler.start()
     samples = [
         run_level(
             domain,
@@ -151,7 +167,12 @@ def main() -> int:
                     True,
                 )
             )
+    if profiler:
+        profile_stop.set()
+        profiler.join()
+        profile_sample("cleanup")
     receipt = {
+        "resource_profile": profile,
         "scenario": identifier,
         "levels": samples,
         "cleanup": all(sample["connections_closed"] for sample in samples),

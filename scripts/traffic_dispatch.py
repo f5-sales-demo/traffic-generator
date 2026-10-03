@@ -5,6 +5,7 @@ import re
 from urllib.parse import parse_qs
 
 from traffic_connections import tls_matrix
+from traffic_profile import verify_profile
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 SHA256_LENGTH = 64
@@ -422,6 +423,13 @@ def verify_workload(contract: dict, receipt: dict) -> dict:
                 and all(
                     sample.get("cache_failures") == 0 for sample in receipt["levels"]
                 ),
+            }
+        )
+    if contract.get("resource_profile"):
+        checks.append(
+            {
+                "id": "resource-profile",
+                "passed": verify_profile(receipt.get("resource_profile", {})),
             }
         )
     return {

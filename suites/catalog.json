@@ -15229,7 +15229,9 @@
           "/restaurant/openapi.json",
           "/crapi/"
         ],
-        "verify_behavior": true
+        "verify_behavior": true,
+        "resource_profile": true,
+        "minimum_duration_seconds": 15
       }
     },
     {
