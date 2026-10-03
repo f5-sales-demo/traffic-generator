@@ -58,3 +58,29 @@ def test_seeded_response_requires_nonempty_object_list():
         "application/json",
         '{"posts":[{"id":"fixture","title":"Synthetic","content":"Fixture"}]}',
     )
+
+
+def test_expected_application_500_requires_exact_status_content_assertion():
+    contract = {
+        "requirements": [
+            {
+                "id": "invalid-otp",
+                "expected_statuses": [200, 500],
+                "minimum_dispatches": 1,
+                "response_contract_by_status": {
+                    "500": {
+                        "content_type": "application/json",
+                        "json_equals": {
+                            "message": "Invalid OTP! Please try again..",
+                            "status": 500,
+                        },
+                    }
+                },
+            }
+        ]
+    }
+    event = {"kind": "scenario", "status": 500, "matched_requirements": ["invalid-otp"]}
+    assert not verify_responses(contract, [event])["passed"]
+    assert verify_responses(
+        contract, [{**event, "response_assertions": {"invalid-otp": True}}]
+    )["passed"]

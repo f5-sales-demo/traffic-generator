@@ -4821,7 +4821,13 @@
             "payload_class": "otp-brute-force",
             "path": "/crapi/identity/api/auth/v2/check-otp",
             "body_regex": "\"otp\"\\s*:\\s*\"\\d{4}\"",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "application/json",
+                "json_equals": { "message": "Invalid OTP! Please try again..", "status": 500 }
+              }
+            },
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
         ],
         "reject_unmatched_errors": true

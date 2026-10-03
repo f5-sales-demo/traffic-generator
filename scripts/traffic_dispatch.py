@@ -477,7 +477,11 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
                     and event.get("status")
                     in [*requirement["expected_statuses"], 403, 429]
                     and (
-                        "response_contract" not in requirement
+                        (
+                            "response_contract" not in requirement
+                            and str(event.get("status"))
+                            not in requirement.get("response_contract_by_status", {})
+                        )
                         or event.get("status") in (403, 429)
                         or event.get("response_assertions", {}).get(requirement["id"])
                         is True

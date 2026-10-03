@@ -278,16 +278,17 @@ class Budget:
         if flow.response:
             content_type = flow.response.headers.get("content-type", "")
             body = flow.response.get_text(strict=False) or ""
-            event["response_assertions"] = {
-                requirement["id"]: response_content_matches(
-                    requirement["response_contract"], content_type, body
+            event["response_assertions"] = {}
+            for requirement in current.get("dispatch_contract", {}).get(
+                "requirements", []
+            ):
+                specification = requirement.get("response_contract_by_status", {}).get(
+                    str(status), requirement.get("response_contract")
                 )
-                for requirement in current.get("dispatch_contract", {}).get(
-                    "requirements", []
-                )
-                if requirement["id"] in event["matched_requirements"]
-                and "response_contract" in requirement
-            }
+                if requirement["id"] in event["matched_requirements"] and specification:
+                    event["response_assertions"][requirement["id"]] = (
+                        response_content_matches(specification, content_type, body)
+                    )
         event["outcome"] = classify_outcome(event)
         with destination.open("a", encoding="utf-8") as stream:
             destination.chmod(0o600)

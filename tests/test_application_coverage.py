@@ -35,6 +35,7 @@ def test_server_errors_require_case_specific_reconciliation():
     catalog = load_catalog(ROOT)
     assert not any(
         500 in requirement.get("expected_statuses", [])
+        and "500" not in requirement.get("response_contract_by_status", {})
         for scenario in catalog["scenarios"]
         for requirement in scenario.get("dispatch_contract", {}).get("requirements", [])
     )
