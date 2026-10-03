@@ -67,3 +67,23 @@ def test_browser_action_cannot_override_failed_response_assertions(tmp_path):
     assert not result["response_assertions"]["passed"]
     assert not result["dispatch_contract_verified"]
     assert result["outcome"] == "fixture_failure"
+
+
+def test_explicit_mitigated_navigation_is_distinct_from_rendered_content():
+    contract = {"actions": ["navigate"], "allow_mitigation": True}
+    receipt = {
+        "actions": [
+            {
+                "id": "navigate",
+                "performed": True,
+                "rendered": False,
+                "mitigated": True,
+                "status": 403,
+            }
+        ],
+        "browser_closed": True,
+    }
+    assert verify_route_actions(contract, receipt)["passed"]
+    assert not verify_route_actions({"actions": ["navigate"]}, receipt)["passed"]
+    receipt["actions"][0]["status"] = 500
+    assert not verify_route_actions(contract, receipt)["passed"]

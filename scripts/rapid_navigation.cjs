@@ -15,6 +15,18 @@ function validOutcome(expectation, observation) {
 async function verifyNavigation(page, response, route, identity, directory) {
   const expected = navigation.find((item) => item.path === route);
   if (!expected) throw new Error('Undeclared rapid navigation');
+  const id = `ua-${identity}-route-${navigation.indexOf(expected)}`;
+  if (response && [403, 429].includes(response.status())) {
+    await page.screenshot({ path: path.join(directory, `${id}.png`) });
+    return {
+      id,
+      performed: new URL(page.url()).pathname === new URL(route, page.url()).pathname,
+      rendered: false,
+      mitigated: true,
+      status: response.status(),
+      expected_outcome: 'mitigation-candidate',
+    };
+  }
   if (expected.selector) await page.locator(expected.selector).first().waitFor({ state: 'visible', timeout: 15000 });
   await page.waitForFunction(
     ({ selector, terms }) => {
@@ -39,7 +51,6 @@ async function verifyNavigation(page, response, route, identity, directory) {
     urlMatches: actual.pathname + actual.search + actual.hash === (expected.redirect_path || route),
     contentMatches: identityMatches && expected.text.every((term) => text.includes(term)),
   };
-  const id = `ua-${identity}-route-${navigation.indexOf(expected)}`;
   const item = {
     id,
     performed: observation.urlMatches,

@@ -3027,7 +3027,8 @@
           "ua-14-route-21",
           "ua-14-route-22",
           "ua-14-route-23"
-        ]
+        ],
+        "allow_mitigation": true
       }
     },
     {

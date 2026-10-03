@@ -88,7 +88,7 @@ const USER_AGENTS = [
         await settleRequests(requestState);
         const item = await verifyNavigation(page, response, path, identity, directory);
         receipt.actions.push(item);
-        if (!item.rendered) throw new Error('Declared navigation outcome was not rendered');
+        if (!item.rendered && !item.mitigated) throw new Error('Declared navigation outcome was not rendered');
         visited++;
       } catch (err) {
         console.log(`    ${path} -> ERR: ${err.message.substring(0, 60)}`);

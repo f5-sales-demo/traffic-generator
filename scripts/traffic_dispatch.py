@@ -284,7 +284,16 @@ def verify_route_actions(contract: dict, receipt: dict) -> dict:
         {
             "id": identifier,
             "passed": observed.get(identifier, {}).get("performed") is True
-            and observed.get(identifier, {}).get("rendered") is True,
+            and (
+                observed.get(identifier, {}).get("rendered") is True
+                or (
+                    contract.get("allow_mitigation") is True
+                    and observed.get(identifier, {}).get("mitigated") is True
+                    and observed.get(identifier, {}).get("status") in (403, 429)
+                )
+            ),
+            "rendered": observed.get(identifier, {}).get("rendered") is True,
+            "mitigated": observed.get(identifier, {}).get("mitigated") is True,
         }
         for identifier in contract["actions"]
     ]
