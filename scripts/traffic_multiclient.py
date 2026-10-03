@@ -10,8 +10,13 @@ from pathlib import Path
 from typing import Any
 
 from traffic_common import atomic_json
+from traffic_workload import content_identity
 
 HTTP_OK = 200
+APPLICATIONS = json.loads(
+    (Path(__file__).resolve().parents[1] / "suites/applications.json").read_text()
+)["applications"]
+APPLICATION_PATHS = tuple(app["prefix"] + app["benign_path"] for app in APPLICATIONS)
 
 
 def identity_matches(headers: dict, address: str, marker: str) -> bool:
@@ -57,13 +62,36 @@ def client(domain: str, index: int) -> dict:
                 check["error"] = "client identity or transport failed"
                 connection.close()
             checks.append(check)
+        application_checks = []
+        for application_path in APPLICATION_PATHS:
+            item = {"path": application_path, "passed": False}
+            try:
+                connection.request(
+                    "GET",
+                    application_path,
+                    headers={
+                        "Cookie": "tgen_client=" + marker,
+                        "True-Client-IP": address,
+                        "Fastly-Client-IP": address,
+                    },
+                )
+                response = connection.getresponse()
+                body = response.read()
+                item["passed"] = response.status == HTTP_OK and content_identity(
+                    application_path, response.getheader("Content-Type", ""), body
+                )
+            except (OSError, ValueError, http.client.HTTPException):
+                item["error"] = "client application or transport failed"
+                connection.close()
+            application_checks.append(item)
     finally:
         connection.close()
     return {
         "client": marker,
         "checks": checks,
+        "application_checks": application_checks,
         "connections_closed": connection.sock is None,
-        "passed": all(check["passed"] for check in checks),
+        "passed": all(check["passed"] for check in [*checks, *application_checks]),
     }
 
 
@@ -81,7 +109,7 @@ def main() -> int:
         "passed": all(
             item["passed"] and item["connections_closed"] for item in clients
         ),
-        "requests": 100,
+        "requests": 20 * (5 + len(APPLICATION_PATHS)),
     }
     atomic_json(
         Path(os.environ["TGEN_RESULTS_DIR"]) / "multiclient-evidence.json", receipt

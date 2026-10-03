@@ -3746,7 +3746,17 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "ip", "wrk"],
       "after": ["cdn-load-testing/05-post-put-bypass"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "target_paths": [
+        "/juice-shop/",
+        "/dvwa/",
+        "/vampi/",
+        "/httpbin/",
+        "/whoami/",
+        "/csd-demo/",
+        "/dvga/",
+        "/restaurant/",
+        "/crapi/"
+      ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
@@ -3765,6 +3775,69 @@
               "cf-connecting-ip": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+",
               "fastly-client-ip": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+"
             }
+          },
+          {
+            "id": "client-app-juice-shop",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "client-app-dvwa",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "client-app-vampi",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "client-app-httpbin",
+            "method": "GET",
+            "path": "/httpbin/get",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "client-app-whoami",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "client-app-csd-demo",
+            "method": "GET",
+            "path": "/csd-demo/",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "client-app-dvga",
+            "method": "GET",
+            "path": "/dvga/",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "client-app-restaurant",
+            "method": "GET",
+            "path": "/restaurant/openapi.json",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
+          },
+          {
+            "id": "client-app-crapi",
+            "method": "GET",
+            "path": "/crapi/",
+            "payload_class": "independent-client-application-rotation",
+            "minimum_dispatches": 20
           }
         ],
         "reject_unmatched_errors": true
