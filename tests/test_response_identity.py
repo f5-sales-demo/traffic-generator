@@ -84,3 +84,32 @@ def test_expected_application_500_requires_exact_status_content_assertion():
     assert verify_responses(
         contract, [{**event, "response_assertions": {"invalid-otp": True}}]
     )["passed"]
+
+
+def test_missing_coupon_contract_rejects_database_errors_and_blocked_control():
+    content = {"content_type": "application/json", "json_document_equals": {}}
+    assert response_content_matches(content, "application/json", "{}")
+    assert not response_content_matches(
+        content, "application/json", '{"error":"database unavailable"}'
+    )
+    requirement = {
+        "id": "control",
+        "minimum_dispatches": 1,
+        "expected_statuses": [500],
+        "require_application_response": True,
+        "response_contract_by_status": {"500": content},
+    }
+    event = {
+        "kind": "scenario",
+        "status": 500,
+        "matched_requirements": ["control"],
+        "response_assertions": {"control": True},
+    }
+    assert verify_responses({"requirements": [requirement]}, [event])["passed"]
+    assert not verify_responses(
+        {"requirements": [requirement]}, [{**event, "status": 403}]
+    )["passed"]
+    assert not verify_responses(
+        {"requirements": [requirement]},
+        [{**event, "response_assertions": {"control": False}}],
+    )["passed"]

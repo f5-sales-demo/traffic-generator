@@ -435,7 +435,13 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
     if any(term not in body for term in contract.get("text_contains", [])):
         return False
     if any(
-        key in contract for key in ("json_equals", "json_keys", "json_nonempty_lists")
+        key in contract
+        for key in (
+            "json_equals",
+            "json_keys",
+            "json_nonempty_lists",
+            "json_document_equals",
+        )
     ):
         try:
             document = json.loads(body)
@@ -444,7 +450,11 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
         if not isinstance(document, dict):
             return False
         return (
-            all(
+            (
+                "json_document_equals" not in contract
+                or document == contract["json_document_equals"]
+            )
+            and all(
                 document.get(key) == value
                 for key, value in contract.get("json_equals", {}).items()
             )
@@ -475,7 +485,14 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
                 and all(
                     not event.get("transport_error")
                     and event.get("status")
-                    in [*requirement["expected_statuses"], 403, 429]
+                    in [
+                        *requirement["expected_statuses"],
+                        *(
+                            []
+                            if requirement.get("require_application_response")
+                            else [403, 429]
+                        ),
+                    ]
                     and (
                         (
                             "response_contract" not in requirement

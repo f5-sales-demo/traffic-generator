@@ -4824,7 +4824,10 @@
             "response_contract_by_status": {
               "500": {
                 "content_type": "application/json",
-                "json_equals": { "message": "Invalid OTP! Please try again..", "status": 500 }
+                "json_equals": {
+                  "message": "Invalid OTP! Please try again..",
+                  "status": 500
+                }
               }
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
@@ -5072,6 +5075,39 @@
             "path": "/crapi/community/api/v2/coupon/validate-coupon",
             "body_regex": "\\$(?:ne|gt|regex)",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+          },
+          {
+            "method": "POST",
+            "minimum_dispatches": 1,
+            "path": "/crapi/community/api/v2/coupon/validate-coupon",
+            "require_application_response": true,
+            "id": "invalid-coupon-control",
+            "payload_class": "intentional-missing-coupon",
+            "body_exact": "{\"coupon_code\":\"INVALID_COUPON_XYZ\"}",
+            "expected_statuses": [500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "application/json",
+                "json_document_equals": {}
+              }
+            }
+          },
+          {
+            "method": "POST",
+            "minimum_dispatches": 1,
+            "path": "/crapi/community/api/v2/coupon/validate-coupon",
+            "require_application_response": true,
+            "id": "valid-coupon-control",
+            "payload_class": "seeded-valid-coupon",
+            "body_exact": "{\"coupon_code\":\"TRAC075\"}",
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "coupon_code": "TRAC075"
+              },
+              "json_keys": ["amount"]
+            }
           }
         ],
         "reject_unmatched_errors": true
@@ -18852,7 +18888,9 @@
       "budget": "http",
       "parallel": false,
       "timeout_seconds": 900,
-      "fixture_contract": { "restore_profiles": true },
+      "fixture_contract": {
+        "restore_profiles": true
+      },
       "dispatch_contract": {
         "requirements": [
           {
