@@ -62,6 +62,7 @@ printf " %6s %6s %6s %6s\n" "------" "------" "------" "------"
 START=$(date +%s)
 PREV_RPS=0
 DIPS=0
+CACHE_POLICY_FAILURES=0
 
 while true; do
   NOW=$(date +%s)
@@ -93,10 +94,20 @@ while true; do
     for s in $(seq 1 "$SAMPLES_PER_CHECK"); do
       STATUS=$(check_cache_status "${BASE}${ep}")
       case "$STATUS" in
-      HIT) HIT=$((HIT + 1)) ;;
+      HIT)
+        HIT=$((HIT + 1))
+        CACHE_POLICY_FAILURES=$((CACHE_POLICY_FAILURES + 1))
+        ;;
       MISS) MISS=$((MISS + 1)) ;;
-      STALE | UPDATING | EXPIRED) STALE=$((STALE + 1)) ;;
-      *) OTHER=$((OTHER + 1)) ;;
+      STALE | UPDATING | EXPIRED)
+        STALE=$((STALE + 1))
+        CACHE_POLICY_FAILURES=$((CACHE_POLICY_FAILURES + 1))
+        ;;
+      NONE | BYPASS) OTHER=$((OTHER + 1)) ;;
+      *)
+        OTHER=$((OTHER + 1))
+        CACHE_POLICY_FAILURES=$((CACHE_POLICY_FAILURES + 1))
+        ;;
       esac
     done
     TOTAL_HIT=$((TOTAL_HIT + HIT))
@@ -139,4 +150,7 @@ else
   fail "$DIPS throughput dips detected during sustained load"
 fi
 
+if ((CACHE_POLICY_FAILURES > 0)); then
+  fail "Unexpected cached dynamic responses: $CACHE_POLICY_FAILURES"
+fi
 summary
