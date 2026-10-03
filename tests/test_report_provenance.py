@@ -25,3 +25,18 @@ def test_failed_missing_and_stale_source_dependencies_fail_report(tmp_path):
     receipt["outcome"] = "tool_failure"
     (child / "receipt.json").write_text(json.dumps(receipt))
     assert not build_report(tmp_path, ["suite/action"])["passed"]
+
+
+def test_report_rejects_receipt_from_a_different_source_digest(tmp_path):
+    child = tmp_path / "suite--action"
+    child.mkdir()
+    receipt = {
+        "id": "suite/action",
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "source_sha256": "a" * 64,
+    }
+    (child / "receipt.json").write_text(json.dumps(receipt))
+    assert not build_report(tmp_path, ["suite/action"], {"suite/action": "b" * 64})[
+        "passed"
+    ]

@@ -9,7 +9,9 @@ from pathlib import Path
 SHA256_LENGTH = 64
 
 
-def build_report(pass_directory: Path, dependencies: list[str]) -> dict:
+def build_report(
+    pass_directory: Path, dependencies: list[str], source_digests: dict | None = None
+) -> dict:
     """Require every dependency's source digest, observed action and successful execution."""
     checks = []
     for identifier in dependencies:
@@ -28,6 +30,10 @@ def build_report(pass_directory: Path, dependencies: list[str]) -> dict:
                 and receipt.get("outcome") == "launched"
                 and receipt.get("dispatch_contract_verified") is True
                 and len(receipt.get("source_sha256", "")) == SHA256_LENGTH
+                and (
+                    source_digests is None
+                    or receipt.get("source_sha256") == source_digests.get(identifier)
+                )
             )
         except (OSError, ValueError, TypeError):
             result["error"] = "dependency receipt missing or invalid"
@@ -46,7 +52,13 @@ def main() -> int:
     catalog = json.loads((root / "suites/catalog.json").read_text())
     scenario = next(item for item in catalog["scenarios"] if item["id"] == sys.argv[1])
     directory = Path(os.environ["TGEN_RESULTS_DIR"])
-    report = build_report(directory.parent, scenario["report_contract"]["dependencies"])
+    dependencies = scenario["report_contract"]["dependencies"]
+    digests = {
+        item["id"]: hashlib.sha256((root / item["entrypoint"]).read_bytes()).hexdigest()
+        for item in catalog["scenarios"]
+        if item["id"] in dependencies
+    }
+    report = build_report(directory.parent, dependencies, digests)
     path = directory / "report-evidence.json"
     path.write_text(json.dumps(report))
     path.chmod(0o600)
