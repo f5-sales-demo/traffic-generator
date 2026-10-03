@@ -116,9 +116,10 @@ def test_native_apachebench_accepts_worker_header_before_final_target():
     binary = shutil.which("ab")
     if binary is None:
         pytest.skip("native ApacheBench unavailable")
+    assert binary is not None
 
     class Handler(BaseHTTPRequestHandler):
-        def do_GET(self):
+        def do_GET(self):  # pylint: disable=invalid-name -- BaseHTTPRequestHandler protocol hook
             body = b"synthetic"
             self.send_response(200)
             self.send_header("Content-Length", str(len(body)))
@@ -137,9 +138,9 @@ def test_native_apachebench_accepts_worker_header_before_final_target():
             ["-n", "2", "-c", "1", f"http://127.0.0.1:{server.server_port}/"],
             "ab-123",
         )
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603 - native tool against owned loopback fixture
             [binary, *args], capture_output=True, text=True, timeout=10, check=False
-        )  # noqa: S603 - native tool against owned loopback fixture
+        )
         assert result.returncode == 0, result.stderr
         assert "Complete requests:      2" in result.stdout
     finally:
