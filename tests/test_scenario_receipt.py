@@ -5,6 +5,7 @@ import tempfile
 import threading
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,13 +48,13 @@ def test_failed_prerequisite_is_recorded_without_aborting_remaining_catalog():
                 ValueError("private fixture material")
             ),
         )
-        state = {"failures": []}
-        result = runtime._scenario(
+        state: dict = {"failures": []}
+        result = runtime._scenario(  # pylint: disable=protected-access
             ROOT,
             scenario(),
             "www.example.test",
             active,
-            boundary,
+            cast("Any", boundary),
             state,
             threading.Event(),
         )
@@ -84,12 +85,12 @@ def test_existing_contract_without_observed_action_cannot_be_verified():
             patch.object(runtime, "execute", return_value={"outcome": "launched"}),
             patch.object(runtime, "evidence_monitor", return_value=lambda: None),
         ):
-            result = runtime._scenario(
+            result = runtime._scenario(  # pylint: disable=protected-access
                 ROOT,
                 scenario(),
                 "www.example.test",
                 active,
-                boundary,
+                cast("Any", boundary),
                 {"failures": []},
                 threading.Event(),
             )

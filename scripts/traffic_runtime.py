@@ -341,7 +341,6 @@ def _scenario(
         },
     )
     before = boundary.metrics()
-    dispatch_file = directory / "dispatch-events.jsonl"
     command = boundary.wrap(
         scenario_command(root, scenario, domain),
         connection=scenario["budget"] == "connection",
@@ -369,8 +368,8 @@ def _scenario(
     )
     if "dispatch_contract" in scenario:
         events = []
-        if dispatch_file.exists():
-            with dispatch_file.open() as stream:
+        if (directory / "dispatch-events.jsonl").exists():
+            with (directory / "dispatch-events.jsonl").open() as stream:
                 events = [json.loads(line) for line in stream if line.strip()]
         result["intended_dispatch"] = verify_dispatch(
             scenario["dispatch_contract"], events
