@@ -9,6 +9,30 @@ import time
 from pathlib import Path
 
 
+def restaurant_actors(fixtures: dict) -> tuple[dict, dict]:
+    """Reject a self-modification masquerading as a cross-account BOLA action."""
+    actors = tuple(
+        fixtures.get("restaurant_" + role, {}) for role in ("attacker", "victim")
+    )
+    if any(
+        not isinstance(actor, dict)
+        or not isinstance(actor.get("username"), str)
+        or not actor["username"].startswith("tgen_bola_")
+        or not isinstance(actor.get("token"), str)
+        or not actor["token"]
+        for actor in actors
+    ):
+        message = "required synthetic BOLA actor fixture absent"
+        raise ValueError(message)
+    if (
+        actors[0]["username"] == actors[1]["username"]
+        or actors[0]["token"] == actors[1]["token"]
+    ):
+        message = "BOLA requires distinct synthetic actor identities and tokens"
+        raise ValueError(message)
+    return actors[0], actors[1]
+
+
 def token(kind: str) -> str:
     """Fail closed on missing or unsafe fixture input."""
     path = Path(os.environ["TGEN_FIXTURES"])
@@ -31,4 +55,11 @@ def token(kind: str) -> str:
 
 
 if __name__ == "__main__":
-    print(token(sys.argv[1] if len(sys.argv) > 1 else "juice_token"))
+    if len(sys.argv) > 1 and sys.argv[1] == "restaurant-actors":
+        path = Path(os.environ["TGEN_FIXTURES"])
+        if path.is_symlink() or path.stat().st_mode & 0o077:
+            message = "unsafe fixture permissions"
+            raise ValueError(message)
+        print(json.dumps(restaurant_actors(json.loads(path.read_text()))))
+    else:
+        print(token(sys.argv[1] if len(sys.argv) > 1 else "juice_token"))

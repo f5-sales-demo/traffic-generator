@@ -16839,7 +16839,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [200]
           },
           {
             "id": "cross-user",
@@ -16847,11 +16847,11 @@
             "path": "/restaurant/profile",
             "payload_class": "cross-user-modification",
             "minimum_dispatches": 1,
-            "body_regex": "\"username\":\"victim_[0-9]+\",\"phone_number\":\"hacked\"",
+            "body_regex": "\"username\":\"(?:victim_[0-9]+|tgen_bola_victim)\",\"phone_number\":\"hacked\"",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [200, 400, 401, 422]
           },
           {
             "id": "privileged-admin",

@@ -47,10 +47,20 @@ class BoundaryTests(unittest.TestCase):
                     {"authentication": {"token": "juice"}},
                     {"access_token": "customer"},
                     {"access_token": "chef"},
+                    {"access_token": "attacker"},
+                    {"access_token": "victim"},
                 ],
             ):
                 boundary.refresh_fixtures("www.example.test")
             data = json.loads((root / "fixtures.json").read_text())
+            assert (
+                data["restaurant_attacker"]["username"]
+                != data["restaurant_victim"]["username"]
+            )
+            assert (
+                data["restaurant_attacker"]["token"]
+                != data["restaurant_victim"]["token"]
+            )
             assert data["crapi_tokens"] == ["crapi-a", "crapi-b"]
             assert data["vampi_token"] == "vampi"  # noqa: S105 - synthetic mock token
             with (
