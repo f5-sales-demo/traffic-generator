@@ -12,7 +12,7 @@ from urllib.request import Request, urlopen
 from traffic_catalog import load_catalog, readiness
 from traffic_runtime import validate_config
 
-HTTP_ERROR_START, METHOD_NOT_ALLOWED = 400, 405
+HTTP_ERROR_START = 400
 
 
 def content_matches(page: dict | None, content_type: str, body: str) -> bool:
@@ -93,13 +93,13 @@ def main() -> int:
                             "ready": code < HTTP_ERROR_START and content_ready,
                         }
                     )
-                except HTTPError as error:
+                except HTTPError:
                     checks.append(
                         {
                             "domain": domain,
                             "protocol": protocol,
                             "path": path,
-                            "ready": error.code == METHOD_NOT_ALLOWED,
+                            "ready": False,
                         }
                     )
                 except OSError:
