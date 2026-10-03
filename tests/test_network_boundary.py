@@ -112,6 +112,8 @@ class BoundaryTests(unittest.TestCase):
         with patch("traffic_network.http.client.HTTPSConnection") as connection:
             response = connection.return_value.getresponse.return_value
             response.status = 200
+            response.read.return_value = b'{"data": []}'
+            response.getheader.return_value = "application/json"
             boundary.request("www.example.test")
         assert boundary.state.benign["benign_requests"] == 1
         assert boundary.state.benign["benign_completed"] == 1
@@ -128,6 +130,12 @@ class BoundaryTests(unittest.TestCase):
         )
         with patch("traffic_network.http.client.HTTPSConnection") as connection:
             connection.return_value.getresponse.return_value.status = 200
+            connection.return_value.getresponse.return_value.getheader.return_value = (
+                "application/json"
+            )
+            connection.return_value.getresponse.return_value.read.return_value = (
+                b'{"data": []}'
+            )
             for _ in range(9):
                 boundary.request("www.example.test")
             paths = [
@@ -170,3 +178,21 @@ class ProxyImportTests(unittest.TestCase):
         """The proxy must import dispatch matchers from the installed source."""
         source = (ROOT / "scripts/traffic_network.py").read_text()
         assert 'PYTHONPATH=str(self.root / "scripts")' in source
+
+
+def test_benign_200_wrong_landing_page_is_not_success():
+    boundary = NetworkBoundary(
+        ROOT, {"domains": ["www.example.test", "api.example.test"]}, ROOT
+    )
+    with patch("traffic_network.http.client.HTTPSConnection") as connection:
+        response = connection.return_value.getresponse.return_value
+        response.status = 200
+        response.getheader.return_value = "text/html"
+        response.read.return_value = b"Origin Server"
+        boundary.request("www.example.test")
+    assert boundary.state.benign["benign_success"] == 0
+    with (
+        patch("traffic_network.subprocess.run"),
+        patch("traffic_network.shutil.rmtree"),
+    ):
+        boundary.__exit__(None, None, None)

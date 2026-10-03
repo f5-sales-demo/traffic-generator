@@ -18,6 +18,7 @@ from types import SimpleNamespace
 from typing import Self
 
 from traffic_common import Pacer, atomic_json, terminate
+from traffic_workload import content_identity
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 CRAPI_ACCOUNT_COUNT = 2
@@ -336,14 +337,16 @@ class NetworkBoundary:
                 },
             )
             response = connection.getresponse()
-            success = SUCCESS_MIN <= response.status < SUCCESS_MAX
+            body = response.read()
+            success = SUCCESS_MIN <= response.status < SUCCESS_MAX and content_identity(
+                path, response.getheader("Content-Type", ""), body
+            )
             with self.state.lock:
                 statuses = self.state.benign["benign_status_by_application"].setdefault(
                     path, {}
                 )
                 code = str(response.status)
                 statuses[code] = statuses.get(code, 0) + 1
-            response.read()
         except (OSError, http.client.HTTPException) as error:
             failed = True
             with self.state.lock:
