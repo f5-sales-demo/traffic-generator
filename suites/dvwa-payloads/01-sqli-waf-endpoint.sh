@@ -6,7 +6,7 @@ BASE="${TARGET_PROTOCOL:-https}://${TARGET}"
 COOKIES=$(mktemp)
 trap 'rm -f "$COOKIES"' EXIT
 # An ownership-routed, origin-authenticated session avoids blocked public setup suppressing attacks.
-python3 "$(dirname "$0")/../../scripts/traffic_fixtures.py" dvwa-session "$TARGET" >"$COOKIES"
+python3 "$(dirname "$0")/../../scripts/traffic_fixtures.py" dvwa-session "$TARGET" > "$COOKIES"
 echo "[*] SQLi payloads against authenticated DVWA"
 PAYLOADS=(
   "5' OR '1'='1"
@@ -34,15 +34,16 @@ for payload in "${PAYLOADS[@]}"; do
     failed=1
     continue
   fi
-  case "$code" in
-  200) outcome=application_response ;;
-  403 | 429) outcome=mitigation_candidate ;;
-  400 | 422 | 500) outcome=application_rejection ;;
-  *)
+  if [[ "$code" == 200 ]]; then
+    outcome=application_response
+  elif [[ "$code" == 403 || "$code" == 429 ]]; then
+    outcome=mitigation_candidate
+  elif [[ "$code" == 400 || "$code" == 422 || "$code" == 500 ]]; then
+    outcome=application_rejection
+  else
     outcome=unexpected_application_response
     failed=1
-    ;;
-  esac
+  fi
   printf '  [%s] %s
 ' "$code" "$outcome"
 done
