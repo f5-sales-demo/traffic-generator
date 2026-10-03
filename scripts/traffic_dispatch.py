@@ -7,6 +7,25 @@ from urllib.parse import parse_qs
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 
 
+def structured_body_matches(requirement: dict, body: str) -> bool:
+    """Check GraphQL operation and batch shape after strict JSON decoding."""
+    if "graphql_operation" not in requirement and "json_body_type" not in requirement:
+        return True
+    try:
+        document = json.loads(body)
+    except ValueError:
+        return False
+    if "graphql_operation" in requirement:
+        return isinstance(document, dict) and bool(
+            re.search(requirement["graphql_operation"], document.get("query", ""))
+        )
+    if requirement["json_body_type"] == "array":
+        return isinstance(document, list) and len(document) >= requirement.get(
+            "json_array_min", 0
+        )
+    return False
+
+
 def match_requirements(contract: dict, request: dict) -> list[str]:
     """Match transient request data before storing redacted dispatch evidence."""
     if request.get("kind") != "scenario":
@@ -40,29 +59,8 @@ def match_requirements(contract: dict, request: dict) -> list[str]:
             for name, value in requirement.get("headers", {}).items()
         ):
             continue
-        if "graphql_operation" in requirement:
-            try:
-                document = json.loads(request.get("body", ""))
-            except ValueError:
-                continue
-            if not isinstance(document, dict) or not re.search(
-                requirement["graphql_operation"], document.get("query", "")
-            ):
-                continue
-        if "json_body_type" in requirement:
-            try:
-                document = json.loads(request.get("body", ""))
-            except ValueError:
-                continue
-            if requirement["json_body_type"] == "array" and not isinstance(
-                document, list
-            ):
-                continue
-            if (
-                "json_array_min" in requirement
-                and len(document) < requirement["json_array_min"]
-            ):
-                continue
+        if not structured_body_matches(requirement, request.get("body", "")):
+            continue
         matched.append(requirement["id"])
     return matched
 
