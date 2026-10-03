@@ -47,8 +47,9 @@ echo ""
 echo "[*] Starting ZAP daemon on port ${ZAP_PORT}..."
 JVM_ARGS="-Xmx512m" zap -daemon -port "${ZAP_PORT}" \
   -config api.disablekey=true \
-  -config autoupdate.checkOnStart=false \
-  -config autoupdate.checkAddonUpdates=false \
+  -config start.checkForUpdates=false \
+  -config start.checkAddonUpdates=false \
+  -config callhome.tel.enabled=false \
   -config spider.maxDuration="${TGEN_ZAP_SPIDER_MINUTES:-3}" \
   -config scanner.maxScanDurationInMins="${TGEN_ZAP_SCAN_MINUTES:-5}" &
 ZAP_PID=$!
