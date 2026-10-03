@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from traffic_connections import tls_matrix
@@ -15,7 +16,7 @@ def test_tls_probe_requires_all_offerings_and_certificate():
     identifier = "ssl-scanning/01-sslscan"
     results = [dict(check, connected=True) for check in tls_matrix(identifier)]
     results[2]["certificate_validated"] = True
-    receipt = {
+    receipt: dict[str, Any] = {
         "scenario": identifier,
         "results": results,
         "attempts": len(results),
@@ -30,7 +31,7 @@ def test_tls_probe_requires_all_offerings_and_certificate():
 
 def test_slow_probe_requires_partial_headers_duration_and_cleanup():
     identifier = "traffic-generation/02-slowloris"
-    receipt = {
+    receipt: dict[str, Any] = {
         "scenario": identifier,
         "results": [{"connected": True}],
         "attempts": 1,
@@ -60,7 +61,7 @@ def test_only_declared_long_poll_cleanup_is_expected():
 
 def test_suppressed_slow_write_errors_cannot_establish_complete_probe():
     identifier = "traffic-generation/02-slowloris"
-    receipt = {
+    receipt: dict[str, Any] = {
         "scenario": identifier,
         "results": [
             {
@@ -82,7 +83,7 @@ def test_suppressed_slow_write_errors_cannot_establish_complete_probe():
 
 def test_slow_probe_distinguishes_peer_close_from_tool_failure():
     identifier = "traffic-generation/02-slowloris"
-    receipt = {
+    receipt: dict[str, Any] = {
         "scenario": identifier,
         "results": [
             {

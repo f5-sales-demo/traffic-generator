@@ -80,7 +80,7 @@ def main() -> int:
         raise ValueError(msg)
     rate = min(20, int(os.environ["TGEN_CONNECTION_RATE"]))
     pacer = Pacer(rate)
-    results = []
+    results: list[dict[str, Any]] = []
     slow = "slowloris" in identifier
     connections = []
     slow_header_writes = 0
