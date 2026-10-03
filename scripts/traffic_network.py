@@ -550,7 +550,9 @@ class NetworkBoundary:
             TGEN_SQLMAP_LEVEL="1",
             TGEN_SQLMAP_RISK="1",
             TGEN_SCANNER_SECONDS="30",
-            TGEN_REQUEST_TIMEOUT="15",
+            TGEN_REQUEST_TIMEOUT="600"
+            if scenario["suite"] == "dvga-exploits"
+            else "15",
             TGEN_REPEAT_COUNT="5",
             TGEN_GRAPHQL_BATCH_MAX="10",
             TGEN_GRAPHQL_FIELDS_MAX="50",
