@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Paced equivalents for TLS, port, and slow-header scenarios on authorized hosts."""
 
-import contextlib
 import json
 import os
 import socket
@@ -102,12 +101,26 @@ def main() -> int:
                 results.append(
                     {"port": 443, "connected": True, "tls": connection.version()}
                 )
-            for _ in range(3):
+            for round_index in range(3):
                 time.sleep(5)
-                for connection in connections:
-                    with contextlib.suppress(OSError):
+                for index, connection in enumerate(connections):
+                    result = results[index]
+                    result.setdefault("write_events", [])
+                    try:
                         connection.sendall(b"X-Synthetic-Slow: bounded\r\n")
                         slow_header_writes += 1
+                        result["write_events"].append(
+                            {"round": round_index, "sent": True}
+                        )
+                    except OSError as error:
+                        result["write_events"].append(
+                            {
+                                "round": round_index,
+                                "sent": False,
+                                "error_type": type(error).__name__,
+                                "errno": error.errno,
+                            }
+                        )
         else:
             if "ssl-scanning" not in identifier:
                 pacer.acquire()

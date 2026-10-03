@@ -56,3 +56,25 @@ def test_only_declared_long_poll_cleanup_is_expected():
     assert not declared_socket_cleanup(
         "/juice-shop/socket.io/?transport=polling", metadata, marker
     )
+
+
+def test_suppressed_slow_write_errors_cannot_establish_complete_probe():
+    identifier = "traffic-generation/02-slowloris"
+    receipt = {
+        "scenario": identifier,
+        "results": [
+            {
+                "connected": True,
+                "write_events": [
+                    {"round": 0, "sent": False, "error_type": "BrokenPipeError"}
+                ],
+            }
+        ],
+        "attempts": 1,
+        "attempt_limit_per_second": 20,
+        "connections_closed": True,
+        "maximum_slow_connections": 1,
+        "slow_header_writes": 0,
+        "elapsed_seconds": 15,
+    }
+    assert not verify_connection_probe(identifier, receipt)["passed"]
