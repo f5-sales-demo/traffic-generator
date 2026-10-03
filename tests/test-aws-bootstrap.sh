@@ -3,8 +3,28 @@ set -euo pipefail
 
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 AWS_ROOT="${REPO_ROOT}/terraform/aws"
+HOST_INTEGRATION=0
+case "${1:-}" in
+'') ;;
+--host-integration) HOST_INTEGRATION=1 ;;
+*)
+  printf 'Usage: %s [--host-integration]\n' "$0" >&2
+  exit 64
+  ;;
+esac
+test "$#" -le 1
+HOST_ROOT=
 TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"' EXIT
+cleanup() {
+  if test -n "$HOST_ROOT"; then sudo -n rm -rf -- "$HOST_ROOT"; fi
+  rm -rf "$TMP"
+}
+trap cleanup EXIT
+if test "$HOST_INTEGRATION" -eq 1; then
+  test "$(uname -s)" = Linux
+  for tool in sudo systemd-tmpfiles getent node npm; do command -v "$tool" >/dev/null; done
+  sudo -n true
+fi
 
 cat >"$TMP/main.tf" <<EOF
 variable "continuous_enabled" {
@@ -90,7 +110,24 @@ fi
 grep -Fq 'set -Eeuo pipefail' "$TMP/csd-bootstrap"
 grep -Fq 'trap fail_bootstrap ERR' "$TMP/csd-bootstrap"
 grep -Fq 'write_status failed "$stage"' "$TMP/csd-bootstrap"
-grep -Fq 'jq -r .version node_modules/playwright-core/package.json' "$TMP/csd-bootstrap"
+grep -Fq 'jq -r .version /opt/traffic-generator/node_modules/playwright-core/package.json' "$TMP/csd-bootstrap"
+grep -Fxq 'cd /opt/traffic-generator/runtime/npm' "$TMP/csd-bootstrap"
+grep -Fq 'npm_env=(env HOME=/opt/traffic-generator/browser-profile PATH=/opt/node/bin:' "$TMP/csd-bootstrap"
+grep -Fq 'sudo -u tgen "${npm_env[@]}" /opt/node/bin/npm install --ignore-scripts --omit=dev --save-exact' "$TMP/csd-bootstrap"
+grep -Fxq '  mv node_modules /opt/traffic-generator/node_modules' "$TMP/csd-bootstrap"
+grep -Fq 'install -d -o root -g root -m 0755 /opt/traffic-generator' "$TMP/csd-bootstrap"
+grep -Fq 'chown root:root "$status_file.tmp"' "$TMP/csd-bootstrap"
+grep -Fq 'chmod 0644 "$status_file.tmp"' "$TMP/csd-bootstrap"
+awk '/^setup_runtime_directories\(\) \{$/ { body=1 } body { print } body && /^\}$/ { exit }' "$TMP/csd-bootstrap" >"$TMP/runtime-directories-function"
+test -s "$TMP/runtime-directories-function"
+grep -Fxq '  install -d -o root -g root -m 0755 /opt/traffic-generator /opt/traffic-generator/runtime' "$TMP/runtime-directories-function"
+grep -Fq 'install -d -o tgen -g tgen -m 0750' "$TMP/runtime-directories-function"
+for child in runtime/results runtime/npm browser-profile .cache .config .npm; do
+  grep -Fq "/opt/traffic-generator/$child" "$TMP/runtime-directories-function"
+done
+setup_line=$(grep -nFx setup_runtime_directories "$TMP/csd-bootstrap" | cut -d: -f1)
+tmpfiles_line=$(grep -nFx 'systemd-tmpfiles --create /etc/tmpfiles.d/csd-traffic-generator.conf' "$TMP/csd-bootstrap" | cut -d: -f1)
+test "$setup_line" -lt "$tmpfiles_line"
 grep -Fq 'install -d -m 0755 /run/sshd' "$TMP/csd-bootstrap"
 grep -Fq "ss -H -ltn '( sport = :22 )' | grep -q LISTEN" "$TMP/csd-bootstrap"
 cloudwatch_line=$(grep -n '^stage=cloudwatch-config$' "$TMP/csd-bootstrap" | cut -d: -f1)
@@ -243,12 +280,19 @@ install() { :; }
 chown() { :; }
 chmod() { :; }
 $(cat "$TMP/status-functions")
-failing_helper() { false; }
+failing_helper() { return 23; }
 write_status provisioning
 failing_helper
 EOF
 chmod +x "$TMP/failing-helper-regression"
-if "$TMP/failing-helper-regression"; then exit 1; fi
+set +e
+"$TMP/failing-helper-regression" >"$TMP/failing-helper.stdout" 2>"$TMP/failing-helper.stderr"
+failure_rc=$?
+set -e
+test "$failure_rc" -eq 23
+grep -Fxq 'bootstrap status=failed stage=failing-helper exit=23' "$TMP/failing-helper.stderr"
+test "$(wc -l <"$TMP/failing-helper.stderr")" -eq 1
+if grep -Eq 'csd-log-event|curl|aws|logger' "$TMP/status-functions"; then exit 1; fi
 test "$(jq -r .status "$TMP/status.json")" = failed
 test "$(jq -r .stage "$TMP/status.json")" = failing-helper
 test "$(jq -r .error_stage "$TMP/status.json")" = failing-helper
@@ -296,6 +340,17 @@ grep -Fxq 'TimeoutStopSec=30s' "$TMP/csd-worker-health.service"
 extract_file /etc/tmpfiles.d/csd-traffic-generator.conf "$TMP/cloud-init.yaml" >"$TMP/tmpfiles.conf"
 grep -Fxq 'f /run/lock/csd-traffic-generator.lock 0660 root tgen -' "$TMP/tmpfiles.conf"
 grep -Fxq 'd /opt/traffic-generator/runtime/continuous 0700 root root -' "$TMP/tmpfiles.conf"
+for parent in /opt/traffic-generator /opt/traffic-generator/runtime; do
+  grep -Fxq "d $parent 0755 root root -" "$TMP/tmpfiles.conf"
+done
+if grep -Eq '^d[[:space:]]+/run(/lock)?[[:space:]]' "$TMP/tmpfiles.conf"; then exit 1; fi
+rw_paths=$(grep '^ReadWritePaths=' "$TMP/csd-xvfb.service")
+for path in ${rw_paths#ReadWritePaths=}; do
+  case "$path" in /opt/traffic-generator | /opt/traffic-generator/runtime) exit 1 ;; esac
+done
+grep -Fq 'sudo -u tgen env HOME=/opt/traffic-generator/browser-profile DISPLAY=:99' "$TMP/csd-worker-health-check"
+grep -Fq 'chown root:root /opt/traffic-generator/status.json' "$TMP/csd-worker-health-check"
+grep -Fq 'chmod 0644 /opt/traffic-generator/status.json' "$TMP/csd-worker-health-check"
 extract_file /etc/logrotate.d/csd-traffic-generator "$TMP/cloud-init.yaml" >"$TMP/logrotate.conf"
 for setting in daily 'size 10M' 'rotate 7' compress delaycompress copytruncate; do
   grep -Fxq "  $setting" "$TMP/logrotate.conf"
@@ -366,4 +421,126 @@ for mode in enabled disabled; do
     if grep -Fxq 'enable --now csd-continuous.timer' "$TMP/activation-$mode.log"; then exit 1; fi
   fi
 done
+if test "$HOST_INTEGRATION" -eq 1; then
+  HOST_ROOT=$(mktemp -d /tmp/csd-bootstrap-host.XXXXXX)
+  fixture_user=$(id -un)
+  fixture_uid=$(id -u)
+  fixture_gid=$(id -g)
+  # Use the caller's real non-root UID as the fixture tgen account.
+  test "$fixture_uid" -ne 0
+  test "$fixture_uid" -ne 65534
+  sudo -n chown root:root "$HOST_ROOT"
+  sudo -n chmod 0755 "$HOST_ROOT"
+  sudo -n install -d -o root -g root -m 0755 "$HOST_ROOT/opt" "$HOST_ROOT/etc" "$HOST_ROOT/run"
+  sudo -n install -d -o root -g root -m 1777 "$HOST_ROOT/run/lock"
+  printf 'root:x:0:0:root:/root:/bin/sh\ntgen:x:%s:%s:fixture:/opt/traffic-generator:/bin/sh\n' "$fixture_uid" "$fixture_gid" | sudo -n tee "$HOST_ROOT/etc/passwd" >/dev/null
+  printf 'root:x:0:\ntgen:x:%s:\n' "$fixture_gid" | sudo -n tee "$HOST_ROOT/etc/group" >/dev/null
+  sudo -n chmod 0644 "$HOST_ROOT/etc/passwd" "$HOST_ROOT/etc/group"
+  sudo -n install -d -o "$fixture_uid" -g "$fixture_gid" -m 0750 "$HOST_ROOT/opt/traffic-generator"
+  sudo -n install -d -o root -g root -m 0755 "$HOST_ROOT/opt/traffic-generator/runtime"
+  printf 'd /opt/traffic-generator/runtime/continuous 0700 root root -\n' | sudo -n tee "$HOST_ROOT/etc/old-tmpfiles.conf" >/dev/null
+  set +e
+  # The caller owns TMP; only the tmpfiles process needs privilege.
+  # shellcheck disable=SC2024
+  sudo -n systemd-tmpfiles --root="$HOST_ROOT" --create "$HOST_ROOT/etc/old-tmpfiles.conf" >"$TMP/old-tmpfiles.log" 2>&1
+  old_rc=$?
+  set -e
+  test "$old_rc" -ne 0
+  grep -Eiq 'unsafe.*(path|transition)' "$TMP/old-tmpfiles.log"
+  printf '[RED reproduced] old hierarchy rejected (exit=%s)\n' "$old_rc"
+  cat "$TMP/old-tmpfiles.log"
+  # Extracted production code changes only fixture root paths and account IDs.
+  sed -e "s#/opt/traffic-generator#$HOST_ROOT/opt/traffic-generator#g" \
+    -e "s/-o tgen -g tgen/-o $fixture_uid -g $fixture_gid/g" \
+    "$TMP/runtime-directories-function" >"$TMP/host-runtime-setup"
+  printf '\nsetup_runtime_directories\n' >>"$TMP/host-runtime-setup"
+  sudo -n bash "$TMP/host-runtime-setup"
+  # Tmpfiles resolves absolute production paths beneath --root and tgen via fixture NSS.
+  # The caller reads its rendered config; tee alone writes the root fixture.
+  # shellcheck disable=SC2024
+  sudo -n tee "$HOST_ROOT/etc/tmpfiles.conf" <"$TMP/tmpfiles.conf" >/dev/null
+  sudo -n systemd-tmpfiles --root="$HOST_ROOT" --create "$HOST_ROOT/etc/tmpfiles.conf"
+  test "$(stat -c '%u:%g:%a' "$HOST_ROOT/run/lock")" = 0:0:1777
+  sudo -n systemd-tmpfiles --root="$HOST_ROOT" --create "$HOST_ROOT/etc/tmpfiles.conf"
+  test "$(stat -c '%u:%g:%a' "$HOST_ROOT/run/lock")" = 0:0:1777
+  root_parent="$HOST_ROOT/opt/traffic-generator"
+  continuous="$root_parent/runtime/continuous"
+  printf 'frozen-upload-state\n' | sudo -n tee "$continuous/sentinel" >/dev/null
+  sudo -n chmod 0600 "$continuous/sentinel"
+  sentinel_digest=$(sudo -n sha256sum "$continuous/sentinel" | cut -d' ' -f1)
+  sed -e "s#/opt/traffic-generator#$HOST_ROOT/opt/traffic-generator#g" "$TMP/status-functions" >"$TMP/host-status-functions"
+  printf '\nstatus_file=%q\nstage=host-fixture\nwrite_status ready\n' "$root_parent/status.json" >>"$TMP/host-status-functions"
+  sudo -n bash "$TMP/host-status-functions"
+  assert_host_permissions() {
+    for parent in "$HOST_ROOT" "$HOST_ROOT/opt" "$root_parent" "$root_parent/runtime" "$HOST_ROOT/run"; do
+      test "$(stat -c '%u:%g:%a' "$parent")" = 0:0:755
+      sudo -n -u "$fixture_user" test -x "$parent"
+      if sudo -n -u "$fixture_user" test -w "$parent"; then exit 1; fi
+    done
+    test "$(sudo -n stat -c '%u:%g:%a' "$continuous")" = 0:0:700
+    test "$(stat -c '%u:%g:%a' "$root_parent/status.json")" = 0:0:644
+    sudo -n -u "$fixture_user" test -r "$root_parent/status.json"
+    if sudo -n -u "$fixture_user" test -w "$root_parent/status.json"; then exit 1; fi
+    for child in runtime/results runtime/npm browser-profile .cache .config .npm; do
+      test "$(stat -c '%u:%g:%a' "$root_parent/$child")" = "$fixture_uid:$fixture_gid:750"
+      sudo -n -u "$fixture_user" test -w "$root_parent/$child"
+    done
+    test "$(stat -c '%u:%g:%a' "$HOST_ROOT/run/lock/csd-traffic-generator.lock")" = "0:$fixture_gid:660"
+    test "$(stat -c '%u:%g:%a' "$HOST_ROOT/run/lock")" = 0:0:1777
+    sudo -n -u "$fixture_user" test -w "$HOST_ROOT/run/lock"
+    sudo -n -u "$fixture_user" node - "$HOST_ROOT/run/lock" <<'NODE'
+const fs = require('fs');
+const dir = process.argv[2];
+const own = dir + '/fixture-user.lock';
+const protectedLock = dir + '/csd-traffic-generator.lock';
+const inode = fs.statSync(protectedLock).ino;
+fs.writeFileSync(own, 'user-owned lock', { flag: 'wx' });
+for (const operation of [() => fs.unlinkSync(protectedLock), () => fs.renameSync(own, protectedLock)]) {
+  let denied = false;
+  try { operation(); } catch (error) {
+    if (!['EPERM', 'EACCES'].includes(error.code)) throw error;
+    denied = true;
+  }
+  if (!denied) throw new Error('sticky directory allowed root-owned lock replacement');
+}
+if (fs.statSync(protectedLock).ino !== inode) throw new Error('root-owned lock inode changed');
+fs.unlinkSync(own);
+NODE
+    test "$(sudo -n stat -c '%u:%g:%a' "$continuous/sentinel")" = 0:0:600
+    test "$(sudo -n sha256sum "$continuous/sentinel" | cut -d' ' -f1)" = "$sentinel_digest"
+  }
+  assert_host_permissions
+  printf '[GREEN] fresh tmpfiles twice preserves root-owned run/lock 1777 and sticky lock protection\n'
+  # Real offline npm package: ignore-scripts must suppress this failing hook.
+  sudo -n -u "$fixture_user" mkdir "$root_parent/runtime/npm/package-fixture"
+  printf '{"name":"bootstrap-offline-fixture","version":"1.0.0","main":"index.js","scripts":{"install":"exit 97"}}\n' | sudo -n -u "$fixture_user" tee "$root_parent/runtime/npm/package-fixture/package.json" >/dev/null
+  printf 'module.exports = "offline-ok";\n' | sudo -n -u "$fixture_user" tee "$root_parent/runtime/npm/package-fixture/index.js" >/dev/null
+  host_node=$(command -v node)
+  host_npm=$(command -v npm)
+  host_path="$(dirname "$host_node"):/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  sudo -n -u "$fixture_user" env PATH="$host_path" HOME="$root_parent/browser-profile" npm_config_cache="$root_parent/browser-profile/.npm" \
+    "$host_npm" --prefix "$root_parent/runtime/npm/package-fixture" pack "$root_parent/runtime/npm/package-fixture" --ignore-scripts --pack-destination "$root_parent/runtime/npm" >/dev/null
+  sudo -n -u "$fixture_user" env PATH="$host_path" HOME="$root_parent/browser-profile" npm_config_cache="$root_parent/browser-profile/.npm" \
+    "$host_npm" --prefix "$root_parent/runtime/npm" install --offline --ignore-scripts --omit=dev --save-exact --no-audit --no-fund "$root_parent/runtime/npm/bootstrap-offline-fixture-1.0.0.tgz"
+  # Match root promotion of tgen-owned child while retaining stable NODE_PATH.
+  sudo -n mv "$root_parent/runtime/npm/node_modules" "$root_parent/node_modules"
+  test "$(stat -c '%u:%g' "$root_parent/node_modules")" = "$fixture_uid:$fixture_gid"
+  sudo -n -u "$fixture_user" env HOME="$root_parent/browser-profile" NODE_PATH="$root_parent/node_modules" \
+    "$host_node" -e 'if (require("bootstrap-offline-fixture") !== "offline-ok") process.exit(1); require("fs").writeFileSync(process.env.HOME + "/probe", "writable");'
+  sudo -n -u "$fixture_user" env HOME="$root_parent" "$host_node" -e 'for (const p of [".cache", ".config", ".npm"]) require("fs").writeFileSync(process.env.HOME + "/" + p + "/probe", "writable");'
+  for iteration in 1 2; do
+    sudo -n rm -rf -- "$HOST_ROOT/run/lock"
+    # Reboot recreates the distribution-owned sticky lock directory, not application config.
+    sudo -n install -d -o root -g root -m 1777 "$HOST_ROOT/run/lock"
+    sudo -n bash "$TMP/host-runtime-setup"
+    sudo -n systemd-tmpfiles --root="$HOST_ROOT" --create "$HOST_ROOT/etc/tmpfiles.conf"
+    test "$(stat -c '%u:%g:%a' "$HOST_ROOT/run/lock")" = 0:0:1777
+    sudo -n systemd-tmpfiles --root="$HOST_ROOT" --create "$HOST_ROOT/etc/tmpfiles.conf"
+    assert_host_permissions
+    sudo -n -u "$fixture_user" test -r "$root_parent/browser-profile/probe"
+    sudo -n -u "$fixture_user" env NODE_PATH="$root_parent/node_modules" "$host_node" -e 'if (require("bootstrap-offline-fixture") !== "offline-ok") process.exit(1)'
+    printf '[GREEN] reboot/rerun %s preserves run/lock 1777, sticky lock protection, ownership, modes, status, npm and continuous digest\n' "$iteration"
+  done
+  printf '[OK] real systemd-tmpfiles unsafe-path regression and offline unprivileged npm integration\n'
+fi
 printf '[OK] rendered bootstrap syntax, Chrome permission normalization, inherited ERR status transition, SSH activation, ordering, and URI rewrites\n'
