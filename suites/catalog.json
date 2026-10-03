@@ -5309,7 +5309,10 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
-      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429]
+      "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
+      "fixture_contract": {
+        "restore_video": true
+      }
     },
     {
       "id": "crapi-exploits/14-unauth-order-access",

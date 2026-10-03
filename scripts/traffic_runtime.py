@@ -534,6 +534,19 @@ def route_action_verification(scenario: dict, result: dict) -> None:
             result["outcome"] = "fixture_failure"
 
 
+def video_fixture_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """No video mutation coverage without exact fixture restoration."""
+    if scenario.get("fixture_contract", {}).get("restore_video"):
+        path = directory / "video-restoration.json"
+        restored = (
+            path.exists() and json.loads(path.read_text()).get("restored") is True
+        )
+        result["video_restoration"] = restored
+        result["dispatch_contract_verified"] &= restored
+        if not restored:
+            result["outcome"] = "fixture_failure"
+
+
 def native_report_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Supplement dispatch with every declared native worker completion report."""
     if "native_report_contract" in scenario:
@@ -635,6 +648,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         result["dispatch_contract_verified"] &= result["scanner_phases"]["passed"]
         if not result["scanner_phases"]["passed"]:
             result["outcome"] = "tool_failure"
+    video_fixture_verification(directory, scenario, result)
     native_report_verification(directory, scenario, result)
     fixture_action_verification(directory, scenario, result)
     cache_action_verification(directory, scenario, result)
