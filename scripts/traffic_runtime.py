@@ -575,6 +575,15 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         result["dispatch_contract_verified"] &= result["workload"]["passed"]
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "tool_failure"
+    if scenario.get("fixture_contract", {}).get("restore_profiles"):
+        evidence = directory / "fixture-restoration.json"
+        result["fixture_restoration"] = (
+            evidence.exists()
+            and json.loads(evidence.read_text()).get("restored") is True
+        )
+        result["dispatch_contract_verified"] &= result["fixture_restoration"]
+        if not result["fixture_restoration"]:
+            result["outcome"] = "fixture_failure"
     cache_action_verification(directory, scenario, result)
     multiclient_action_verification(directory, scenario, result)
     nested_action_verification(directory, scenario, result)

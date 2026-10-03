@@ -16859,11 +16859,11 @@
             "path": "/restaurant/profile",
             "payload_class": "privileged-profile-modification",
             "minimum_dispatches": 1,
-            "body_exact": "{\"username\":\"admin\",\"phone_number\":\"bola_test\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [200, 400, 401, 422],
+            "body_regex": "\"username\":\"(?:admin|tgen_bola_admin)\",\"phone_number\":\"bola_test\""
           },
           {
             "id": "privileged-chef",
@@ -16871,11 +16871,11 @@
             "path": "/restaurant/profile",
             "payload_class": "privileged-profile-modification",
             "minimum_dispatches": 1,
-            "body_exact": "{\"username\":\"chef\",\"phone_number\":\"bola_test\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [200, 400, 401, 422],
+            "body_regex": "\"username\":\"(?:chef|tgen_bola_chef)\",\"phone_number\":\"bola_test\""
           },
           {
             "id": "privileged-manager",
@@ -16883,11 +16883,11 @@
             "path": "/restaurant/profile",
             "payload_class": "privileged-profile-modification",
             "minimum_dispatches": 1,
-            "body_exact": "{\"username\":\"manager\",\"phone_number\":\"bola_test\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [200, 400, 401, 422],
+            "body_regex": "\"username\":\"(?:manager|tgen_bola_manager)\",\"phone_number\":\"bola_test\""
           },
           {
             "id": "privileged-root",
@@ -16895,14 +16895,17 @@
             "path": "/restaurant/profile",
             "payload_class": "privileged-profile-modification",
             "minimum_dispatches": 1,
-            "body_exact": "{\"username\":\"root\",\"phone_number\":\"bola_test\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
+            "expected_statuses": [200, 400, 401, 422],
+            "body_regex": "\"username\":\"(?:root|tgen_bola_root)\",\"phone_number\":\"bola_test\""
           }
         ],
         "reject_unmatched_errors": true
+      },
+      "fixture_contract": {
+        "restore_profiles": true
       }
     },
     {

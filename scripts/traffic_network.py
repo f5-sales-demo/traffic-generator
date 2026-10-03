@@ -466,8 +466,8 @@ class NetworkBoundary:
             ).get("access_token")
             if token:
                 fixtures["restaurant_" + role + "_token"] = token
-        for actor in ("attacker", "victim"):
-            username = "tgen_bola_" + actor
+        for actor in ("attacker", "victim", "admin", "bola_chef", "manager", "root"):
+            username = "tgen_bola_" + actor.removeprefix("bola_")
             token = self.fixture_login(
                 domain,
                 "/restaurant/token",
@@ -475,6 +475,7 @@ class NetworkBoundary:
             ).get("access_token")
             if token:
                 fixtures["restaurant_" + actor] = {"username": username, "token": token}
+                fixtures["restaurant_" + actor + "_token"] = token
         atomic_json(fixture_path, fixtures)
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:

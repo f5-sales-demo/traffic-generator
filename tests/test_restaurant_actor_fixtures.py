@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import traffic_runtime as runtime
 from fixture_token import restaurant_actors
 
 
@@ -60,3 +61,15 @@ def test_bola_actor_rejects_expired_or_wrong_subject_token():
     fixtures["restaurant_victim"]["token"] = issued("other-actor", time.time() + 60)
     with pytest.raises(ValueError, match="identity"):
         restaurant_actors(fixtures)
+
+
+def test_missing_profile_restoration_fails_scenario(tmp_path):
+    scenario = {"budget": "http", "fixture_contract": {"restore_profiles": True}}
+    result = {"outcome": "launched", "dispatch_contract_verified": True}
+    runtime.scenario_action_verification(tmp_path, scenario, result)
+    assert not result["dispatch_contract_verified"]
+    assert result["outcome"] == "fixture_failure"
+    (tmp_path / "fixture-restoration.json").write_text('{"restored":true}')
+    result = {"outcome": "launched", "dispatch_contract_verified": True}
+    runtime.scenario_action_verification(tmp_path, scenario, result)
+    assert result["dispatch_contract_verified"]

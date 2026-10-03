@@ -49,6 +49,10 @@ class BoundaryTests(unittest.TestCase):
                     {"access_token": "chef"},
                     {"access_token": "attacker"},
                     {"access_token": "victim"},
+                    *[
+                        {"access_token": role}
+                        for role in ("admin", "bola_chef", "manager", "root")
+                    ],
                 ],
             ):
                 boundary.refresh_fixtures("www.example.test")
