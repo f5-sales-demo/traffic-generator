@@ -236,6 +236,8 @@ def evidence_monitor(
 
 def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
     """Use explicit interpreters; connection probes use separately paced equivalents."""
+    if "report_contract" in scenario:
+        return ["python3", str(root / "scripts/traffic_report.py"), scenario["id"]]
     if scenario.get("adapter") == "bounded-benchmark":
         return [
             "python3",
@@ -335,6 +337,13 @@ def prerequisite_failure(
 
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
+    if "report_contract" in scenario:
+        evidence = directory / "report-evidence.json"
+        result["dispatch_contract_verified"] = (
+            evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
     if "dispatch_contract" in scenario:
         events = []
         if (directory / "dispatch-events.jsonl").exists():

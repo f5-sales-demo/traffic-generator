@@ -7110,19 +7110,6 @@
       "timeout_seconds": 900
     },
     {
-      "id": "mitre-attack/08-attck-coverage-report",
-      "suite": "mitre-attack",
-      "entrypoint": "suites/mitre-attack/08-attck-coverage-report.sh",
-      "kind": "report",
-      "dependencies": ["bash"],
-      "after": ["mitre-attack/07-impact"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
-      "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
-      "budget": "none",
-      "parallel": false,
-      "timeout_seconds": 900
-    },
-    {
       "id": "owasp-scanning/01-zap-baseline",
       "suite": "owasp-scanning",
       "entrypoint": "suites/owasp-scanning/01-zap-baseline.sh",
@@ -7236,19 +7223,6 @@
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
-      "parallel": false,
-      "timeout_seconds": 900
-    },
-    {
-      "id": "owasp-scanning/10-full-owasp-report",
-      "suite": "owasp-scanning",
-      "entrypoint": "suites/owasp-scanning/10-full-owasp-report.sh",
-      "kind": "report",
-      "dependencies": ["arjun", "bash", "dalfox", "python3", "sqlmap"],
-      "after": ["owasp-scanning/09-arjun-param-discovery"],
-      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
-      "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
-      "budget": "none",
       "parallel": false,
       "timeout_seconds": 900
     },
@@ -15953,6 +15927,74 @@
               "content-type": "multipart/form-data; boundary=.+"
             }
           }
+        ]
+      }
+    },
+    {
+      "id": "mitre-attack/08-attck-coverage-report",
+      "suite": "mitre-attack",
+      "entrypoint": "suites/mitre-attack/08-attck-coverage-report.sh",
+      "kind": "report",
+      "dependencies": ["bash"],
+      "after": [
+        "mitre-attack/01-reconnaissance",
+        "mitre-attack/02-initial-access",
+        "mitre-attack/03-execution",
+        "mitre-attack/04-credential-access",
+        "mitre-attack/05-discovery",
+        "mitre-attack/06-collection-exfiltration",
+        "mitre-attack/07-impact"
+      ],
+      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
+      "budget": "none",
+      "parallel": false,
+      "timeout_seconds": 900,
+      "report_contract": {
+        "dependencies": [
+          "mitre-attack/01-reconnaissance",
+          "mitre-attack/02-initial-access",
+          "mitre-attack/03-execution",
+          "mitre-attack/04-credential-access",
+          "mitre-attack/05-discovery",
+          "mitre-attack/06-collection-exfiltration",
+          "mitre-attack/07-impact"
+        ]
+      }
+    },
+    {
+      "id": "owasp-scanning/10-full-owasp-report",
+      "suite": "owasp-scanning",
+      "entrypoint": "suites/owasp-scanning/10-full-owasp-report.sh",
+      "kind": "report",
+      "dependencies": ["arjun", "bash", "dalfox", "python3", "sqlmap"],
+      "after": [
+        "owasp-scanning/01-zap-baseline",
+        "owasp-scanning/02-zap-active-scan",
+        "owasp-scanning/03-nikto-full",
+        "owasp-scanning/04-nuclei-full",
+        "owasp-scanning/05-nmap-vuln-scan",
+        "owasp-scanning/06-sqlmap-comprehensive",
+        "owasp-scanning/07-ffuf-directory-discovery",
+        "owasp-scanning/08-dalfox-xss-scan",
+        "owasp-scanning/09-arjun-param-discovery"
+      ],
+      "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
+      "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
+      "budget": "none",
+      "parallel": false,
+      "timeout_seconds": 900,
+      "report_contract": {
+        "dependencies": [
+          "owasp-scanning/01-zap-baseline",
+          "owasp-scanning/02-zap-active-scan",
+          "owasp-scanning/03-nikto-full",
+          "owasp-scanning/04-nuclei-full",
+          "owasp-scanning/05-nmap-vuln-scan",
+          "owasp-scanning/06-sqlmap-comprehensive",
+          "owasp-scanning/07-ffuf-directory-discovery",
+          "owasp-scanning/08-dalfox-xss-scan",
+          "owasp-scanning/09-arjun-param-discovery"
         ]
       }
     }
