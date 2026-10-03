@@ -447,8 +447,16 @@ def multiclient_action_verification(
 def nested_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Require each declared child receipt, independent of aggregate parent traffic."""
     if "nested_contract" in scenario:
+        root = Path(__file__).resolve().parents[1]
+        catalog = load_catalog(root)
+        digests = {
+            item["id"]: hashlib.sha256(
+                (root / item["entrypoint"]).read_bytes()
+            ).hexdigest()
+            for item in catalog["scenarios"]
+        }
         reports = [
-            build_report(directory / ("nested-" + suite), identifiers)
+            build_report(directory / ("nested-" + suite), identifiers, digests)
             for suite, identifiers in scenario["nested_contract"].items()
         ]
         result["nested_actions"] = reports
@@ -511,7 +519,11 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             directory, scenario["browser_contract"]
         )
         result["dispatch_contract_verified"] = result["browser_actions"]["passed"] and (
-            "dispatch_contract" not in scenario or result["intended_dispatch"]["passed"]
+            "dispatch_contract" not in scenario
+            or (
+                result["intended_dispatch"]["passed"]
+                and result["response_assertions"]["passed"]
+            )
         )
         if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
             result["outcome"] = "fixture_failure"

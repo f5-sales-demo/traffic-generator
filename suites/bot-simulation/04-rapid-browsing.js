@@ -8,6 +8,7 @@ const { chromium } = require('playwright');
 const { observeRequests, settleRequests } = require('../../scripts/browser_requests.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
+const { navigation, verifyNavigation } = require('../../scripts/rapid_navigation.cjs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
 process.on('exit', () => {
   try {
@@ -24,32 +25,7 @@ if (!TARGET_FQDN) {
 const BASE_URL = `${process.env.TARGET_PROTOCOL || 'http'}://${TARGET_FQDN}`;
 
 // Pages to hit rapidly
-const PAGES = [
-  '/juice-shop/',
-  '/juice-shop/#/search',
-  '/juice-shop/#/login',
-  '/juice-shop/#/register',
-  '/juice-shop/#/about',
-  '/juice-shop/#/contact',
-  '/juice-shop/#/recycle',
-  '/juice-shop/#/complain',
-  '/juice-shop/#/basket',
-  '/juice-shop/#/order-completion',
-  '/juice-shop/#/track-result',
-  '/juice-shop/#/score-board',
-  '/dvwa/',
-  '/dvwa/login.php',
-  '/dvwa/vulnerabilities/sqli/',
-  '/dvwa/vulnerabilities/xss_r/',
-  '/dvwa/vulnerabilities/exec/',
-  '/vampi/',
-  '/vampi/users/v1',
-  '/vampi/users/v1/login',
-  '/juice-shop/rest/products/search?q=',
-  '/juice-shop/api/Users/',
-  '/juice-shop/api/Products/',
-  '/juice-shop/api/Feedbacks/',
-];
+const PAGES = navigation.map((item) => item.path);
 
 // Rotating user agents
 const USER_AGENTS = [
@@ -80,11 +56,14 @@ const USER_AGENTS = [
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--ignore-certificate-errors'],
   });
 
+  const directory = process.env.TGEN_RESULTS_DIR;
+  if (!directory) throw new Error('Private results directory is required');
+  const receipt = { actions: [], browser_closed: false };
   let visited = 0;
   let errors = 0;
   const startTime = Date.now();
 
-  for (const ua of USER_AGENTS.slice(0, Number(process.env.TGEN_BROWSER_IDENTITIES || USER_AGENTS.length))) {
+  for (const [identity, ua] of USER_AGENTS.entries()) {
     const context = await browser.newContext({
       ignoreHTTPSErrors: true,
       userAgent: ua,
@@ -106,6 +85,10 @@ const USER_AGENTS = [
         });
         const status = response ? response.status() : 'N/A';
         console.log(`    ${path} -> ${status}`);
+        await settleRequests(requestState);
+        const item = await verifyNavigation(page, response, path, identity, directory);
+        receipt.actions.push(item);
+        if (!item.rendered) throw new Error('Declared navigation outcome was not rendered');
         visited++;
       } catch (err) {
         console.log(`    ${path} -> ERR: ${err.message.substring(0, 60)}`);
@@ -123,6 +106,8 @@ const USER_AGENTS = [
   }
 
   await browser.close();
+  receipt.browser_closed = true;
+  fs.writeFileSync(path.join(directory, 'route-actions.json'), JSON.stringify(receipt), { mode: 0o600 });
   fs.rmSync(PROFILE_DIR, { recursive: true, force: true });
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

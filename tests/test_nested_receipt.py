@@ -1,5 +1,6 @@
 """Nested launch success cannot pass without child action verification."""
 
+import json
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -59,3 +60,26 @@ def test_parent_stress_requires_every_child_verified_receipt(tmp_path):
         + '"}'
     )
     assert not build_report(tmp_path / "nested-api", ["suite/action"])["passed"]
+
+
+def test_nested_parent_rejects_verified_receipt_from_stale_source(tmp_path):
+    """Child receipts must belong to the installed parent's current catalog source."""
+    identifier = "bot-simulation/04-rapid-browsing"
+    child = tmp_path / "nested-bot-simulation" / identifier.replace("/", "--")
+    child.mkdir(parents=True)
+    (child / "receipt.json").write_text(
+        json.dumps(
+            {
+                "id": identifier,
+                "outcome": "launched",
+                "dispatch_contract_verified": True,
+                "source_sha256": "0" * 64,
+            }
+        )
+    )
+    result = {"outcome": "launched", "dispatch_contract_verified": True}
+    runtime.nested_action_verification(
+        tmp_path, {"nested_contract": {"bot-simulation": [identifier]}}, result
+    )
+    assert not result["dispatch_contract_verified"]
+    assert result["outcome"] == "tool_failure"
