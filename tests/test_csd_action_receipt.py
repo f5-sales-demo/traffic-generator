@@ -20,6 +20,7 @@ def test_failed_or_missing_browser_action_cannot_pass():
                 "steps": [
                     {
                         "name": "navigate",
+                        "screenshot": {"captureStatus": "captured", "assertionStatus": "passed"},
                         "status": "passed",
                         "assertions": {"status": "passed"},
                     },
@@ -27,7 +28,7 @@ def test_failed_or_missing_browser_action_cannot_pass():
                         "name": "set-fields",
                         "status": "passed",
                         "assertions": {"status": "passed"},
-                        "screenshot": {"status": "passed"},
+                        "screenshot": {"captureStatus": "captured", "assertionStatus": "passed"},
                     },
                 ],
             }
@@ -41,7 +42,7 @@ def test_failed_or_missing_browser_action_cannot_pass():
             "name": "cleanup",
             "status": "passed",
             "assertions": {"status": "passed"},
-            "screenshot": {"status": "passed"},
+            "screenshot": {"captureStatus": "captured", "assertionStatus": "passed"},
         }
     )
     assert verify_browser_actions(contract, receipt)["passed"]

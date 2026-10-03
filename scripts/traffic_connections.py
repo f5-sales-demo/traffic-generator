@@ -84,6 +84,8 @@ def main() -> int:
     results = []
     slow = "slowloris" in identifier
     connections = []
+    slow_header_writes = 0
+    started = time.monotonic()
     try:
         if slow:
             count = min(20, int(os.environ["TGEN_SLOW_CONNECTIONS"]))
@@ -105,6 +107,7 @@ def main() -> int:
                 for connection in connections:
                     with contextlib.suppress(OSError):
                         connection.sendall(b"X-Synthetic-Slow: bounded\r\n")
+                        slow_header_writes += 1
         else:
             if "ssl-scanning" not in identifier:
                 pacer.acquire()
@@ -129,6 +132,9 @@ def main() -> int:
         "attempt_limit_per_second": rate,
         "maximum_slow_connections": len(connections),
         "results": results,
+        "elapsed_seconds": time.monotonic() - started,
+        "slow_header_writes": slow_header_writes,
+        "connections_closed": all(connection.fileno() == -1 for connection in connections),
     }
     path = Path(os.environ["TGEN_RESULTS_DIR"]) / "connections.json"
     path.write_text(json.dumps(receipt) + "\n")

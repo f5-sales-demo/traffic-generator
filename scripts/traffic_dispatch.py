@@ -4,6 +4,8 @@ import json
 import re
 from urllib.parse import parse_qs
 
+from traffic_connections import tls_matrix
+
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 
 
@@ -195,8 +197,8 @@ def verify_browser_actions(contract: dict, receipt: dict) -> dict:
             "passed": name in observed
             and observed[name].get("status") == "passed"
             and observed[name].get("assertions", {}).get("status") == "passed"
-            and observed[name].get("screenshot", {}).get("status", "passed")
-            == "passed",
+            and observed[name].get("screenshot", {}).get("captureStatus") == "captured"
+            and observed[name].get("screenshot", {}).get("assertionStatus") == "passed",
         }
         for name in contract["steps"]
     ]
@@ -209,3 +211,29 @@ def verify_browser_actions(contract: dict, receipt: dict) -> dict:
         and not cleanup.get("errors")
     )
     return {"passed": passed, "steps": checks}
+
+
+def verify_connection_probe(identifier: str, receipt: dict) -> dict:
+    """Require the intended protocol offerings or bounded slow-header activity."""
+    results = receipt.get("results", [])
+    checks = {
+        "identity": receipt.get("scenario") == identifier,
+        "attempt_count": receipt.get("attempts") == len(results) and bool(results),
+        "rate": 0 < receipt.get("attempt_limit_per_second", 0) <= 20,
+        "transport": not any(result.get("transport_failure") for result in results),
+        "cleanup": receipt.get("connections_closed") is True,
+    }
+    if "slowloris" in identifier:
+        count = receipt.get("maximum_slow_connections", 0)
+        checks["slow_connections"] = 0 < count <= 20 and len(results) == count
+        checks["partial_headers"] = receipt.get("slow_header_writes", 0) == count * 3
+        checks["duration"] = receipt.get("elapsed_seconds", 0) >= 15
+    else:
+        checks["offerings"] = all(
+            any(all(result.get(key) == value for key, value in offering.items()) for result in results)
+            for offering in tls_matrix(identifier)
+        )
+        checks["certificate"] = any(result.get("certificate_validated") for result in results)
+        if "ssl-scanning" not in identifier:
+            checks["http_port"] = any(result.get("port") == 80 for result in results)
+    return {"passed": all(checks.values()), "checks": checks}

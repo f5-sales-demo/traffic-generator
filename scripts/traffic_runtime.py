@@ -18,7 +18,11 @@ from pathlib import Path
 
 from traffic_catalog import load_catalog, readiness
 from traffic_common import atomic_json, terminate
-from traffic_dispatch import verify_browser_actions, verify_dispatch
+from traffic_dispatch import (
+    verify_browser_actions,
+    verify_connection_probe,
+    verify_dispatch,
+)
 from traffic_network import NetworkBoundary
 
 sys.dont_write_bytecode = True
@@ -360,7 +364,10 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             connection_data = json.loads(connection_receipt.read_text())
             result["connection_attempts"] = connection_data["attempts"]
             result["connection_limit"] = connection_data["attempt_limit_per_second"]
-            result["dispatch_contract_verified"] = connection_data["attempts"] > 0
+            result["connection_probe"] = verify_connection_probe(scenario["id"], connection_data)
+            result["dispatch_contract_verified"] = result["connection_probe"]["passed"]
+            if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
+                result["outcome"] = "tool_failure"
         else:
             result["outcome"] = "tool_failure"
 
