@@ -354,6 +354,21 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
                 ),
             }
         )
+    if contract.get("reject_unmatched_errors"):
+        checks.append(
+            {
+                "id": "unmatched-server-failures",
+                "passed": not any(
+                    event.get("kind") == "scenario"
+                    and not event.get("matched_requirements")
+                    and (
+                        event.get("transport_error")
+                        or event.get("status") in (500, 502, 503, 504)
+                    )
+                    for event in events
+                ),
+            }
+        )
     return {"passed": all(check["passed"] for check in checks), "checks": checks}
 
 

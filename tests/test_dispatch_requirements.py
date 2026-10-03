@@ -296,3 +296,15 @@ def test_every_declared_dispatch_requires_a_terminal_response():
     event = {"kind": "scenario", "matched_requirements": ["payload"], "status": 200}
     assert not verify_responses(specification, [event])["passed"]
     assert verify_responses(specification, [event] * 3)["passed"]
+
+
+def test_unmatched_application_error_cannot_be_hidden_by_one_matching_payload():
+    specification = {
+        "requirements": [
+            {"id": "payload", "minimum_dispatches": 1, "expected_statuses": [200]}
+        ],
+        "reject_unmatched_errors": True,
+    }
+    event = {"kind": "scenario", "matched_requirements": ["payload"], "status": 200}
+    unknown = {"kind": "scenario", "matched_requirements": [], "status": 502}
+    assert not verify_responses(specification, [event, unknown])["passed"]

