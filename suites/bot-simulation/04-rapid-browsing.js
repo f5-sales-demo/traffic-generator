@@ -138,6 +138,7 @@ const USER_AGENTS = [
               .locator('script[src]')
               .count()
               .catch(() => 0),
+            browser_errors: [...browserErrors],
             body_characters: (
               await page
                 .locator('body')
