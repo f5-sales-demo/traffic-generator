@@ -305,6 +305,8 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 environment,
                 scenario["timeout_seconds"],
             )
+        result["dispatch_contract_verified"] = False
+        scenario_action_verification(directory, scenario, result)
         atomic_json(directory / "receipt.json", result)
         failed |= result["outcome"] != "launched"
     return int(failed)
