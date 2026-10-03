@@ -6,7 +6,7 @@ BASE="${TARGET_PROTOCOL:-https}://${TARGET}"
 COOKIES=$(mktemp)
 trap 'rm -f "$COOKIES"' EXIT
 # An ownership-routed, origin-authenticated session avoids blocked public setup suppressing attacks.
-python3 "$(dirname "$0")/../../scripts/traffic_fixtures.py" dvwa-session "$TARGET" > "$COOKIES"
+python3 "$(dirname "$0")/../../scripts/traffic_fixtures.py" dvwa-session "$TARGET" >"$COOKIES"
 echo "[*] SQLi payloads against authenticated DVWA"
 PAYLOADS=(
   "5' OR '1'='1"
