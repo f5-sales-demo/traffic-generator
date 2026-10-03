@@ -332,10 +332,14 @@ def declared_socket_cleanup(path: str, metadata: dict, marker: dict) -> bool:
         and query.get("transport") == ["polling"]
         and bool(query.get("sid"))
         and (
-            (metadata.get("id", "").startswith("csd-violations/")
-            and marker.get("phase") == "closing-browser")
-            or (metadata.get("id") == "bot-simulation/04-rapid-browsing"
-            and marker.get("phase") in ("navigating", "closing-browser"))
+            (
+                metadata.get("id", "").startswith("csd-violations/")
+                and marker.get("phase") == "closing-browser"
+            )
+            or (
+                metadata.get("id") == "bot-simulation/04-rapid-browsing"
+                and marker.get("phase") in ("navigating", "closing-browser")
+            )
         )
     )
 
