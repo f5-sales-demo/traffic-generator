@@ -10,7 +10,12 @@ SHA256_LENGTH = 64
 
 
 def build_report(
-    pass_directory: Path, dependencies: list[str], source_digests: dict | None = None
+    pass_directory: Path,
+    dependencies: list[str],
+    source_digests: dict | None = None,
+    *,
+    source_commit: str | None = None,
+    artifact_sha256: str | None = None,
 ) -> dict:
     """Require every dependency's source digest, observed action and successful execution."""
     checks = []
@@ -36,6 +41,14 @@ def build_report(
                 and receipt.get("outcome") == "launched"
                 and receipt.get("dispatch_contract_verified") is True
                 and len(receipt.get("source_sha256", "")) == SHA256_LENGTH
+                and (
+                    source_commit is None
+                    or receipt.get("source_commit") == source_commit
+                )
+                and (
+                    artifact_sha256 is None
+                    or receipt.get("artifact_sha256") == artifact_sha256
+                )
                 and (
                     source_digests is None
                     or receipt.get("source_sha256") == source_digests.get(identifier)
@@ -64,7 +77,13 @@ def main() -> int:
         for item in catalog["scenarios"]
         if item["id"] in dependencies
     }
-    report = build_report(directory.parent, dependencies, digests)
+    report = build_report(
+        directory.parent,
+        dependencies,
+        digests,
+        source_commit=os.environ["SOURCE_COMMIT"],
+        artifact_sha256=os.environ["TGEN_ARTIFACT_SHA256"],
+    )
     path = directory / "report-evidence.json"
     path.write_text(json.dumps(report))
     path.chmod(0o600)

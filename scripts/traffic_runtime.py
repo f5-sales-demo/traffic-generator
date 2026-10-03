@@ -376,6 +376,8 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 scenario["timeout_seconds"],
             )
         result["id"] = scenario["id"]
+        result["source_commit"] = os.environ.get("SOURCE_COMMIT")
+        result["artifact_sha256"] = os.environ.get("TGEN_ARTIFACT_SHA256")
         result["source_sha256"] = hashlib.sha256(
             (root / scenario["entrypoint"]).read_bytes()
         ).hexdigest()
@@ -481,7 +483,13 @@ def nested_action_verification(directory: Path, scenario: dict, result: dict) ->
             for item in catalog["scenarios"]
         }
         reports = [
-            build_report(directory / ("nested-" + suite), identifiers, digests)
+            build_report(
+                directory / ("nested-" + suite),
+                identifiers,
+                digests,
+                source_commit=result.get("source_commit"),
+                artifact_sha256=result.get("artifact_sha256"),
+            )
             for suite, identifiers in scenario["nested_contract"].items()
         ]
         result["nested_actions"] = reports
@@ -658,6 +666,8 @@ def _scenario(
     result.update(
         {
             "id": scenario["id"],
+            "source_commit": config["source_commit"],
+            "artifact_sha256": config["artifact_sha256"],
             "source_sha256": hashlib.sha256(
                 (root / scenario["entrypoint"]).read_bytes()
             ).hexdigest(),

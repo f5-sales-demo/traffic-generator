@@ -62,3 +62,31 @@ def test_report_rejects_foreign_symlink_receipt(tmp_path):
     assert not build_report(owned, ["suite/action"], {"suite/action": "a" * 64})[
         "passed"
     ]
+
+
+def test_report_rejects_adapter_source_revision_mismatch(tmp_path):
+    child = tmp_path / "suite--action"
+    child.mkdir()
+    receipt = {
+        "id": "suite/action",
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "source_sha256": "a" * 64,
+        "source_commit": "b" * 40,
+        "artifact_sha256": "c" * 64,
+    }
+    (child / "receipt.json").write_text(json.dumps(receipt))
+    assert not build_report(
+        tmp_path,
+        ["suite/action"],
+        {"suite/action": "a" * 64},
+        source_commit="d" * 40,
+        artifact_sha256="c" * 64,
+    )["passed"]
+    assert build_report(
+        tmp_path,
+        ["suite/action"],
+        {"suite/action": "a" * 64},
+        source_commit="b" * 40,
+        artifact_sha256="c" * 64,
+    )["passed"]

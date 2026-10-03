@@ -44,7 +44,12 @@ def test_failed_prerequisite_is_recorded_without_aborting_remaining_catalog():
         active = root / "pass-test"
         active.mkdir()
         boundary = SimpleNamespace(
-            config={"results_dir": temporary, "scenario_timeout_seconds": 10},
+            config={
+                "results_dir": temporary,
+                "scenario_timeout_seconds": 10,
+                "source_commit": "a" * 40,
+                "artifact_sha256": "b" * 64,
+            },
             refresh_fixtures=lambda _: (_ for _ in ()).throw(
                 ValueError("private fixture material")
             ),
@@ -76,7 +81,12 @@ def test_existing_contract_without_observed_action_cannot_be_verified():
         active = root / "pass-test"
         active.mkdir()
         boundary = SimpleNamespace(
-            config={"results_dir": temporary, "scenario_timeout_seconds": 10},
+            config={
+                "results_dir": temporary,
+                "scenario_timeout_seconds": 10,
+                "source_commit": "a" * 40,
+                "artifact_sha256": "b" * 64,
+            },
             refresh_fixtures=lambda _: None,
             environment=lambda *_: {},
             metrics=lambda: {"scenario_requests": 1},
@@ -112,7 +122,12 @@ def test_cancelled_tool_requests_cannot_establish_success():
             ]
         )
         boundary = SimpleNamespace(
-            config={"results_dir": temporary, "scenario_timeout_seconds": 10},
+            config={
+                "results_dir": temporary,
+                "scenario_timeout_seconds": 10,
+                "source_commit": "a" * 40,
+                "artifact_sha256": "b" * 64,
+            },
             refresh_fixtures=lambda _: None,
             environment=lambda *_: {},
             metrics=lambda: next(snapshots),
@@ -145,7 +160,12 @@ def test_scenario_mitigation_count_excludes_filler_and_prerequisites(tmp_path):
         ]
     )
     boundary = SimpleNamespace(
-        config={"results_dir": str(tmp_path), "scenario_timeout_seconds": 10},
+        config={
+            "results_dir": str(tmp_path),
+            "scenario_timeout_seconds": 10,
+            "source_commit": "a" * 40,
+            "artifact_sha256": "b" * 64,
+        },
         refresh_fixtures=lambda _: None,
         environment=lambda *_: {},
         metrics=lambda: next(snapshots),
