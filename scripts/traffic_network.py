@@ -22,18 +22,12 @@ from traffic_common import Pacer, atomic_json, terminate
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 CRAPI_ACCOUNT_COUNT = 2
 BENIGN_CONNECTION_MAX_AGE = 10
-BENIGN_PATHS = (
-    "/juice-shop/rest/products/search",
-    "/dvwa/login.php",
-    "/vampi/",
-    "/httpbin/get",
-    "/whoami/",
-    "/csd-demo/",
-    "/dvga/",
-    "/restaurant/openapi.json",
-    "/crapi/",
-)
 PROXY_HEARTBEAT_MAX_AGE = 30
+APPLICATION_MANIFEST = Path(__file__).resolve().parents[1] / "suites/applications.json"
+BENIGN_PATHS = tuple(
+    app["prefix"] + app["benign_path"]
+    for app in json.loads(APPLICATION_MANIFEST.read_text())["applications"]
+)
 
 
 def _proxy_failed(message: str) -> None:

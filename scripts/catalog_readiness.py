@@ -40,9 +40,17 @@ def main() -> int:
     )
     result["browser_ready"] = browser.returncode == 0
     checks = []
+    application_pages = {
+        app["prefix"] + page["path"]: page
+        for app in json.loads((root / "suites/applications.json").read_text())[
+            "applications"
+        ]
+        for page in app["pages"]
+    }
     paths = sorted(
         {path for scenario in catalog["scenarios"] for path in scenario["target_paths"]}
     )
+    paths = sorted(set(paths) | set(application_pages))
     for domain in config["domains"]:
         for protocol in ("http", "https"):
             for path in paths:
@@ -62,12 +70,18 @@ def main() -> int:
                         )
                     with urlopen(request, timeout=10) as response:  # noqa: S310 - fixed HTTP(S) schemes
                         code = response.status
+                        body = response.read(1024 * 1024).decode("utf-8")
+                        page = application_pages.get(path)
+                        content_ready = page is None or (
+                            response.headers.get_content_type() == page["content_type"]
+                            and page["identity"].casefold() in body.casefold()
+                        )
                     checks.append(
                         {
                             "domain": domain,
                             "protocol": protocol,
                             "path": path,
-                            "ready": code < HTTP_ERROR_START,
+                            "ready": code < HTTP_ERROR_START and content_ready,
                         }
                     )
                 except HTTPError as error:

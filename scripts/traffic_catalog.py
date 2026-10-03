@@ -11,6 +11,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 MAX_SCENARIO_SECONDS = 900
+APPLICATION_COUNT = 9
 
 
 def validate_catalog(root: Path, catalog: dict) -> None:
@@ -31,6 +32,13 @@ def validate_catalog(root: Path, catalog: dict) -> None:
         str(path.relative_to(root))
         for path in (root / "suites/cdn-load-testing").glob("bench-*.sh")
     }
+    applications = json.loads((root / "suites/applications.json").read_text())[
+        "applications"
+    ]
+    prefixes = {app["prefix"]: app["id"] for app in applications}
+    if len(prefixes) != APPLICATION_COUNT:
+        message = "traffic application inventory must contain nine published prefixes"
+        raise ValueError(message)
     seen: set[str] = set()
     recorded: set[str] = set()
     for scenario in catalog["scenarios"]:
@@ -38,6 +46,13 @@ def validate_catalog(root: Path, catalog: dict) -> None:
         if identifier in seen or not set(scenario["after"]) <= seen:
             msg = "duplicate scenario or missing ordered dependency"
             raise ValueError(msg)
+        for path in scenario["target_paths"]:
+            if path != "/" and not any(
+                path.startswith(prefix) or path == prefix.rstrip("/")
+                for prefix in prefixes
+            ):
+                message = "scenario target has no declared application"
+                raise ValueError(message)
         seen.add(identifier)
         path = root / scenario["entrypoint"]
         if not path.is_file() or not path.resolve().is_relative_to(root.resolve()):

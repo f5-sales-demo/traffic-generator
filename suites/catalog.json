@@ -82,7 +82,8 @@
     "scripts/traffic_fixtures.py",
     "suites/discovery-words.txt",
     "suites/nuclei-config.yaml",
-    "scripts/cleanup_network.py"
+    "scripts/cleanup_network.py",
+    "suites/applications.json"
   ],
   "scenarios": [
     {
