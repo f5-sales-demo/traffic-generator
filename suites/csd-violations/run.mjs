@@ -163,7 +163,14 @@ export async function waitForRequestsTerminal(requests, timeoutMs = 20000) {
   const deadline = Date.now() + timeoutMs;
   const pending = () =>
     [...requests.values()].filter((request) => request.terminal === 'pending' && !request.path.includes('/socket.io/'));
-  while (pending().length && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 25));
+  let settled = Date.now();
+  let observed = requests.size;
+  while (Date.now() < deadline) {
+    if (pending().length || requests.size !== observed) settled = Date.now();
+    observed = requests.size;
+    if (!pending().length && Date.now() - settled >= Math.min(500, timeoutMs / 2)) break;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
   return { passed: pending().length === 0, pending: pending().length };
 }
 
