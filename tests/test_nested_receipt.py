@@ -83,3 +83,24 @@ def test_nested_parent_rejects_verified_receipt_from_stale_source(tmp_path):
     )
     assert not result["dispatch_contract_verified"]
     assert result["outcome"] == "tool_failure"
+
+
+def test_retention_removes_only_orphaned_owned_child_markers(tmp_path):
+    active = tmp_path / "pass-active"
+    active.mkdir()
+    child = active / "child"
+    child.mkdir()
+    markers = tmp_path / "children"
+    markers.mkdir()
+    for name, destination in (
+        ("live", child),
+        ("stale", tmp_path / "pass-gone" / "child"),
+        ("foreign", tmp_path.parent / "unrelated"),
+    ):
+        (markers / (name + ".json")).write_text(
+            json.dumps({"dispatch_path": str(destination / "dispatch-events.jsonl")})
+        )
+    runtime.retain(tmp_path, active, 7, 100000)
+    assert (markers / "live.json").exists()
+    assert not (markers / "stale.json").exists()
+    assert (markers / "foreign.json").exists()

@@ -185,6 +185,28 @@ def detail_size(root: Path) -> int:
     return total
 
 
+def prune_child_markers(root: Path) -> None:
+    """Remove attribution markers only after their owned scenario directory is evicted."""
+    markers = root / "children"
+    if markers.is_symlink():
+        return
+    for marker in markers.glob("*.json"):
+        if marker.is_symlink():
+            continue
+        try:
+            destination = Path(
+                json.loads(marker.read_text())["dispatch_path"]
+            ).resolve()
+            relative = destination.relative_to(root.resolve())
+            if (
+                relative.parts[0].startswith("pass-")
+                and not destination.parent.exists()
+            ):
+                marker.unlink(missing_ok=True)
+        except (OSError, ValueError, KeyError, TypeError, IndexError):
+            continue
+
+
 def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
     """Evict oldest detailed runs by age then total bytes; preserve active evidence."""
     candidates = sorted(
@@ -217,6 +239,8 @@ def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
                 detail_bytes = detail_size(directory)
                 shutil.rmtree(directory)
                 total -= detail_bytes
+
+    prune_child_markers(root)
 
 
 def evidence_monitor(
