@@ -274,3 +274,22 @@ def declared_socket_cleanup(path: str, metadata: dict, marker: dict) -> bool:
         and metadata.get("id", "").startswith("csd-violations/")
         and marker.get("phase") == "closing-browser"
     )
+
+
+def verify_route_actions(contract: dict, receipt: dict) -> dict:
+    """Require every actual fragment navigation and rendered route, plus cleanup."""
+    observed = {action["id"]: action for action in receipt.get("actions", [])}
+    checks = [
+        {
+            "id": identifier,
+            "passed": observed.get(identifier, {}).get("performed") is True
+            and observed.get(identifier, {}).get("rendered") is True,
+        }
+        for identifier in contract["actions"]
+    ]
+    return {
+        "passed": bool(checks)
+        and all(check["passed"] for check in checks)
+        and receipt.get("browser_closed") is True,
+        "checks": checks,
+    }

@@ -22,6 +22,7 @@ from traffic_dispatch import (
     verify_browser_actions,
     verify_connection_probe,
     verify_dispatch,
+    verify_route_actions,
 )
 from traffic_network import NetworkBoundary
 
@@ -337,6 +338,15 @@ def prerequisite_failure(
 
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
+    if "route_contract" in scenario:
+        evidence = directory / "route-actions.json"
+        result["route_actions"] = (
+            verify_route_actions(
+                scenario["route_contract"], json.loads(evidence.read_text())
+            )
+            if evidence.exists()
+            else {"passed": False}
+        )
     if "report_contract" in scenario:
         evidence = directory / "report-evidence.json"
         result["dispatch_contract_verified"] = (
@@ -366,6 +376,12 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             "dispatch_contract" not in scenario or result["intended_dispatch"]["passed"]
         )
         if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+    if "route_contract" in scenario:
+        result["dispatch_contract_verified"] = (
+            result["dispatch_contract_verified"] and result["route_actions"]["passed"]
+        )
+        if not result["dispatch_contract_verified"]:
             result["outcome"] = "fixture_failure"
     if scenario["budget"] == "connection":
         connection_receipt = directory / "connections.json"

