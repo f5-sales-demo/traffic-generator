@@ -25,6 +25,7 @@ from traffic_dispatch import (
     verify_responses,
     verify_route_actions,
     verify_tool_actions,
+    verify_workload,
 )
 from traffic_network import NetworkBoundary
 
@@ -239,6 +240,13 @@ def evidence_monitor(
 
 def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
     """Use explicit interpreters; connection probes use separately paced equivalents."""
+    if scenario.get("adapter") == "bounded-workload":
+        return [
+            "python3",
+            str(root / "scripts/traffic_workload.py"),
+            scenario["id"],
+            domain,
+        ]
     if "report_contract" in scenario:
         return ["python3", str(root / "scripts/traffic_report.py"), scenario["id"]]
     if scenario.get("adapter") == "bounded-benchmark":
@@ -429,6 +437,18 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         )
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "fixture_failure"
+    if "workload_contract" in scenario:
+        evidence = directory / "workload.json"
+        result["workload"] = (
+            verify_workload(
+                scenario["workload_contract"], json.loads(evidence.read_text())
+            )
+            if evidence.exists()
+            else {"passed": False}
+        )
+        result["dispatch_contract_verified"] &= result["workload"]["passed"]
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
     connection_action_verification(directory, scenario, result)
 
 

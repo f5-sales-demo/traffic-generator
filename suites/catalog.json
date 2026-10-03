@@ -13948,34 +13948,84 @@
       "dispatch_contract": {
         "requirements": [
           {
-            "id": "ramp-requests",
+            "id": "application-0",
             "method": "GET",
-            "path_regex": "(?:/health|/juice-shop/|/vampi/users/v1|/httpbin/get|/whoami/|/csd-demo/health)",
-            "payload_class": "concurrency-ramp",
-            "minimum_dispatches": 300
+            "path": "/httpbin/get",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-2",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-4",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-5",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-6",
+            "method": "GET",
+            "path": "/dvga/",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-7",
+            "method": "GET",
+            "path": "/restaurant/openapi.json",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-8",
+            "method": "GET",
+            "path": "/crapi/",
+            "payload_class": "bounded-01-concurrency-ramp",
+            "minimum_dispatches": 10
           }
         ]
       },
-      "tool_contract": {
-        "requirements": [
-          {
-            "id": "hey-1",
-            "tool": "hey",
-            "argument_regex": "-c 1(?: |$)",
-            "minimum": 1
-          },
-          {
-            "id": "hey-10",
-            "tool": "hey",
-            "argument_regex": "-c 10(?: |$)",
-            "minimum": 1
-          },
-          {
-            "id": "hey-20",
-            "tool": "hey",
-            "argument_regex": "-c 20(?: |$)",
-            "minimum": 1
-          }
+      "adapter": "bounded-workload",
+      "workload_contract": {
+        "levels": [1, 10, 20],
+        "minimum_requests": 100,
+        "paths": [
+          "/httpbin/get",
+          "/juice-shop/rest/products/search",
+          "/dvwa/login.php",
+          "/vampi/",
+          "/whoami/",
+          "/csd-demo/health",
+          "/dvga/",
+          "/restaurant/openapi.json",
+          "/crapi/"
         ]
       }
     },
@@ -14091,12 +14141,84 @@
       "dispatch_contract": {
         "requirements": [
           {
-            "id": "sustained-requests",
+            "id": "application-0",
             "method": "GET",
-            "path_regex": "(?:/health|/juice-shop/|/juice-shop/rest/products/search|/vampi/users/v1|/httpbin/get|/whoami/|/csd-demo/health|/dvwa/login.php)",
-            "payload_class": "sustained-load",
-            "minimum_dispatches": 20
+            "path": "/httpbin/get",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-2",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-4",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-5",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-6",
+            "method": "GET",
+            "path": "/dvga/",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-7",
+            "method": "GET",
+            "path": "/restaurant/openapi.json",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-8",
+            "method": "GET",
+            "path": "/crapi/",
+            "payload_class": "bounded-03-sustained-load",
+            "minimum_dispatches": 10
           }
+        ]
+      },
+      "adapter": "bounded-workload",
+      "workload_contract": {
+        "levels": [20],
+        "minimum_requests": 100,
+        "paths": [
+          "/httpbin/get",
+          "/juice-shop/rest/products/search",
+          "/dvwa/login.php",
+          "/vampi/",
+          "/whoami/",
+          "/csd-demo/health",
+          "/dvga/",
+          "/restaurant/openapi.json",
+          "/crapi/"
         ]
       }
     },
@@ -14279,12 +14401,84 @@
       "dispatch_contract": {
         "requirements": [
           {
-            "id": "profile-load",
+            "id": "application-0",
             "method": "GET",
-            "path_regex": "(?:/health|/juice-shop/|/juice-shop/rest/products/search|/vampi/users/v1|/httpbin/get|/whoami/|/csd-demo/health|/dvwa/login.php)",
-            "payload_class": "resource-profile-workload",
-            "minimum_dispatches": 40
+            "path": "/httpbin/get",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-2",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-4",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-5",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-6",
+            "method": "GET",
+            "path": "/dvga/",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-7",
+            "method": "GET",
+            "path": "/restaurant/openapi.json",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-8",
+            "method": "GET",
+            "path": "/crapi/",
+            "payload_class": "bounded-07-self-profile-under-load",
+            "minimum_dispatches": 10
           }
+        ]
+      },
+      "adapter": "bounded-workload",
+      "workload_contract": {
+        "levels": [20],
+        "minimum_requests": 100,
+        "paths": [
+          "/httpbin/get",
+          "/juice-shop/rest/products/search",
+          "/dvwa/login.php",
+          "/vampi/",
+          "/whoami/",
+          "/csd-demo/health",
+          "/dvga/",
+          "/restaurant/openapi.json",
+          "/crapi/"
         ]
       }
     },
@@ -14303,22 +14497,84 @@
       "dispatch_contract": {
         "requirements": [
           {
-            "id": "churn",
+            "id": "application-0",
             "method": "GET",
-            "path": "/health",
-            "payload_class": "ephemeral-connection-churn",
-            "minimum_dispatches": 170
+            "path": "/httpbin/get",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-1",
+            "method": "GET",
+            "path": "/juice-shop/rest/products/search",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-2",
+            "method": "GET",
+            "path": "/dvwa/login.php",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-3",
+            "method": "GET",
+            "path": "/vampi/",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-4",
+            "method": "GET",
+            "path": "/whoami/",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-5",
+            "method": "GET",
+            "path": "/csd-demo/health",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-6",
+            "method": "GET",
+            "path": "/dvga/",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-7",
+            "method": "GET",
+            "path": "/restaurant/openapi.json",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
+          },
+          {
+            "id": "application-8",
+            "method": "GET",
+            "path": "/crapi/",
+            "payload_class": "bounded-08-ephemeral-port-stress",
+            "minimum_dispatches": 10
           }
         ]
       },
-      "tool_contract": {
-        "requirements": [
-          {
-            "id": "new-connections",
-            "tool": "hey",
-            "argument_regex": "-disable-keepalive",
-            "minimum": 3
-          }
+      "adapter": "bounded-workload",
+      "workload_contract": {
+        "levels": [20],
+        "minimum_requests": 100,
+        "paths": [
+          "/httpbin/get",
+          "/juice-shop/rest/products/search",
+          "/dvwa/login.php",
+          "/vampi/",
+          "/whoami/",
+          "/csd-demo/health",
+          "/dvga/",
+          "/restaurant/openapi.json",
+          "/crapi/"
         ]
       }
     },

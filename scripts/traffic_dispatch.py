@@ -355,3 +355,25 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
             }
         )
     return {"passed": all(check["passed"] for check in checks), "checks": checks}
+
+
+def verify_workload(contract: dict, receipt: dict) -> dict:
+    """Require each declared concurrency level's completed requests and cleanup."""
+    checks = [
+        {
+            "concurrency": level,
+            "passed": any(
+                sample.get("concurrency") == level
+                and sample.get("requests", 0) >= contract["minimum_requests"]
+                and sample.get("transport_failures") == 0
+                for sample in receipt.get("levels", [])
+            ),
+        }
+        for level in contract["levels"]
+    ]
+    return {
+        "passed": bool(checks)
+        and all(check["passed"] for check in checks)
+        and receipt.get("cleanup") is True,
+        "checks": checks,
+    }
