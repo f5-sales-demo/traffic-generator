@@ -328,3 +328,30 @@ def verify_tool_actions(contract: dict, events: list[dict]) -> dict:
         "passed": bool(checks) and all(check["passed"] for check in checks),
         "checks": checks,
     }
+
+
+def verify_responses(contract: dict, events: list[dict]) -> dict:
+    """Request actions require explicit application outcomes or a mitigation candidate."""
+    checks = []
+    for requirement in contract.get("requirements", []):
+        if "expected_statuses" not in requirement:
+            continue
+        responses = [
+            event
+            for event in events
+            if event.get("kind") == "scenario"
+            and requirement["id"] in event.get("matched_requirements", [])
+        ]
+        checks.append(
+            {
+                "id": requirement["id"],
+                "passed": bool(responses)
+                and all(
+                    not event.get("transport_error")
+                    and event.get("status")
+                    in [*requirement["expected_statuses"], 403, 429]
+                    for event in responses
+                ),
+            }
+        )
+    return {"passed": all(check["passed"] for check in checks), "checks": checks}

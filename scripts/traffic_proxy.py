@@ -181,6 +181,7 @@ class Budget:
             },
         }
         matched = match_requirements(current.get("dispatch_contract", {}), observed)
+        flow.metadata["tgen_matched_requirements"] = matched
         with event_path.open("a", encoding="utf-8") as stream:
             event_path.chmod(0o600)
             # This private receipt records endpoint and payload class inputs, never headers/cookies.
@@ -251,6 +252,7 @@ class Budget:
             "method": flow.request.method,
             "path": flow.request.path.split("?", 1)[0],
             "status": status,
+            "matched_requirements": flow.metadata.get("tgen_matched_requirements", []),
             "transport_error": transport_error,
             "expected_statuses": current.get("expected_statuses", []),
         }

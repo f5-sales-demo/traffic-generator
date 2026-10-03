@@ -22,6 +22,7 @@ from traffic_dispatch import (
     verify_browser_actions,
     verify_connection_probe,
     verify_dispatch,
+    verify_responses,
     verify_route_actions,
     verify_tool_actions,
 )
@@ -397,10 +398,15 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             scenario["dispatch_contract"], events
         )
         result["dispatch_contract_verified"] = result["intended_dispatch"]["passed"]
-        if (
-            result["outcome"] == "launched"
-            and not result["intended_dispatch"]["passed"]
-        ):
+        response_path = directory / "response-events.jsonl"
+        result["response_assertions"] = verify_responses(
+            scenario["dispatch_contract"],
+            [json.loads(line) for line in response_path.read_text().splitlines()]
+            if response_path.exists()
+            else [],
+        )
+        result["dispatch_contract_verified"] &= result["response_assertions"]["passed"]
+        if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
             result["outcome"] = "fixture_failure"
     if "browser_contract" in scenario:
         result["browser_actions"] = browser_action_receipt(

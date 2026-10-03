@@ -13,6 +13,7 @@ from traffic_dispatch import (  # noqa: E402
     match_requirements,
     validate_dispatch_contract,
     verify_dispatch,
+    verify_responses,
 )
 
 
@@ -271,3 +272,14 @@ def test_binary_payload_contract_does_not_accept_decoded_replacement_characters(
     assert not match_requirements(specification, event)
     event["body_hex"] = "713dc0af"
     assert match_requirements(specification, event) == ["overlong"]
+
+
+def test_matched_request_requires_declared_response_or_mitigation():
+    specification = {"requirements": [{"id": "actual-api", "expected_statuses": [200, 401]}]}
+    event = {"kind": "scenario", "matched_requirements": ["actual-api"], "status": 404}
+    assert not verify_responses(specification, [event])["passed"]
+    assert verify_responses(specification, [dict(event, status=401)])["passed"]
+    assert verify_responses(specification, [dict(event, status=403)])["passed"]
+    assert not verify_responses(specification, [dict(event, transport_error="timeout")])[
+        "passed"
+    ]
