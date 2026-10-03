@@ -3250,53 +3250,55 @@
             "id": "sample-0",
             "method": "GET",
             "path": "/juice-shop/",
-            "payload_class": "cache-expiry-sampling",
+            "payload_class": "sustained-cache-policy-sample",
             "minimum_dispatches": 10
           },
           {
             "id": "sample-1",
             "method": "GET",
             "path": "/httpbin/get",
-            "payload_class": "cache-expiry-sampling",
+            "payload_class": "sustained-cache-policy-sample",
             "minimum_dispatches": 10
           },
           {
             "id": "sample-2",
             "method": "GET",
             "path": "/whoami/",
-            "payload_class": "cache-expiry-sampling",
+            "payload_class": "sustained-cache-policy-sample",
             "minimum_dispatches": 10
           },
           {
             "id": "sample-3",
             "method": "GET",
-            "path": "/health",
-            "payload_class": "cache-expiry-sampling",
+            "path": "/dvwa/login.php",
+            "payload_class": "sustained-cache-policy-sample",
             "minimum_dispatches": 10
           },
           {
             "id": "sample-4",
             "method": "GET",
-            "path": "/dvwa/login.php",
-            "payload_class": "cache-expiry-sampling",
+            "path": "/vampi/users/v1",
+            "payload_class": "sustained-cache-policy-sample",
             "minimum_dispatches": 10
           },
           {
             "id": "sample-5",
             "method": "GET",
-            "path": "/vampi/users/v1",
-            "payload_class": "cache-expiry-sampling",
-            "minimum_dispatches": 10
-          },
-          {
-            "id": "sample-6",
-            "method": "GET",
-            "path": "/csd-demo/health",
-            "payload_class": "cache-expiry-sampling",
+            "path": "/csd-demo/",
+            "payload_class": "sustained-cache-policy-sample",
             "minimum_dispatches": 10
           }
         ],
         "reject_unmatched_errors": true
+      },
+      "adapter": "bounded-workload",
+      "workload_contract": {
+        "levels": [20],
+        "minimum_requests": 100,
+        "verify_behavior": true,
+        "minimum_duration": 15,
+        "cache_mode": "dynamic-bypass",
+        "paths": ["/juice-shop/", "/httpbin/get", "/whoami/", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"]
       }
     },
     {

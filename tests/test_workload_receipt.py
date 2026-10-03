@@ -68,3 +68,28 @@ def test_duration_cutoff_cannot_substitute_for_completed_counted_requests():
         "cleanup": True,
     }
     assert not verify_workload(specification, receipt)["passed"]
+
+
+def test_sustained_workload_requires_declared_duration_and_cache_samples():
+    specification = {
+        "levels": [20],
+        "minimum_requests": 100,
+        "minimum_duration": 15,
+        "cache_mode": "dynamic-bypass",
+    }
+    receipt: dict[str, Any] = {
+        "levels": [
+            {
+                "concurrency": 20,
+                "requests": 100,
+                "transport_failures": 0,
+                "content_failures": 0,
+                "cache_failures": 0,
+            }
+        ],
+        "cleanup": True,
+        "elapsed": 1,
+    }
+    assert not verify_workload(specification, receipt)["passed"]
+    receipt["elapsed"] = 15
+    assert verify_workload(specification, receipt)["passed"]

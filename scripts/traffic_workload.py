@@ -59,6 +59,7 @@ def run_level(
             "path": paths[index % len(paths)],
             "transport_failure": False,
             "content_valid": False,
+            "cache_valid": False,
         }
         if not keepalive or not hasattr(local, "connection"):
             local.connection = http.client.HTTPSConnection(
@@ -78,6 +79,8 @@ def run_level(
                 status=response.status,
                 content_type=response.getheader("Content-Type"),
                 body_sha256=hashlib.sha256(body).hexdigest(),
+                cache_valid=response.getheader("X-Cache-Status", "NONE")
+                in ("NONE", "BYPASS"),
                 content_valid=content_identity(
                     result["path"], response.getheader("Content-Type", ""), body
                 ),
@@ -105,6 +108,7 @@ def run_level(
         "requests": len(results),
         "transport_failures": sum(result["transport_failure"] for result in results),
         "content_failures": sum(not result["content_valid"] for result in results),
+        "cache_failures": sum(not result["cache_valid"] for result in results),
         "elapsed": time.monotonic() - started,
         "connections_created": len(connections),
         "persistent": keepalive,

@@ -398,6 +398,23 @@ def verify_workload(contract: dict, receipt: dict) -> dict:
         }
         for level in contract["levels"]
     ]
+    if "minimum_duration" in contract:
+        checks.append(
+            {
+                "duration": True,
+                "passed": receipt.get("elapsed", 0) >= contract["minimum_duration"],
+            }
+        )
+    if contract.get("cache_mode") == "dynamic-bypass":
+        checks.append(
+            {
+                "cache": True,
+                "passed": bool(receipt.get("levels"))
+                and all(
+                    sample.get("cache_failures") == 0 for sample in receipt["levels"]
+                ),
+            }
+        )
     return {
         "passed": bool(checks)
         and all(check["passed"] for check in checks)
