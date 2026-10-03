@@ -108,6 +108,9 @@ def run_level(
         "elapsed": time.monotonic() - started,
         "connections_created": len(connections),
         "persistent": keepalive,
+        "connections_closed": all(
+            connection.sock is None for connection in connections
+        ),
         "results": results,
     }
 
@@ -147,7 +150,7 @@ def main() -> int:
     receipt = {
         "scenario": identifier,
         "levels": samples,
-        "cleanup": True,
+        "cleanup": all(sample["connections_closed"] for sample in samples),
         "elapsed": time.monotonic() - started,
     }
     atomic_json(Path(os.environ["TGEN_RESULTS_DIR"]) / "workload.json", receipt)
