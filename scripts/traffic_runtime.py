@@ -492,6 +492,29 @@ def nested_action_verification(directory: Path, scenario: dict, result: dict) ->
             result["outcome"] = "tool_failure"
 
 
+def fixture_action_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Require mutation restoration independently of the attack response."""
+    if scenario.get("fixture_contract", {}).get("restore_profiles"):
+        evidence = directory / "fixture-restoration.json"
+        result["fixture_restoration"] = (
+            evidence.exists()
+            and json.loads(evidence.read_text()).get("restored") is True
+        )
+        result["dispatch_contract_verified"] &= result["fixture_restoration"]
+        if not result["fixture_restoration"]:
+            result["outcome"] = "fixture_failure"
+
+
+def route_action_verification(scenario: dict, result: dict) -> None:
+    """Route assertions supplement dispatch and response verification."""
+    if "route_contract" in scenario:
+        result["dispatch_contract_verified"] = (
+            result["dispatch_contract_verified"] and result["route_actions"]["passed"]
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+
+
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
     if "tool_contract" in scenario:
@@ -558,12 +581,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         )
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "tool_failure"
-    if "route_contract" in scenario:
-        result["dispatch_contract_verified"] = (
-            result["dispatch_contract_verified"] and result["route_actions"]["passed"]
-        )
-        if not result["dispatch_contract_verified"]:
-            result["outcome"] = "fixture_failure"
+    route_action_verification(scenario, result)
     if "workload_contract" in scenario:
         evidence = directory / "workload.json"
         result["workload"] = (
@@ -576,15 +594,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         result["dispatch_contract_verified"] &= result["workload"]["passed"]
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "tool_failure"
-    if scenario.get("fixture_contract", {}).get("restore_profiles"):
-        evidence = directory / "fixture-restoration.json"
-        result["fixture_restoration"] = (
-            evidence.exists()
-            and json.loads(evidence.read_text()).get("restored") is True
-        )
-        result["dispatch_contract_verified"] &= result["fixture_restoration"]
-        if not result["fixture_restoration"]:
-            result["outcome"] = "fixture_failure"
+    fixture_action_verification(directory, scenario, result)
     cache_action_verification(directory, scenario, result)
     multiclient_action_verification(directory, scenario, result)
     nested_action_verification(directory, scenario, result)

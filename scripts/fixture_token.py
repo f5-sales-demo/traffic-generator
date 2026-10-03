@@ -75,8 +75,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "restaurant-actors":
         path = Path(os.environ["TGEN_FIXTURES"])
         if path.is_symlink() or path.stat().st_mode & 0o077:
-            message = "unsafe fixture permissions"
-            raise ValueError(message)
+            MESSAGE = "unsafe fixture permissions"
+            raise ValueError(MESSAGE)
         print(json.dumps(restaurant_actors(json.loads(path.read_text()))))
     else:
         print(token(sys.argv[1] if len(sys.argv) > 1 else "juice_token"))

@@ -175,7 +175,7 @@ def test_scenario_mitigation_count_excludes_filler_and_prerequisites(tmp_path):
         return {"outcome": "launched"}
 
     with patch.object(runtime, "execute", side_effect=observed_execution):
-        result = runtime._scenario(
+        result = runtime._scenario(  # pylint: disable=protected-access
             ROOT,
             scenario(),
             "www.example.test",

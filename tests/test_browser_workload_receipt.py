@@ -60,7 +60,10 @@ def test_browser_action_cannot_override_failed_response_assertions(tmp_path):
         )
         + "\n"
     )
-    result = {"outcome": "launched", "dispatch_contract_verified": False}
+    result: dict[str, Any] = {
+        "outcome": "launched",
+        "dispatch_contract_verified": False,
+    }
     with patch.object(runtime, "browser_action_receipt", return_value={"passed": True}):
         runtime.scenario_action_verification(tmp_path, scenario, result)
     assert result["intended_dispatch"]["passed"]
@@ -71,7 +74,7 @@ def test_browser_action_cannot_override_failed_response_assertions(tmp_path):
 
 def test_explicit_mitigated_navigation_is_distinct_from_rendered_content():
     contract = {"actions": ["navigate"], "allow_mitigation": True}
-    receipt = {
+    receipt: dict[str, Any] = {
         "actions": [
             {
                 "id": "navigate",
