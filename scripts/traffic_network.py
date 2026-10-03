@@ -398,7 +398,9 @@ class NetworkBoundary:
                 "curl",
                 "-sk",
                 "--max-time",
-                "10",
+                "30",
+                "-w",
+                "\n%{http_code}",
                 "-X",
                 "POST",
                 "https://" + domain + path,
@@ -415,10 +417,31 @@ class NetworkBoundary:
             ]
         )
         result = subprocess.run(command, capture_output=True, text=True, check=False)  # noqa: S603 - fixed allowlisted paced fixture login
+        content, _, code = result.stdout.rpartition("\n")
         try:
-            return json.loads(result.stdout)
+            status = int(code)
+            document = json.loads(content)
         except ValueError:
-            return {}
+            status, document = 0, {}
+        outcome = (
+            "transport_failure"
+            if result.returncode or status == 0
+            else "mitigation"
+            if status in (403, 429)
+            else "application_response"
+            if status == SUCCESS_MIN
+            else "application_rejection"
+        )
+        receipt = self.runtime / "fixture-authentication.jsonl"
+        with receipt.open("a") as stream:
+            receipt.chmod(0o600)
+            stream.write(
+                json.dumps({"path": path, "status": status, "outcome": outcome}) + "\n"
+            )
+        if outcome == "transport_failure":
+            message = "synthetic authentication transport failure"
+            raise ValueError(message)
+        return document if status == SUCCESS_MIN and isinstance(document, dict) else {}
 
     def refresh_fixtures(self, domain: str) -> None:
         """Generate/renew real tokens for public seeded lab accounts without disabling WAAP."""

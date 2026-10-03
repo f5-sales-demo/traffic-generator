@@ -5,6 +5,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -210,3 +211,54 @@ def test_benign_200_wrong_landing_page_is_not_success():
         patch("traffic_network.shutil.rmtree"),
     ):
         boundary.__exit__(None, None, None)
+
+
+def test_fixture_transport_failure_is_not_silently_replaced_with_stale_token(tmp_path):
+    boundary = NetworkBoundary(
+        ROOT, {"domains": ["www.example.test", "api.example.test"]}, tmp_path
+    )
+    try:
+        with (
+            patch(
+                "traffic_network.subprocess.run",
+                return_value=SimpleNamespace(returncode=28, stdout="\n000"),
+            ),
+            pytest.raises(ValueError, match="transport"),
+        ):
+            boundary.fixture_login(
+                "www.example.test",
+                "/crapi/identity/api/auth/login",
+                {"email": "synthetic"},
+            )
+        receipt = json.loads((tmp_path / "fixture-authentication.jsonl").read_text())
+        assert receipt["outcome"] == "transport_failure"
+        assert "email" not in receipt
+    finally:
+        boundary.state.pool.shutdown()
+        boundary.browser_temp.rmdir()
+
+
+def test_blocked_fixture_authentication_retains_mitigation_receipt(tmp_path):
+    boundary = NetworkBoundary(
+        ROOT, {"domains": ["www.example.test", "api.example.test"]}, tmp_path
+    )
+    try:
+        with patch(
+            "traffic_network.subprocess.run",
+            return_value=SimpleNamespace(returncode=0, stdout="{}\n403"),
+        ):
+            assert (
+                boundary.fixture_login(
+                    "www.example.test", "/crapi/identity/api/auth/login", {}
+                )
+                == {}
+            )
+        assert (
+            json.loads((tmp_path / "fixture-authentication.jsonl").read_text())[
+                "outcome"
+            ]
+            == "mitigation"
+        )
+    finally:
+        boundary.state.pool.shutdown()
+        boundary.browser_temp.rmdir()
