@@ -4,6 +4,12 @@
 # Targets: Origin server directly — DVGA, RESTaurant, crAPI, Juice Shop, DVWA, VAmPI, httpbin
 # Estimated duration: 10 minutes
 set -uo pipefail
+for native_tool in wrk hey vegeta ab; do
+  command -v "$native_tool" >/dev/null || {
+    echo "[FAIL] Required native $native_tool missing" >&2
+    exit 1
+  }
+done
 
 TARGET="${1:-${TARGET_FQDN:?TARGET_FQDN required}}"
 PROTOCOL="${TARGET_PROTOCOL:-http}"
@@ -128,8 +134,8 @@ if [ -f "$GQL_LUA" ]; then
   GQL_PID=$!
   echo "[+] wrk GraphQL torture: batch DoS + recursion + SQLi + XSS (PID $GQL_PID, ${WRK_T}t/128c keepalive)"
 else
-  echo "[WARN] GraphQL Lua script not found"
-  GQL_PID=""
+  echo "[FAIL] Required GraphQL Lua phase missing" >&2
+  exit 1
 fi
 echo ""
 
@@ -144,8 +150,8 @@ if [ -f "$REST_LUA" ]; then
   REST_PID=$!
   echo "[+] wrk Restaurant torture: BOLA + BOPLA + SSRF + injection (PID $REST_PID, ${WRK_T}t/128c keepalive)"
 else
-  echo "[WARN] Restaurant Lua script not found"
-  REST_PID=""
+  echo "[FAIL] Required Restaurant Lua phase missing" >&2
+  exit 1
 fi
 echo ""
 
@@ -160,8 +166,8 @@ if [ -f "$CRAPI_LUA" ]; then
   CRAPI_PID=$!
   echo "[+] wrk crAPI torture: BOLA + NoSQL + OTP + orders (PID $CRAPI_PID, ${WRK_T}t/128c keepalive)"
 else
-  echo "[WARN] crAPI Lua script not found"
-  CRAPI_PID=""
+  echo "[FAIL] Required crAPI Lua phase missing" >&2
+  exit 1
 fi
 echo ""
 

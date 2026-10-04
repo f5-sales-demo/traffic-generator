@@ -4,6 +4,12 @@
 # Targets: All endpoints with full header diversity, path randomization, session isolation
 # Estimated duration: 10 minutes
 set -uo pipefail
+for native_tool in wrk hey vegeta ab; do
+  command -v "$native_tool" >/dev/null || {
+    echo "[FAIL] Required native $native_tool missing" >&2
+    exit 1
+  }
+done
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-600}}"
