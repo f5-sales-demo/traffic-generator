@@ -16,12 +16,28 @@ import uuid
 from collections.abc import Callable
 from pathlib import Path
 
+from catalog_pass_receipt import catalog_pass_receipt
+from scanner_phase_contract import verify_scanner_phases
+from stress_reports import verify_native_reports
 from traffic_catalog import load_catalog, readiness
 from traffic_common import atomic_json, terminate
+from traffic_dispatch import (
+    verify_browser_actions,
+    verify_connection_probe,
+    verify_dispatch,
+    verify_responses,
+    verify_route_actions,
+    verify_tool_actions,
+    verify_workload,
+)
+from traffic_functional import verify_functional
 from traffic_network import NetworkBoundary
+from traffic_report import build_report
+from traffic_tool import native_binary
 
 sys.dont_write_bytecode = True
 DOMAIN_COUNT = 2
+BROWSER_RECEIPT_VERSION = 2
 
 
 def validate_config(config: dict) -> None:
@@ -174,6 +190,28 @@ def detail_size(root: Path) -> int:
     return total
 
 
+def prune_child_markers(root: Path) -> None:
+    """Remove attribution markers only after their owned scenario directory is evicted."""
+    markers = root / "children"
+    if markers.is_symlink():
+        return
+    for marker in markers.glob("*.json"):
+        if marker.is_symlink():
+            continue
+        try:
+            destination = Path(
+                json.loads(marker.read_text())["dispatch_path"]
+            ).resolve()
+            relative = destination.relative_to(root.resolve())
+            if (
+                relative.parts[0].startswith("pass-")
+                and not destination.parent.exists()
+            ):
+                marker.unlink(missing_ok=True)
+        except (OSError, ValueError, KeyError, TypeError, IndexError):
+            continue
+
+
 def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
     """Evict oldest detailed runs by age then total bytes; preserve active evidence."""
     candidates = sorted(
@@ -207,6 +245,8 @@ def retain(root: Path, active: Path, days: int, max_bytes: int) -> None:
                 shutil.rmtree(directory)
                 total -= detail_bytes
 
+    prune_child_markers(root)
+
 
 def evidence_monitor(
     runtime: Path, active: Path, config: dict
@@ -230,6 +270,20 @@ def evidence_monitor(
 
 def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
     """Use explicit interpreters; connection probes use separately paced equivalents."""
+    adapters = {
+        "dynamic-cache": "traffic_cache.py",
+        "bounded-workload": "traffic_workload.py",
+        "bounded-multiclient": "traffic_multiclient.py",
+    }
+    if scenario.get("adapter") in adapters:
+        return [
+            "python3",
+            str(root / "scripts" / adapters[scenario["adapter"]]),
+            scenario["id"],
+            domain,
+        ]
+    if "report_contract" in scenario:
+        return ["python3", str(root / "scripts/traffic_report.py"), scenario["id"]]
     if scenario.get("adapter") == "bounded-benchmark":
         return [
             "python3",
@@ -265,6 +319,40 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
     for scenario in scenarios:
         directory = results / scenario["id"].replace("/", "--")
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+        runtime_directory = Path(os.environ["TGEN_RUNTIME_DIR"])
+        marker = "child-" + uuid.uuid4().hex
+        metadata = {
+            "id": scenario["id"],
+            "phase": "execution",
+            "dispatch_path": str(directory / "dispatch-events.jsonl"),
+            "dispatch_contract": scenario.get("dispatch_contract", {}),
+            "expected_statuses": scenario.get("expected_http_statuses", []),
+        }
+        (runtime_directory / "children").mkdir(mode=0o700, exist_ok=True)
+        atomic_json(runtime_directory / "children" / (marker + ".json"), metadata)
+        tools = directory / "child-tools"
+        tools.mkdir(mode=0o700, exist_ok=True)
+        for tool in {
+            "curl",
+            *[
+                requirement["tool"]
+                for requirement in scenario.get("tool_contract", {}).get(
+                    "requirements", []
+                )
+            ],
+        }:
+            binary = native_binary(tool, os.environ["PATH"], runtime_directory)
+            wrapper = tools / tool
+            wrapper.write_text(
+                "#!/usr/bin/env python3\nimport os,sys\nos.execv(sys.executable,[sys.executable,"
+                + repr(str(root / "scripts/traffic_tool.py"))
+                + ","
+                + repr(binary)
+                + ","
+                + repr(tool)
+                + ",*sys.argv[1:]])\n"
+            )
+            wrapper.chmod(0o700)
         command = scenario_command(root, scenario, os.environ["TARGET_FQDN"])
         # Native connection tools cannot bypass the isolated HTTP egress from nested runs.
         if scenario["budget"] == "connection":
@@ -277,6 +365,11 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
             environment = dict(
                 os.environ,
                 TGEN_NESTED_EXECUTION="1",
+                TGEN_CHILD_MARKER=marker,
+                TGEN_TOOL_CONTRACT=json.dumps(
+                    scenario.get("tool_contract", {"requirements": []})
+                ),
+                PATH=str(tools) + os.pathsep + os.environ["PATH"],
                 TGEN_RESULTS_DIR=str(directory),
                 RESULTS_DIR=str(directory),
             )
@@ -286,9 +379,298 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 environment,
                 scenario["timeout_seconds"],
             )
+        result["id"] = scenario["id"]
+        result["source_commit"] = os.environ.get("SOURCE_COMMIT")
+        result["artifact_sha256"] = os.environ.get("TGEN_ARTIFACT_SHA256")
+        result["source_sha256"] = hashlib.sha256(
+            (root / scenario["entrypoint"]).read_bytes()
+        ).hexdigest()
+        result["dispatch_contract_verified"] = False
+        scenario_action_verification(directory, scenario, result)
         atomic_json(directory / "receipt.json", result)
         failed |= result["outcome"] != "launched"
     return int(failed)
+
+
+def browser_action_receipt(directory: Path, contract: dict) -> dict:
+    """Read one uniquely identified browser action receipt from the scenario directory."""
+    receipts = []
+    for candidate in directory.glob("*/receipt.json"):
+        try:
+            receipt = json.loads(candidate.read_text())
+        except (OSError, ValueError):
+            return {"passed": False, "reason": "browser receipt unreadable"}
+        if not isinstance(receipt, dict):
+            return {"passed": False, "reason": "browser receipt invalid"}
+        if receipt.get("schemaVersion") == BROWSER_RECEIPT_VERSION:
+            receipts.append(receipt)
+    if len(receipts) != 1:
+        return {"passed": False, "reason": "browser receipt missing or ambiguous"}
+    return verify_browser_actions(contract, receipts[0])
+
+
+def prerequisite_failure(
+    identifier: str, directory: Path, state: dict, error: str
+) -> dict:
+    """Retain a redacted fixture failure without stopping independent catalog work."""
+    result = {
+        "id": identifier,
+        "outcome": "fixture_failure",
+        "phase": "prerequisite",
+        "error": error,
+        "dispatch_contract_verified": False,
+        "http_requests": 0,
+    }
+    state["failures"] = (
+        state["failures"] + [{"id": identifier, "outcome": result["outcome"]}]
+    )[-200:]
+    atomic_json(directory / "receipt.json", result)
+    return result
+
+
+def connection_action_verification(
+    directory: Path, scenario: dict, result: dict
+) -> None:
+    """Validate a separately budgeted concrete connection probe."""
+    if scenario["budget"] == "connection":
+        connection_receipt = directory / "connections.json"
+        if connection_receipt.exists():
+            connection_data = json.loads(connection_receipt.read_text())
+            result["connection_attempts"] = connection_data["attempts"]
+            result["connection_limit"] = connection_data["attempt_limit_per_second"]
+            result["connection_probe"] = verify_connection_probe(
+                scenario["id"], connection_data
+            )
+            result["dispatch_contract_verified"] = result["connection_probe"]["passed"]
+            if (
+                result["outcome"] == "launched"
+                and not result["dispatch_contract_verified"]
+            ):
+                result["outcome"] = "tool_failure"
+        else:
+            result["outcome"] = "tool_failure"
+
+
+def cache_action_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Require cache content and isolation receipts when declared."""
+    if scenario.get("adapter") == "dynamic-cache":
+        evidence = directory / "cache-evidence.json"
+        result["dispatch_contract_verified"] &= (
+            evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+
+
+def multiclient_action_verification(
+    directory: Path, scenario: dict, result: dict
+) -> None:
+    """Require per-client echoed identity and cleanup evidence."""
+    if scenario.get("adapter") == "bounded-multiclient":
+        evidence = directory / "multiclient-evidence.json"
+        result["dispatch_contract_verified"] &= (
+            evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+
+
+def nested_action_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Require each declared child receipt, independent of aggregate parent traffic."""
+    if "nested_contract" in scenario:
+        root = Path(__file__).resolve().parents[1]
+        catalog = load_catalog(root)
+        digests = {
+            item["id"]: hashlib.sha256(
+                (root / item["entrypoint"]).read_bytes()
+            ).hexdigest()
+            for item in catalog["scenarios"]
+        }
+        reports = [
+            build_report(
+                directory / ("nested-" + suite),
+                identifiers,
+                digests,
+                source_commit=result.get("source_commit"),
+                artifact_sha256=result.get("artifact_sha256"),
+            )
+            for suite, identifiers in scenario["nested_contract"].items()
+        ]
+        result["nested_actions"] = reports
+        result["dispatch_contract_verified"] &= bool(reports) and all(
+            report["passed"] for report in reports
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
+
+
+def fixture_action_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Require mutation restoration independently of the attack response."""
+    if scenario.get("fixture_contract", {}).get("csrf_restore"):
+        evidence = directory / "csrf-restoration.json"
+        restored = (
+            evidence.exists()
+            and json.loads(evidence.read_text()).get("restored") is True
+        )
+        result["dispatch_contract_verified"] &= restored
+        if not restored:
+            result["outcome"] = "fixture_failure"
+    if scenario.get("fixture_contract", {}).get("restore_profiles"):
+        evidence = directory / "fixture-restoration.json"
+        result["fixture_restoration"] = (
+            evidence.exists()
+            and json.loads(evidence.read_text()).get("restored") is True
+        )
+        result["dispatch_contract_verified"] &= result["fixture_restoration"]
+        if not result["fixture_restoration"]:
+            result["outcome"] = "fixture_failure"
+
+
+def route_action_verification(scenario: dict, result: dict) -> None:
+    """Route assertions supplement dispatch and response verification."""
+    if "route_contract" in scenario:
+        result["dispatch_contract_verified"] = (
+            result["dispatch_contract_verified"] and result["route_actions"]["passed"]
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+
+
+def video_fixture_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """No video mutation coverage without exact fixture restoration."""
+    if scenario.get("fixture_contract", {}).get("remove_disposable_videos"):
+        evidence = directory / "video-deletion-cleanup.json"
+        removed = (
+            evidence.exists()
+            and json.loads(evidence.read_text()).get("removed") is True
+        )
+        result["disposable_video_cleanup"] = removed
+        result["dispatch_contract_verified"] &= removed
+        if not removed:
+            result["outcome"] = "fixture_failure"
+    if scenario.get("fixture_contract", {}).get("restore_video"):
+        path = directory / "video-restoration.json"
+        restored = (
+            path.exists() and json.loads(path.read_text()).get("restored") is True
+        )
+        result["video_restoration"] = restored
+        result["dispatch_contract_verified"] &= restored
+        if not restored:
+            result["outcome"] = "fixture_failure"
+
+
+def native_report_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Supplement dispatch with every declared native worker completion report."""
+    if "native_report_contract" in scenario:
+        result["native_reports"] = verify_native_reports(
+            directory, scenario["native_report_contract"]
+        )
+        result["dispatch_contract_verified"] &= result["native_reports"]["passed"]
+        if not result["native_reports"]["passed"]:
+            result["outcome"] = "tool_failure"
+
+
+def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Join actual dispatch, browser actions, and connection evidence to a launch."""
+    if "tool_contract" in scenario:
+        evidence = directory / "tool-events.jsonl"
+        result["tool_actions"] = (
+            verify_tool_actions(
+                scenario["tool_contract"],
+                [json.loads(line) for line in evidence.read_text().splitlines()],
+            )
+            if evidence.exists()
+            else {"passed": False}
+        )
+    if "route_contract" in scenario:
+        evidence = directory / "route-actions.json"
+        result["route_actions"] = (
+            verify_route_actions(
+                scenario["route_contract"], json.loads(evidence.read_text())
+            )
+            if evidence.exists()
+            else {"passed": False}
+        )
+    if "report_contract" in scenario:
+        evidence = directory / "report-evidence.json"
+        result["dispatch_contract_verified"] = (
+            evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+    if "dispatch_contract" in scenario:
+        events = []
+        if (directory / "dispatch-events.jsonl").exists():
+            with (directory / "dispatch-events.jsonl").open() as stream:
+                events = [json.loads(line) for line in stream if line.strip()]
+        result["intended_dispatch"] = verify_dispatch(
+            scenario["dispatch_contract"], events
+        )
+        result["dispatch_contract_verified"] = result["intended_dispatch"]["passed"]
+        response_path = directory / "response-events.jsonl"
+        result["response_assertions"] = verify_responses(
+            scenario["dispatch_contract"],
+            [json.loads(line) for line in response_path.read_text().splitlines()]
+            if response_path.exists()
+            else [],
+        )
+        result["dispatch_contract_verified"] &= result["response_assertions"]["passed"]
+        if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+    if "browser_contract" in scenario:
+        result["browser_actions"] = browser_action_receipt(
+            directory, scenario["browser_contract"]
+        )
+        result["dispatch_contract_verified"] = result["browser_actions"]["passed"] and (
+            "dispatch_contract" not in scenario
+            or (
+                result["intended_dispatch"]["passed"]
+                and result["response_assertions"]["passed"]
+            )
+        )
+        if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:
+            result["outcome"] = "fixture_failure"
+    if "tool_contract" in scenario:
+        result["dispatch_contract_verified"] = (
+            result["dispatch_contract_verified"] and result["tool_actions"]["passed"]
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
+    route_action_verification(scenario, result)
+    if "workload_contract" in scenario:
+        evidence = directory / "workload.json"
+        result["workload"] = (
+            verify_workload(
+                scenario["workload_contract"], json.loads(evidence.read_text())
+            )
+            if evidence.exists()
+            else {"passed": False}
+        )
+        result["dispatch_contract_verified"] &= result["workload"]["passed"]
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
+    if "scanner_contract" in scenario:
+        evidence = directory / "scanner-phases.jsonl"
+        result["scanner_phases"] = verify_scanner_phases(
+            scenario["scanner_contract"],
+            [json.loads(line) for line in evidence.read_text().splitlines()]
+            if evidence.exists()
+            else [],
+        )
+        result["dispatch_contract_verified"] &= result["scanner_phases"]["passed"]
+        if not result["scanner_phases"]["passed"]:
+            result["outcome"] = "tool_failure"
+    video_fixture_verification(directory, scenario, result)
+    native_report_verification(directory, scenario, result)
+    fixture_action_verification(directory, scenario, result)
+    cache_action_verification(directory, scenario, result)
+    multiclient_action_verification(directory, scenario, result)
+    nested_action_verification(directory, scenario, result)
+    connection_action_verification(directory, scenario, result)
+    result["dispatch_contract_verified"] = (
+        result.get("dispatch_contract_verified", False)
+        and result.get("outcome") == "launched"
+    )
 
 
 def _scenario(
@@ -302,13 +684,35 @@ def _scenario(
 ) -> dict:
     """Launch one scenario and record meaningful network dispatch independently of filler."""
     config = boundary.config
-    atomic_json(
-        Path(config["results_dir"]) / "current-scenario.json", {"id": scenario["id"]}
-    )
     directory = active / scenario["id"].replace("/", "--")
     directory.mkdir(mode=0o700)
-    boundary.refresh_fixtures(domain)
-    environment = boundary.environment(scenario, domain, directory)
+    atomic_json(
+        Path(config["results_dir"]) / "current-scenario.json",
+        {
+            "id": scenario["id"],
+            "phase": "prerequisite",
+            "dispatch_path": str(directory / "dispatch-events.jsonl"),
+            "dispatch_contract": scenario.get("dispatch_contract", {}),
+            "expected_statuses": scenario.get("expected_http_statuses", []),
+        },
+    )
+    try:
+        boundary.refresh_fixtures(domain, scenario.get("fixture_refresh", []))
+        environment = boundary.environment(scenario, domain, directory)
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+        return prerequisite_failure(
+            scenario["id"], directory, state, type(error).__name__
+        )
+    atomic_json(
+        Path(config["results_dir"]) / "current-scenario.json",
+        {
+            "id": scenario["id"],
+            "phase": "execution",
+            "dispatch_path": str(directory / "dispatch-events.jsonl"),
+            "dispatch_contract": scenario.get("dispatch_contract", {}),
+            "expected_statuses": scenario.get("expected_http_statuses", []),
+        },
+    )
     before = boundary.metrics()
     command = boundary.wrap(
         scenario_command(root, scenario, domain),
@@ -326,24 +730,40 @@ def _scenario(
     result.update(
         {
             "id": scenario["id"],
+            "source_commit": config["source_commit"],
+            "artifact_sha256": config["artifact_sha256"],
             "source_sha256": hashlib.sha256(
                 (root / scenario["entrypoint"]).read_bytes()
             ).hexdigest(),
             "http_requests": after.get("scenario_requests", 0)
             - before.get("scenario_requests", 0),
             "claim": scenario["expected_outcome"],
+            "dispatch_contract_verified": False,
         }
     )
-    if scenario["budget"] == "connection":
-        connection_receipt = directory / "connections.json"
-        if connection_receipt.exists():
-            connection_data = json.loads(connection_receipt.read_text())
-            result["connection_attempts"] = connection_data["attempts"]
-            result["connection_limit"] = connection_data["attempt_limit_per_second"]
-        else:
-            result["outcome"] = "tool_failure"
-    result["mitigated_requests"] = after.get("attack_mitigated", 0) - before.get(
-        "attack_mitigated", 0
+    scenario_action_verification(directory, scenario, result)
+    response_path = directory / "response-events.jsonl"
+    responses = (
+        [
+            json.loads(line)
+            for line in response_path.read_text().splitlines()
+            if line.strip()
+        ]
+        if response_path.exists()
+        else []
+    )
+    result["mitigated_requests"] = sum(
+        event.get("scenario") == scenario["id"]
+        and event.get("kind") == "scenario"
+        and event.get("status") in (403, 429)
+        and event.get("outcome") != "expected_application_rejection"
+        for event in responses
+    )
+    result["application_rejections"] = sum(
+        event.get("scenario") == scenario["id"]
+        and event.get("kind") == "scenario"
+        and event.get("outcome") == "expected_application_rejection"
+        for event in responses
     )
     result["transport_failures"] = after.get(
         "scenario_transport_failures", 0
@@ -351,6 +771,11 @@ def _scenario(
     result["tool_cancellations"] = after.get("tool_cancellations", 0) - before.get(
         "tool_cancellations", 0
     )
+    if result["tool_cancellations"] and result["outcome"] in (
+        "launched",
+        "fixture_failure",
+    ):
+        result["outcome"] = "tool_failure"
     if scenario["kind"] == "javascript":
         log_text = (directory / "scenario.log").read_text(errors="replace")
         if re.search(
@@ -365,6 +790,10 @@ def _scenario(
         and result["http_requests"] == 0
     ):
         result["outcome"] = "fixture_failure"
+    result["functional_acceptance"] = verify_functional(
+        scenario, result, responses, directory
+    )
+    result["functional_verified"] = result["functional_acceptance"]["passed"]
     if result["outcome"] != "launched":
         state["failures"] = (
             state["failures"] + [{"id": scenario["id"], "outcome": result["outcome"]}]
@@ -399,6 +828,29 @@ def _heartbeat(
     worker = threading.Thread(target=heartbeat, daemon=True)
     worker.start()
     return worker
+
+
+def current_pass_receipt(
+    root: Path,
+    scenarios: list[dict],
+    state: dict,
+    active: Path,
+    receipts: list[dict],
+    config: dict,
+) -> dict:
+    """Resolve source digests outside the supervisor's lifecycle state."""
+    digests = {
+        item["id"]: hashlib.sha256((root / item["entrypoint"]).read_bytes()).hexdigest()
+        for item in load_catalog(root)["scenarios"]
+    }
+    return catalog_pass_receipt(
+        active.name,
+        state["pass_started"],
+        receipts,
+        {item["id"]: digests[item["id"]] for item in scenarios},
+        digests,
+        config,
+    )
 
 
 def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) -> int:
@@ -461,18 +913,9 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
                 retain(
                     runtime, active, config["retention_days"], config["retention_bytes"]
                 )
-            receipt = {
-                "id": pass_id,
-                "started": state["pass_started"],
-                "complete": len(receipts) == len(scenarios),
-                "catalog_complete": len(receipts)
-                == len(load_catalog(root)["scenarios"]),
-                "scenario_count": len(receipts),
-                "passed": len(receipts) == len(scenarios)
-                and all(r["outcome"] == "launched" for r in receipts),
-                "scenarios": receipts,
-                "completed": time.time(),
-            }
+            receipt = current_pass_receipt(
+                root, scenarios, state, active, receipts, config
+            )
             atomic_json(active / "receipt.json", receipt)
             if receipt["catalog_complete"]:
                 state["completed_passes"] += 1
@@ -485,7 +928,14 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
         worker.join(3)
     state.update(status="stopped", current_scenario=None, heartbeat=time.time())
     atomic_json(status_path, state)
-    return 0 if not state["failures"] else 1
+    return (
+        0
+        if not state["failures"]
+        and (
+            continuous or state.get("last_pass", {}).get("functional_verified") is True
+        )
+        else 1
+    )
 
 
 def main() -> int:

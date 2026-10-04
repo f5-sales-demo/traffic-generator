@@ -5,6 +5,7 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
+const { observeRequests, settleRequests, childHeaders } = require('../../scripts/browser_requests.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
@@ -48,10 +49,12 @@ const PAGES_TO_SCRAPE = [
   });
 
   const context = await browser.newContext({
+    extraHTTPHeaders: childHeaders(),
     ignoreHTTPSErrors: true,
     viewport: { width: 1920, height: 1080 },
   });
   const page = await context.newPage();
+  const requestState = observeRequests(page);
 
   let scraped = 0;
 
@@ -60,6 +63,7 @@ const PAGES_TO_SCRAPE = [
       const url = `${BASE_URL}${path}`;
       console.log(`[+] Scraping: ${path}`);
 
+      await settleRequests(requestState);
       const response = await page.goto(url, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
@@ -77,6 +81,9 @@ const PAGES_TO_SCRAPE = [
     }
   }
 
+  await settleRequests(requestState).catch(() => {
+    process.exitCode = 1;
+  });
   await browser.close();
   fs.rmSync(PROFILE_DIR, { recursive: true, force: true });
 

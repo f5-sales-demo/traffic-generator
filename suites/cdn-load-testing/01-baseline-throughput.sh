@@ -60,12 +60,12 @@ for ep in "${ENDPOINTS[@]}"; do
   sleep 0.1
   # Check cache status
   STATUS=$(check_cache_status "${BASE}${ep}")
-  if [ "$STATUS" = "HIT" ]; then
-    pass "$ep → X-Cache-Status: $STATUS"
-  elif [ "$STATUS" = "MISS" ] || [ "$STATUS" = "NONE" ]; then
-    fail "$ep → X-Cache-Status: $STATUS (expected HIT after warmup)"
+  if [ "$STATUS" = "NONE" ] || [ "$STATUS" = "BYPASS" ]; then
+    pass "$ep retains declared dynamic-bypass behavior: $STATUS"
+  elif [ "$STATUS" = "HIT" ] || [ "$STATUS" = "STALE" ]; then
+    fail "$ep → X-Cache-Status: $STATUS (expected uncached dynamic application)"
   else
-    pass "$ep → X-Cache-Status: $STATUS (STALE/UPDATING acceptable)"
+    fail "$ep unexpected cache status: $STATUS"
   fi
 done
 

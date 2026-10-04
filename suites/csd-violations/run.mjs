@@ -4,6 +4,7 @@ import { constants } from 'node:fs';
 import { access, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import browserRequests from '../../scripts/browser_requests.cjs';
 import { DEFAULT_POLICY } from './continuous.mjs';
 import { SCENARIOS, SUITE_MANIFEST } from './scenarios.mjs';
 
@@ -157,6 +158,21 @@ function networkOutcome(request) {
     path: parsed.pathname,
     terminal: 'pending',
   };
+}
+
+export async function waitForRequestsTerminal(requests, timeoutMs = 20000) {
+  const deadline = Date.now() + timeoutMs;
+  const pending = () =>
+    [...requests.values()].filter((request) => request.terminal === 'pending' && !request.path.includes('/socket.io/'));
+  let settled = Date.now();
+  let observed = requests.size;
+  while (Date.now() < deadline) {
+    if (pending().length || requests.size !== observed) settled = Date.now();
+    observed = requests.size;
+    if (!pending().length && Date.now() - settled >= Math.min(500, timeoutMs / 2)) break;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  return { passed: pending().length === 0, pending: pending().length };
 }
 
 function safeFilename(value) {
@@ -342,7 +358,29 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
         tracked.timers.delete(timer);
         resolve(terminal);
       };
-      script.onload = () => done('finished');
+      script.onload = () => {
+        const expectedGlobals = {
+          [SCRIPT_URLS.jsdelivr]: '_',
+          [SCRIPT_URLS.esm]: 'moment',
+          [SCRIPT_URLS.unpkg]: '_',
+          [SCRIPT_URLS.jspm]: 'dayjs',
+          'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': 'Chart',
+        };
+        const expected = expectedGlobals[src];
+        const versions = {
+          [SCRIPT_URLS.jsdelivr]: '4.17.21',
+          [SCRIPT_URLS.esm]: '2.30.1',
+          [SCRIPT_URLS.unpkg]: '1.13.7',
+          'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': '4.4.4',
+        };
+        const library = expected && window[expected];
+        const nativeIdentity = versions[src]
+          ? (library?.VERSION ?? library?.version) === versions[src]
+          : expected === 'dayjs' &&
+            typeof library === 'function' &&
+            library('2026-01-02').format('YYYY-MM-DD') === '2026-01-02';
+        done(typeof library === 'function' && nativeIdentity ? 'finished' : 'failed');
+      };
       script.onerror = () => done('failed');
       const timer = setTimeout(() => done('timed-out'), 8_000);
       tracked.timers.add(timer);
@@ -743,6 +781,7 @@ export async function runSuite(options = {}) {
       const context = await execute(() =>
         browser.newContext({
           ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? false,
+          extraHTTPHeaders: browserRequests.childHeaders(),
         }),
       );
       cleanup.contexts += 1;
@@ -854,6 +893,10 @@ export async function runSuite(options = {}) {
           });
           scenarioResult.status = 'failed';
         }
+        if (options.drainRequests) {
+          scenarioResult.networkDrain = await cleanupOperation(() => waitForRequestsTerminal(requests));
+          if (!scenarioResult.networkDrain.passed) scenarioResult.status = 'failed';
+        }
         scenarioResult.finalScreenshot = await captureWithinDeadline(() =>
           captureScreenshot(
             page,
@@ -871,6 +914,10 @@ export async function runSuite(options = {}) {
         scenarioResult.completedAt = new Date().toISOString();
         try {
           if (options.routeCleanup) await cleanupOperation(() => options.routeCleanup(context));
+          if (options.drainRequests) {
+            scenarioResult.finalNetworkDrain = await cleanupOperation(() => waitForRequestsTerminal(requests));
+            if (!scenarioResult.finalNetworkDrain.passed) scenarioResult.status = 'failed';
+          }
           await cleanupOperation(() => context.close());
         } catch (error) {
           reportLocalError(`context cleanup ${scenario.name} failed`, error);

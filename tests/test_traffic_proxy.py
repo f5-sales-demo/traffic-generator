@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 import pathlib
+import sys
 import tempfile
 import time
 import unittest
@@ -14,6 +15,7 @@ from unittest.mock import patch
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class ProxyTests(unittest.IsolatedAsyncioTestCase):
@@ -40,11 +42,16 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             budget = module.Budget()
             dispatched = []
 
-            async def request(index):
+            async def request(_index):
                 flow = SimpleNamespace(
                     metadata={},
                     request=SimpleNamespace(
-                        headers={"Host": "www.example.test"}, host="192.0.2.1", port=443
+                        content=b"synthetic",
+                        headers={"Host": "www.example.test"},
+                        host="192.0.2.1",
+                        port=443,
+                        method="GET",
+                        path="/httpbin/get",
                     ),
                 )
                 await budget.request(flow)
@@ -60,7 +67,9 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             assert budget.counts["filler_requests"] == 0
             escaped = SimpleNamespace(
                 request=SimpleNamespace(
-                    headers={"Host": "outside.example.test"}, port=443
+                    content=b"synthetic",
+                    headers={"Host": "outside.example.test"},
+                    port=443,
                 )
             )
             await budget.request(escaped)
@@ -72,6 +81,71 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                 ]
                 == 21
             )
+
+    async def test_dispatch_keeps_phase_and_contract_from_enqueue(self):
+        """Changing active phases cannot reattribute an already queued request."""
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch.dict(
+                os.environ,
+                {
+                    "TGEN_DOMAINS": '["www.example.test","api.example.test"]',
+                    "TGEN_PROXY_METRICS": temporary + "/metrics.json",
+                },
+            ),
+        ):
+            spec = importlib.util.spec_from_file_location(
+                "phase_proxy", ROOT / "scripts/traffic_proxy.py"
+            )
+            assert spec is not None
+            assert spec.loader is not None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            budget = module.Budget()
+            evidence = pathlib.Path(temporary) / "scenario-events.jsonl"
+            current = {
+                "id": "synthetic/action",
+                "phase": "prerequisite",
+                "dispatch_path": str(evidence),
+                "dispatch_contract": {
+                    "requirements": [
+                        {
+                            "id": "action",
+                            "method": "POST",
+                            "path": "/httpbin/post",
+                            "body_exact": "synthetic",
+                            "payload_class": "fixture",
+                            "minimum_dispatches": 1,
+                        }
+                    ]
+                },
+            }
+            budget.scenario_file.write_text(json.dumps(current))
+            flow = SimpleNamespace(
+                metadata={},
+                request=SimpleNamespace(
+                    content=b"synthetic",
+                    headers={"Host": "www.example.test"},
+                    host="www.example.test",
+                    port=443,
+                    method="POST",
+                    path="/httpbin/post",
+                    get_text=lambda **_options: "synthetic",
+                ),
+            )
+            pending = asyncio.create_task(budget.request(flow))
+            await asyncio.sleep(0)
+            current["phase"] = "execution"
+            budget.scenario_file.write_text(json.dumps(current))
+            budget.maximum_pending_fillers = 0
+            budget.running()
+            await pending
+            budget.done()
+            event = json.loads(evidence.read_text())
+            assert event["kind"] == "prerequisite"
+            assert event["matched_requirements"] == []
+            assert "body" not in event
+            assert "headers" not in event
 
     async def test_cancelled_requests_do_not_consume_dispatches(self):
         with (
@@ -135,6 +209,78 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             budget.error(flow)
             assert future.cancelled()
             assert budget.counts["tool_cancellations"] == 1
+
+    async def test_raw_connect_receipt_records_forwarded_method(self):
+        """The carrier GET is not the intended CONNECT dispatch."""
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.dict(
+                os.environ,
+                {
+                    "TGEN_DOMAINS": '["www.example.test","api.example.test"]',
+                    "TGEN_PROXY_METRICS": tmp + "/metrics.json",
+                },
+            ),
+        ):
+            spec = importlib.util.spec_from_file_location(
+                "raw_proxy", ROOT / "scripts/traffic_proxy.py"
+            )
+            assert spec is not None
+            assert spec.loader is not None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            budget = module.Budget()
+            evidence = pathlib.Path(tmp) / "dispatch-events.jsonl"
+            budget.scenario_file.write_text(
+                json.dumps(
+                    {
+                        "id": "synthetic/connect",
+                        "phase": "execution",
+                        "dispatch_path": str(evidence),
+                        "dispatch_contract": {
+                            "requirements": [
+                                {
+                                    "id": "connect",
+                                    "method": "CONNECT",
+                                    "path": "/httpbin/get",
+                                    "payload_class": "method-probe",
+                                    "minimum_dispatches": 1,
+                                }
+                            ]
+                        },
+                    }
+                )
+            )
+            flow = SimpleNamespace(
+                metadata={},
+                request=SimpleNamespace(
+                    content=b"",
+                    headers={
+                        "Host": "www.example.test",
+                        "X-TGen-Raw-Method": "CONNECT",
+                    },
+                    host="www.example.test",
+                    port=443,
+                    method="GET",
+                    path="/httpbin/get",
+                    get_text=lambda **_: "",
+                ),
+            )
+            with patch.object(
+                budget,
+                "raw_connect",
+                return_value=module.http.Response.make(403, b"blocked"),
+            ):
+                pending = asyncio.create_task(budget.request(flow))
+                await asyncio.sleep(0)
+                budget.maximum_pending_fillers = 0
+                budget.running()
+                await pending
+                budget.done()
+            event = json.loads(evidence.read_text())
+            assert event["method"] == "CONNECT"
+            assert event["matched_requirements"] == ["connect"]
+            assert flow.metadata["tgen_dispatched_method"] == "CONNECT"
 
 
 if __name__ == "__main__":

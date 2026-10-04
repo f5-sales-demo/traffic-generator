@@ -15,7 +15,7 @@ echo ""
 echo "[+] Registering test user..."
 REG_RESP=$(curl -sk -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"attacker","password":"attacker123","email":"attacker@evil.example"}' \
+  -d '{"username":"attacker","password":"attacker123","email":"attacker@example.com"}' \
   --max-time 10) || true
 echo "    Register response: ${REG_RESP}"
 

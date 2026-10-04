@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""Paced equivalents for TLS, port, and slow-header scenarios on authorized hosts."""
+"""Native bounded socket probes for declared TLS and slow-header behaviors."""
 
-import contextlib
 import json
 import os
 import socket
@@ -81,14 +80,16 @@ def main() -> int:
         raise ValueError(msg)
     rate = min(20, int(os.environ["TGEN_CONNECTION_RATE"]))
     pacer = Pacer(rate)
-    results = []
+    results: list[dict[str, Any]] = []
     slow = "slowloris" in identifier
     connections = []
+    slow_header_writes = 0
+    started = time.monotonic()
     try:
         if slow:
             count = min(20, int(os.environ["TGEN_SLOW_CONNECTIONS"]))
             for _ in range(count):
-                pacer.acquire()
+                attempted = pacer.acquire()
                 connection = ssl.create_default_context().wrap_socket(
                     socket.create_connection((host, 443), timeout=5),
                     server_hostname=host,
@@ -98,13 +99,34 @@ def main() -> int:
                 )
                 connections.append(connection)
                 results.append(
-                    {"port": 443, "connected": True, "tls": connection.version()}
+                    {
+                        "port": 443,
+                        "connected": True,
+                        "tls": connection.version(),
+                        "attempted_monotonic": attempted,
+                        "partial_headers_sent": True,
+                    }
                 )
-            for _ in range(3):
+            for round_index in range(3):
                 time.sleep(5)
-                for connection in connections:
-                    with contextlib.suppress(OSError):
+                for index, connection in enumerate(connections):
+                    result = results[index]
+                    result.setdefault("write_events", [])
+                    try:
                         connection.sendall(b"X-Synthetic-Slow: bounded\r\n")
+                        slow_header_writes += 1
+                        result["write_events"].append(
+                            {"round": round_index, "sent": True}
+                        )
+                    except OSError as error:
+                        result["write_events"].append(
+                            {
+                                "round": round_index,
+                                "sent": False,
+                                "error_type": type(error).__name__,
+                                "errno": error.errno,
+                            }
+                        )
         else:
             if "ssl-scanning" not in identifier:
                 pacer.acquire()
@@ -123,12 +145,17 @@ def main() -> int:
             connection.close()
     receipt = {
         "scenario": identifier,
-        "execution": "bounded connection equivalent",
+        "execution": "native bounded socket probe",
         "scope": "authorized application ports 80 and 443",
         "attempts": len(results),
         "attempt_limit_per_second": rate,
         "maximum_slow_connections": len(connections),
         "results": results,
+        "elapsed_seconds": time.monotonic() - started,
+        "slow_header_writes": slow_header_writes,
+        "connections_closed": all(
+            connection.fileno() == -1 for connection in connections
+        ),
     }
     path = Path(os.environ["TGEN_RESULTS_DIR"]) / "connections.json"
     path.write_text(json.dumps(receipt) + "\n")

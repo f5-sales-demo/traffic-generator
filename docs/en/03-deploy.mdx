@@ -22,7 +22,7 @@ pinned Node 22 archive URL and SHA-256, pinned Chrome for Testing archive URL an
 `operator_ssh_cidr`, and `ssh_public_key_path`. Never guess an image or artifact digest and never
 commit credentials, key material, or local variable files.
 
-The currently observed jumpbox public address is `142.127.218.190/32`; revalidate it immediately before every plan or apply because it is not permanent. On `robin@192.168.2.240`, the untracked public key path may be `/home/robin/.ssh/id_ed25519.pub`. Terraform reads that public key, while its private counterpart remains outside configuration and state.
+Before each plan or apply, verify the current jumpbox public address and supply its CIDR through private inputs. Use the untracked public key at `/home/<USER>/.ssh/id_ed25519.pub`; its private counterpart remains outside configuration and state.
 
 The worker clones the exact source commit and verifies runtime archives before installation. Client-Side Defense browser scenarios run with headed Chrome under Xvfb.
 

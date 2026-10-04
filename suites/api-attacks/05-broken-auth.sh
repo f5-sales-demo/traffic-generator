@@ -45,7 +45,7 @@ echo "[+] Test 3: BOLA — access other users' resources with attacker token"
 # Register
 curl -sk -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"authtest","password":"authtest123","email":"authtest@evil.example"}' \
+  -d '{"username":"authtest","password":"authtest123","email":"authtest@example.com"}' \
   --max-time 10 >/dev/null 2>&1 || true
 
 # Login
