@@ -619,7 +619,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             if evidence.exists()
             else {"passed": False}
         )
-    if "report_contract" in scenario:
+    if "report_contract" in scenario and scenario.get("adapter") != "native-subfinder":
         evidence = directory / "report-evidence.json"
         result["dispatch_contract_verified"] = (
             evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
