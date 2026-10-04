@@ -6,6 +6,7 @@ import socket
 import subprocess
 import sys
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import IO, cast
 
@@ -89,7 +90,8 @@ def main() -> int:
                     )
     finally:
         for process in workers:
-            cast("IO[bytes]", process.stdin).close()
+            with suppress(BrokenPipeError):
+                cast("IO[bytes]", process.stdin).close()
             if process.poll() is None:
                 process.terminate()
             try:
@@ -102,6 +104,9 @@ def main() -> int:
             errors="replace"
         )
         result["connected"] = "SSL negotiation finished successfully" in text
+        result["peer_header_timeout"] = (
+            "408 Request Timeout" in text and "request header timeout" in text
+        )
     receipt = {
         "scenario": identifier,
         "execution": "native-openssl-slow-headers",

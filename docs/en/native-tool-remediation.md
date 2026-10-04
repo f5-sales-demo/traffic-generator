@@ -5,10 +5,10 @@ Every executable catalog entry must run its declared native tool and retain actu
 | Finding | Replacement | Verification |
 | --- | --- | --- |
 | Five named Nmap/TLS entries used generic Python TLS probes | Native Nmap, SSLScan, SSLyze, testssl with scoped connect pacing and native reports | Installed native Nmap/SSLScan/SSLyze/testssl completed with structured reports and scoped measured connections on f4f30ce |
-| Seven load entries used Python HTTP workers | Native wrk, hey or curl per declared load contract | Source checks; installed checks pending |
-| Two hardware benchmarks used Python HTTP workers | Native wrk, hey, Vegeta, ab and Lua phases with resource sampling | Installed checks pending; hardware comparison requires actual hosts |
+| Seven load entries used Python HTTP workers | Native wrk, hey or curl per declared load contract | Installed hey ramp and curl churn reports passed; complete content qualification pending |
+| Two hardware benchmarks used Python HTTP workers | Native wrk, hey, Vegeta, ab and Lua phases with resource sampling | Native wrk/hey/Vegeta/ab/Lua reports pass; connection-mode dispatch correction in progress; hardware comparison requires actual hosts |
 | Cache and independent-client entries used Python HTTP requests | Native curl with real response bytes and content checks | Installed checks pending |
-| Subfinder used DNS lookup instead of passive discovery | Native Subfinder against the authorized root domain; discoveries are never scanned | Installed provider availability pending |
+| Subfinder used DNS lookup instead of passive discovery | Native Subfinder against the authorized root domain; discoveries are never scanned | Native Subfinder returned four real provider discoveries; corrected native receipt passed |
 | VAmPI auth failure produced dummy tokens | Fail the prerequisite when real authentication is unavailable | Existing source checks; live prerequisite checks pending |
 | SQLMap auth failure produced fabricated session ID | Require actual origin-issued DVWA session | Installed checks pending |
 | CSD loader supplied no-op JavaScript | Pinned actual library assets and executable identity checks | Passed on earlier immutable candidate |
@@ -18,3 +18,5 @@ Every executable catalog entry must run its declared native tool and retain actu
 Reports and source checks are not complete functional qualification. Preserve all failed evidence. No task is complete until source, immutable installation and required live checks pass. CSD enforcement remains disabled.
 
 The CSD browser now requests actual owned endpoints directly; response interception and implicit endpoint fallback are removed. RESTaurant escalation chains cannot substitute a seeded privileged identity. Native scanner and load report failures remain failed evidence.
+
+Slow-header catalog execution now launches actual OpenSSL clients instead of the Python TLS substitute. All five named scanner catalog entries invoke their native binaries. Python workload and benchmark executable engines are retired.
