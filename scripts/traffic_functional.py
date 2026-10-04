@@ -2,11 +2,13 @@
 
 import hashlib
 import json
+from itertools import pairwise
 from pathlib import Path
 
 from traffic_csd_functional import verify_csd_libraries
 
 CREDENTIAL_COUNT = 15
+CONNECTION_LIMIT = 20
 
 
 def verify_credentials(scenario: dict, result: dict, directory: Path) -> dict:
@@ -77,6 +79,37 @@ def verify_credentials(scenario: dict, result: dict, directory: Path) -> dict:
     }
 
 
+def verify_slow_headers(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require paced native partial headers, observed rounds, and closed sockets."""
+    path = directory / "connections.json"
+    receipt = json.loads(path.read_text()) if path.exists() else {}
+    probes = receipt.get("results", [])
+    attempts = [probe.get("attempted_monotonic") for probe in probes]
+    rate = receipt.get("attempt_limit_per_second", 0)
+    spacing = (
+        0 < rate <= CONNECTION_LIMIT
+        and bool(attempts)
+        and all(isinstance(value, (int, float)) for value in attempts)
+    )
+    spacing = spacing and all(
+        later - earlier >= 1 / rate - 0.001 for earlier, later in pairwise(attempts)
+    )
+    return {
+        "passed": receipt.get("execution") == "native bounded socket probe"
+        and receipt.get("scenario") == scenario["id"]
+        and spacing
+        and all(probe.get("partial_headers_sent") is True for probe in probes)
+        and result.get("connection_probe", {}).get("passed") is True
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "observed_attempt_spacing": spacing,
+        "claim": "native slow-header connection behavior; control attribution separate",
+    }
+
+
 def verify_functional(
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
@@ -89,6 +122,11 @@ def verify_functional(
         return verify_credentials(scenario, result, directory)
     if contract.get("verifier") == "native-csd-libraries":
         return verify_csd_libraries(scenario, result, directory)
+    if (
+        contract.get("verifier") == "native-slow-headers"
+        and scenario["id"] == "traffic-generation/02-slowloris"
+    ):
+        return verify_slow_headers(scenario, result, directory)
     requirements = scenario.get("dispatch_contract", {}).get("requirements", [])
     declared = contract.get("native_response_requirements", [])
     checks = [

@@ -20519,7 +20519,11 @@
       "budget": "connection",
       "parallel": true,
       "timeout_seconds": 900,
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-slow-headers",
+        "behavior": "Native TLS sockets send incomplete HTTP headers, repeat three paced header rounds, observe peer closure, and close all sockets"
+      }
     },
     {
       "id": "traffic-generation/03-http-methods",

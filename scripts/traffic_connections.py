@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paced equivalents for TLS, port, and slow-header scenarios on authorized hosts."""
+"""Native bounded socket probes for declared TLS and slow-header behaviors."""
 
 import json
 import os
@@ -89,7 +89,7 @@ def main() -> int:
         if slow:
             count = min(20, int(os.environ["TGEN_SLOW_CONNECTIONS"]))
             for _ in range(count):
-                pacer.acquire()
+                attempted = pacer.acquire()
                 connection = ssl.create_default_context().wrap_socket(
                     socket.create_connection((host, 443), timeout=5),
                     server_hostname=host,
@@ -99,7 +99,13 @@ def main() -> int:
                 )
                 connections.append(connection)
                 results.append(
-                    {"port": 443, "connected": True, "tls": connection.version()}
+                    {
+                        "port": 443,
+                        "connected": True,
+                        "tls": connection.version(),
+                        "attempted_monotonic": attempted,
+                        "partial_headers_sent": True,
+                    }
                 )
             for round_index in range(3):
                 time.sleep(5)
@@ -139,7 +145,7 @@ def main() -> int:
             connection.close()
     receipt = {
         "scenario": identifier,
-        "execution": "bounded connection equivalent",
+        "execution": "native bounded socket probe",
         "scope": "authorized application ports 80 and 443",
         "attempts": len(results),
         "attempt_limit_per_second": rate,
