@@ -20,7 +20,9 @@ def main() -> int:
     body = args.body.read_text(errors="replace")
     output = " ".join(
         html.unescape(value)
-        for value in re.findall(r"<pre[^>]*>(.*?)</pre>", body, re.DOTALL | re.IGNORECASE)
+        for value in re.findall(
+            r"<pre[^>]*>(.*?)</pre>", body, re.DOTALL | re.IGNORECASE
+        )
     )
     application = (
         args.status == HTTP_OK
