@@ -358,7 +358,17 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
         tracked.timers.delete(timer);
         resolve(terminal);
       };
-      script.onload = () => done('finished');
+      script.onload = () => {
+        const expectedGlobals = {
+          [SCRIPT_URLS.jsdelivr]: '_',
+          [SCRIPT_URLS.esm]: 'moment',
+          [SCRIPT_URLS.unpkg]: '_',
+          [SCRIPT_URLS.jspm]: 'dayjs',
+          'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': 'Chart',
+        };
+        const expected = expectedGlobals[src];
+        done(expected && typeof window[expected] === 'function' ? 'finished' : 'failed');
+      };
       script.onerror = () => done('failed');
       const timer = setTimeout(() => done('timed-out'), 8_000);
       tracked.timers.add(timer);
