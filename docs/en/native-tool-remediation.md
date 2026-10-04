@@ -31,4 +31,7 @@ native reset postconditions and scoped recovery remain open.
 
 Two crAPI upload scenarios previously emitted only MP4 header bytes. They now call native FFmpeg to encode one second of synthetic video and native FFprobe to verify the codec and dimensions. FFmpeg and FFprobe are mandatory dependencies. Native encode/decode passed on the workstation; installed upload/conversion acceptance remains pending.
 
-On installed generator `312f665`, keepalive and VM benchmark adapters completed 17 and 33 native workers with observed process cleanup, zero transport failures and zero cancellations. Both receipts remain functionally unqualified because full phase, content and host comparison contracts are incomplete. Private receipt: `resume-native-followups/pass-focused-1791121335656328761/receipt.json`.
+On installed generator `312f665`, keepalive and VM benchmark adapters completed 17 and 33 native workers with
+observed process cleanup, zero transport failures and zero cancellations. Both receipts remain functionally
+unqualified because full phase, content and host comparison contracts are incomplete. Private receipt:
+`resume-native-followups/pass-focused-1791121335656328761/receipt.json`.

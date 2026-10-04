@@ -29,6 +29,16 @@
       "label": "Integration",
       "description": "Integration with F5 XC, origin-server, and CSD demo",
       "paths": ["07-integrate*"]
+    },
+    {
+      "label": "Catalog operations and acceptance",
+      "description": "Catalog operations and acceptance with revision-specific evidence and incomplete gates",
+      "paths": ["continuous-catalog*", "06-runner*", "dvwa-payload-mapping*", "native-tool-remediation*"]
+    },
+    {
+      "label": "Historical evidence",
+      "description": "Historical evidence with revision-specific evidence and incomplete gates",
+      "paths": ["archive/**"]
     }
   ],
   "promote": [
@@ -41,5 +51,5 @@
     "07-integrate*",
     "08-teardown*"
   ],
-  "demote": []
+  "demote": ["archive/**"]
 }
