@@ -5032,8 +5032,11 @@
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "functional_contract": {"verifier": "native-crapi-otp", "behavior": "Native reset mail establishes the isolated actor prerequisite; both sampled guess batches return declared native OTP outcomes and password/mail state is restored"},
-      "fixture_contract": {"restore_otp": true},
+      "functional_contract": {
+        "verifier": "native-crapi-otp",
+        "behavior": "Native reset mail establishes the isolated actor prerequisite; both sampled guess batches return declared native OTP outcomes and password/mail state is restored"
+      },
+      "fixture_contract": { "restore_otp": true },
       "fixture_refresh": ["crapi"]
     },
     {
