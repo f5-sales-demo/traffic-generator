@@ -186,7 +186,7 @@ def test_declared_native_403_requires_application_identity_and_is_not_waap_proof
         "expected_statuses": [403],
         "response_contract_by_status": {"403": {"content_type": "application/json"}},
     }
-    event = {
+    event: dict = {
         "kind": "scenario",
         "status": 403,
         "matched_requirements": ["conversion"],
