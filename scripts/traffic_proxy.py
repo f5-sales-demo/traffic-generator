@@ -298,6 +298,17 @@ class Budget:
                     event["response_assertions"][requirement["id"]] = (
                         response_content_matches(specification, content_type, body)
                     )
+        event["status_specific_assertions"] = {
+            requirement["id"]: event.get("response_assertions", {}).get(
+                requirement["id"]
+            )
+            is True
+            for requirement in current.get("dispatch_contract", {}).get(
+                "requirements", []
+            )
+            if requirement["id"] in event["matched_requirements"]
+            and str(status) in requirement.get("response_contract_by_status", {})
+        }
         event["outcome"] = classify_outcome(event)
         with destination.open("a", encoding="utf-8") as stream:
             destination.chmod(0o600)

@@ -5356,7 +5356,7 @@
             "query_regex": "(?:^|&)video_id=[1-9][0-9]*(?:&|$)",
             "minimum_dispatches": 3,
             "payload_class": "video-conversion-trigger",
-            "expected_statuses": [200, 400, 500],
+            "expected_statuses": [200, 400, 500, 403],
             "response_contract": {
               "content_type": "application/json",
               "json_keys": ["message", "status"]
@@ -5375,6 +5375,13 @@
                   "message": "Error occured while executing.",
                   "status": 500
                 }
+              },
+              "403": {
+                "content_type": "application/json",
+                "json_equals": {
+                  "status": 403
+                },
+                "text_contains": ["Thi-S endpoint S-hould be accessed only inte-Rnally."]
               }
             }
           }

@@ -4,7 +4,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from traffic_dispatch import response_content_matches, verify_responses
+from traffic_dispatch import (
+    classify_outcome,
+    response_content_matches,
+    verify_responses,
+)
 
 
 def test_positive_response_requires_declared_identity_and_content_type():
@@ -172,4 +176,30 @@ def test_mixed_graphql_requires_every_ordered_result_without_errors():
             '{"data":{"pastes":[]}}',
             '{"data":{"pastes":[]},"errors":[{"message":"failed"}]}',
         ),
+    )
+
+
+def test_declared_native_403_requires_application_identity_and_is_not_waap_proof():
+    requirement = {
+        "id": "conversion",
+        "minimum_dispatches": 1,
+        "expected_statuses": [403],
+        "response_contract_by_status": {"403": {"content_type": "application/json"}},
+    }
+    event = {
+        "kind": "scenario",
+        "status": 403,
+        "matched_requirements": ["conversion"],
+        "response_assertions": {"conversion": False},
+    }
+    assert not verify_responses({"requirements": [requirement]}, [event])["passed"]
+    event["response_assertions"]["conversion"] = True
+    assert verify_responses({"requirements": [requirement]}, [event])["passed"]
+    assert (
+        classify_outcome({**event, "status_specific_assertions": {"conversion": True}})
+        == "expected_application_rejection"
+    )
+    assert (
+        classify_outcome({**event, "status_specific_assertions": {"conversion": False}})
+        == "mitigation_candidate"
     )

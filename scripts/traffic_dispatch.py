@@ -198,6 +198,8 @@ def classify_outcome(event: dict) -> str:
         return "transport_failure"
     status = event.get("status")
     if status in (403, 429):
+        if any(event.get("status_specific_assertions", {}).values()):
+            return "expected_application_rejection"
         return "mitigation_candidate"
     if status in event.get("expected_statuses", []):
         return "expected_application_response"
@@ -570,7 +572,11 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
                             and str(event.get("status"))
                             not in requirement.get("response_contract_by_status", {})
                         )
-                        or event.get("status") in (403, 429)
+                        or (
+                            event.get("status") in (403, 429)
+                            and str(event.get("status"))
+                            not in requirement.get("response_contract_by_status", {})
+                        )
                         or event.get("response_assertions", {}).get(requirement["id"])
                         is True
                     )
