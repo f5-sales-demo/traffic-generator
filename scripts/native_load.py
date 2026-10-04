@@ -4,13 +4,13 @@ import hashlib
 import json
 import os
 import shutil
-import subprocess
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from native_scanner_process import run_scanner
 from stress_reports import report_matches
 from traffic_common import atomic_json
 from traffic_profile import sample_resources
@@ -100,11 +100,7 @@ def run_worker(tool: str, directory: Path, index: int, args: list[str]) -> dict:
     """Require a completed native report; process exit alone is insufficient."""
     path = directory / (tool + "-" + str(index) + ".log")
     started = time.monotonic()
-    with path.open("w") as stream:
-        path.chmod(0o600)
-        process = subprocess.run(  # noqa: S603 - native argv from source contract
-            args, stdout=stream, stderr=subprocess.STDOUT, check=False
-        )
+    process = run_scanner(args, dict(os.environ), path, 600)
     text = path.read_text()
     valid = (
         report_matches(tool, text)
@@ -116,9 +112,13 @@ def run_worker(tool: str, directory: Path, index: int, args: list[str]) -> dict:
         "tool": tool,
         "report": path.name,
         "report_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-        "exit_code": process.returncode,
+        "exit_code": process["exit_code"],
+        "process_evidence": process,
         "elapsed": time.monotonic() - started,
-        "passed": process.returncode == 0 and valid,
+        "passed": process["exit_code"] == 0
+        and not process["timed_out"]
+        and process["connections_closed"]
+        and valid,
     }
 
 
@@ -128,42 +128,54 @@ def run_vegeta(
     """Run actual Vegeta attack and encode its real per-request response records."""
     attack = directory / ("vegeta-" + str(index) + ".raw")
     encoded = directory / ("vegeta-" + str(index) + ".bin")
-    with attack.open("wb") as stream:
-        attack.chmod(0o600)
-        process = subprocess.run(  # noqa: S603 - native tool argv from contract
-            [
-                binary,
-                "attack",
-                "-workers=1",
-                "-max-workers=2",
-                "-rate=5/s",
-                "-duration=" + str(duration) + "s",
-                "-timeout=60s",
-                "-keepalive=" + str(persistent).lower(),
-            ],
-            input=(
-                "GET "
-                + url
-                + "\nConnection: "
-                + ("keep-alive" if persistent else "close")
-                + "\n"
-            ).encode(),
-            stdout=stream,
-            check=False,
-        )
-    with attack.open("rb") as source, encoded.open("w") as stream:
-        encoded.chmod(0o600)
-        report = subprocess.run(  # noqa: S603 - native tool report encoding
-            [binary, "encode"], stdin=source, stdout=stream, check=False
-        )
+    arguments = [
+        binary,
+        "attack",
+        "-workers=1",
+        "-max-workers=2",
+        "-rate=5/s",
+        "-duration=" + str(duration) + "s",
+        "-timeout=60s",
+        "-keepalive=" + str(persistent).lower(),
+    ]
+    target = (
+        "GET "
+        + url
+        + "\nConnection: "
+        + ("keep-alive" if persistent else "close")
+        + "\n"
+    ).encode()
+    # Vegeta writes a binary report to stdout; retain stderr separately without mixing bytes.
+    native_log = directory / ("vegeta-" + str(index) + ".log")
+    process = run_scanner(
+        arguments,
+        dict(os.environ),
+        attack,
+        duration + 120,
+        target,
+        native_log,
+    )
+    report = run_scanner(
+        [binary, "encode"],
+        dict(os.environ),
+        encoded,
+        60,
+        attack.read_bytes(),
+    )
     return {
         "tool": "vegeta",
         "report": encoded.name,
         "report_sha256": hashlib.sha256(encoded.read_bytes()).hexdigest(),
-        "passed": process.returncode == 0
-        and report.returncode == 0
+        "passed": process["exit_code"] == 0
+        and not process["timed_out"]
+        and process["connections_closed"]
+        and report["exit_code"] == 0
+        and report["connections_closed"]
         and report_matches("vegeta", encoded.read_text()),
-        "exit_code": process.returncode,
+        "exit_code": process["exit_code"],
+        "process_evidence": process,
+        "encode_process_evidence": report,
+        "attack_cleanup_basis": "native attack process reaped; encode process group observed absent",
     }
 
 
@@ -311,7 +323,11 @@ def main() -> int:
         "execution": "native-load-tools",
         "workers": workers,
         "resource_samples": samples,
-        "cleanup": True,
+        "cleanup": bool(workers)
+        and all(
+            worker.get("process_evidence", {}).get("connections_closed") is True
+            for worker in workers
+        ),
         "passed": bool(workers) and all(worker["passed"] for worker in workers),
         "source_commit": os.environ["SOURCE_COMMIT"],
         "artifact_sha256": os.environ["TGEN_ARTIFACT_SHA256"],
