@@ -13,7 +13,7 @@
         "Markdown",
         "Git",
         "API",
-        "API['’]?s",
+        "API['\u2019]?s",
         "HTML",
         "SSH",
         "JSON",
@@ -21,7 +21,7 @@
         "SQLite",
         "Unicode",
         "ID",
-        "id['’]?s",
+        "id['\u2019]?s",
         "check[- ]box(es)?",
         "key[/ ]?value",
         "CLI tool(s)?",
@@ -51,5 +51,8 @@
         "Sales?forces?"
       ]
     }
+  },
+  "filters": {
+    "comments": true
   }
 }

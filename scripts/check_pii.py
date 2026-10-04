@@ -316,7 +316,7 @@ ADDRESS_FIELD_RE = re.compile(
     r"(?i)(?:^|[,{\s])['\"]?"
     r"(?P<key>street_address|postal_address|postal_code|zip_code|date_of_birth|dob|"
     r"social_security_number|ssn)"
-    r"['\"]?\s*[:=]\s*(?P<quote>['\"`]?)"
+    r"['\"]?\s*(?P<separator>[:=])\s*(?P<quote>['\"`]?)"
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
 QUERY_RE = re.compile(
@@ -1816,6 +1816,10 @@ def is_nonliteral_code_expression(
     value = normalized_value(value_override or match.group("value"))
     numeric_literal = bool(NUMERIC_LITERAL_RE.fullmatch(value))
     in_jq_filter = match_is_in_spans(match, jq_spans)
+    if in_jq_filter and match.groupdict().get("separator") == "=":
+        separator_end = match.end("separator")
+        if line[separator_end : separator_end + 1] == "=":
+            return True
     in_source_comment = (source_code or in_jq_filter) and is_source_comment(line, match)
     if numeric_literal:
         return False
@@ -2487,6 +2491,7 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
     fence_language: str | None = None
     fence_close_column: int | None = None
     fence_container: str | None = None
+    pending_jq_command = ""
     active_jq_quote: str | None = None
     yaml_block_indent: int | None = None
     yaml_block_anchor: str | None = None
@@ -2631,7 +2636,22 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
             spans = ()
             active_jq_quote = None
         else:
-            spans, active_jq_quote = jq_filter_spans(line, active_jq_quote)
+            if pending_jq_command and active_jq_quote is None:
+                combined = pending_jq_command + line
+                combined_spans, active_jq_quote = jq_filter_spans(combined, None)
+                offset = len(pending_jq_command)
+                adjusted_spans = []
+                for start, end in combined_spans:
+                    if end > offset:
+                        adjusted_spans.append((max(0, start - offset), end - offset))
+                spans = tuple(adjusted_spans)
+            else:
+                combined = line
+                spans, active_jq_quote = jq_filter_spans(line, active_jq_quote)
+            if combined.rstrip().endswith("\\") and active_jq_quote is None:
+                pending_jq_command = combined.rstrip()[:-1] + " "
+            else:
+                pending_jq_command = ""
 
         context = LineScanContext(
             source_code=source_code,

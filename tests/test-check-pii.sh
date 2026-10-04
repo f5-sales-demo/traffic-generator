@@ -9,6 +9,21 @@ SCANNER="${REPO_ROOT}/scripts/check-pii.sh"
 PYTHON_SCANNER="${REPO_ROOT}/scripts/check_pii.py"
 SYNTHETIC_USER=realperson
 
+# Address-field matches share the structured-value interface with identity fields.
+python3 - "$PYTHON_SCANNER" <<'PYTEST'
+import importlib.util
+import sys
+spec = importlib.util.spec_from_file_location("scanner_address_regression", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+for line in ["ssn: str", "ssn = '123-45-6789'", "{'ssn': '123-45-6789'}"]:
+    match = module.ADDRESS_FIELD_RE.search(line)
+    assert match is not None
+    assert match.group("separator") in {":", "="}
+print("[OK] address-field match preserves the structured separator contract")
+PYTEST
+
 FAIL=0
 WORK=$(mktemp -d)
 cleanup() { rm -rf "$WORK"; }
@@ -738,6 +753,32 @@ EOF
 git -C "$repo" add fixture.mdx
 git -C "$repo" commit -qm unrelated-jq
 assert_customer_identifier "an earlier jq command cannot exempt a later field" "$repo" --scope head --mode enforce
+
+repo=$(new_repo jq-identity-comparison)
+cat >"${repo}/fixture.mdx" <<'EOF'
+```bash
+jq -e --arg namespace "$NS" '.metadata.namespace == $namespace and .spec.custom_errors["5"] == $page' response.json
+```
+EOF
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm jq-identity-comparison
+assert_clean "jq identity comparisons do not emit organization literals" "$repo" --scope head --mode enforce
+
+repo=$(new_repo jq-continued-options)
+cat >"${repo}/fixture.md" <<'EOF'
+```bash
+jq -e \
+  --arg namespace "$NS" \
+  '.metadata.namespace == $namespace' \
+  response.json
+jq -n \
+  --arg label 'sample' \
+  '{namespace: "unsafe-org-fixture"}'
+```
+EOF
+git -C "$repo" add fixture.md
+git -C "$repo" commit -qm jq-continued-options
+assert_customer_identifier "continued jq options retain literal enforcement" "$repo" --scope head --mode enforce
 
 repo=$(new_repo jq-expressions)
 cat >"${repo}/fixture.mdx" <<'EOF'
