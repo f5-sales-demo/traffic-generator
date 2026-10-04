@@ -6,7 +6,7 @@ Every executable catalog entry must run its declared native tool and retain actu
 | --- | --- | --- |
 | Five named Nmap/TLS entries used generic Python TLS probes | Native Nmap, SSLScan, SSLyze, testssl with scoped connect pacing and native reports | Installed native Nmap/SSLScan/SSLyze/testssl completed with structured reports and scoped measured connections on f4f30ce |
 | Seven load entries used Python HTTP workers | Native wrk, hey or curl per declared load contract | Source checks; installed checks pending |
-| Two hardware benchmarks used Python HTTP workers | Native wrk, hey, ab phases with resource sampling | Installed checks pending; hardware comparison requires actual hosts |
+| Two hardware benchmarks used Python HTTP workers | Native wrk, hey, Vegeta, ab and Lua phases with resource sampling | Installed checks pending; hardware comparison requires actual hosts |
 | Cache and independent-client entries used Python HTTP requests | Native curl with real response bytes and content checks | Installed checks pending |
 | Subfinder used DNS lookup instead of passive discovery | Native Subfinder against the authorized root domain; discoveries are never scanned | Installed provider availability pending |
 | VAmPI auth failure produced dummy tokens | Fail the prerequisite when real authentication is unavailable | Existing source checks; live prerequisite checks pending |
@@ -16,3 +16,5 @@ Every executable catalog entry must run its declared native tool and retain actu
 | Optional native tool fallbacks and missing Lua phases | Mandatory native dependency gates | Alternate load branches removed; complete native phase qualification in progress |
 
 Reports and source checks are not complete functional qualification. Preserve all failed evidence. No task is complete until source, immutable installation and required live checks pass. CSD enforcement remains disabled.
+
+The CSD browser now requests actual owned endpoints directly; response interception and implicit endpoint fallback are removed. RESTaurant escalation chains cannot substitute a seeded privileged identity. Native scanner and load report failures remain failed evidence.
