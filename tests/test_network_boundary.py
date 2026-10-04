@@ -43,6 +43,7 @@ class BoundaryTests(unittest.TestCase):
                 "fixture_login",
                 side_effect=[
                     {"auth_token": "vampi"},
+                    {"token": "disposable-video"},
                     {"token": "crapi-a"},
                     {"token": "crapi-b"},
                     {"authentication": {"token": "juice"}},

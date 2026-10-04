@@ -5098,7 +5098,7 @@
           {
             "id": "admin-video-delete",
             "method": "DELETE",
-            "minimum_dispatches": 1,
+            "minimum_dispatches": 4,
             "payload_class": "bfla-video-delete",
             "path_regex": "/crapi/identity/api/v2/admin/videos/[^/]+",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
@@ -5109,14 +5109,17 @@
             "minimum_dispatches": 1,
             "payload_class": "bfla-video-list",
             "path": "/crapi/identity/api/v2/admin/videos",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [401, 404, 405]
           }
         ],
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "fixture_contract": {
+        "remove_disposable_videos": true
+      }
     },
     {
       "id": "crapi-exploits/08-mass-assignment-orders",

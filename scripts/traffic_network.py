@@ -483,6 +483,13 @@ class NetworkBoundary:
             if vampi:
                 fixtures["vampi_token"] = vampi
         if "crapi" in required:
+            disposable = self.fixture_login(
+                domain,
+                "/crapi/identity/api/auth/login",
+                {"email": "tgen-video@example.com", "password": "SyntheticVideo!123"},
+            ).get("token")
+            if disposable:
+                fixtures["crapi_video_actor_token"] = disposable
             crapi = []
             for email, password in (
                 ("adam007@example.com", "adam007!123"),

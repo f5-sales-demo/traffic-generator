@@ -536,6 +536,16 @@ def route_action_verification(scenario: dict, result: dict) -> None:
 
 def video_fixture_verification(directory: Path, scenario: dict, result: dict) -> None:
     """No video mutation coverage without exact fixture restoration."""
+    if scenario.get("fixture_contract", {}).get("remove_disposable_videos"):
+        evidence = directory / "video-deletion-cleanup.json"
+        removed = (
+            evidence.exists()
+            and json.loads(evidence.read_text()).get("removed") is True
+        )
+        result["disposable_video_cleanup"] = removed
+        result["dispatch_contract_verified"] &= removed
+        if not removed:
+            result["outcome"] = "fixture_failure"
     if scenario.get("fixture_contract", {}).get("restore_video"):
         path = directory / "video-restoration.json"
         restored = (
