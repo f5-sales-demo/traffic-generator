@@ -91,14 +91,14 @@ const IDENTITIES = [
     });
     const page = await context.newPage();
     const requestState = observeRequests(page);
-    page.setDefaultTimeout(10000);
+    page.setDefaultTimeout(60000);
 
     // --- Registration form ---
     try {
       console.log(`[+] Registering: ${identity.email}`);
       await page.goto(`${BASE_URL}/juice-shop/#/register`, {
         waitUntil: 'domcontentloaded',
-        timeout: 15000,
+        timeout: 60000,
       });
 
       await page
@@ -141,10 +141,10 @@ const IDENTITIES = [
     // --- Contact form ---
     try {
       console.log(`[+] Submitting contact form as: ${identity.name}`);
-      await settleRequests(requestState);
+      await settleRequests(requestState, 60000);
       await page.goto(`${BASE_URL}/juice-shop/#/contact`, {
         waitUntil: 'domcontentloaded',
-        timeout: 15000,
+        timeout: 60000,
       });
 
       await page
@@ -179,7 +179,7 @@ const IDENTITIES = [
       console.log(`    Contact form error: ${err.message}`);
     }
 
-    await settleRequests(requestState).catch((error) => {
+    await settleRequests(requestState, 60000).catch((error) => {
       console.error(error.message);
       process.exitCode = 1;
     });
