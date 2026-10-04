@@ -554,7 +554,11 @@ class NetworkBoundary:
             requirement["tool"]
             for requirement in scenario.get("tool_contract", {}).get("requirements", [])
         }:
-            binary = native_binary(tool, os.environ["PATH"], self.runtime)
+            binary = native_binary(
+                tool,
+                "/opt/traffic-generator/bin" + os.pathsep + os.environ["PATH"],
+                self.runtime,
+            )
             if not binary:
                 message = "required native scanner missing"
                 raise ValueError(message)
@@ -571,7 +575,11 @@ class NetworkBoundary:
             wrapper.chmod(0o700)
         return dict(
             os.environ,
-            PATH=str(tool_path) + os.pathsep + os.environ["PATH"],
+            PATH=str(tool_path)
+            + os.pathsep
+            + "/opt/traffic-generator/bin"
+            + os.pathsep
+            + os.environ["PATH"],
             TGEN_TOOL_CONTRACT=json.dumps(
                 scenario.get("tool_contract", {"requirements": []})
             ),
