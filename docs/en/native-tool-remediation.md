@@ -23,8 +23,11 @@ Slow-header catalog execution now launches actual OpenSSL clients instead of the
 
 The stricter SSLyze check requires all 18 declared plugins to be scheduled, completed and free of plugin errors. Both domains passed with 602 measured connection attempts each, zero transport failures and no surviving native process group. The partial-plugin candidate remains failed evidence. Source receipts now bind the Python adapter, C pacer and cleanup verifier separately.
 
-The shared crAPI setup helper no longer treats signup welcome mail as a verification OTP. Native MIME parsing requires an exact recipient, the `crAPI OTP` subject and the labeled OTP body; welcome mail requires the actual VIN. The parser passed against 17 actual MailHog messages covering both kinds. This is parser qualification, not complete signup/reset scenario acceptance: isolated actors, native reset postconditions and scoped recovery remain open.
-
+The shared crAPI setup helper no longer treats signup welcome mail as a verification OTP. Native
+MIME parsing requires an exact recipient, the `crAPI OTP` subject and the labeled OTP body; welcome
+mail requires the actual VIN. The parser passed against 17 actual MailHog messages covering both
+kinds. This is parser qualification, not complete signup/reset scenario acceptance: isolated actors,
+native reset postconditions and scoped recovery remain open.
 
 Two crAPI upload scenarios previously emitted only MP4 header bytes. They now call native FFmpeg to encode one second of synthetic video and native FFprobe to verify the codec and dimensions. FFmpeg and FFprobe are mandatory dependencies. Native encode/decode passed on the workstation; installed upload/conversion acceptance remains pending.
 

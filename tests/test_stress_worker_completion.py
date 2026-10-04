@@ -19,7 +19,11 @@ def test_origin_stress_waits_for_child_completion(tmp_path, child_exit):
     script = cdn / "09-origin-torture.sh"
     shutil.copyfile(ROOT / "suites/cdn-load-testing/09-origin-torture.sh", script)
     (suites / "dvga-exploits").mkdir()
-    for name in ("_graphql-torture.lua", "_restaurant-torture.lua", "_crapi-torture.lua"):
+    for name in (
+        "_graphql-torture.lua",
+        "_restaurant-torture.lua",
+        "_crapi-torture.lua",
+    ):
         (cdn / name).write_text("-- development fixture")
     runner = suites / "runner.sh"
     runner.write_text(
