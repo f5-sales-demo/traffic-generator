@@ -4,6 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 
+from traffic_csd_functional import verify_csd_libraries
+
 CREDENTIAL_COUNT = 15
 
 
@@ -85,6 +87,8 @@ def verify_functional(
         and scenario["id"] == "bot-simulation/01-playwright-credential-stuff"
     ):
         return verify_credentials(scenario, result, directory)
+    if contract.get("verifier") == "native-csd-libraries":
+        return verify_csd_libraries(scenario, result, directory)
     requirements = scenario.get("dispatch_contract", {}).get("requirements", [])
     declared = contract.get("native_response_requirements", [])
     checks = [

@@ -5074,7 +5074,9 @@
               "content_type": "application/json",
               "json_keys": ["posts", "total"],
               "json_nested_list_matches": {
-                "posts": { "author.email": "[A-Za-z0-9._%+-]+@example\\.com" }
+                "posts": {
+                  "author.email": "[A-Za-z0-9._%+-]+@example\\.com"
+                }
               },
               "json_nonempty_lists": {
                 "posts": ["id", "title", "content"]
@@ -5569,7 +5571,14 @@
         "scenario": "obfuscated-loader",
         "steps": ["navigate-home", "decode-and-inject-reviewed-url", "cleanup-obfuscated-loader"]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-csd-libraries",
+        "behavior": "Pinned native browser libraries execute and all injected nodes, controls, listeners and timers are cleaned up",
+        "native_library_steps": {
+          "decode-and-inject-reviewed-url": ["terminal"]
+        }
+      }
     },
     {
       "id": "csd-violations/multi-cdn-injection",
@@ -5588,7 +5597,14 @@
         "scenario": "multi-cdn-injection",
         "steps": ["navigate-home", "inject-four-cdn-candidates", "cleanup-multi-cdn-candidates"]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-csd-libraries",
+        "behavior": "Pinned native browser libraries execute and all injected nodes, controls, listeners and timers are cleaned up",
+        "native_library_steps": {
+          "inject-four-cdn-candidates": ["jsdelivr", "esm", "unpkg", "jspm"]
+        }
+      }
     },
     {
       "id": "csd-violations/tag-manager-hijack",
@@ -5607,7 +5623,14 @@
         "scenario": "tag-manager-hijack",
         "steps": ["navigate-home", "inject-reviewed-tag-manager-candidate", "cleanup-tag-manager-candidate"]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-csd-libraries",
+        "behavior": "Pinned native browser libraries execute and all injected nodes, controls, listeners and timers are cleaned up",
+        "native_library_steps": {
+          "inject-reviewed-tag-manager-candidate": ["terminal"]
+        }
+      }
     },
     {
       "id": "csd-violations/multi-channel-exfiltration",
