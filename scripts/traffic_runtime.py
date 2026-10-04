@@ -864,6 +864,11 @@ def catalog_pass_receipt(
         "catalog_complete": catalog_complete,
         "catalog_accepted": catalog_complete and functional,
         "functional_verified": functional,
+        "functional_gaps": [
+            receipt.get("id")
+            for receipt in receipts
+            if receipt.get("functional_verified") is not True
+        ],
         "claim": "observed dispatch is separate from native functional acceptance",
         "passed": verified,
         "scenario_count": len(receipts),
@@ -969,7 +974,14 @@ def run(root: Path, scenarios: list[dict], config_path: Path, continuous: bool) 
         worker.join(3)
     state.update(status="stopped", current_scenario=None, heartbeat=time.time())
     atomic_json(status_path, state)
-    return 0 if not state["failures"] else 1
+    return (
+        0
+        if not state["failures"]
+        and (
+            continuous or state.get("last_pass", {}).get("functional_verified") is True
+        )
+        else 1
+    )
 
 
 def main() -> int:
