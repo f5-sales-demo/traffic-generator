@@ -367,7 +367,19 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
           'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': 'Chart',
         };
         const expected = expectedGlobals[src];
-        done(expected && typeof window[expected] === 'function' ? 'finished' : 'failed');
+        const versions = {
+          [SCRIPT_URLS.jsdelivr]: '4.17.21',
+          [SCRIPT_URLS.esm]: '2.30.1',
+          [SCRIPT_URLS.unpkg]: '1.13.7',
+          'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': '4.4.4',
+        };
+        const library = expected && window[expected];
+        const nativeIdentity = versions[src]
+          ? (library?.VERSION ?? library?.version) === versions[src]
+          : expected === 'dayjs' &&
+            typeof library === 'function' &&
+            library('2026-01-02').format('YYYY-MM-DD') === '2026-01-02';
+        done(typeof library === 'function' && nativeIdentity ? 'finished' : 'failed');
       };
       script.onerror = () => done('failed');
       const timer = setTimeout(() => done('timed-out'), 8_000);
