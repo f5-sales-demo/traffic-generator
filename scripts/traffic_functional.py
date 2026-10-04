@@ -1,9 +1,75 @@
 """Functional acceptance from source contracts and observed native responses."""
 
+import hashlib
+import json
+from pathlib import Path
 
-def verify_functional(scenario: dict, result: dict, responses: list[dict]) -> dict:
+CREDENTIAL_COUNT = 15
+
+
+def verify_credentials(scenario: dict, result: dict, directory: Path) -> dict:
+    """Inspect native browser outcomes, exact credential count, and closed sessions."""
+    path = directory / "credential-functional.json"
+    evidence = json.loads(path.read_text()) if path.exists() else {}
+    attempts = evidence.get("attempts", [])
+    passed = (
+        evidence.get("scenario") == scenario["id"]
+        and evidence.get("source_commit") == result.get("source_commit")
+        and evidence.get("passed") is True
+        and evidence.get("contextsClosed") is True
+        and evidence.get("browserErrors") == []
+        and len(attempts) == CREDENTIAL_COUNT
+        and [attempt.get("index") for attempt in attempts]
+        == list(range(CREDENTIAL_COUNT))
+        and all(
+            attempt.get("passed") is True
+            and attempt.get("sessionClosed") is True
+            and attempt.get("expectedAccepted") is (attempt["index"] == 0)
+            and (
+                attempt.get("accepted") is True
+                if attempt["index"] == 0
+                else attempt.get("rejected") is True
+            )
+            for attempt in attempts
+        )
+        and len(evidence.get("screenshots", [])) == CREDENTIAL_COUNT
+        and all(
+            Path(name).name == name
+            and (directory / name).is_file()
+            and (directory / name)
+            .read_bytes()
+            .startswith(bytes.fromhex("89504e470d0a1a0a"))
+            for name in evidence.get("screenshots", [])
+        )
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0
+    )
+    return {
+        "passed": passed,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "native_attempts": len(attempts),
+        "screenshots": {
+            name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            for name in evidence.get("screenshots", [])
+            if Path(name).name == name and (directory / name).is_file()
+        },
+        "evidence": path.name,
+        "control_attribution": "separate WAAP evidence required",
+    }
+
+
+def verify_functional(
+    scenario: dict, result: dict, responses: list[dict], directory: Path
+) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if (
+        contract.get("verifier") == "native-dvwa-credentials"
+        and scenario["id"] == "bot-simulation/01-playwright-credential-stuff"
+    ):
+        return verify_credentials(scenario, result, directory)
     requirements = scenario.get("dispatch_contract", {}).get("requirements", [])
     declared = contract.get("native_response_requirements", [])
     checks = [

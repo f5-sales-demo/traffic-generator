@@ -2582,6 +2582,10 @@
       "budget": "http",
       "parallel": false,
       "timeout_seconds": 900,
+      "functional_contract": {
+        "behavior": "Native DVWA accepts the seeded credential, rejects fourteen invalid pairs, and closes the authenticated session",
+        "verifier": "native-dvwa-credentials"
+      },
       "dispatch_contract": {
         "requirements": [
           {

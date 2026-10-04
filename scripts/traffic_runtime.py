@@ -789,7 +789,9 @@ def _scenario(
         and result["http_requests"] == 0
     ):
         result["outcome"] = "fixture_failure"
-    result["functional_acceptance"] = verify_functional(scenario, result, responses)
+    result["functional_acceptance"] = verify_functional(
+        scenario, result, responses, directory
+    )
     result["functional_verified"] = result["functional_acceptance"]["passed"]
     if result["outcome"] != "launched":
         state["failures"] = (

@@ -56,6 +56,11 @@ const CREDENTIALS = [
   let failures = 0;
   let launched = 0;
   let transportFailures = 0;
+  const attempts = [];
+  const browserErrors = [];
+  const screenshots = [];
+  const resultsDir = process.env.TGEN_RESULTS_DIR;
+  if (resultsDir) fs.mkdirSync(resultsDir, { recursive: true, mode: 0o700 });
 
   for (const cred of CREDENTIALS) {
     const context = await browser.newContext({
@@ -64,7 +69,11 @@ const CREDENTIALS = [
     });
     const page = await context.newPage();
     const requestState = observeRequests(page);
-    page.setDefaultTimeout(30000);
+    page.on('pageerror', (error) => browserErrors.push(error.name));
+    page.on('requestfailed', () => browserErrors.push('requestfailed'));
+    const attemptIndex = CREDENTIALS.indexOf(cred);
+    const expectedAccepted = attemptIndex === 0;
+    page.setDefaultTimeout(60000);
 
     try {
       console.log(`[+] Trying: ${cred.user} / ${cred.password}`);
@@ -96,19 +105,38 @@ const CREDENTIALS = [
       await settleRequests(requestState);
       await page.fill('input[name="username"]', cred.user);
       await page.fill('input[name="password"]', cred.password);
-      await page.click('input[type="submit"]');
+      const [response] = await Promise.all([
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 60000 }),
+        page.click('input[type="submit"]'),
+      ]);
       launched++;
-
-      await page.waitForTimeout(1000);
-
-      const url = page.url();
-      if (url.includes('index.php') || !url.includes('login')) {
-        console.log(`    -> SUCCESS (redirected to ${url})`);
-        successes++;
-      } else {
-        console.log(`    -> FAILED (stayed on login page)`);
-        failures++;
+      await settleRequests(requestState, 60000);
+      const body = await page.textContent('body');
+      const route = new URL(page.url()).pathname;
+      const accepted = response.status() === 200 && route === '/dvwa/index.php'
+        && body.includes('DVWA') && body.includes('Logout');
+      const rejected = response.status() === 200 && route === '/dvwa/login.php'
+        && body.includes('DVWA') && body.includes('Login failed');
+      if (resultsDir) {
+        const filename = `credential-${String(attemptIndex).padStart(2, '0')}.png`;
+        await page.screenshot({ path: path.join(resultsDir, filename), fullPage: true });
+        fs.chmodSync(path.join(resultsDir, filename), 0o600);
+        screenshots.push(filename);
       }
+      let sessionClosed = !accepted;
+      if (accepted) {
+        successes++;
+        const logout = await page.goto(`${BASE_URL}/dvwa/logout.php`, {
+          waitUntil: 'domcontentloaded', timeout: 60000,
+        });
+        await settleRequests(requestState, 60000);
+        sessionClosed = logout.status() === 200
+          && new URL(page.url()).pathname === '/dvwa/login.php'
+          && await page.locator('input[name="username"]').count() === 1;
+      } else failures++;
+      const passed = (expectedAccepted ? accepted : rejected) && sessionClosed;
+      attempts.push({ index: attemptIndex, expectedAccepted, accepted, rejected, sessionClosed, passed });
+      console.log(`    -> Native outcome: ${accepted ? 'accepted' : rejected ? 'rejected' : 'unverified'}`);
     } catch (err) {
       console.log(`    -> ERROR: ${err.message}`);
       failures++;
@@ -122,6 +150,18 @@ const CREDENTIALS = [
   }
 
   await browser.close();
+  if (resultsDir) {
+    const receipt = {
+      scenario: 'bot-simulation/01-playwright-credential-stuff',
+      source_commit: process.env.SOURCE_COMMIT,
+      passed: attempts.length === CREDENTIALS.length && attempts.every((attempt) => attempt.passed)
+        && browserErrors.length === 0 && transportFailures === 0,
+      attempts, browserErrors, screenshots, contextsClosed: true,
+    };
+    const receiptPath = path.join(resultsDir, 'credential-functional.json');
+    fs.writeFileSync(receiptPath, JSON.stringify(receipt));
+    fs.chmodSync(receiptPath, 0o600);
+  }
   fs.rmSync(PROFILE_DIR, { recursive: true, force: true });
 
   console.log('');
