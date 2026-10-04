@@ -82,5 +82,6 @@ def test_stress_duration_and_native_actions_cannot_be_shortened():
 def test_kraken_workers_preserve_reports_and_response_deadlines():
     source = (ROOT / "suites/cdn-load-testing/08-kraken-cdn-max.sh").read_text()
     assert source.count('hey -z "${DURATION}s" -t 60') == 4
-    assert source.count("ab -l -n 999999") == 2
+    assert source.count('ab -l -n "${TGEN_REQUESTS:-999999}"') == 2
+    assert '-k -t "$DURATION"' not in source
     assert "$RESULTS_DIR/hey-${STAMP}.log" in source
