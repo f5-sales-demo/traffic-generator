@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+from http import HTTPStatus
 from pathlib import Path
 
 from crapi_mail import owned_messages
@@ -54,6 +55,45 @@ def verify_restoration(directory: Path, scenario: dict, result: dict) -> None:
         result["outcome"] = "fixture_failure"
 
 
+def record_outcomes(directory: Path, temporary: Path) -> None:
+    """Require every actual native guess response and both sampled batches."""
+    checks = []
+    for line in (temporary / "results.txt").read_text().splitlines():
+        otp, code = line.split(":")
+        document = json.loads((temporary / ("resp_" + otp + ".txt")).read_text())
+        status = int(code)
+        message = document.get("message")
+        passed = (
+            status == HTTPStatus.INTERNAL_SERVER_ERROR
+            and message in ("Invalid OTP! Please try again..", "Invalid OTP")
+        ) or (status == HTTPStatus.OK and message == "OTP verified")
+        checks.append(
+            {"guess": otp, "status": status, "message": message, "passed": passed}
+        )
+    expected = {f"{value:04d}" for value in range(10)} | {
+        f"{value:04d}"
+        for value in range(100, 100 + int(os.environ.get("TGEN_CONCURRENCY", "50")))
+    }
+    passed = (
+        {row["guess"] for row in checks} == expected
+        and len(checks) == len(expected)
+        and all(row["passed"] for row in checks)
+    )
+    atomic_json(
+        directory / "otp-functional.json",
+        {
+            "passed": passed,
+            "attempts": checks,
+            "source_commit": os.environ.get("SOURCE_COMMIT"),
+            "artifact_sha256": os.environ.get("TGEN_ARTIFACT_SHA256"),
+            "prerequisite": "native reset email OTP retrieved before guesses",
+        },
+    )
+    if not passed:
+        message = "native OTP guess response contract failed"
+        raise ValueError(message)
+
+
 def main() -> int:
     """Require baseline auth; recovery uses the same actor and removes only new owned mail."""
     action, base = sys.argv[1:3]
@@ -68,6 +108,9 @@ def main() -> int:
     output = Path(os.environ["TGEN_RESULTS_DIR"])
     journal = output / "otp-fixture-journal.json"
     token = fixtures["crapi_otp_actor_token"]
+    if action == "outcomes":
+        record_outcomes(output, Path(sys.argv[3]))
+        return 0
     if action == "snapshot":
         login = request(
             base,

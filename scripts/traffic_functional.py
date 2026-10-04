@@ -132,6 +132,40 @@ def verify_commands(scenario: dict, result: dict, directory: Path) -> dict:
     }
 
 
+def verify_otp(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require native guess outcomes and independent isolated actor restoration."""
+    evidence = json.loads((directory / "otp-functional.json").read_text())
+    return {
+        "passed": evidence.get("passed") is True
+        and evidence.get("source_commit") == result.get("source_commit")
+        and evidence.get("artifact_sha256") == result.get("artifact_sha256")
+        and result.get("otp_restoration") is True
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "native_attempts": len(evidence.get("attempts", [])),
+    }
+
+
+def verify_native_contract(scenario: dict, result: dict, directory: Path) -> dict:
+    """Select the real native contract evidence without substituting probe behavior."""
+    contract = scenario["functional_contract"]
+    if contract["verifier"] == "native-crapi-otp":
+        return verify_otp(scenario, result, directory)
+    receipt = json.loads((directory / "connections.json").read_text())
+    return {
+        "passed": receipt.get("passed") is True
+        and receipt.get("source_commit") == result.get("source_commit")
+        and receipt.get("artifact_sha256") == result.get("artifact_sha256")
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True,
+        "behavior": contract["behavior"],
+        "native_report_verified": True,
+    }
+
+
 def verify_functional(
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
@@ -154,17 +188,12 @@ def verify_functional(
         and scenario["id"] == "dvwa-exploits/02-command-injection"
     ):
         return verify_commands(scenario, result, directory)
-    if contract.get("verifier") in ("native-masscan", "native-scanner"):
-        receipt = json.loads((directory / "connections.json").read_text())
-        return {
-            "passed": receipt.get("passed") is True
-            and receipt.get("source_commit") == result.get("source_commit")
-            and receipt.get("artifact_sha256") == result.get("artifact_sha256")
-            and result.get("outcome") == "launched"
-            and result.get("dispatch_contract_verified") is True,
-            "behavior": contract["behavior"],
-            "native_report_verified": True,
-        }
+    if contract.get("verifier") in (
+        "native-masscan",
+        "native-scanner",
+        "native-crapi-otp",
+    ):
+        return verify_native_contract(scenario, result, directory)
     requirements = scenario.get("dispatch_contract", {}).get("requirements", [])
     declared = contract.get("native_response_requirements", [])
     checks = [
