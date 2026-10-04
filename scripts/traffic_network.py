@@ -460,10 +460,25 @@ class NetworkBoundary:
             stream.write(
                 json.dumps({"path": path, "status": status, "outcome": outcome}) + "\n"
             )
-        if outcome == "transport_failure":
-            message = "synthetic authentication transport failure"
+        if outcome != "application_response":
+            message = "synthetic authentication prerequisite failed: " + outcome
             raise ValueError(message)
-        return document if status == SUCCESS_MIN and isinstance(document, dict) else {}
+        if not isinstance(document, dict):
+            message = "synthetic authentication response is not an object"
+            raise ValueError(message)  # noqa: TRY004 - prerequisite failure uses runtime ValueError classification
+        token = (
+            document.get("auth_token")
+            if path.startswith("/vampi/")
+            else document.get("token")
+            if path.startswith("/crapi/")
+            else document.get("authentication", {}).get("token")
+            if path.startswith("/juice-shop/")
+            else document.get("access_token")
+        )
+        if not isinstance(token, str) or not token.strip():
+            message = "synthetic authentication token missing"
+            raise ValueError(message)
+        return document
 
     def refresh_fixtures(self, domain: str, families: list[str] | None = None) -> None:
         """Generate/renew real tokens for public seeded lab accounts without disabling WAAP."""

@@ -244,17 +244,17 @@ def test_blocked_fixture_authentication_retains_mitigation_receipt(tmp_path):
         ROOT, {"domains": ["www.example.test", "api.example.test"]}, tmp_path
     )
     try:
-        with patch(
-            "traffic_network.subprocess.run",
-            return_value=SimpleNamespace(
-                returncode=0, stdout="<html>Request Rejected</html>\n403"
+        with (
+            patch(
+                "traffic_network.subprocess.run",
+                return_value=SimpleNamespace(
+                    returncode=0, stdout="<html>Request Rejected</html>\n403"
+                ),
             ),
+            pytest.raises(ValueError, match="prerequisite failed: mitigation"),
         ):
-            assert (
-                boundary.fixture_login(
-                    "www.example.test", "/crapi/identity/api/auth/login", {}
-                )
-                == {}
+            boundary.fixture_login(
+                "www.example.test", "/crapi/identity/api/auth/login", {}
             )
         assert (
             json.loads((tmp_path / "fixture-authentication.jsonl").read_text())[
