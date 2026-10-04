@@ -73,6 +73,7 @@ def test_nested_parent_rejects_verified_receipt_from_stale_source(tmp_path):
                 "id": identifier,
                 "outcome": "launched",
                 "dispatch_contract_verified": True,
+                "functional_verified": True,
                 "source_sha256": "0" * 64,
             }
         )

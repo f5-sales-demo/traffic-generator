@@ -40,6 +40,7 @@ def build_report(
                 receipt.get("id") == identifier
                 and receipt.get("outcome") == "launched"
                 and receipt.get("dispatch_contract_verified") is True
+                and receipt.get("functional_verified") is True
                 and len(receipt.get("source_sha256", "")) == SHA256_LENGTH
                 and (
                     source_commit is None

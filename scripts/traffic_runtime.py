@@ -29,6 +29,7 @@ from traffic_dispatch import (
     verify_tool_actions,
     verify_workload,
 )
+from traffic_functional import verify_functional
 from traffic_network import NetworkBoundary
 from traffic_report import build_report
 from traffic_tool import native_binary
@@ -788,6 +789,8 @@ def _scenario(
         and result["http_requests"] == 0
     ):
         result["outcome"] = "fixture_failure"
+    result["functional_acceptance"] = verify_functional(scenario, result, responses)
+    result["functional_verified"] = result["functional_acceptance"]["passed"]
     if result["outcome"] != "launched":
         state["failures"] = (
             state["failures"] + [{"id": scenario["id"], "outcome": result["outcome"]}]
@@ -846,6 +849,9 @@ def catalog_pass_receipt(
         for identifier, receipt in observed.items()
     )
     catalog_complete = complete and set(expected) == set(catalog)
+    functional = verified and all(
+        receipt.get("functional_verified") is True for receipt in receipts
+    )
     return {
         "id": pass_id,
         "started": started,
@@ -854,7 +860,9 @@ def catalog_pass_receipt(
         "artifact_sha256": config["artifact_sha256"],
         "complete": complete,
         "catalog_complete": catalog_complete,
-        "catalog_accepted": catalog_complete and verified,
+        "catalog_accepted": catalog_complete and functional,
+        "functional_verified": functional,
+        "claim": "observed dispatch is separate from native functional acceptance",
         "passed": verified,
         "scenario_count": len(receipts),
         "scenarios": receipts,
