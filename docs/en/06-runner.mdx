@@ -421,7 +421,7 @@ Record browser-observed sensor and `__imp_apg__/api/dip` requests separately fro
 After the exact-prefix `upload-commit.json` and its referenced evidence digests validate, convert receipt
 `startedAt` and `completedAt` ISO timestamps to epoch seconds. The operator must then use the structured
 `xcsh_api` method/path/params/payload workflow in
-[Integrate](./07-integrate/#operator-side-post-receipt-correlation):
+[Integrate](../07-integrate/#operator-side-post-receipt-correlation):
 `GET /api/shape/csd/namespaces/{namespace}/detected_domains`,
 `POST /api/shape/csd/namespaces/{namespace}/scripts` with snake_case `start_time` and `end_time`, and
 `GET /api/shape/csd/namespaces/{namespace}/formFields` with those query parameters. Compare exact
