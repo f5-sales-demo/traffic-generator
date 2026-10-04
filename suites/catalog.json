@@ -4706,7 +4706,7 @@
       "kind": "shell",
       "dependencies": ["ab", "bash", "curl", "hey", "ip", "vegeta", "wrk"],
       "after": ["cdn-load-testing/09-origin-torture"],
-      "target_paths": ["/dvwa/", "/httpbin/", "/httpbin/get", "/juice-shop/", "/vampi/"],
+      "target_paths": ["/dvwa/", "/dvwa/login.php", "/httpbin/", "/httpbin/get", "/juice-shop/", "/vampi/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
@@ -4737,7 +4737,7 @@
           {
             "id": "path-2",
             "method": "GET",
-            "path": "/dvwa/",
+            "path": "/dvwa/login.php",
             "payload_class": "persistent-benchmark",
             "minimum_dispatches": 25,
             "headers": {
@@ -4776,7 +4776,7 @@
       "kind": "shell",
       "dependencies": ["ab", "bash", "curl", "hey", "ip", "vegeta", "wrk"],
       "after": ["cdn-load-testing/bench-keepalive"],
-      "target_paths": ["/dvwa/", "/httpbin/", "/httpbin/get", "/juice-shop/", "/vampi/"],
+      "target_paths": ["/dvwa/", "/dvwa/login.php", "/httpbin/", "/httpbin/get", "/juice-shop/", "/vampi/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
@@ -4807,7 +4807,7 @@
           {
             "id": "path-2",
             "method": "GET",
-            "path": "/dvwa/",
+            "path": "/dvwa/login.php",
             "payload_class": "new-connection-benchmark",
             "minimum_dispatches": 25,
             "headers": {
