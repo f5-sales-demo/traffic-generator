@@ -41,6 +41,12 @@ before the explicitly enabled supervised service starts.
 
 ## Native functional acceptance
 
-Catalog dispatch receipts prove the declared request was sent. Catalog acceptance additionally requires every scenario to pass a source-declared functional contract against the installed application. Existing unit tests and test doubles are development checks and cannot supply live acceptance.
+Catalog dispatch receipts prove the declared request was sent. Catalog acceptance additionally requires every
+scenario to pass a source-declared functional contract against the installed application. Existing unit tests
+and test doubles are development checks and cannot supply live acceptance.
 
-Read-only native contracts require complete action coverage, application content assertions, observed upstream dispatch, declared response status, and zero transport failures or tool cancellations. Missing contracts remain unqualified. A generic 200, login page, or unverified mitigation response cannot qualify the scenario. Mutation contracts require scoped fixture postconditions and recovery before they can be accepted. WAAP control attribution remains a separate gate.
+Read-only native contracts require complete action coverage, application content assertions, observed upstream
+dispatch, declared response status, and zero transport failures or tool cancellations. Missing contracts
+remain unqualified. A generic 200, login page, or unverified mitigation response cannot qualify the scenario.
+Mutation contracts require scoped fixture postconditions and recovery before they can be accepted. WAAP
+control attribution remains a separate gate.
