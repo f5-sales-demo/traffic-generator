@@ -382,7 +382,7 @@ exits nonzero. Retry from the worker without rerunning Chrome:
 ```bash
 sudo -u tgen env RUNTIME_ENV=/etc/traffic-generator/runtime.env \
   /bin/bash /opt/traffic-generator/source/suites/csd-violations/run.sh \
-  --retry-upload /opt/traffic-generator/runtime/results/<run-id>/<scenario>
+  --retry-upload "$EVIDENCE_RUN_DIR"
 ```
 
 Retry revalidates the frozen local checksum set and exact run/scenario key prefix. For every expected
