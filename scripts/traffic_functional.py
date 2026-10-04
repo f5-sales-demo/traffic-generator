@@ -95,7 +95,7 @@ def verify_slow_headers(scenario: dict, result: dict, directory: Path) -> dict:
         later - earlier >= 1 / rate - 0.001 for earlier, later in pairwise(attempts)
     )
     return {
-        "passed": receipt.get("execution") == "native bounded socket probe"
+        "passed": receipt.get("execution") == "native-openssl-slow-headers"
         and receipt.get("scenario") == scenario["id"]
         and spacing
         and all(probe.get("partial_headers_sent") is True for probe in probes)
