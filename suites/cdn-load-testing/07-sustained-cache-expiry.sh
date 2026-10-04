@@ -4,6 +4,10 @@
 # Targets: All endpoints — 30-min sustained load monitoring cache status transitions
 # Estimated duration: 30+ minutes
 set -uo pipefail
+
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v wrk >/dev/null || { echo "[FAIL] Required native wrk missing" >&2; exit 1; }
+command -v hey >/dev/null || { echo "[FAIL] Required native hey missing" >&2; exit 1; }
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-1800}}"

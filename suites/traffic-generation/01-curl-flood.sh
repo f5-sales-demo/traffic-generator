@@ -5,6 +5,9 @@
 # Estimated duration: ~30 seconds per endpoint
 set -euo pipefail
 
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v wrk >/dev/null || { echo "[FAIL] Required native wrk missing" >&2; exit 1; }
+
 TARGET="${1:?Usage: 01-curl-flood.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 

@@ -3403,14 +3403,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "bounded-workload",
-      "workload_contract": {
+      "adapter": "native-load",
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["wrk"],
         "levels": [20],
-        "minimum_requests": 200,
-        "verify_behavior": true,
-        "paths": ["/juice-shop/", "/whoami/", "/httpbin/get", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"]
-      },
-      "fixture_refresh": []
+        "batches": [200],
+        "connection_modes": [true],
+        "paths": ["/juice-shop/", "/whoami/", "/httpbin/get", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"],
+        "duration_seconds": 2,
+        "resource_profile": false
+      }
     },
     {
       "id": "cdn-load-testing/02-query-string-isolation",
@@ -4217,16 +4220,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "bounded-workload",
-      "workload_contract": {
+      "adapter": "native-load",
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["wrk"],
         "levels": [20],
-        "minimum_requests": 100,
-        "verify_behavior": true,
-        "minimum_duration": 15,
-        "cache_mode": "dynamic-bypass",
-        "paths": ["/juice-shop/", "/httpbin/get", "/whoami/", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"]
-      },
-      "fixture_refresh": []
+        "batches": [100],
+        "connection_modes": [true],
+        "paths": ["/juice-shop/", "/httpbin/get", "/whoami/", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"],
+        "duration_seconds": 15,
+        "resource_profile": false
+      }
     },
     {
       "id": "cdn-load-testing/08-kraken-cdn-max",
@@ -4706,7 +4710,7 @@
       "budget": "http",
       "parallel": true,
       "timeout_seconds": 900,
-      "adapter": "bounded-benchmark",
+      "adapter": "native-load",
       "dispatch_contract": {
         "requirements": [
           {
@@ -4752,7 +4756,16 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["wrk", "hey", "ab"],
+        "levels": [2],
+        "batches": [100],
+        "connection_modes": [true],
+        "paths": ["/httpbin/get", "/juice-shop/", "/dvwa/login.php", "/vampi/"],
+        "duration_seconds": 5,
+        "resource_profile": true
+      }
     },
     {
       "id": "cdn-load-testing/bench-vm-compare",
@@ -4766,7 +4779,7 @@
       "budget": "http",
       "parallel": true,
       "timeout_seconds": 900,
-      "adapter": "bounded-benchmark",
+      "adapter": "native-load",
       "dispatch_contract": {
         "requirements": [
           {
@@ -4812,7 +4825,16 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["wrk", "hey", "ab"],
+        "levels": [2],
+        "batches": [100],
+        "connection_modes": [true, false],
+        "paths": ["/httpbin/get", "/juice-shop/", "/dvwa/login.php", "/vampi/"],
+        "duration_seconds": 5,
+        "resource_profile": true
+      }
     },
     {
       "id": "challenge-verify/01-js-challenge-interstitial",
@@ -14388,14 +14410,19 @@
       "suite": "owasp-scanning",
       "entrypoint": "suites/owasp-scanning/05-nmap-vuln-scan.sh",
       "kind": "shell",
-      "dependencies": ["bash", "nmap"],
+      "dependencies": ["bash", "gcc", "nmap"],
       "after": ["owasp-scanning/04-nuclei-full"],
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
       "timeout_seconds": 900,
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-scanner",
+      "functional_contract": {
+        "verifier": "native-scanner",
+        "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
+      }
     },
     {
       "id": "owasp-scanning/06-sqlmap-comprehensive",
@@ -16329,10 +16356,13 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "bounded-workload",
-      "workload_contract": {
+      "adapter": "native-load",
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["hey"],
         "levels": [1, 10, 20],
-        "minimum_requests": 100,
+        "batches": [100],
+        "connection_modes": [true],
         "paths": [
           "/httpbin/get",
           "/juice-shop/rest/products/search",
@@ -16344,9 +16374,9 @@
           "/restaurant/openapi.json",
           "/crapi/"
         ],
-        "verify_behavior": true
-      },
-      "fixture_refresh": []
+        "duration_seconds": 2,
+        "resource_profile": false
+      }
     },
     {
       "id": "performance-testing/02-per-app-throughput",
@@ -16555,10 +16585,13 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "bounded-workload",
-      "workload_contract": {
+      "adapter": "native-load",
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["wrk"],
         "levels": [20],
-        "minimum_requests": 100,
+        "batches": [100],
+        "connection_modes": [true],
         "paths": [
           "/httpbin/get",
           "/juice-shop/rest/products/search",
@@ -16570,9 +16603,9 @@
           "/restaurant/openapi.json",
           "/crapi/"
         ],
-        "verify_behavior": true
-      },
-      "fixture_refresh": []
+        "duration_seconds": 2,
+        "resource_profile": false
+      }
     },
     {
       "id": "performance-testing/04-connection-churn",
@@ -16611,15 +16644,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "bounded-workload",
-      "workload_contract": {
+      "adapter": "native-load",
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["curl"],
         "levels": [1],
-        "minimum_requests": 100,
+        "batches": [100],
+        "connection_modes": [true, false],
         "paths": ["/httpbin/get"],
-        "verify_behavior": true,
-        "connection_modes": [true, false]
-      },
-      "fixture_refresh": []
+        "duration_seconds": 2,
+        "resource_profile": false
+      }
     },
     {
       "id": "performance-testing/05-mixed-attack-load",
@@ -16866,10 +16901,13 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "bounded-workload",
-      "workload_contract": {
+      "adapter": "native-load",
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["curl"],
         "levels": [20],
-        "minimum_requests": 100,
+        "batches": [100],
+        "connection_modes": [true],
         "paths": [
           "/httpbin/get",
           "/juice-shop/rest/products/search",
@@ -16881,11 +16919,9 @@
           "/restaurant/openapi.json",
           "/crapi/"
         ],
-        "verify_behavior": true,
-        "resource_profile": true,
-        "minimum_duration": 15
-      },
-      "fixture_refresh": []
+        "duration_seconds": 15,
+        "resource_profile": true
+      }
     },
     {
       "id": "performance-testing/08-ephemeral-port-stress",
@@ -16980,10 +17016,13 @@
         ],
         "reject_unmatched_errors": true
       },
-      "adapter": "bounded-workload",
-      "workload_contract": {
+      "adapter": "native-load",
+      "fixture_refresh": [],
+      "native_load_contract": {
+        "tools": ["hey"],
         "levels": [20],
-        "minimum_requests": 100,
+        "batches": [20, 50, 100],
+        "connection_modes": [true],
         "paths": [
           "/httpbin/get",
           "/juice-shop/rest/products/search",
@@ -16995,10 +17034,9 @@
           "/restaurant/openapi.json",
           "/crapi/"
         ],
-        "verify_behavior": true,
-        "batches": [20, 50, 100]
-      },
-      "fixture_refresh": []
+        "duration_seconds": 2,
+        "resource_profile": false
+      }
     },
     {
       "id": "performance-testing/09-parallel-suite-stress",
@@ -17331,14 +17369,19 @@
       "suite": "reconnaissance",
       "entrypoint": "suites/reconnaissance/01-nmap-service-scan.sh",
       "kind": "shell",
-      "dependencies": ["bash", "nmap"],
+      "dependencies": ["bash", "gcc", "nmap"],
       "after": [],
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
       "timeout_seconds": 900,
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-scanner",
+      "functional_contract": {
+        "verifier": "native-scanner",
+        "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
+      }
     },
     {
       "id": "reconnaissance/02-masscan-port-sweep",
@@ -20399,42 +20442,57 @@
       "suite": "ssl-scanning",
       "entrypoint": "suites/ssl-scanning/01-sslscan.sh",
       "kind": "shell",
-      "dependencies": ["bash"],
+      "dependencies": ["bash", "gcc", "sslscan"],
       "after": [],
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
       "timeout_seconds": 900,
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-scanner",
+      "functional_contract": {
+        "verifier": "native-scanner",
+        "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
+      }
     },
     {
       "id": "ssl-scanning/02-sslyze",
       "suite": "ssl-scanning",
       "entrypoint": "suites/ssl-scanning/02-sslyze.sh",
       "kind": "shell",
-      "dependencies": ["bash", "sslyze"],
+      "dependencies": ["bash", "gcc", "sslyze"],
       "after": ["ssl-scanning/01-sslscan"],
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
       "timeout_seconds": 900,
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-scanner",
+      "functional_contract": {
+        "verifier": "native-scanner",
+        "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
+      }
     },
     {
       "id": "ssl-scanning/03-testssl",
       "suite": "ssl-scanning",
       "entrypoint": "suites/ssl-scanning/03-testssl.sh",
       "kind": "shell",
-      "dependencies": ["bash", "testssl"],
+      "dependencies": ["bash", "gcc", "testssl"],
       "after": ["ssl-scanning/02-sslyze"],
       "target_paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "connection",
       "parallel": false,
       "timeout_seconds": 900,
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-scanner",
+      "functional_contract": {
+        "verifier": "native-scanner",
+        "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
+      }
     },
     {
       "id": "traffic-generation/01-curl-flood",

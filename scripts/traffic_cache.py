@@ -4,13 +4,13 @@ import gzip
 import http.client
 import json
 import os
-import ssl
 import sys
 import uuid
 from pathlib import Path
 from urllib.parse import urlencode
 
 import brotli
+from native_http import request
 from traffic_common import atomic_json
 from traffic_workload import content_identity
 
@@ -78,44 +78,34 @@ def main() -> int:
                 ]
             )
     checks = []
-    connection = http.client.HTTPSConnection(
-        domain, context=ssl.create_default_context(), timeout=15
-    )
-    try:
-        for path, query, headers in cases:
-            check = {
-                "path": path,
-                "query": query,
-                "encoding": headers.get("Accept-Encoding"),
-                "passed": False,
-            }
-            try:
-                connection.request(
-                    "GET",
-                    path + ("?" + urlencode(query) if query else ""),
-                    headers=headers,
-                )
-                response = connection.getresponse()
-                body = response.read()
-                content_type = response.getheader("Content-Type", "")
-                encoding = response.getheader("Content-Encoding", "")
-                if encoding == "gzip":
-                    body = gzip.decompress(body)
-                elif encoding == "br":
-                    body = brotli.decompress(body)
-                cache = response.getheader("X-Cache-Status", "NONE")
-                check.update(status=response.status, cache=cache)
-                check["passed"] = response.status == HTTP_OK and (
-                    validate_dynamic_response(path, content_type, body, cache, query)
-                    if path != "/health"
-                    else cache in ("NONE", "BYPASS") and b"origin-server" in body
-                )
-            except (OSError, ValueError, http.client.HTTPException):
-                check["error"] = "content or transport verification failed"
-                connection.close()
-            checks.append(check)
-    finally:
-        connection.close()
+    for path, query, headers in cases:
+        check = {
+            "path": path,
+            "query": query,
+            "encoding": headers.get("Accept-Encoding"),
+            "passed": False,
+        }
+        try:
+            status, response_headers, body = request(
+                "https://" + domain + path + ("?" + urlencode(query) if query else ""),
+                headers,
+            )
+            content_type = response_headers.get("content-type", "")
+            encoding = response_headers.get("content-encoding", "")
+            if encoding == "gzip":
+                body = gzip.decompress(body)
+            elif encoding == "br":
+                body = brotli.decompress(body)
+            cache = response_headers.get("x-cache-status", "NONE")
+            check.update(status=status, cache=cache)
+            check["passed"] = status == HTTP_OK and (
+                validate_dynamic_response(path, content_type, body, cache, query)
+                if path != "/health"
+                else cache in ("NONE", "BYPASS") and b"origin-server" in body
+            )
+        except (OSError, ValueError, http.client.HTTPException):
+            check["error"] = "content or transport verification failed"
+        checks.append(check)
     atomic_json(
         Path(os.environ["TGEN_RESULTS_DIR"]) / "cache-evidence.json",
         {

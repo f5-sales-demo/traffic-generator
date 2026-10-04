@@ -5,6 +5,9 @@
 # Estimated duration: 3-5 minutes
 set -uo pipefail
 
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v hey >/dev/null || { echo "[FAIL] Required native hey missing" >&2; exit 1; }
+
 TARGET="${1:?Usage: 02-per-app-throughput.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 

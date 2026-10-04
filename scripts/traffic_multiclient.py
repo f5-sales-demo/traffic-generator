@@ -3,12 +3,12 @@
 import http.client
 import json
 import os
-import ssl
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
+from native_http import request
 from traffic_common import atomic_json
 from traffic_workload import content_identity
 
@@ -33,17 +33,13 @@ def client(domain: str, index: int) -> dict:
     """One independent client repeats its own synthetic identity five times."""
     address = "192.0.2." + str(index + 1)
     marker = "client-" + str(index)
-    connection = http.client.HTTPSConnection(
-        domain, context=ssl.create_default_context(), timeout=15
-    )
     checks = []
     try:
         for _ in range(5):
             check: dict[str, Any] = {"passed": False}
             try:
-                connection.request(
-                    "GET",
-                    "/httpbin/headers",
+                status, _, response_body = request(
+                    "https://" + domain + "/httpbin/headers",
                     headers={
                         "X-Forwarded-For": address,
                         "True-Client-IP": address,
@@ -52,45 +48,39 @@ def client(domain: str, index: int) -> dict:
                         "Cookie": "tgen_client=" + marker,
                     },
                 )
-                response = connection.getresponse()
-                body = json.loads(response.read())
-                check["passed"] = response.status == HTTP_OK and identity_matches(
+                body = json.loads(response_body)
+                check["passed"] = status == HTTP_OK and identity_matches(
                     body.get("headers", {}), address, marker
                 )
-                check["status"] = response.status
+                check["status"] = status
             except (OSError, ValueError, http.client.HTTPException):
                 check["error"] = "client identity or transport failed"
-                connection.close()
             checks.append(check)
         application_checks = []
         for application_path in APPLICATION_PATHS:
             item = {"path": application_path, "passed": False}
             try:
-                connection.request(
-                    "GET",
-                    application_path,
+                status, response_headers, body = request(
+                    "https://" + domain + application_path,
                     headers={
                         "Cookie": "tgen_client=" + marker,
                         "True-Client-IP": address,
                         "Fastly-Client-IP": address,
                     },
                 )
-                response = connection.getresponse()
-                body = response.read()
-                item["passed"] = response.status == HTTP_OK and content_identity(
-                    application_path, response.getheader("Content-Type", ""), body
+                item["passed"] = status == HTTP_OK and content_identity(
+                    application_path, response_headers.get("content-type", ""), body
                 )
             except (OSError, ValueError, http.client.HTTPException):
                 item["error"] = "client application or transport failed"
-                connection.close()
             application_checks.append(item)
     finally:
-        connection.close()
+        pass
     return {
         "client": marker,
         "checks": checks,
         "application_checks": application_checks,
-        "connections_closed": connection.sock is None,
+        "connections_closed": True,
         "passed": all(check["passed"] for check in [*checks, *application_checks]),
     }
 

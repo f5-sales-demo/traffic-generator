@@ -5,6 +5,9 @@
 # Estimated duration: 1-2 minutes
 set -uo pipefail
 
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v hey >/dev/null || { echo "[FAIL] Required native hey missing" >&2; exit 1; }
+
 TARGET="${1:?Usage: 08-ephemeral-port-stress.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 

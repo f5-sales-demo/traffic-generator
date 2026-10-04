@@ -3,17 +3,12 @@
 import hashlib
 import http.client
 import json
-import os
 import ssl
-import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
-
-from traffic_common import atomic_json
-from traffic_profile import sample_resources
 
 
 def content_identity(path: str, content_type: str, body: bytes) -> bool:
@@ -121,75 +116,9 @@ def run_level(
 
 
 def main() -> int:
-    """Run manifest-owned workload levels and retain a private measurable receipt."""
-    root = Path(__file__).resolve().parents[1]
-    identifier, domain = sys.argv[1:3]
-    if domain != os.environ["TGEN_AUTHORIZED_HOST"]:
-        message = "unauthorized workload target"
-        raise ValueError(message)
-    catalog = json.loads((root / "suites/catalog.json").read_text())
-    scenario = next(item for item in catalog["scenarios"] if item["id"] == identifier)
-    contract = scenario["workload_contract"]
-    started = time.monotonic()
-    profile: dict[str, Any] = {"samples": []}
-    profile_stop = threading.Event()
-
-    def profile_sample(phase: str) -> None:
-        profile["samples"].append({**sample_resources(), "phase": phase})
-
-    def monitor() -> None:
-        while not profile_stop.wait(0.5):
-            profile_sample("under-load")
-
-    profiler = None
-    if contract.get("resource_profile"):
-        profile_sample("baseline")
-        profiler = threading.Thread(target=monitor, daemon=True)
-        profiler.start()
-    samples = [
-        run_level(
-            domain,
-            contract["paths"],
-            level,
-            batch,
-            persistent,
-        )
-        for level in contract["levels"]
-        for batch in contract.get("batches", [contract["minimum_requests"]])
-        for persistent in contract.get(
-            "connection_modes",
-            ["churn" not in identifier and "ephemeral" not in identifier],
-        )
-    ]
-    if "sustained" in identifier or "profile" in identifier:
-        while time.monotonic() - started < int(os.environ["TGEN_DURATION"]):
-            samples.append(
-                run_level(
-                    domain,
-                    contract["paths"],
-                    contract["levels"][-1],
-                    contract["minimum_requests"],
-                    True,
-                )
-            )
-    if profiler:
-        profile_stop.set()
-        profiler.join()
-        profile_sample("cleanup")
-    receipt = {
-        "resource_profile": profile,
-        "scenario": identifier,
-        "levels": samples,
-        "cleanup": all(sample["connections_closed"] for sample in samples),
-        "elapsed": time.monotonic() - started,
-    }
-    atomic_json(Path(os.environ["TGEN_RESULTS_DIR"]) / "workload.json", receipt)
-    return int(
-        any(
-            sample["transport_failures"] or sample["content_failures"]
-            for sample in samples
-        )
-    )
+    """Retired substitute; catalog load execution requires native_load.py."""
+    message = "Python workload execution retired; use the declared native tool"
+    raise ValueError(message)
 
 
 if __name__ == "__main__":

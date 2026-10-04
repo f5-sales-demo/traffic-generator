@@ -269,12 +269,13 @@ def evidence_monitor(
 
 
 def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
-    """Use explicit interpreters; connection probes use separately paced equivalents."""
+    """Invoke native tools through explicit scoped adapters and shared pacing."""
     adapters = {
         "dynamic-cache": "traffic_cache.py",
-        "bounded-workload": "traffic_workload.py",
+        "native-load": "native_load.py",
         "bounded-multiclient": "traffic_multiclient.py",
         "native-masscan": "native_masscan.py",
+        "native-scanner": "native_scanners.py",
     }
     if scenario.get("adapter") in adapters:
         return [
@@ -285,13 +286,6 @@ def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
         ]
     if "report_contract" in scenario:
         return ["python3", str(root / "scripts/traffic_report.py"), scenario["id"]]
-    if scenario.get("adapter") == "bounded-benchmark":
-        return [
-            "python3",
-            str(root / "scripts/traffic_benchmark.py"),
-            scenario["id"],
-            domain,
-        ]
     if scenario["budget"] == "connection":
         return [
             "python3",
@@ -444,7 +438,7 @@ def connection_action_verification(
                     "passed": connection_data.get("passed") is True,
                     "claim": "native Masscan SYN/SYN-ACK and measured pacing",
                 }
-                if scenario.get("adapter") == "native-masscan"
+                if scenario.get("adapter") in ("native-masscan", "native-scanner")
                 else verify_connection_probe(scenario["id"], connection_data)
             )
             result["dispatch_contract_verified"] = result["connection_probe"]["passed"]
@@ -576,6 +570,20 @@ def native_report_verification(directory: Path, scenario: dict, result: dict) ->
             result["outcome"] = "tool_failure"
 
 
+def native_load_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Require each native load worker to complete its real report."""
+    if "native_load_contract" in scenario:
+        path = directory / "native-load.json"
+        result["native_load"] = (
+            json.loads(path.read_text()) if path.exists() else {"passed": False}
+        )
+        result["dispatch_contract_verified"] &= (
+            result["native_load"].get("passed") is True
+        )
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
+
+
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
     if "tool_contract" in scenario:
@@ -643,6 +651,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "tool_failure"
     route_action_verification(scenario, result)
+    native_load_verification(directory, scenario, result)
     if "workload_contract" in scenario:
         evidence = directory / "workload.json"
         result["workload"] = (
@@ -722,7 +731,8 @@ def _scenario(
     before = boundary.metrics()
     command = boundary.wrap(
         scenario_command(root, scenario, domain),
-        connection=scenario["budget"] == "connection",
+        connection=scenario["budget"] == "connection"
+        or scenario["id"] == "reconnaissance/05-subfinder-enum",
     )
     result = execute(
         command,

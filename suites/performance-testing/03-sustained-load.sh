@@ -5,6 +5,9 @@
 # Estimated duration: 2 minutes (configurable)
 set -uo pipefail
 
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v wrk >/dev/null || { echo "[FAIL] Required native wrk missing" >&2; exit 1; }
+
 TARGET="${1:?Usage: 03-sustained-load.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 

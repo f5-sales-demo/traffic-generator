@@ -76,8 +76,8 @@ if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
   echo "[FIXTURE] Using a real seeded VAmPI token after blocked authentication"
 fi
 if [[ -z "$TOKEN" ]]; then
-  echo "    WARN: Could not get token, using dummy"
-  TOKEN="dummy-token-for-testing"
+  echo "[FAIL] Native authentication prerequisite failed" >&2
+  exit 1
 fi
 
 echo ""

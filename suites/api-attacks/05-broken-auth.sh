@@ -59,8 +59,8 @@ if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
   TOKEN=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py" vampi_token)
 fi
 if [[ -z "$TOKEN" ]]; then
-  echo "    WARN: Could not get token, using dummy"
-  TOKEN="dummy-token-for-testing"
+  echo "[FAIL] Native authentication prerequisite failed" >&2
+  exit 1
 fi
 
 for user in admin user1 root superadmin; do

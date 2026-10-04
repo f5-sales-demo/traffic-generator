@@ -4,6 +4,9 @@
 # Targets: All 7 CDN endpoints with randomized sub-paths, XFF, Accept-Encoding
 # Estimated duration: 3-5 minutes
 set -uo pipefail
+
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v wrk >/dev/null || { echo "[FAIL] Required native wrk missing" >&2; exit 1; }
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-60}}"

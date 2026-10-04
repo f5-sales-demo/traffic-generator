@@ -68,29 +68,14 @@ run_sqlmap "Juice Shop — Login Endpoint" \
 echo "[*] Phase 2: DVWA Endpoints"
 echo "========================================"
 
-# Attempt to authenticate to DVWA and get a session cookie
-echo "[*] Authenticating to DVWA..."
-DVWA_COOKIE=""
-DVWA_LOGIN_RESPONSE=$(curl -s -c - -b - \
-  -d "username=admin&password=password&Login=Login" \
-  -L "${BASE}/dvwa/login.php" 2>/dev/null) || true
-
-# Extract PHPSESSID from cookie jar
-PHPSESSID=$(curl -s -c - \
-  -d "username=admin&password=password&Login=Login" \
-  -L "${BASE}/dvwa/login.php" 2>/dev/null |
-  grep -oP 'PHPSESSID\s+\K\S+' || echo "")
-
-if [[ -n "${PHPSESSID}" ]]; then
-  DVWA_COOKIE="PHPSESSID=${PHPSESSID};security=low"
-  echo "[*] DVWA session obtained: ${DVWA_COOKIE}"
-else
-  # Fall back to a simple cookie grab
-  PHPSESSID=$(curl -s -I "${BASE}/dvwa/login.php" 2>/dev/null |
-    grep -ioP 'PHPSESSID=\K[^;]+' || echo "fallback_session")
-  DVWA_COOKIE="PHPSESSID=${PHPSESSID};security=low"
-  echo "[!] Could not fully authenticate. Using fallback cookie: ${DVWA_COOKIE}"
+# Require the actual seeded origin-authenticated session; never invent a cookie.
+if [[ -z "${TGEN_FIXTURES:-}" ]]; then
+  echo "[FAIL] Native DVWA fixture required" >&2
+  exit 1
 fi
+PHPSESSID=$(python3 -c 'import json,os;d=json.load(open(os.environ["TGEN_FIXTURES"]));print(d["dvwa_sessions"][os.environ["TARGET_FQDN"]])') || exit 1
+[[ -n "$PHPSESSID" ]] || exit 1
+DVWA_COOKIE="PHPSESSID=${PHPSESSID};security=low"
 
 run_sqlmap "DVWA — SQL Injection (GET)" \
   -u "${BASE}/dvwa/vulnerabilities/sqli/?id=1&Submit=Submit" \

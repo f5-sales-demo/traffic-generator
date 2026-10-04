@@ -21,23 +21,27 @@ def test_another_clients_cookie_or_forwarded_identity_fails():
 
 
 def test_each_independent_client_dispatches_all_nine_applications():
-    with patch("traffic_multiclient.http.client.HTTPSConnection") as connection:
-        response = connection.return_value.getresponse.return_value
-        response.status = 200
-        response.getheader.return_value = "application/json"
-        response.read.return_value = json.dumps(
-            {
-                "headers": {
-                    "True-Client-IP": "192.0.2.1",
-                    "Fastly-Client-IP": "192.0.2.1",
-                    "Cookie": "tgen_client=client-0",
+    def native_response(url, _headers=None, **_options):
+        return (
+            200,
+            {"content-type": "application/json"},
+            json.dumps(
+                {
+                    "headers": {
+                        "True-Client-IP": "192.0.2.1",
+                        "Fastly-Client-IP": "192.0.2.1",
+                        "Cookie": "tgen_client=client-0",
+                    }
                 }
-            }
-        ).encode()
+            ).encode(),
+        )
+
+    with patch("traffic_multiclient.request", side_effect=native_response) as native:
         with patch("traffic_multiclient.content_identity", return_value=True):
             result = client("www.example.test", 0)
         paths = [
-            call.args[1] for call in connection.return_value.request.call_args_list
+            call.args[0].removeprefix("https://www.example.test")
+            for call in native.call_args_list
         ]
     assert set(APPLICATION_PATHS).issubset(paths)
     assert len(result["application_checks"]) == 9
