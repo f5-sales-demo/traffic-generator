@@ -81,11 +81,11 @@ const CREDENTIALS = [
       for (let setupAttempt = 0; setupAttempt < 3; setupAttempt++) {
         const setup = await page.goto(`${BASE_URL}/dvwa/login.php`, {
           waitUntil: 'domcontentloaded',
-          timeout: 30000,
+          timeout: 60000,
         });
         if (![502, 503, 504].includes(setup.status())) break;
         console.log(`    -> SETUP FAILURE: HTTP ${setup.status()} on attempt ${setupAttempt + 1}`);
-        await settleRequests(requestState);
+        await settleRequests(requestState, 60000);
         await page.waitForTimeout(1000);
       }
 
@@ -102,7 +102,7 @@ const CREDENTIALS = [
         continue;
       }
 
-      await settleRequests(requestState);
+      await settleRequests(requestState, 60000);
       await page.fill('input[name="username"]', cred.user);
       await page.fill('input[name="password"]', cred.password);
       const [response] = await Promise.all([
@@ -144,10 +144,13 @@ const CREDENTIALS = [
       console.log(`    -> Native outcome: ${accepted ? 'accepted' : rejected ? 'rejected' : 'unverified'}`);
     } catch (err) {
       console.log(`    -> ERROR: ${err.message}`);
+      console.log(
+        `    -> Pending paths: ${JSON.stringify([...requestState.pending].map((request) => new URL(request.url()).pathname))}`,
+      );
       failures++;
       transportFailures++;
     } finally {
-      await settleRequests(requestState).catch(() => {
+      await settleRequests(requestState, 60000).catch(() => {
         transportFailures++;
       });
       await context.close();
