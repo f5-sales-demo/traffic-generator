@@ -3412,7 +3412,8 @@
         "connection_modes": [true],
         "paths": ["/juice-shop/", "/whoami/", "/httpbin/get", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"],
         "duration_seconds": 2,
-        "resource_profile": false
+        "resource_profile": false,
+        "lua_script": "suites/cdn-load-testing/_baseline.lua"
       }
     },
     {
@@ -4758,13 +4759,14 @@
       },
       "fixture_refresh": [],
       "native_load_contract": {
-        "tools": ["wrk", "hey", "ab"],
+        "tools": ["wrk", "hey", "vegeta", "ab"],
         "levels": [2],
         "batches": [100],
         "connection_modes": [true],
         "paths": ["/httpbin/get", "/juice-shop/", "/dvwa/login.php", "/vampi/"],
         "duration_seconds": 5,
-        "resource_profile": true
+        "resource_profile": true,
+        "lua_script": "suites/cdn-load-testing/_baseline.lua"
       }
     },
     {
@@ -4827,13 +4829,14 @@
       },
       "fixture_refresh": [],
       "native_load_contract": {
-        "tools": ["wrk", "hey", "ab"],
+        "tools": ["wrk", "hey", "vegeta", "ab"],
         "levels": [2],
         "batches": [100],
         "connection_modes": [true, false],
         "paths": ["/httpbin/get", "/juice-shop/", "/dvwa/login.php", "/vampi/"],
         "duration_seconds": 5,
-        "resource_profile": true
+        "resource_profile": true,
+        "lua_script": "suites/cdn-load-testing/_baseline.lua"
       }
     },
     {

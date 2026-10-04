@@ -108,6 +108,43 @@ def run_worker(tool: str, directory: Path, index: int, args: list[str]) -> dict:
     }
 
 
+def run_vegeta(
+    binary: str, url: str, duration: int, persistent: bool, directory: Path, index: int
+) -> dict:
+    """Run actual Vegeta attack and encode its real per-request response records."""
+    attack = directory / ("vegeta-" + str(index) + ".raw")
+    encoded = directory / ("vegeta-" + str(index) + ".bin")
+    with attack.open("wb") as stream:
+        attack.chmod(0o600)
+        process = subprocess.run(  # noqa: S603 - native tool argv from contract
+            [
+                binary,
+                "attack",
+                "-rate=5/s",
+                "-duration=" + str(duration) + "s",
+                "-timeout=60s",
+                "-keepalive=" + str(persistent).lower(),
+            ],
+            input=("GET " + url + "\n").encode(),
+            stdout=stream,
+            check=False,
+        )
+    with attack.open("rb") as source, encoded.open("w") as stream:
+        encoded.chmod(0o600)
+        report = subprocess.run(  # noqa: S603 - native tool report encoding
+            [binary, "encode"], stdin=source, stdout=stream, check=False
+        )
+    return {
+        "tool": "vegeta",
+        "report": encoded.name,
+        "report_sha256": hashlib.sha256(encoded.read_bytes()).hexdigest(),
+        "passed": process.returncode == 0
+        and report.returncode == 0
+        and report_matches("vegeta", encoded.read_text()),
+        "exit_code": process.returncode,
+    }
+
+
 def run_curl_group(
     binary: str,
     url: str,
@@ -127,6 +164,33 @@ def run_curl_group(
 
     with ThreadPoolExecutor(max_workers=level) as pool:
         return list(pool.map(worker, range(level if persistent else count)))
+
+
+def run_lua(
+    binary: str, host: str, contract: dict, directory: Path, index: int
+) -> dict:
+    """Execute the checked-in native wrk Lua script and retain its digest."""
+    script = Path(__file__).resolve().parents[1] / contract["lua_script"]
+    if not script.is_file():
+        message = "required native wrk Lua phase missing"
+        raise ValueError(message)
+    args = [
+        binary,
+        "-t1",
+        "-c2",
+        "-d" + str(contract["duration_seconds"]) + "s",
+        "--timeout",
+        "60s",
+        "-s",
+        str(script),
+        "https://" + host + "/",
+    ]
+    worker = run_worker("wrk", directory, index, args)
+    worker.update(
+        lua_sha256=hashlib.sha256(script.read_bytes()).hexdigest(),
+        binary_sha256=hashlib.sha256(Path(binary).read_bytes()).hexdigest(),
+    )
+    return worker
 
 
 def main() -> int:
@@ -166,7 +230,18 @@ def main() -> int:
                     for persistent in contract["connection_modes"]:
                         for path in contract["paths"]:
                             group = (
-                                run_curl_group(
+                                [
+                                    run_vegeta(
+                                        binary,
+                                        "https://" + host + path,
+                                        contract["duration_seconds"],
+                                        persistent,
+                                        directory,
+                                        len(workers),
+                                    )
+                                ]
+                                if tool == "vegeta"
+                                else run_curl_group(
                                     binary,
                                     "https://" + host + path,
                                     level,
@@ -203,6 +278,8 @@ def main() -> int:
                                     ).hexdigest(),
                                 )
                             workers.extend(group)
+            if tool == "wrk" and contract.get("lua_script"):
+                workers.append(run_lua(binary, host, contract, directory, len(workers)))
     finally:
         stop.set()
         if profiler.is_alive():

@@ -6,7 +6,10 @@
 set -uo pipefail
 
 # Native dependencies are mandatory; no alternate request engine is accepted.
-command -v wrk >/dev/null || { echo "[FAIL] Required native wrk missing" >&2; exit 1; }
+command -v wrk >/dev/null || {
+  echo "[FAIL] Required native wrk missing" >&2
+  exit 1
+}
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-60}}"
@@ -40,7 +43,8 @@ for ep in "${ENDPOINTS[@]}"; do
       -H "Accept-Encoding: $(rand_encoding)" \
       "${BASE}${ep}" 2>&1 | grep -E "Requests/sec|Latency|Transfer" | sed 's/^/    /'
   else
-    echo "    [SKIP] wrk not available"
+    echo "[FAIL] Required native wrk missing" >&2
+    exit 1
   fi
   echo ""
 done
@@ -51,7 +55,8 @@ if command -v wrk >/dev/null 2>&1 && [ -f "$LUA_SCRIPT" ]; then
   wrk -t"$THREADS" -c"$CONNS" -d"${DURATION}s" --timeout 10s \
     -s "$LUA_SCRIPT" "${BASE}/" 2>&1 | grep -E "Requests/sec|Latency|Transfer|Socket" | sed 's/^/    /'
 else
-  echo "    [SKIP] wrk or Lua script not available"
+  echo "[FAIL] Required native wrk Lua phase missing" >&2
+  exit 1
 fi
 echo ""
 

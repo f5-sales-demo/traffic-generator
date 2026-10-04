@@ -1,12 +1,15 @@
 #!/bin/bash
 # Per-application throughput benchmark
-# Tools: hey (primary), curl+xargs (fallback)
+# Tools: hey
 # Measures: throughput (req/s), latency percentiles, error rate for each app independently
 # Estimated duration: 3-5 minutes
 set -uo pipefail
 
 # Native dependencies are mandatory; no alternate request engine is accepted.
-command -v hey >/dev/null || { echo "[FAIL] Required native hey missing" >&2; exit 1; }
+command -v hey >/dev/null || {
+  echo "[FAIL] Required native hey missing" >&2
+  exit 1
+}
 
 TARGET="${1:?Usage: 02-per-app-throughput.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
@@ -34,13 +37,8 @@ echo "    Concurrency: ${CONCURRENCY}"
 echo "    Requests per app: ${REQUESTS}"
 echo ""
 
-USE_HEY=false
-if command -v hey &>/dev/null; then
-  USE_HEY=true
-  echo "[+] Using hey (goroutine-based engine)"
-else
-  echo "[+] hey not found — falling back to curl+xargs"
-fi
+USE_HEY=true
+
 echo ""
 
 printf "%-20s %6s %6s %6s %8s %8s %8s %8s\n" \
@@ -51,47 +49,25 @@ for app in health landing juice-shop juice-shop-api dvwa vampi vampi-api httpbin
   endpoint="${APP_ENDPOINTS[$app]}"
   url="${BASE}${endpoint}"
 
-  if [[ "$USE_HEY" == "true" ]]; then
-    result=$(hey -n "${REQUESTS}" -c "${CONCURRENCY}" -t 30 "${url}" 2>&1)
+  result=$(hey -n "${REQUESTS}" -c "${CONCURRENCY}" -t 30 "${url}" 2>&1)
 
-    rps=$(echo "$result" | grep "Requests/sec" | awk '{print $2}')
-    avg=$(echo "$result" | grep "Average" | head -1 | awk '{print $2}')
+  rps=$(echo "$result" | grep "Requests/sec" | awk '{print $2}')
+  avg=$(echo "$result" | grep "Average" | head -1 | awk '{print $2}')
 
-    # Extract percentiles from hey's latency distribution
-    p95=$(echo "$result" | grep "95%" | head -1 | awk '{print $2}')
-    p99=$(echo "$result" | grep "99%" | head -1 | awk '{print $2}')
+  # Extract percentiles from hey's latency distribution
+  p95=$(echo "$result" | grep "95%" | head -1 | awk '{print $2}')
+  p99=$(echo "$result" | grep "99%" | head -1 | awk '{print $2}')
 
-    # Extract status code counts
-    total="${REQUESTS}"
-    status_200=$(echo "$result" | grep '^\s*\[200\]' | awk '{print $2}' || echo 0)
-    status_301=$(echo "$result" | grep '^\s*\[301\]' | awk '{print $2}' || echo 0)
-    status_302=$(echo "$result" | grep '^\s*\[302\]' | awk '{print $2}' || echo 0)
-    [[ -z "$status_200" ]] && status_200=0
-    [[ -z "$status_301" ]] && status_301=0
-    [[ -z "$status_302" ]] && status_302=0
-    ok=$((status_200 + status_301 + status_302))
-    fail=$((total - ok))
-
-  else
-    start_time=$(date +%s%N)
-
-    results=$(seq "$REQUESTS" | xargs -P"$CONCURRENCY" -I{} \
-      curl -sf -o /dev/null -w "%{http_code} %{time_total}\n" \
-      --max-time 10 --connect-timeout 5 "$url" 2>/dev/null)
-
-    end_time=$(date +%s%N)
-    wall_ms=$(((end_time - start_time) / 1000000))
-
-    total=$(echo "$results" | grep -c . || echo 0)
-    ok=$(echo "$results" | grep -c '^[23]0[0-9] ' || true)
-    fail=$((total - ok))
-
-    avg=$(echo "$results" | awk '{sum+=$2; n++} END {if(n>0) printf "%.3f", sum/n; else print "0"}')
-    p95=$(echo "$results" | awk '{print $2}' | sort -n | awk -v p=95 'BEGIN{c=0} {a[c++]=$1} END{idx=int(c*p/100); if(idx>=c)idx=c-1; printf "%.3f", a[idx]}')
-    p99=$(echo "$results" | awk '{print $2}' | sort -n | awk -v p=99 'BEGIN{c=0} {a[c++]=$1} END{idx=int(c*p/100); if(idx>=c)idx=c-1; printf "%.3f", a[idx]}')
-    rps=$(awk "BEGIN {if($wall_ms>0) printf \"%.1f\", $total / ($wall_ms / 1000.0); else print \"N/A\"}")
-  fi
-
+  # Extract status code counts
+  total="${REQUESTS}"
+  status_200=$(echo "$result" | grep '^\s*\[200\]' | awk '{print $2}' || echo 0)
+  status_301=$(echo "$result" | grep '^\s*\[301\]' | awk '{print $2}' || echo 0)
+  status_302=$(echo "$result" | grep '^\s*\[302\]' | awk '{print $2}' || echo 0)
+  [[ -z "$status_200" ]] && status_200=0
+  [[ -z "$status_301" ]] && status_301=0
+  [[ -z "$status_302" ]] && status_302=0
+  ok=$((status_200 + status_301 + status_302))
+  fail=$((total - ok))
   flag=""
   if [[ "$fail" -gt 0 ]]; then flag=" **"; fi
 

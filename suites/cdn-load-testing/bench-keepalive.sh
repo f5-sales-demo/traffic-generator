@@ -5,10 +5,22 @@
 set -uo pipefail
 
 # Native dependencies are mandatory; no alternate request engine is accepted.
-command -v wrk >/dev/null || { echo "[FAIL] Required native wrk missing" >&2; exit 1; }
-command -v hey >/dev/null || { echo "[FAIL] Required native hey missing" >&2; exit 1; }
-command -v vegeta >/dev/null || { echo "[FAIL] Required native vegeta missing" >&2; exit 1; }
-command -v ab >/dev/null || { echo "[FAIL] Required native ab missing" >&2; exit 1; }
+command -v wrk >/dev/null || {
+  echo "[FAIL] Required native wrk missing" >&2
+  exit 1
+}
+command -v hey >/dev/null || {
+  echo "[FAIL] Required native hey missing" >&2
+  exit 1
+}
+command -v vegeta >/dev/null || {
+  echo "[FAIL] Required native vegeta missing" >&2
+  exit 1
+}
+command -v ab >/dev/null || {
+  echo "[FAIL] Required native ab missing" >&2
+  exit 1
+}
 
 TARGET="${1:?Usage: bench-keepalive.sh <TARGET_FQDN> [duration]}"
 PROTOCOL="${TARGET_PROTOCOL:-http}"
@@ -223,8 +235,8 @@ if [ -f "$LUA_SCRIPT" ]; then
   echo "  Transfer/s:    ${T2_XFER:-N/A}"
   echo "  Socket errors: ${T2_ERR:-none}"
 else
-  echo "  [SKIP] Lua script not found"
-  T2_RPS=0
+  echo "[FAIL] Required native Lua phase missing" >&2
+  exit 1
 fi
 
 TW_T2=$(ss -tan state time-wait | wc -l)

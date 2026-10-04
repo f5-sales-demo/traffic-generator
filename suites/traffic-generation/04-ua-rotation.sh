@@ -1,12 +1,15 @@
 #!/bin/bash
 # User-Agent rotation requests using hey (goroutine-based, ~10x more CPU-efficient than curl)
-# Tools: hey (primary), curl (fallback)
+# Tools: native hey
 # Targets: Various endpoints with rotating user agents
 # Estimated duration: 1-2 minutes
 set -euo pipefail
 
 # Native dependencies are mandatory; no alternate request engine is accepted.
-command -v hey >/dev/null || { echo "[FAIL] Required native hey missing" >&2; exit 1; }
+command -v hey >/dev/null || {
+  echo "[FAIL] Required native hey missing" >&2
+  exit 1
+}
 
 TARGET="${1:?Usage: 04-ua-rotation.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
@@ -62,44 +65,23 @@ ENDPOINTS=(
   "/juice-shop/rest/products/search?q=test"
 )
 
-if command -v hey &>/dev/null; then
-  echo "[+] Using hey (goroutine-based engine)"
-  echo ""
+echo "[+] Using hey (goroutine-based engine)"
+echo ""
 
-  for ua in "${USER_AGENTS[@]}"; do
-    ua_display="${ua}"
-    [[ -z "$ua" ]] && ua_display="(empty)"
-    echo "[+] UA: ${ua_display:0:60}"
+for ua in "${USER_AGENTS[@]}"; do
+  ua_display="${ua}"
+  [[ -z "$ua" ]] && ua_display="(empty)"
+  echo "[+] UA: ${ua_display:0:60}"
 
-    for endpoint in "${ENDPOINTS[@]}"; do
-      echo "    ${endpoint}:"
-      hey -n "${TGEN_UA_REQUESTS:-100}" -c "${TGEN_UA_CONCURRENCY:-20}" -t 10 -H "User-Agent: ${ua}" "${BASE}${endpoint}" 2>&1 |
-        grep -E "(Requests/sec|Average|Status)" |
-        while IFS= read -r line; do
-          echo "      ${line}"
-        done
-    done
-    echo ""
+  for endpoint in "${ENDPOINTS[@]}"; do
+    echo "    ${endpoint}:"
+    hey -n "${TGEN_UA_REQUESTS:-100}" -c "${TGEN_UA_CONCURRENCY:-20}" -t 10 -H "User-Agent: ${ua}" "${BASE}${endpoint}" 2>&1 |
+      grep -E "(Requests/sec|Average|Status)" |
+      while IFS= read -r line; do
+        echo "      ${line}"
+      done
   done
-
-else
-  echo "[+] hey not found — falling back to curl"
   echo ""
-
-  for ua in "${USER_AGENTS[@]}"; do
-    ua_display="${ua}"
-    [[ -z "$ua" ]] && ua_display="(empty)"
-    echo "[+] UA: ${ua_display:0:60}"
-
-    for endpoint in "${ENDPOINTS[@]}"; do
-      code=$(curl -sk -o /dev/null -w "%{http_code}" \
-        -H "User-Agent: ${ua}" \
-        "${BASE}${endpoint}" \
-        --max-time 10) || code="ERR"
-      echo "    ${endpoint} -> HTTP ${code}"
-    done
-    echo ""
-  done
-fi
+done
 
 echo "[*] User-Agent rotation complete"
