@@ -344,7 +344,9 @@ class Budget:
                                 r"b'[^']*'", "[redacted header]", flow.error.msg
                             ),
                             "worker_marker": flow.metadata.get("tgen_worker", ""),
-                            "upstream_dispatched": flow.metadata.get("tgen_upstream_dispatched", False),
+                            "upstream_dispatched": flow.metadata.get(
+                                "tgen_upstream_dispatched", False
+                            ),
                             "observed_at": time.time(),
                             "scenario": self.current_scenario(),
                         }
