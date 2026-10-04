@@ -744,6 +744,13 @@ def _scenario(
         event.get("scenario") == scenario["id"]
         and event.get("kind") == "scenario"
         and event.get("status") in (403, 429)
+        and event.get("outcome") != "expected_application_rejection"
+        for event in responses
+    )
+    result["application_rejections"] = sum(
+        event.get("scenario") == scenario["id"]
+        and event.get("kind") == "scenario"
+        and event.get("outcome") == "expected_application_rejection"
         for event in responses
     )
     result["transport_failures"] = after.get(
