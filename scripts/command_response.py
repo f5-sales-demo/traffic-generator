@@ -30,10 +30,15 @@ def main() -> int:
         and "Logout" in body
         and "Command Injection" in body
     )
-    effect = bool(re.search(args.pattern, output, re.IGNORECASE))
+    effect = (
+        "4 packets transmitted, 4 received" in output and "uid=" not in output
+        if args.pattern == "negative-backtick-no-stdout"
+        else bool(re.search(args.pattern, output, re.IGNORECASE))
+    )
     receipt = {
         "application_verified": application,
         "native_output_verified": effect,
+        "expected_negative": args.pattern == "negative-backtick-no-stdout",
         "status": args.status,
         "passed": application and effect,
     }
