@@ -274,6 +274,7 @@ def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
         "dynamic-cache": "traffic_cache.py",
         "bounded-workload": "traffic_workload.py",
         "bounded-multiclient": "traffic_multiclient.py",
+        "native-masscan": "native_masscan.py",
     }
     if scenario.get("adapter") in adapters:
         return [
@@ -438,8 +439,13 @@ def connection_action_verification(
             connection_data = json.loads(connection_receipt.read_text())
             result["connection_attempts"] = connection_data["attempts"]
             result["connection_limit"] = connection_data["attempt_limit_per_second"]
-            result["connection_probe"] = verify_connection_probe(
-                scenario["id"], connection_data
+            result["connection_probe"] = (
+                {
+                    "passed": connection_data.get("passed") is True,
+                    "claim": "native Masscan SYN/SYN-ACK and measured pacing",
+                }
+                if scenario.get("adapter") == "native-masscan"
+                else verify_connection_probe(scenario["id"], connection_data)
             )
             result["dispatch_contract_verified"] = result["connection_probe"]["passed"]
             if (

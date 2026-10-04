@@ -17352,7 +17352,12 @@
       "budget": "connection",
       "parallel": false,
       "timeout_seconds": 900,
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-masscan",
+      "functional_contract": {
+        "verifier": "native-masscan",
+        "behavior": "Native Masscan sends paced SYN probes to authorized application ports 80 and 443 and observes real SYN-ACK replies"
+      }
     },
     {
       "id": "reconnaissance/03-gobuster-dir",

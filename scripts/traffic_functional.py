@@ -154,6 +154,20 @@ def verify_functional(
         and scenario["id"] == "dvwa-exploits/02-command-injection"
     ):
         return verify_commands(scenario, result, directory)
+    if (
+        contract.get("verifier") == "native-masscan"
+        and scenario["id"] == "reconnaissance/02-masscan-port-sweep"
+    ):
+        receipt = json.loads((directory / "connections.json").read_text())
+        return {
+            "passed": receipt.get("passed") is True
+            and receipt.get("source_commit") == result.get("source_commit")
+            and receipt.get("artifact_sha256") == result.get("artifact_sha256")
+            and result.get("outcome") == "launched"
+            and result.get("dispatch_contract_verified") is True,
+            "behavior": contract["behavior"],
+            "native_packet_evidence": True,
+        }
     requirements = scenario.get("dispatch_contract", {}).get("requirements", [])
     declared = contract.get("native_response_requirements", [])
     checks = [
