@@ -276,6 +276,7 @@ def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
         "bounded-multiclient": "traffic_multiclient.py",
         "native-masscan": "native_masscan.py",
         "native-scanner": "native_scanners.py",
+        "native-subfinder": "native_subfinder.py",
     }
     if scenario.get("adapter") in adapters:
         return [
@@ -584,6 +585,19 @@ def native_load_verification(directory: Path, scenario: dict, result: dict) -> N
             result["outcome"] = "tool_failure"
 
 
+def native_discovery_verification(
+    directory: Path, scenario: dict, result: dict
+) -> None:
+    """Discovery requires real native provider results, not an HTTP filler count."""
+    if scenario.get("adapter") == "native-subfinder":
+        path = directory / "native-discovery.json"
+        receipt = json.loads(path.read_text()) if path.exists() else {}
+        result["dispatch_contract_verified"] = receipt.get("passed") is True
+        result["native_discovery"] = receipt
+        if not result["dispatch_contract_verified"]:
+            result["outcome"] = "tool_failure"
+
+
 def scenario_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Join actual dispatch, browser actions, and connection evidence to a launch."""
     if "tool_contract" in scenario:
@@ -652,6 +666,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             result["outcome"] = "tool_failure"
     route_action_verification(scenario, result)
     native_load_verification(directory, scenario, result)
+    native_discovery_verification(directory, scenario, result)
     if "workload_contract" in scenario:
         evidence = directory / "workload.json"
         result["workload"] = (

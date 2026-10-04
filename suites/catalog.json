@@ -18026,23 +18026,15 @@
       "after": ["reconnaissance/04-feroxbuster-recurse"],
       "target_paths": ["/dvwa/", "/health", "/httpbin/", "/juice-shop/", "/vampi/"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
-      "budget": "http",
+      "budget": "none",
       "parallel": false,
       "timeout_seconds": 900,
-      "dispatch_contract": {
-        "requirements": [
-          {
-            "id": "authorized-name-health",
-            "method": "GET",
-            "path": "/health",
-            "payload_class": "resolved-authorized-domain-probe",
-            "minimum_dispatches": 2
-          }
-        ],
-        "reject_unmatched_errors": true
-      },
       "intentional_negative_paths": ["/health"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-subfinder",
+      "report_contract": {
+        "native_discovery": true
+      }
     },
     {
       "id": "reconnaissance/06-sensitive-files",
