@@ -1,4 +1,4 @@
-# Continuous catalog delivery tasks
+# Historical continuous catalog evidence
 
 - [x] Explicit ordered catalog: 151 numbered entrypoints, eleven browser scenarios, two benchmarks.
 - [x] Read-only suite dry-run, missing dependency failure, structured configuration.

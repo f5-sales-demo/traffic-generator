@@ -1,46 +1,4 @@
 {
-  "customSets": [
-    {
-      "label": "Azure Deployment",
-      "description": "Existing Azure traffic-generator deployment and lifecycle",
-      "paths": ["01-architecture*", "02-prerequisites*", "03-deploy*", "08-teardown*"]
-    },
-    {
-      "label": "AWS Deployment",
-      "description": "Public-subnet AWS traffic-generator deployment with Elastic IP, jumpbox-restricted SSH, Systems Manager recovery, evidence handling, and teardown",
-      "paths": ["01-architecture*", "02-prerequisites*", "03-deploy*", "06-runner*", "08-teardown*"]
-    },
-    {
-      "label": "Traffic Suites",
-      "description": "Attack traffic suite scripts and runner usage",
-      "paths": ["05-suites*", "06-runner*"]
-    },
-    {
-      "label": "CSD Violations",
-      "description": "Canonical Client-Side Defense browser scenarios, per-step screenshots, sanitized receipts, and claim boundaries",
-      "paths": ["05-suites*", "06-runner*", "07-integrate*"]
-    },
-    {
-      "label": "Tool Catalog",
-      "description": "Complete catalog of installed security tools",
-      "paths": ["04-tool-catalog*"]
-    },
-    {
-      "label": "Integration",
-      "description": "Integration with F5 XC, origin-server, and CSD demo",
-      "paths": ["07-integrate*"]
-    },
-    {
-      "label": "Catalog operations and acceptance",
-      "description": "Catalog operations and acceptance with revision-specific evidence and incomplete gates",
-      "paths": ["continuous-catalog*", "06-runner*", "dvwa-payload-mapping*", "native-tool-remediation*"]
-    },
-    {
-      "label": "Historical evidence",
-      "description": "Historical evidence with revision-specific evidence and incomplete gates",
-      "paths": ["archive/**"]
-    }
-  ],
   "promote": [
     "index*",
     "01-architecture*",
@@ -49,7 +7,12 @@
     "05-suites*",
     "06-runner*",
     "07-integrate*",
-    "08-teardown*"
+    "08-teardown*",
+    "continuous-catalog*",
+    "continuous-catalog-tasks*",
+    "dvwa-payload-mapping*",
+    "native-tool-remediation*"
   ],
-  "demote": ["archive/**"]
+  "demote": ["archive/**"],
+  "tieredHierarchy": true
 }
