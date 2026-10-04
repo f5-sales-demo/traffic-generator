@@ -315,8 +315,13 @@ export function pageHelpers({
     'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': '/csd-demo/static/vendor/chart.umd.min.js',
     'https://jsonplaceholder.typicode.com/favicon.ico': '/juice-shop/favicon.ico',
   };
-  const nativeUrl = (url, post = false) =>
-    !nativeOrigin ? url : new URL(nativeAssets[url] ?? (post ? '/httpbin/post' : '/httpbin/get'), location.origin).href;
+  const nativeUrl = (url, post = false) => {
+    if (!nativeOrigin) return url;
+    const receiver = ['https://www.httpbin.org/post', 'https://jsonplaceholder.typicode.com/posts'].includes(url);
+    const destination = nativeAssets[url] ?? (post && receiver ? '/httpbin/post' : null);
+    if (!destination) throw new Error('Native endpoint mapping missing');
+    return new URL(destination, location.origin).href;
+  };
   const tracked = { nodes: new Set(), timers: new Set() };
   const managedContext = { runId, scenarioName };
   const CLEANUP_SETTLE_MS = 250;

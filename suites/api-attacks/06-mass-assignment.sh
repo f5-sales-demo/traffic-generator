@@ -71,10 +71,6 @@ LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
   --max-time 10) || true
 
 TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // empty' 2>/dev/null || true)
-if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
-  TOKEN=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py" vampi_token)
-  echo "[FIXTURE] Using a real seeded VAmPI token after blocked authentication"
-fi
 if [[ -z "$TOKEN" ]]; then
   echo "[FAIL] Native authentication prerequisite failed" >&2
   exit 1
