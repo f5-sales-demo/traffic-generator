@@ -6388,7 +6388,11 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-dvwa-command",
+        "behavior": "Every preserved command payload reaches authenticated native DVWA and returns declared command output or an explicit negative backtick command outcome"
+      }
     },
     {
       "id": "dvwa-exploits/03-csrf-password-change",
