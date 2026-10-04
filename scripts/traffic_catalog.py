@@ -16,6 +16,20 @@ MAX_SCENARIO_SECONDS = 900
 APPLICATION_COUNT = 9
 
 
+def validate_native_execution(scenario: dict) -> None:
+    """Reject retired substitutes and undeclared connection scanner execution."""
+    if scenario.get("adapter") in ("bounded-workload", "bounded-benchmark"):
+        message = "retired substitute execution adapter"
+        raise ValueError(message)
+    if scenario["budget"] == "connection" and scenario.get("adapter") not in (
+        "native-scanner",
+        "native-masscan",
+        "native-slow-headers",
+    ):
+        message = "connection scenario must invoke its declared native tool"
+        raise ValueError(message)
+
+
 def validate_execution_contract(scenario: dict) -> None:
     """Missing observed-action contracts fail catalog discovery."""
     if scenario["budget"] != "connection" and not any(
@@ -82,6 +96,7 @@ def validate_catalog(root: Path, catalog: dict) -> None:
     for scenario in catalog["scenarios"]:
         identifier = scenario["id"]
         validate_execution_contract(scenario)
+        validate_native_execution(scenario)
         validate_fixture_refresh(scenario)
         if "dispatch_contract" in scenario:
             validate_dispatch_contract(scenario["dispatch_contract"])

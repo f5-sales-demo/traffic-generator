@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 """Native bounded socket probes for declared TLS and slow-header behaviors."""
 
-import json
 import os
 import socket
 import ssl
 import sys
 import time
-from pathlib import Path
 from typing import Any
-
-from traffic_common import Pacer
 
 HTTPS_PORT = 443
 
@@ -74,99 +70,14 @@ def tls_probe(host: str, check: dict) -> dict:
 
 def main() -> int:
     """Run the named connection behavior within independent recorded limits."""
-    identifier, host = sys.argv[1:3]
+    _identifier, host = sys.argv[1:3]
     if host != os.environ.get("TGEN_AUTHORIZED_HOST"):
         msg = "connection target is not authorized"
         raise ValueError(msg)
-    rate = min(20, int(os.environ["TGEN_CONNECTION_RATE"]))
-    pacer = Pacer(rate)
-    results: list[dict[str, Any]] = []
-    slow = "slowloris" in identifier
-    connections = []
-    slow_header_writes = 0
-    started = time.monotonic()
-    try:
-        if slow:
-            count = min(20, int(os.environ["TGEN_SLOW_CONNECTIONS"]))
-            for _ in range(count):
-                attempted = pacer.acquire()
-                connection = ssl.create_default_context().wrap_socket(
-                    socket.create_connection((host, 443), timeout=5),
-                    server_hostname=host,
-                )
-                connection.sendall(
-                    ("GET / HTTP/1.1\r\nHost: " + host + "\r\n").encode()
-                )
-                connections.append(connection)
-                results.append(
-                    {
-                        "port": 443,
-                        "connected": True,
-                        "tls": connection.version(),
-                        "attempted_monotonic": attempted,
-                        "partial_headers_sent": True,
-                    }
-                )
-            for round_index in range(3):
-                time.sleep(5)
-                for index, connection in enumerate(connections):
-                    result = results[index]
-                    result.setdefault("write_events", [])
-                    try:
-                        connection.sendall(b"X-Synthetic-Slow: bounded\r\n")
-                        slow_header_writes += 1
-                        result["write_events"].append(
-                            {"round": round_index, "sent": True}
-                        )
-                    except OSError as error:
-                        result["write_events"].append(
-                            {
-                                "round": round_index,
-                                "sent": False,
-                                "error_type": type(error).__name__,
-                                "errno": error.errno,
-                            }
-                        )
-        else:
-            if "ssl-scanning" not in identifier:
-                pacer.acquire()
-                try:
-                    with socket.create_connection((host, 80), timeout=5):
-                        results.append({"port": 80, "connected": True})
-                except OSError:
-                    results.append(
-                        {"port": 80, "connected": False, "transport_failure": True}
-                    )
-            for check in tls_matrix(identifier):
-                pacer.acquire()
-                results.append(tls_probe(host, check))
-    finally:
-        for connection in connections:
-            connection.close()
-    receipt = {
-        "scenario": identifier,
-        "execution": "native bounded socket probe",
-        "scope": "authorized application ports 80 and 443",
-        "attempts": len(results),
-        "attempt_limit_per_second": rate,
-        "maximum_slow_connections": len(connections),
-        "results": results,
-        "elapsed_seconds": time.monotonic() - started,
-        "slow_header_writes": slow_header_writes,
-        "connections_closed": all(
-            connection.fileno() == -1 for connection in connections
-        ),
-    }
-    path = Path(os.environ["TGEN_RESULTS_DIR"]) / "connections.json"
-    path.write_text(json.dumps(receipt) + "\n")
-    path.chmod(0o600)
-    print(json.dumps(receipt))
-    return (
-        0
-        if any(r.get("connected") for r in results)
-        and not any(r.get("transport_failure") for r in results)
-        else 1
+    message = (
+        "generic socket substitution retired; invoke the declared native tool adapter"
     )
+    raise ValueError(message)
 
 
 if __name__ == "__main__":
