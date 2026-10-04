@@ -172,6 +172,7 @@ class Budget:
         await self.pending.put((event, host))
         await event
         flow.metadata.pop("tgen_pending_slot", None)
+        flow.metadata["tgen_upstream_dispatched"] = True
         try:
             current = flow.metadata["tgen_scenario"]
             event_path = Path(current["dispatch_path"])
@@ -271,6 +272,7 @@ class Budget:
             raise ValueError(message)
         event = {
             "worker_marker": flow.metadata.get("tgen_worker", ""),
+            "upstream_dispatched": flow.metadata.get("tgen_upstream_dispatched", False),
             "scenario": current["id"],
             "kind": "scenario"
             if current.get("phase") == "execution"
@@ -342,6 +344,7 @@ class Budget:
                                 r"b'[^']*'", "[redacted header]", flow.error.msg
                             ),
                             "worker_marker": flow.metadata.get("tgen_worker", ""),
+                            "upstream_dispatched": flow.metadata.get("tgen_upstream_dispatched", False),
                             "observed_at": time.time(),
                             "scenario": self.current_scenario(),
                         }
