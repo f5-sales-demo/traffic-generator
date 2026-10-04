@@ -17,6 +17,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from catalog_pass_receipt import catalog_pass_receipt
+from crapi_otp_fixture import verify_restoration
 from scanner_phase_contract import verify_scanner_phases
 from stress_reports import verify_native_reports
 from traffic_catalog import load_catalog, readiness
@@ -512,6 +513,7 @@ def nested_action_verification(directory: Path, scenario: dict, result: dict) ->
 
 def fixture_action_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Require mutation restoration independently of the attack response."""
+    verify_restoration(directory, scenario, result)
     if scenario.get("fixture_contract", {}).get("csrf_restore"):
         evidence = directory / "csrf-restoration.json"
         restored = (

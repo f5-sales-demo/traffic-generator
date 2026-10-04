@@ -480,6 +480,23 @@ class NetworkBoundary:
             raise ValueError(message)
         return document
 
+    def refresh_otp_fixture(self, domain: str, fixtures: dict) -> None:
+        """Renew only the isolated OTP actor without changing other fixture identities."""
+        if not fixtures.get("crapi_otp_email"):
+            return
+        otp = self.fixture_login(
+            domain,
+            "/crapi/identity/api/auth/login",
+            {
+                "email": fixtures["crapi_otp_email"],
+                "password": fixtures["crapi_otp_password"],
+            },
+        ).get("token")
+        if not otp:
+            message = "isolated OTP fixture authentication failed"
+            raise ValueError(message)
+        fixtures["crapi_otp_actor_token"] = otp
+
     def refresh_fixtures(self, domain: str, families: list[str] | None = None) -> None:
         """Generate/renew real tokens for public seeded lab accounts without disabling WAAP."""
         fixture_path = self.runtime.parent / "fixtures.json"
@@ -498,6 +515,7 @@ class NetworkBoundary:
             if vampi:
                 fixtures["vampi_token"] = vampi
         if "crapi" in required:
+            self.refresh_otp_fixture(domain, fixtures)
             disposable = self.fixture_login(
                 domain,
                 "/crapi/identity/api/auth/login",
