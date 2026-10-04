@@ -130,6 +130,8 @@ def run_vegeta(
             [
                 binary,
                 "attack",
+                "-workers=1",
+                "-max-workers=2",
                 "-rate=5/s",
                 "-duration=" + str(duration) + "s",
                 "-timeout=60s",
