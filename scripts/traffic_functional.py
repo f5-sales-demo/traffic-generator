@@ -10,8 +10,23 @@ CREDENTIAL_COUNT = 15
 def verify_credentials(scenario: dict, result: dict, directory: Path) -> dict:
     """Inspect native browser outcomes, exact credential count, and closed sessions."""
     path = directory / "credential-functional.json"
-    evidence = json.loads(path.read_text()) if path.exists() else {}
+    try:
+        evidence = json.loads(path.read_text()) if path.exists() else {}
+    except (OSError, ValueError):
+        return {"passed": False, "reason": "native credential evidence unreadable"}
+    if not isinstance(evidence, dict):
+        return {
+            "passed": False,
+            "reason": "native credential evidence is not an object",
+        }
     attempts = evidence.get("attempts", [])
+    if not isinstance(attempts, list) or any(not isinstance(a, dict) for a in attempts):
+        return {"passed": False, "reason": "native credential attempts malformed"}
+    screenshots = evidence.get("screenshots", [])
+    if not isinstance(screenshots, list) or any(
+        not isinstance(name, str) for name in screenshots
+    ):
+        return {"passed": False, "reason": "native credential screenshots malformed"}
     passed = (
         evidence.get("scenario") == scenario["id"]
         and evidence.get("source_commit") == result.get("source_commit")
