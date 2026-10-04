@@ -475,6 +475,22 @@ def graphql_body_matches(contract: dict, body: str) -> bool:
     )
 
 
+def nested_list_matches(document: dict, specification: dict) -> bool:
+    """Verify actual nested object values, including synthetic exposure fields."""
+    for key, fields in specification.items():
+        rows = document.get(key)
+        if not isinstance(rows, list) or not rows:
+            return False
+        for row in rows:
+            for path, pattern in fields.items():
+                value = row
+                for field in path.split("."):
+                    value = value.get(field) if isinstance(value, dict) else None
+                if not isinstance(value, str) or not re.fullmatch(pattern, value):
+                    return False
+    return True
+
+
 def response_content_matches(contract: dict, content_type: str, body: str) -> bool:
     """Evaluate transient response content and retain only assertion booleans."""
     if content_type.split(";", 1)[0] != contract.get("content_type") or any(
@@ -495,6 +511,7 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
             "json_keys",
             "json_nonempty_lists",
             "json_document_equals",
+            "json_nested_list_matches",
         )
     ):
         try:
@@ -515,6 +532,9 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
             and all(key in document for key in contract.get("json_keys", []))
             and required_response_lists(
                 document, contract.get("json_nonempty_lists", {})
+            )
+            and nested_list_matches(
+                document, contract.get("json_nested_list_matches", {})
             )
         )
     return True

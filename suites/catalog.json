@@ -5049,7 +5049,7 @@
       "parallel": false,
       "timeout_seconds": 900,
       "functional_contract": {
-        "behavior": "Native seeded community objects expose id, title, and content through the recent-posts API",
+        "behavior": "Native seeded community posts expose synthetic author email through the recent-posts API",
         "mutation_policy": "read-only",
         "native_response_requirements": ["community-posts"]
       },
@@ -5069,7 +5069,10 @@
             "response_contract": {
               "content_type": "application/json",
               "json_keys": ["posts", "total"],
-              "json_nonempty_lists": {
+              "json_nested_list_matches": {
+              "posts": {"author.email": "[A-Za-z0-9._%+-]+@example\\.com"}
+            },
+            "json_nonempty_lists": {
                 "posts": ["id", "title", "content"]
               }
             }

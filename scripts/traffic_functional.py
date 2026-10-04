@@ -7,6 +7,21 @@ def verify_functional(scenario: dict, result: dict, responses: list[dict]) -> di
     requirements = scenario.get("dispatch_contract", {}).get("requirements", [])
     declared = contract.get("native_response_requirements", [])
     checks = [
+        {
+            "id": "direct-native-api",
+            "passed": scenario.get("kind") == "shell"
+            and not scenario.get("adapter")
+            and not any(
+                key in scenario
+                for key in (
+                    "tool_contract",
+                    "nested_contract",
+                    "workload_contract",
+                    "browser_contract",
+                    "fixture_contract",
+                )
+            ),
+        },
         {"id": "declared-functional-scope", "passed": bool(contract.get("behavior"))},
         {
             "id": "read-only-scope",
