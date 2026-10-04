@@ -37,8 +37,9 @@ def main() -> int:
         for index in range(count):
             log = (directory / ("openssl-" + str(index) + ".log")).open("wb")
             attempted = pacer.acquire()
+            # All native clients are closed together in finally.
+            # pylint: disable-next=consider-using-with
             process = subprocess.Popen(  # noqa: S603 - native scoped TLS client
-                # pylint: disable=consider-using-with
                 [
                     binary,
                     "s_client",
