@@ -520,15 +520,16 @@ class NetworkBoundary:
             if len(crapi) == CRAPI_ACCOUNT_COUNT:
                 fixtures["crapi_tokens"] = crapi
         if "juice" in required:
+            if not fixtures.get("juice_email") or not fixtures.get("juice_password"):
+                message = "real synthetic Juice Shop fixture credentials missing"
+                raise ValueError(message)
             juice = (
                 self.fixture_login(
                     domain,
                     "/juice-shop/rest/user/login",
                     {
-                        "email": fixtures.get("juice_email", "tgen@example.com"),
-                        "password": fixtures.get(
-                            "juice_password", "synthetic-fixture-unavailable"
-                        ),
+                        "email": fixtures["juice_email"],
+                        "password": fixtures["juice_password"],
                     },
                 )
                 .get("authentication", {})
