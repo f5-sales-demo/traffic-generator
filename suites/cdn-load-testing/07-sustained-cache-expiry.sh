@@ -6,8 +6,14 @@
 set -uo pipefail
 
 # Native dependencies are mandatory; no alternate request engine is accepted.
-command -v wrk >/dev/null || { echo "[FAIL] Required native wrk missing" >&2; exit 1; }
-command -v hey >/dev/null || { echo "[FAIL] Required native hey missing" >&2; exit 1; }
+command -v wrk >/dev/null || {
+  echo "[FAIL] Required native wrk missing" >&2
+  exit 1
+}
+command -v hey >/dev/null || {
+  echo "[FAIL] Required native hey missing" >&2
+  exit 1
+}
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-1800}}"
@@ -36,19 +42,14 @@ MONITOR_ENDPOINTS=(
 # Start wrk in background
 echo "[+] Starting sustained wrk load..."
 WRK_LOG="/tmp/cdn-sustained-wrk-$$.log"
-if command -v wrk >/dev/null 2>&1 && [ -f "$LUA_SCRIPT" ]; then
-  wrk -t"$THREADS" -c"$CONNS" -d"${DURATION}s" --timeout 10s \
-    -s "$LUA_SCRIPT" "${BASE}/" >"$WRK_LOG" 2>&1 &
-  WRK_PID=$!
-  echo "    wrk PID: $WRK_PID"
-else
-  echo "    [WARN] wrk not available, using hey fallback"
-  hey -z "${DURATION}s" -c "$CONNS" \
-    -H "X-Forwarded-For: $(rand_ip)" \
-    "${BASE}/juice-shop/" >"$WRK_LOG" 2>&1 &
-  WRK_PID=$!
-fi
-echo ""
+[[ -f "$LUA_SCRIPT" ]] || {
+  echo "[FAIL] Required native wrk Lua phase missing" >&2
+  exit 1
+}
+wrk -t"$THREADS" -c"$CONNS" -d"${DURATION}s" --timeout 10s \
+  -s "$LUA_SCRIPT" "${BASE}/" >"$WRK_LOG" 2>&1 &
+WRK_PID=$!
+echo "    wrk PID: $WRK_PID"echo ""
 
 # Monitoring header
 printf " %6s" "Time"
