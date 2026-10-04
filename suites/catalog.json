@@ -5074,9 +5074,9 @@
               "content_type": "application/json",
               "json_keys": ["posts", "total"],
               "json_nested_list_matches": {
-              "posts": {"author.email": "[A-Za-z0-9._%+-]+@example\\.com"}
-            },
-            "json_nonempty_lists": {
+                "posts": { "author.email": "[A-Za-z0-9._%+-]+@example\\.com" }
+              },
+              "json_nonempty_lists": {
                 "posts": ["id", "title", "content"]
               }
             }

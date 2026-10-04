@@ -113,10 +113,13 @@ const CREDENTIALS = [
       await settleRequests(requestState, 60000);
       const body = await page.textContent('body');
       const route = new URL(page.url()).pathname;
-      const accepted = response.status() === 200 && route === '/dvwa/index.php'
-        && body.includes('DVWA') && body.includes('Logout');
-      const rejected = response.status() === 200 && route === '/dvwa/login.php'
-        && body.includes('DVWA') && body.includes('Login failed');
+      const accepted =
+        response.status() === 200 && route === '/dvwa/index.php' && body.includes('DVWA') && body.includes('Logout');
+      const rejected =
+        response.status() === 200 &&
+        route === '/dvwa/login.php' &&
+        body.includes('DVWA') &&
+        body.includes('Login failed');
       if (resultsDir) {
         const filename = `credential-${String(attemptIndex).padStart(2, '0')}.png`;
         await page.screenshot({ path: path.join(resultsDir, filename), fullPage: true });
@@ -127,12 +130,14 @@ const CREDENTIALS = [
       if (accepted) {
         successes++;
         const logout = await page.goto(`${BASE_URL}/dvwa/logout.php`, {
-          waitUntil: 'domcontentloaded', timeout: 60000,
+          waitUntil: 'domcontentloaded',
+          timeout: 60000,
         });
         await settleRequests(requestState, 60000);
-        sessionClosed = logout.status() === 200
-          && new URL(page.url()).pathname === '/dvwa/login.php'
-          && await page.locator('input[name="username"]').count() === 1;
+        sessionClosed =
+          logout.status() === 200 &&
+          new URL(page.url()).pathname === '/dvwa/login.php' &&
+          (await page.locator('input[name="username"]').count()) === 1;
       } else failures++;
       const passed = (expectedAccepted ? accepted : rejected) && sessionClosed;
       attempts.push({ index: attemptIndex, expectedAccepted, accepted, rejected, sessionClosed, passed });
@@ -154,9 +159,15 @@ const CREDENTIALS = [
     const receipt = {
       scenario: 'bot-simulation/01-playwright-credential-stuff',
       source_commit: process.env.SOURCE_COMMIT,
-      passed: attempts.length === CREDENTIALS.length && attempts.every((attempt) => attempt.passed)
-        && browserErrors.length === 0 && transportFailures === 0,
-      attempts, browserErrors, screenshots, contextsClosed: true,
+      passed:
+        attempts.length === CREDENTIALS.length &&
+        attempts.every((attempt) => attempt.passed) &&
+        browserErrors.length === 0 &&
+        transportFailures === 0,
+      attempts,
+      browserErrors,
+      screenshots,
+      contextsClosed: true,
     };
     const receiptPath = path.join(resultsDir, 'credential-functional.json');
     fs.writeFileSync(receiptPath, JSON.stringify(receipt));
