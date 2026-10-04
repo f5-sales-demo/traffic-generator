@@ -295,13 +295,28 @@ function assertEvidence(step, stepResult) {
   };
 }
 
-export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioName = null } = {}) {
+export function pageHelpers({
+  terminalTimeoutMs = 8_000,
+  runId = null,
+  scenarioName = null,
+  nativeOrigin = false,
+} = {}) {
   const SCRIPT_URLS = {
     jsdelivr: 'https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js',
     esm: 'https://esm.sh/moment@2.30.1',
     unpkg: 'https://unpkg.com/underscore@1.13.7/underscore-min.js',
     jspm: 'https://ga.jspm.io/npm:dayjs@1.11.13/dayjs.min.js',
   };
+  const nativeAssets = {
+    'https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js': '/csd-demo/static/vendor/lodash.min.js',
+    'https://esm.sh/moment@2.30.1': '/csd-demo/static/vendor/moment.js',
+    'https://unpkg.com/underscore@1.13.7/underscore-min.js': '/csd-demo/static/vendor/underscore-min.js',
+    'https://ga.jspm.io/npm:dayjs@1.11.13/dayjs.min.js': '/csd-demo/static/vendor/dayjs.min.js',
+    'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': '/csd-demo/static/vendor/chart.umd.min.js',
+    'https://jsonplaceholder.typicode.com/favicon.ico': '/juice-shop/favicon.ico',
+  };
+  const nativeUrl = (url, post = false) =>
+    !nativeOrigin ? url : new URL(nativeAssets[url] ?? (post ? '/httpbin/post' : '/httpbin/get'), location.origin).href;
   const tracked = { nodes: new Set(), timers: new Set() };
   const managedContext = { runId, scenarioName };
   const CLEANUP_SETTLE_MS = 250;
@@ -321,7 +336,7 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
   const terminalFetch = async (url, body) => {
     const controller = new AbortController();
     let timer;
-    const request = fetch(url, {
+    const request = fetch(nativeUrl(url, true), {
       method: 'POST',
       mode: 'no-cors',
       keepalive: false,
@@ -349,7 +364,7 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
   const injectScript = (src, attributes = {}) =>
     new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = src;
+      script.src = nativeUrl(src);
       script.async = true;
       for (const [key, value] of Object.entries(attributes)) script.dataset[key] = value;
       tracked.nodes.add(script);
@@ -467,12 +482,12 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
     });
     const image = new Image();
     image.alt = 'synthetic evidence';
-    image.src = 'https://jsonplaceholder.typicode.com/favicon.ico';
+    image.src = nativeUrl('https://jsonplaceholder.typicode.com/favicon.ico');
     tracked.nodes.add(image);
     document.body.appendChild(image);
     const link = document.createElement('link');
     link.rel = 'prefetch';
-    link.href = SCRIPT_URLS.jsdelivr;
+    link.href = nativeUrl(SCRIPT_URLS.jsdelivr);
     tracked.nodes.add(link);
     document.head.appendChild(link);
     return {
@@ -786,7 +801,11 @@ export async function runSuite(options = {}) {
       );
       cleanup.contexts += 1;
       if (options.routeSetup) await options.routeSetup(context, target);
-      await context.addInitScript(pageHelpers, { runId, scenarioName: scenario.name });
+      await context.addInitScript(pageHelpers, {
+        runId,
+        scenarioName: scenario.name,
+        nativeOrigin: options.runtime?.platform === 'azure',
+      });
       const page = await execute(() => context.newPage());
       const requests = new Map();
       const instrumentation = { sensorRequests: 0, dipRequests: 0 };
