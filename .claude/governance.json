@@ -88,6 +88,7 @@
     "traffic-generator": ["README.md"]
   },
   "protected_files": [
+    ".github/workflows/github-pages-config-sources.yml",
     ".github/workflows/github-pages-deploy.yml",
     ".github/workflows/reconcile-fleet-content.yml",
     ".github/workflows/reconcile-fleet-settings.yml",
@@ -229,7 +230,9 @@
       "webapp-api-protection": "content",
       "xcsh": "developer",
       "xcsh-action": "developer",
-      "xcsh-chrome-extension": "developer"
+      "xcsh-chrome-extension": "developer",
+      "canada": "content",
+      "custom-responses": "content"
     }
   }
 }
