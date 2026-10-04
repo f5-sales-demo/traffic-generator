@@ -35,6 +35,14 @@ class BoundaryTests(unittest.TestCase):
             root = pathlib.Path(tmp)
             runtime = root / "runtime"
             runtime.mkdir()
+            (root / "fixtures.json").write_text(
+                json.dumps(
+                    {
+                        "juice_email": "tgen@example.com",
+                        "juice_password": "Synthetic!123",
+                    }
+                )
+            )
             boundary = NetworkBoundary(
                 ROOT, {"domains": ["www.example.test", "api.example.test"]}, runtime
             )
