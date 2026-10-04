@@ -76,7 +76,15 @@ def command(
             "%{http_code} %{num_connects}\n",
             "-H",
             "Connection: keep-alive" if persistent else "Connection: close",
-            *([url] * count if persistent else [url]),
+            *(
+                [
+                    argument
+                    for _ in range(count)
+                    for argument in ("--output", "/dev/null", url)
+                ]
+                if persistent
+                else [url]
+            ),
         ]
     message = "undeclared native load tool"
     raise ValueError(message)
