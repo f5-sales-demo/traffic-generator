@@ -36,6 +36,8 @@ def command(
             "-t",
             "60",
             *([] if persistent else ["-disable-keepalive"]),
+            "-H",
+            "Connection: keep-alive" if persistent else "Connection: close",
             url,
         ]
     if tool == "wrk":
@@ -62,6 +64,8 @@ def command(
             "-s",
             "60",
             *(["-k"] if persistent else []),
+            "-H",
+            "Connection: keep-alive" if persistent else "Connection: close",
             url,
         ]
     if tool == "curl":
@@ -137,7 +141,13 @@ def run_vegeta(
                 "-timeout=60s",
                 "-keepalive=" + str(persistent).lower(),
             ],
-            input=("GET " + url + "\n").encode(),
+            input=(
+                "GET "
+                + url
+                + "\nConnection: "
+                + ("keep-alive" if persistent else "close")
+                + "\n"
+            ).encode(),
             stdout=stream,
             check=False,
         )
