@@ -51,8 +51,10 @@ def command(
             url,
         ]
     if tool == "ab":
+        url = url.replace("https://", "http://", 1)
         return [
             binary,
+            "-l",
             "-n",
             str(max(level, count)),
             "-c",
