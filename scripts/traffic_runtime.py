@@ -438,7 +438,11 @@ def connection_action_verification(
             result["connection_probe"] = (
                 {
                     "passed": connection_data.get("passed") is True,
-                    "claim": "native Masscan SYN/SYN-ACK and measured pacing",
+                    "claim": (
+                        "native Masscan SYN/SYN-ACK and measured pacing"
+                        if scenario.get("adapter") == "native-masscan"
+                        else "named native scanner report, scoped pacing and observed process cleanup"
+                    ),
                 }
                 if scenario.get("adapter") in ("native-masscan", "native-scanner")
                 else verify_connection_probe(scenario["id"], connection_data)
