@@ -25,6 +25,8 @@
     "web-app-attacks"
   ],
   "required_tools": [
+    "ffmpeg",
+    "ffprobe",
     "ab",
     "arjun",
     "bash",
@@ -75,6 +77,7 @@
     "zap"
   ],
   "support_files": [
+    "scripts/create_native_video.sh",
     "suites/csd-violations/scenarios.mjs",
     "suites/csd-violations/run.sh",
     "suites/parameter-words.txt",
@@ -5120,7 +5123,7 @@
       "suite": "crapi-exploits",
       "entrypoint": "suites/crapi-exploits/07-bfla-admin-video.sh",
       "kind": "shell",
-      "dependencies": ["bash", "curl", "python3"],
+      "dependencies": ["bash", "curl", "python3", "ffmpeg", "ffprobe"],
       "after": ["crapi-exploits/06-data-exposure-posts"],
       "target_paths": [
         "/crapi/health",
@@ -5368,7 +5371,7 @@
       "suite": "crapi-exploits",
       "entrypoint": "suites/crapi-exploits/13-command-injection-video.sh",
       "kind": "shell",
-      "dependencies": ["bash", "curl", "python3", "flock"],
+      "dependencies": ["bash", "curl", "python3", "flock", "ffmpeg", "ffprobe"],
       "after": ["crapi-exploits/12-sqli-apply-coupon"],
       "target_paths": [
         "/crapi/health",
