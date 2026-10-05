@@ -145,9 +145,7 @@ def test_role_mutation_rejects_missing_payload_or_failed_restoration(tmp_path):
             "source_commit": result["source_commit"],
             "artifact_sha256": result["artifact_sha256"],
         }
-        for i, role in enumerate(
-            ["Chef", "Admin", "Manager", "Manager", "Manager", "Chef"]
-        )
+        for i, role in enumerate(["Chef"] * 6)
     ]
     r = {
         "before": before,

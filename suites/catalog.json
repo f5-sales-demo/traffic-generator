@@ -19922,7 +19922,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_attacker",
+                "role": "Chef"
+              }
+            }
           },
           {
             "id": "role-1",
@@ -19934,7 +19942,12 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [422],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["detail"]
+            }
           },
           {
             "id": "role-2",
@@ -19946,7 +19959,12 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [422],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["detail"]
+            }
           },
           {
             "id": "role-3",
@@ -19958,7 +19976,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_attacker",
+                "role": "Chef"
+              }
+            }
           },
           {
             "id": "role-4",
@@ -19970,7 +19996,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_attacker",
+                "role": "Chef"
+              }
+            }
           },
           {
             "id": "role-5",
@@ -19982,7 +20016,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "username": "tgen_bola_attacker",
+                "role": "Chef"
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true

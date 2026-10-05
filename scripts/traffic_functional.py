@@ -183,10 +183,10 @@ def verify_role_mutation(scenario: dict, result: dict, directory: Path) -> dict:
     ]
     expected = {
         "role-0": "Chef",
-        "role-1": "Admin",
-        "role-2": "Manager",
-        "role-3": "Manager",
-        "role-4": "Manager",
+        "role-1": "Chef",
+        "role-2": "Chef",
+        "role-3": "Chef",
+        "role-4": "Chef",
         "role-5": "Chef",
     }
     return {
