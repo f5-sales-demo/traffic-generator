@@ -15,6 +15,8 @@ CONNECTION_LIMIT = 20
 MIN_RESOURCE_SAMPLES = 2
 SHA256_LENGTH = 64
 HTTP_OK = 200
+VIDEO_ATTEMPTS = 4
+HTTP_NOT_FOUND = 404
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -170,6 +172,35 @@ def verify_native_contract(scenario: dict, result: dict, directory: Path) -> dic
         and result.get("dispatch_contract_verified") is True,
         "behavior": contract["behavior"],
         "native_report_verified": True,
+    }
+
+
+def verify_video_deletion(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require four actual owned uploads, regular-user delete outcomes and native absence."""
+    evidence = json.loads((directory / "video-deletion-cleanup.json").read_text())
+    objects = evidence.get("objects", [])
+    return {
+        "passed": evidence.get("removed") is True
+        and evidence.get("owned_uploads") == VIDEO_ATTEMPTS
+        and len(objects) == VIDEO_ATTEMPTS
+        and {row.get("attempt") for row in objects} == {1, 2, 3, 4}
+        and all(
+            isinstance(row.get("video_id"), int)
+            and row["video_id"] > 0
+            and row.get("upload_status") in (200, 201)
+            and row.get("delete_status") in (200, 204)
+            and row.get("absent_status") == HTTP_NOT_FOUND
+            for row in objects
+        )
+        and evidence.get("source_commit") == result.get("source_commit")
+        and evidence.get("artifact_sha256") == result.get("artifact_sha256")
+        and result.get("disposable_video_cleanup") is True
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "owned_uploads": len(objects),
     }
 
 
@@ -598,6 +629,7 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
     specialized = {
+        "native-video-deletion": verify_video_deletion,
         "native-dvwa-csrf": verify_csrf,
         "native-role-mutation": verify_role_mutation,
         "native-scraper": verify_scraper,

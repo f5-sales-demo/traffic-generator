@@ -5371,6 +5371,10 @@
       "fixture_refresh": ["crapi"],
       "fixture_contract": {
         "remove_disposable_videos": true
+      },
+      "functional_contract": {
+        "verifier": "native-video-deletion",
+        "behavior": "Four synthetic owned videos are natively uploaded and deleted by the regular actor, then exact absence is read back for each object"
       }
     },
     {
