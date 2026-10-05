@@ -828,6 +828,10 @@ def _scenario(
         and result["http_requests"] == 0
     ):
         result["outcome"] = "fixture_failure"
+    if scenario.get("fixture_contract", {}).get("restore_signup"):
+        result["signup_restoration"] = boundary.recover_signup(directory)
+        if not result["signup_restoration"]:
+            result["outcome"] = "fixture_failure"
     result["functional_acceptance"] = verify_functional(
         scenario, result, responses, directory
     )

@@ -7,6 +7,7 @@ import shutil
 import socket
 import ssl
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -717,6 +718,28 @@ class NetworkBoundary:
                 **attack,
                 "elapsed": time.time() - self.state.started,
             }
+
+    def recover_signup(self, directory: Path) -> bool:
+        """Run only exact forced-command recovery outside the HTTP egress namespace."""
+        journal = directory / "fixture-journal.json"
+        if not journal.exists():
+            return False
+        environment = dict(
+            os.environ, TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json")
+        )
+        completed = subprocess.run(  # noqa: S603 - fixed helper and owned private directory
+            [
+                sys.executable,
+                str(self.root / "scripts/crapi_signup_fixture.py"),
+                "recover",
+                str(directory),
+            ],
+            env=environment,
+            capture_output=True,
+            check=False,
+            timeout=90,
+        )
+        return completed.returncode == 0
 
     def __exit__(self, *_: object) -> None:
         """Remove only this boundary's namespaces/rules and close every worker."""

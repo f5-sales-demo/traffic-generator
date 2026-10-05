@@ -6,6 +6,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 import uuid
 from pathlib import Path
@@ -201,10 +202,13 @@ def main() -> int:
     except (OSError, ValueError, KeyError, subprocess.SubprocessError):
         evidence["passed"] = False
     finally:
-        evidence["recovery"] = recover(directory)
+        # Host-side runtime performs forced-command SSH recovery after namespace execution.
         atomic_json(directory / "signup-functional.json", evidence)
     return int(not evidence["passed"])
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    if len(sys.argv) == JWT_PARTS and sys.argv[1] == "recover":
+        recover(Path(sys.argv[2]))
+    else:
+        raise SystemExit(main())

@@ -35,7 +35,7 @@ def test_failure_runs_exact_recovery_and_does_not_pass(tmp_path):
         patch.object(signup, "recover", return_value={"passed": True}) as recover,
     ):
         assert signup.main() == 1
-        recover.assert_called_once_with(tmp_path)
+        recover.assert_not_called()
         assert (
             json.loads((tmp_path / "signup-functional.json").read_text())["passed"]
             is False
