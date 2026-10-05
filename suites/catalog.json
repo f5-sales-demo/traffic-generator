@@ -6622,7 +6622,8 @@
       },
       "functional_contract": {
         "verifier": "native-dvga-pastes",
-        "behavior": "seven native stored-paste outcomes and exact owned removal"
+        "behavior": "seven native stored-paste outcomes and exact owned removal",
+        "waf_signatures": ["200000098", "200000125", "200001097", "200001130", "200001475", "200101351", "200101566", "200101607", "200101609", "200101615"]
       }
     },
     {
