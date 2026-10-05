@@ -179,7 +179,7 @@ def test_discovery_requires_native_report_identity_and_observed_cleanup(tmp_path
     }
     report = tmp_path / "subfinder-native.jsonl"
     report.write_text('{"host":"api.example.com","source":"crtsh"}\n')
-    evidence = {
+    evidence: dict = {
         "scenario": scenario["id"],
         "execution": "native-subfinder",
         "passed": True,
