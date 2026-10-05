@@ -438,3 +438,16 @@ def test_csrf_acceptance_requires_mutation_fresh_login_and_recovery(tmp_path):
     d["fresh_login"] = False
     p.write_text(json.dumps(d))
     assert not verify_csrf(s, r, tmp_path)["passed"]
+
+
+def test_composed_requires_declared_content_assertion_even_with_native_identity(
+    tmp_path,
+):
+    scenario, result, event = composed_fixture()
+    scenario["dispatch_contract"]["requirements"][0]["response_contract"] = {
+        "content_type": "application/json",
+        "json_keys": ["users"],
+    }
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    event["response_assertions"] = {"read": True}
+    assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]

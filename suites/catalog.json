@@ -5174,7 +5174,14 @@
             "path": "/crapi/workshop/api/mechanic/mechanic_report",
             "query_regex": "(?:^|&)report_id=\\d+",
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [401],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "message": "JWT Token required!"
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
@@ -5264,7 +5271,20 @@
             "minimum_dispatches": 1,
             "payload_class": "mechanic-data-exposure",
             "path": "/crapi/workshop/api/mechanic",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["mechanics", "previous_offset", "next_offset"],
+              "json_nonempty_lists": {
+                "mechanics": ["id", "mechanic_code", "user"]
+              },
+              "json_nested_list_matches": {
+                "mechanics": {
+                  "user.email": "[A-Za-z0-9._%+-]+@example\\.com"
+                }
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
