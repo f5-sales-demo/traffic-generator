@@ -601,17 +601,21 @@ def verify_responses(contract: dict, events: list[dict]) -> dict:
                 "passed": len(responses) >= requirement.get("minimum_dispatches", 1)
                 and all(
                     not event.get("transport_error")
-                    and event.get("status")
-                    in [
-                        *requirement["expected_statuses"],
-                        *(
-                            []
-                            if requirement.get("require_application_response")
-                            else [403, 429]
-                        ),
-                    ]
                     and (
-                        (
+                        event.get("control_attributed") is True
+                        or event.get("status")
+                        in [
+                            *requirement["expected_statuses"],
+                            *(
+                                []
+                                if requirement.get("require_application_response")
+                                else [403, 429]
+                            ),
+                        ]
+                    )
+                    and (
+                        event.get("control_attributed") is True
+                        or (
                             "response_contract" not in requirement
                             and str(event.get("status"))
                             not in requirement.get("response_contract_by_status", {})

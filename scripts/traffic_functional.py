@@ -9,7 +9,7 @@ from pathlib import Path
 from traffic_csd_functional import verify_csd_libraries
 from traffic_dispatch import verify_browser_actions
 from traffic_report import build_report
-from traffic_security import bot_attribution
+from traffic_security import bot_attribution, waf_attribution
 
 CREDENTIAL_COUNT = 15
 CONNECTION_LIMIT = 20
@@ -203,8 +203,18 @@ def verify_video_conversion(
             and all(
                 r.get("upstream_dispatched") is True
                 and not r.get("transport_error")
-                and r.get("response_assertions", {}).get(requirement["id"]) is True
-                and r.get("status") in requirement["expected_statuses"]
+                and (
+                    (
+                        r.get("response_assertions", {}).get(requirement["id"]) is True
+                        and r.get("status") in requirement["expected_statuses"]
+                    )
+                    or waf_attribution(
+                        r,
+                        result,
+                        directory,
+                        scenario["functional_contract"].get("waf_signatures", []),
+                    )
+                )
                 for r in rows
             )
         )

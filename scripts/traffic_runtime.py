@@ -35,6 +35,7 @@ from traffic_dispatch import (
 from traffic_functional import verify_functional
 from traffic_network import NetworkBoundary
 from traffic_report import build_report
+from traffic_security import attributed_responses
 from traffic_tool import native_binary
 
 sys.dont_write_bytecode = True
@@ -621,12 +622,9 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
             scenario["dispatch_contract"], events
         )
         result["dispatch_contract_verified"] = result["intended_dispatch"]["passed"]
-        response_path = directory / "response-events.jsonl"
+        response_rows = attributed_responses(scenario, result, directory)
         result["response_assertions"] = verify_responses(
-            scenario["dispatch_contract"],
-            [json.loads(line) for line in response_path.read_text().splitlines()]
-            if response_path.exists()
-            else [],
+            scenario["dispatch_contract"], response_rows
         )
         result["dispatch_contract_verified"] &= result["response_assertions"]["passed"]
         if result["outcome"] == "launched" and not result["dispatch_contract_verified"]:

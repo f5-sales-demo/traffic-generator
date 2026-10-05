@@ -112,3 +112,77 @@ def bot_attribution(
         )
     except (OSError, ValueError, KeyError, TypeError, IndexError):
         return False
+
+
+def waf_attribution(
+    response: dict, result: dict, directory: Path, signatures: list[str]
+) -> bool:
+    """Require actual request-bound enabled WAF signature and effective blocking configuration."""
+    path = directory / "control-attribution.json"
+    if not path.is_file() or path.is_symlink():
+        return False
+    try:
+        evidence = json.loads(path.read_text())
+        scope = evidence["scope"]
+        bounds = evidence["clock_bounds"]
+        firewall = evidence["firewall"]
+        if not (
+            all(key in response for key in RESPONSE_IDENTITY_FIELDS)
+            and len(response.get("payload_sha256", "")) == SHA256_LENGTH
+            and len(response.get("response_sha256", "")) == SHA256_LENGTH
+            and evidence.get("source_commit") == result.get("source_commit")
+            and evidence.get("artifact_sha256") == result.get("artifact_sha256")
+            and response.get("upstream_dispatched") is True
+            and response.get("status") == FORBIDDEN
+            and firewall.get("metadata", {}).get("name")
+            == scope["loadbalancer"] + "-waf"
+            and firewall.get("metadata", {}).get("namespace") == scope["namespace"]
+            and "blocking" in firewall["spec"]
+            and "monitoring" not in firewall["spec"]
+            and len(bounds) == PAIR_LENGTH
+            and -MAX_CLOCK_OFFSET <= bounds[0] <= bounds[1] <= MAX_CLOCK_OFFSET
+        ):
+            return False
+        checks = [
+            c
+            for c in evidence["checks"]
+            if request_identity(c["response"]) == request_identity(response)
+        ]
+        if len(checks) != 1:
+            return False
+        access = checks[0]["access"]
+        if not access.get("req_id") or not joined(access, response, scope, bounds):
+            return False
+        return any(
+            event.get("req_id") == access["req_id"]
+            and joined(event, response, scope, bounds)
+            and event.get("action") == "block"
+            and event.get("sec_event_type") == "waf_sec_event"
+            and event.get("sec_event_name") == "WAF"
+            and event.get("app_firewall_name") == scope["loadbalancer"] + "-waf"
+            and event.get("enforcement_mode") == "Blocking"
+            and event.get("waf_mode") == "block"
+            and event.get("recommended_action") == "block"
+            and any(
+                str(sig.get("id")) in signatures and sig.get("state") == "Enabled"
+                for sig in event.get("signatures", [])
+            )
+            for event in checks[0]["events"]
+        )
+    except (OSError, ValueError, KeyError, TypeError, IndexError):
+        return False
+
+
+def attributed_responses(scenario: dict, result: dict, directory: Path) -> list[dict]:
+    """Read actual response receipts and mark only fully validated WAF evidence."""
+    path = directory / "response-events.jsonl"
+    rows = (
+        [json.loads(line) for line in path.read_text().splitlines()]
+        if path.exists()
+        else []
+    )
+    signatures = scenario.get("functional_contract", {}).get("waf_signatures", [])
+    for row in rows:
+        if waf_attribution(row, result, directory, signatures):
+            row["control_attributed"] = True
+    return rows

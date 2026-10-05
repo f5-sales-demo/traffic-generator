@@ -5696,6 +5696,7 @@
       "fixture_refresh": ["crapi"],
       "functional_contract": {
         "verifier": "native-video-conversion",
+        "waf_signatures": ["200010176", "200003909", "200003915"],
         "behavior": "All native video parameter updates and conversion triggers have exact protocol evidence and original media/name/parameter restoration; command execution is not inferred"
       }
     },

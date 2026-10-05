@@ -15,7 +15,7 @@ from traffic_functional import (
     verify_load,
     verify_scraper,
 )
-from traffic_security import bot_attribution
+from traffic_security import bot_attribution, waf_attribution
 
 
 def test_load_rejects_missing_workers_and_wrong_content(tmp_path):
@@ -473,3 +473,86 @@ def test_native_mechanic_shape_uses_nested_objects_and_string_identity():
     assert response_content_matches(contract, "application/json", json.dumps(body))
     body["mechanics"][0]["user"] = {}
     assert not response_content_matches(contract, "application/json", json.dumps(body))
+
+
+def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
+
+    response: dict = {
+        "scenario": "bot-simulation/04-rapid-browsing",
+        "domain": "www.example.com",
+        "path": "/juice-shop/",
+        "method": "GET",
+        "status": 403,
+        "synthetic_identity": "showcase-" + "a" * 32 + "-rapid-ua-3",
+        "sent_at": 10.0,
+        "received_at": 11.0,
+        "upstream_dispatched": True,
+        "payload_sha256": "a" * 64,
+        "response_sha256": "b" * 64,
+    }
+    action = {
+        "id": "ua-3-route-0",
+        "performed": True,
+        "rendered": False,
+        "mitigated": True,
+        "status": 403,
+        "fresh_document_response": True,
+    }
+    event = {
+        "req_id": "synthetic-request",
+        "namespace": "example-waap",
+        "vh_name": "ves-io-http-loadbalancer-example-waap",
+        "domain": "www.example.com",
+        "req_path": "/juice-shop/",
+        "method": "GET",
+        "user": "Header-X-Mud-User-" + response["synthetic_identity"],
+        "time": "1970-01-01T00:00:10.500Z",
+        "rsp_code": "403",
+        "action": "block",
+        "sec_event_type": "waf_sec_event",
+        "sec_event_name": "WAF",
+        "app_firewall_name": "example-waap-waf",
+        "enforcement_mode": "Blocking",
+        "waf_mode": "block",
+        "recommended_action": "block",
+        "bot_info": {
+            "classification": "malicious",
+            "anomaly": "Search Engine Verification Failed",
+            "type": "Search Engine",
+            "name": "Google",
+        },
+    }
+    event["signatures"] = [{"id": "200003915", "state": "Enabled"}]
+    access = {**event}
+    evidence: dict = {
+        "source_commit": "c" * 40,
+        "artifact_sha256": "d" * 64,
+        "scope": {
+            "namespace": "example-waap",
+            "loadbalancer": "example-waap",
+            "domain": "www.example.com",
+        },
+        "clock_bounds": [-1, 1],
+        "firewall": {
+            "metadata": {"name": "example-waap-waf", "namespace": "example-waap"},
+            "spec": {"blocking": {}, "default_bot_setting": {}},
+        },
+        "checks": [
+            {
+                "response": response,
+                "action_id": action["id"],
+                "access": access,
+                "events": [event],
+            }
+        ],
+    }
+    result = {"source_commit": "c" * 40, "artifact_sha256": "d" * 64}
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert waf_attribution(response, result, tmp_path, ["200003915"])
+    event["req_id"] = "foreign-request"
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, ["200003915"])
+    event["req_id"] = "synthetic-request"
+    evidence["firewall"]["spec"] = {"monitoring": {}}
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, ["200003915"])
