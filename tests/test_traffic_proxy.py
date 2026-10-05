@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 import pathlib
+import re
 import sys
 import tempfile
 import time
@@ -55,6 +56,10 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                     ),
                 )
                 await budget.request(flow)
+                assert re.fullmatch(
+                    r"showcase-[0-9a-f]{32}-[a-z0-9-]+",
+                    flow.request.headers["X-MUD-User"],
+                )
                 dispatched.append(time.monotonic())
 
             pending = [asyncio.create_task(request(i)) for i in range(21)]

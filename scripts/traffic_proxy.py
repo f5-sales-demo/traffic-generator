@@ -9,6 +9,7 @@ import os
 import re
 import ssl
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -36,6 +37,7 @@ class Budget:
         self.domains = json.loads(os.environ["TGEN_DOMAINS"])
         self.metrics_path = Path(os.environ["TGEN_PROXY_METRICS"])
         self.counts: dict[str, Any] = {
+            "run_identity": uuid.uuid4().hex,
             "attack_requests": 0,
             "scenario_requests": 0,
             "filler_requests": 0,
@@ -147,7 +149,12 @@ class Budget:
         flow.request.scheme = "https" if flow.request.port == HTTPS_PORT else "http"
         if "X-MUD-User" not in flow.request.headers:
             flow.request.headers["X-MUD-User"] = (
-                "waap-scenario-" + self.current_scenario() + "-" + host
+                "showcase-"
+                + self.counts["run_identity"]
+                + "-scenario-"
+                + self.current_scenario()
+                + "-"
+                + host.replace(".", "-")
             )
         try:
             current = json.loads(self.scenario_file.read_text())
