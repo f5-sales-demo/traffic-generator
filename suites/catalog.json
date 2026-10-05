@@ -6215,9 +6215,16 @@
       "suite": "dvga-exploits",
       "entrypoint": "suites/dvga-exploits/02-deep-recursion.sh",
       "kind": "shell",
-      "dependencies": ["bash", "curl"],
-      "after": ["dvga-exploits/01-batch-query-dos"],
-      "target_paths": ["/dvga/graphql"],
+      "dependencies": [
+        "bash",
+        "curl"
+      ],
+      "after": [
+        "dvga-exploits/01-batch-query-dos"
+      ],
+      "target_paths": [
+        "/dvga/graphql"
+      ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
@@ -6225,25 +6232,60 @@
       "dispatch_contract": {
         "requirements": [
           {
-            "id": "recursive-query",
-            "graphql_operation": "owner\\{pastes\\{owner",
-            "minimum_dispatches": 3,
+            "id": "depth-one",
+            "graphql_operation": "^\\{pastes\\{title\\}\\}$",
+            "minimum_dispatches": 1,
             "payload_class": "graphql-recursion",
             "method": "POST",
             "path": "/dvga/graphql",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "graphql_list_field": "pastes",
+              "graphql_list_fields": [
+                "title"
+              ]
+            }
+          },
+          {
+            "id": "nested-depths",
+            "graphql_operation": "owner",
+            "minimum_dispatches": 9,
+            "payload_class": "graphql-recursion",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "graphql_list_field": "pastes",
+              "graphql_list_fields": [
+                "owner"
+              ]
             }
           }
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"],
+      "prerequisites": [
+        "seeded-dvga-pastes"
+      ],
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Native GraphQL paste reads return all selected fields; queries retain audit telemetry without changing application fixtures",
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -6251,15 +6293,44 @@
       "suite": "dvga-exploits",
       "entrypoint": "suites/dvga-exploits/03-field-duplication.sh",
       "kind": "shell",
-      "dependencies": ["bash", "curl"],
-      "after": ["dvga-exploits/02-deep-recursion"],
-      "target_paths": ["/dvga/graphql"],
+      "dependencies": [
+        "bash",
+        "curl"
+      ],
+      "after": [
+        "dvga-exploits/02-deep-recursion"
+      ],
+      "target_paths": [
+        "/dvga/graphql"
+      ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
       "timeout_seconds": 900,
       "dispatch_contract": {
         "requirements": [
+          {
+            "id": "single-field",
+            "graphql_operation": "^\\{pastes\\{ title\\}\\}$",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-duplicate-fields",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "graphql_list_field": "pastes",
+              "graphql_list_fields": [
+                "title"
+              ]
+            }
+          },
           {
             "id": "repeated-fields",
             "graphql_operation": "title\\s+title",
@@ -6269,6 +6340,17 @@
             "path": "/dvga/graphql",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "graphql_list_field": "pastes",
+              "graphql_list_fields": [
+                "title"
+              ]
             }
           },
           {
@@ -6280,17 +6362,31 @@
             "path": "/dvga/graphql",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "graphql_list_field": "pastes",
+              "graphql_list_fields": [
+                "a1",
+                "a50"
+              ]
             }
           }
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"],
+      "prerequisites": [
+        "seeded-dvga-pastes"
+      ],
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Native GraphQL paste reads return all selected fields; queries retain audit telemetry without changing application fixtures",
+        "mutation_policy": "read-only"
       }
     },
     {

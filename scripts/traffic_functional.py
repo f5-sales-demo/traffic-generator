@@ -195,6 +195,11 @@ def verify_composed_native(
                     and r.get("native_response_identity") is True
                     and r.get("status") in requirement.get("expected_statuses", [])
                     and (
+                        "response_contract" not in requirement
+                        or r.get("response_assertions", {}).get(requirement["id"])
+                        is True
+                    )
+                    and (
                         r.get("status") not in (403, 429)
                         or r.get("status_specific_assertions", {}).get(
                             requirement["id"]

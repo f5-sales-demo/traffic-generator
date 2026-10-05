@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
+from traffic_dispatch import response_content_matches
 from traffic_functional import verify_composed_native, verify_functional, verify_load
 from traffic_security import bot_attribution
 
@@ -342,3 +343,23 @@ def test_bot_denial_requires_exact_request_security_and_effective_firewall(tmp_p
     evidence["firewall"]["spec"] = {"monitoring": {}}
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not bot_attribution(action, response, result, tmp_path)
+
+
+def test_graphql_read_contracts_require_native_data_not_generic_errors():
+    contract = {
+        "content_type": "application/json",
+        "graphql_list_field": "pastes",
+        "graphql_list_fields": ["title"],
+    }
+    assert response_content_matches(
+        contract, "application/json", '{"data":{"pastes":[{"title":"synthetic"}]}}'
+    )
+    assert not response_content_matches(
+        contract, "application/json", '{"errors":[{"message":"wrong query"}]}'
+    )
+    assert not response_content_matches(
+        contract, "application/json", '{"data":{"pastes":[]}}'
+    )
+    assert not response_content_matches(
+        contract, "application/json", '{"data":{"pastes":[{"unrelated":true}]}}'
+    )

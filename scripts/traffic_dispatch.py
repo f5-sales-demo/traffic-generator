@@ -491,19 +491,43 @@ def nested_list_matches(document: dict, specification: dict) -> bool:
     return True
 
 
+def graphql_list_matches(contract: dict, body: str) -> bool:
+    """Require nonempty native GraphQL objects and every declared selected field."""
+    try:
+        document = json.loads(body)
+    except ValueError:
+        return False
+    if not isinstance(document, dict) or document.get("errors"):
+        return False
+    data = document.get("data")
+    rows = data.get(contract["graphql_list_field"]) if isinstance(data, dict) else None
+    return (
+        isinstance(rows, list)
+        and bool(rows)
+        and all(
+            isinstance(row, dict)
+            and all(
+                field in row and row[field] is not None
+                for field in contract["graphql_list_fields"]
+            )
+            for row in rows
+        )
+    )
+
+
 def response_content_matches(contract: dict, content_type: str, body: str) -> bool:
     """Evaluate transient response content and retain only assertion booleans."""
     if content_type.split(";", 1)[0] != contract.get("content_type") or any(
         term not in body for term in contract.get("text_contains", [])
     ):
         return False
-    if "graphql_data_field" in contract or "graphql_response_fields" in contract:
-        matcher = (
-            graphql_body_matches
-            if "graphql_data_field" in contract
-            else graphql_mixed_body_matches
-        )
-        return matcher(contract, body)
+    for field, matcher in (
+        ("graphql_list_field", graphql_list_matches),
+        ("graphql_data_field", graphql_body_matches),
+        ("graphql_response_fields", graphql_mixed_body_matches),
+    ):
+        if field in contract:
+            return matcher(contract, body)
     if any(
         key in contract
         for key in (
