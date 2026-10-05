@@ -69,7 +69,17 @@ def main() -> int:
         restored = all(after.get(field) == before[field] for field in FIELDS)
         receipt = directory / "fixture-restoration.json"
         receipt.write_text(
-            json.dumps({"restored": restored, "actor": name, "fields": list(FIELDS)})
+            json.dumps(
+                {
+                    "restored": restored,
+                    "actor": name,
+                    "fields": list(FIELDS),
+                    "before": before,
+                    "after": {field: after.get(field) for field in FIELDS},
+                    "source_commit": os.environ.get("SOURCE_COMMIT"),
+                    "artifact_sha256": os.environ.get("TGEN_ARTIFACT_SHA256"),
+                }
+            )
         )
         receipt.chmod(0o600)
         if not restored:

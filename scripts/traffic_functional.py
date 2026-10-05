@@ -173,6 +173,47 @@ def verify_native_contract(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
+def verify_role_mutation(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require every actual role payload readback and exact original profile restoration."""
+    before = json.loads((directory / "restaurant-role-snapshot.json").read_text())
+    recovery = json.loads((directory / "fixture-restoration.json").read_text())
+    rows = [
+        json.loads(line)
+        for line in (directory / "role-native-outcomes.jsonl").read_text().splitlines()
+    ]
+    expected = {
+        "role-0": "Chef",
+        "role-1": "Admin",
+        "role-2": "Manager",
+        "role-3": "Manager",
+        "role-4": "Manager",
+        "role-5": "Chef",
+    }
+    return {
+        "passed": before.get("username", "").startswith("tgen_bola_")
+        and len(rows) == len(expected)
+        and {row.get("id") for row in rows} == set(expected)
+        and all(
+            row.get("profile", {}).get("username") == before["username"]
+            and row["profile"].get("role") == expected[row["id"]]
+            and row.get("source_commit") == result.get("source_commit")
+            and row.get("artifact_sha256") == result.get("artifact_sha256")
+            for row in rows
+        )
+        and recovery.get("before") == recovery.get("after") == before
+        and recovery.get("restored") is True
+        and recovery.get("source_commit") == result.get("source_commit")
+        and recovery.get("artifact_sha256") == result.get("artifact_sha256")
+        and result.get("fixture_restoration") is True
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "native_payloads": len(rows),
+    }
+
+
 def verify_profile_restoration(scenario: dict, result: dict, directory: Path) -> bool:
     """Require exact actor snapshot and native after-readback coverage."""
     try:
@@ -538,6 +579,8 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-role-mutation":
+        return verify_role_mutation(scenario, result, directory)
     if contract.get("verifier") == "native-scraper":
         return verify_scraper(scenario, result, directory)
     if contract.get("verifier") == "native-browser-routes":

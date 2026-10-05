@@ -19987,7 +19987,11 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "functional_contract": {
+        "verifier": "native-role-mutation",
+        "behavior": "Every role payload has an actual native profile readback and exact original synthetic actor restoration"
+      }
     },
     {
       "id": "restaurant-exploits/05-bfla-privilege",
