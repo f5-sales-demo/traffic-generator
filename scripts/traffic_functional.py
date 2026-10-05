@@ -12,6 +12,7 @@ from traffic_report import build_report
 CREDENTIAL_COUNT = 15
 CONNECTION_LIMIT = 20
 MIN_RESOURCE_SAMPLES = 2
+SHA256_LENGTH = 64
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -331,6 +332,42 @@ def verify_display_browser(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
+def verify_discovery(scenario: dict, result: dict, directory: Path) -> dict:
+    """Read real passive discovery rows and require source-bound native process cleanup."""
+    evidence = json.loads((directory / "native-discovery.json").read_text())
+    report = (directory / "subfinder-native.jsonl").read_bytes()
+    rows = [json.loads(line) for line in report.splitlines() if line.strip()]
+    process = evidence.get("process", {})
+    domain = evidence.get("authorized_domain", "")
+    return {
+        "passed": bool(domain)
+        and bool(rows)
+        and evidence.get("passed") is True
+        and evidence.get("scenario") == scenario["id"]
+        and evidence.get("execution") == "native-subfinder"
+        and evidence.get("source_commit") == result.get("source_commit")
+        and evidence.get("artifact_sha256") == result.get("artifact_sha256")
+        and evidence.get("report_sha256") == hashlib.sha256(report).hexdigest()
+        and len(evidence.get("binary_sha256", "")) == SHA256_LENGTH
+        and len(rows) == evidence.get("discoveries")
+        and all(
+            isinstance(row, dict)
+            and row.get("host", "").endswith("." + domain)
+            and row.get("source")
+            for row in rows
+        )
+        and process.get("exit_code") == 0
+        and process.get("timed_out") is False
+        and process.get("observed_process_count", 0) > 0
+        and process.get("connections_closed") is True
+        and process.get("remaining_after_cleanup") == []
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "claim": "passive native discovery only; discovered hosts never scanned",
+    }
+
+
 def verify_current_report(scenario: dict, result: dict, directory: Path) -> dict:
     """Recompute current-pass dependencies against installed source and artifact bytes."""
     dependencies = scenario["report_contract"]["dependencies"]
@@ -366,6 +403,8 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-subfinder":
+        return verify_discovery(scenario, result, directory)
     if contract.get("verifier") == "current-pass-report":
         return verify_current_report(scenario, result, directory)
     if contract.get("verifier") == "native-browser-display":

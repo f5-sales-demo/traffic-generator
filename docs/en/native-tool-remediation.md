@@ -12,7 +12,7 @@ Every executable catalog entry must run its declared native tool and retain actu
 | VAmPI auth failure produced dummy tokens | Fail the prerequisite when real authentication is unavailable | Existing source checks; live prerequisite checks pending |
 | SQLMap auth failure produced fabricated session ID | Require actual origin-issued DVWA session | Installed checks pending |
 | CSD loader supplied no-op JavaScript | Pinned actual library assets and executable identity checks | Passed on earlier immutable candidate |
-| crAPI registration claims retrieved OTP while assigning 0000 | Fabricated OTP removed; isolated native registration and actual password-reset OTP workflow still required | Fails full acceptance; existing scenario is not qualified |
+| crAPI registration claims retrieved OTP while assigning 0000 | Native isolated registration, authentication, vehicle and reset OTP workflow | `6aa8bbc` installed slice passed with exact account, vehicle and mail cleanup; broader catalog acceptance pending |
 | Optional native tool fallbacks and missing Lua phases | Mandatory native dependency gates | Alternate load branches removed; complete native phase qualification in progress |
 
 Reports and source checks are not complete functional qualification. Preserve all failed evidence. No task is complete until source, immutable installation and required live checks pass. CSD enforcement remains disabled.
@@ -35,3 +35,5 @@ On installed generator `312f665`, keepalive and VM benchmark adapters completed 
 observed process cleanup, zero transport failures and zero cancellations. Both receipts remain functionally
 unqualified because full phase, content and host comparison contracts are incomplete. Private receipt:
 `resume-native-followups/pass-focused-1791121335656328761/receipt.json`.
+
+Source-bound functional checks now reject unexpected statuses, absent upstream dispatch, generic denial bodies and unobserved recovery. Nested child receipts carry functional results, and aggregate reports recompute dependency qualification from current-pass installed source/artifact evidence. The full catalog remains unqualified.

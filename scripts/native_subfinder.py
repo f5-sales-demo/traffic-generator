@@ -4,10 +4,10 @@ import hashlib
 import json
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
+from native_scanner_process import run_scanner
 from traffic_common import atomic_json
 
 
@@ -23,7 +23,9 @@ def main() -> int:
     if binary is None:
         message = "native Subfinder missing"
         raise ValueError(message)
-    result = subprocess.run(  # noqa: S603 - scoped native passive discovery
+    report = directory / "subfinder-native.jsonl"
+    errors = directory / "subfinder-native.log"
+    process = run_scanner(
         [
             binary,
             "-d",
@@ -37,20 +39,19 @@ def main() -> int:
             "-max-time",
             "1",
         ],
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=90,
+        dict(os.environ),
+        report,
+        90,
+        stderr_path=errors,
     )
-    report = directory / "subfinder-native.jsonl"
-    report.write_text(result.stdout)
-    report.chmod(0o600)
-    errors = directory / "subfinder-native.log"
-    errors.write_text(result.stderr)
-    errors.chmod(0o600)
-    rows = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
+    rows = [
+        json.loads(line) for line in report.read_text().splitlines() if line.strip()
+    ]
     passed = (
-        result.returncode == 0
+        process["exit_code"] == 0
+        and process["timed_out"] is False
+        and process["connections_closed"] is True
+        and process["remaining_after_cleanup"] == []
         and bool(rows)
         and all(
             row.get("host", "").endswith("." + domain) and row.get("source")
@@ -64,6 +65,8 @@ def main() -> int:
             "execution": "native-subfinder",
             "passed": passed,
             "discoveries": len(rows),
+            "authorized_domain": domain,
+            "process": process,
             "report_sha256": hashlib.sha256(report.read_bytes()).hexdigest(),
             "binary_sha256": hashlib.sha256(Path(binary).read_bytes()).hexdigest(),
             "source_commit": os.environ["SOURCE_COMMIT"],

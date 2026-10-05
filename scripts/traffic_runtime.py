@@ -21,6 +21,7 @@ from crapi_otp_fixture import verify_restoration
 from scanner_phase_contract import verify_scanner_phases
 from stress_reports import verify_native_reports
 from traffic_catalog import load_catalog, readiness
+from traffic_command import scenario_command
 from traffic_common import atomic_json, terminate
 from traffic_dispatch import (
     verify_browser_actions,
@@ -267,46 +268,6 @@ def evidence_monitor(
         return None
 
     return check
-
-
-def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
-    """Invoke native tools through explicit scoped adapters and shared pacing."""
-    adapters = {
-        "dynamic-cache": "traffic_cache.py",
-        "native-load": "native_load.py",
-        "bounded-multiclient": "traffic_multiclient.py",
-        "native-masscan": "native_masscan.py",
-        "native-scanner": "native_scanners.py",
-        "native-subfinder": "native_subfinder.py",
-        "native-slow-headers": "native_slow_headers.py",
-    }
-    if scenario.get("adapter") in adapters:
-        return [
-            "python3",
-            str(root / "scripts" / adapters[scenario["adapter"]]),
-            scenario["id"],
-            domain,
-        ]
-    if "report_contract" in scenario:
-        return ["python3", str(root / "scripts/traffic_report.py"), scenario["id"]]
-    if scenario["budget"] == "connection":
-        return [
-            "python3",
-            str(root / "scripts/traffic_connections.py"),
-            scenario["id"],
-            domain,
-        ]
-    if scenario["kind"] == "csd-browser":
-        return [
-            "node",
-            str(root / "suites/csd-violations/azure.mjs"),
-            scenario["scenario"],
-        ]
-    return [
-        "node" if scenario["kind"] == "javascript" else "bash",
-        str(root / scenario["entrypoint"]),
-        domain,
-    ]
 
 
 def run_nested(root: Path, scenarios: list[dict]) -> int:

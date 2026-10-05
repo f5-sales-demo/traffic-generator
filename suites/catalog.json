@@ -18519,6 +18519,10 @@
       "adapter": "native-subfinder",
       "report_contract": {
         "native_discovery": true
+      },
+      "functional_contract": {
+        "verifier": "native-subfinder",
+        "behavior": "Native passive discovery rows remain within the authorized root and bind report bytes, binary provenance, installed source and observed process cleanup"
       }
     },
     {

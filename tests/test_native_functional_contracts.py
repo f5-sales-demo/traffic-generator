@@ -102,7 +102,10 @@ def test_composed_restoration_label_requires_observed_recovery(tmp_path):
     scenario, result, event = composed_fixture()
     scenario["functional_contract"]["mutation_policy"] = "journaled-restoration"
     assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
-    scenario["functional_contract"]["restoration_fields"] = ["video_restoration", "otp_restoration"]
+    scenario["functional_contract"]["restoration_fields"] = [
+        "video_restoration",
+        "otp_restoration",
+    ]
     result["video_restoration"] = True
     assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
     result["otp_restoration"] = True
@@ -158,3 +161,51 @@ def test_report_functional_acceptance_uses_current_dependency_receipts(tmp_path)
         receipt["source_commit"] = "c" * 40
         path.write_text(json.dumps(receipt))
         assert not verify_functional(scenario, result, [], directory)["passed"]
+
+
+def test_discovery_requires_native_report_identity_and_observed_cleanup(tmp_path):
+    scenario = {
+        "id": "reconnaissance/05-subfinder-enum",
+        "functional_contract": {
+            "verifier": "native-subfinder",
+            "behavior": "passive discovery",
+        },
+    }
+    result = {
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+    }
+    report = tmp_path / "subfinder-native.jsonl"
+    report.write_text('{"host":"api.example.com","source":"crtsh"}\n')
+    evidence = {
+        "scenario": scenario["id"],
+        "execution": "native-subfinder",
+        "passed": True,
+        "source_commit": result["source_commit"],
+        "artifact_sha256": result["artifact_sha256"],
+        "authorized_domain": "example.com",
+        "discoveries": 1,
+        "report_sha256": hashlib.sha256(report.read_bytes()).hexdigest(),
+        "binary_sha256": "c" * 64,
+        "process": {
+            "exit_code": 0,
+            "timed_out": False,
+            "observed_process_count": 1,
+            "connections_closed": True,
+            "remaining_after_cleanup": [],
+        },
+    }
+    receipt = tmp_path / "native-discovery.json"
+    receipt.write_text(json.dumps(evidence))
+    assert verify_functional(scenario, result, [], tmp_path)["passed"]
+    report.write_text('{"host":"foreign.invalid","source":"crtsh"}\n')
+    evidence["report_sha256"] = hashlib.sha256(report.read_bytes()).hexdigest()
+    receipt.write_text(json.dumps(evidence))
+    assert not verify_functional(scenario, result, [], tmp_path)["passed"]
+    report.write_text('{"host":"api.example.com","source":"crtsh"}\n')
+    evidence["report_sha256"] = hashlib.sha256(report.read_bytes()).hexdigest()
+    evidence["process"]["timed_out"] = True
+    receipt.write_text(json.dumps(evidence))
+    assert not verify_functional(scenario, result, [], tmp_path)["passed"]
