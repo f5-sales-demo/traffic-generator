@@ -1,7 +1,7 @@
 ---
 name: Documentation
-description: Suggest a documentation improvement or report missing docs
-labels: ["documentation"]
+about: Suggest a documentation improvement or report missing docs
+labels: documentation
 ---
 
 ## What Needs to Be Documented
