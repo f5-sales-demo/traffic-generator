@@ -5277,7 +5277,7 @@
               "content_type": "application/json",
               "json_keys": ["mechanics", "previous_offset", "next_offset"],
               "json_nonempty_lists": {
-                "mechanics": ["id", "mechanic_code", "user"]
+                "mechanics": ["mechanic_code"]
               },
               "json_nested_list_matches": {
                 "mechanics": {

@@ -451,3 +451,25 @@ def test_composed_requires_declared_content_assertion_even_with_native_identity(
     assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
     event["response_assertions"] = {"read": True}
     assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+
+
+def test_native_mechanic_shape_uses_nested_objects_and_string_identity():
+    contract = {
+        "content_type": "application/json",
+        "json_nonempty_lists": {"mechanics": ["mechanic_code"]},
+        "json_nested_list_matches": {
+            "mechanics": {"user.email": r"[A-Za-z0-9._%+-]+@example\.com"}
+        },
+    }
+    body = {
+        "mechanics": [
+            {
+                "id": 1,
+                "mechanic_code": "TRAC_EXAMPLE",
+                "user": {"email": "mechanic@example.com"},
+            }
+        ]
+    }
+    assert response_content_matches(contract, "application/json", json.dumps(body))
+    body["mechanics"][0]["user"] = {}
+    assert not response_content_matches(contract, "application/json", json.dumps(body))
