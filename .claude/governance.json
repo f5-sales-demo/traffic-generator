@@ -222,6 +222,7 @@
       "origin-server": "content",
       "starlight-llms-txt": "developer",
       "starlight-mega-menu": "developer",
+      "statistics": "content",
       "terraform-provider-xcsh": "developer",
       "traffic-generator": "content",
       "vscode-xcsh": "developer",

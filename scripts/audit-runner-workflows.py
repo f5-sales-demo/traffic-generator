@@ -212,6 +212,7 @@ MANAGED_ARC_COHORT = frozenset(
         "observability",
         "origin-server",
         "starlight-mega-menu",
+        "statistics",
         "traffic-generator",
         "vscode-xcsh",
         "was",
