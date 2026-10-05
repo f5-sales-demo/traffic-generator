@@ -225,7 +225,6 @@ MANAGED_ARC_COHORT = frozenset(
         "starlight-mega-menu",
         "traffic-generator",
         "vscode-xcsh",
-        "waf",
         "was",
         "webapp-api-protection",
         "xcsh-action",

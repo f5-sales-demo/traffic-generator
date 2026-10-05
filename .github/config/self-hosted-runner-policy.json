@@ -786,14 +786,6 @@
         }
       }
     },
-    "f5-sales-demo/waf": {
-      ".github/workflows/workflow-security-audit.yml": {
-        "workflow-security-audit": {
-          "runs_on": "ubuntu-latest",
-          "reason": "read-only pull request workflow security audit"
-        }
-      }
-    },
     "f5-sales-demo/was": {
       ".github/workflows/workflow-security-audit.yml": {
         "workflow-security-audit": {
@@ -1323,20 +1315,6 @@
       }
     },
     "f5-sales-demo/vscode-xcsh": {
-      "runner": {
-        "arc_scale_sets": {
-          "socketless": {
-            "label": "managed-socketless",
-            "profile": "ubuntu-24.04"
-          },
-          "container-build": {
-            "label": "managed-container-build",
-            "profile": "container-build"
-          }
-        }
-      }
-    },
-    "f5-sales-demo/waf": {
       "runner": {
         "arc_scale_sets": {
           "socketless": {

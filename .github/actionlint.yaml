@@ -49,7 +49,6 @@ self-hosted-runner:
     - traffic-generator
     - ubuntu-24.04-arm
     - vscode-xcsh
-    - waf
     - was
     - webapp-api-protection
     - xcsh
