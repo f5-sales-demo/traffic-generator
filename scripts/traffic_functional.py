@@ -236,7 +236,8 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
         return verify_composed_native(scenario, result, responses, directory)
     if contract.get("verifier") == "native-crapi-signup":
         evidence = json.loads((directory / "signup-functional.json").read_text())
-        recovery = json.loads((directory / "fixture-recovery-receipt.json").read_text())
+        path = directory / "fixture-recovery-receipt.json"
+        recovery = json.loads(path.read_text()) if path.exists() else {"passed": False}
         return {
             "passed": evidence.get("passed") is True
             and recovery.get("passed") is True
