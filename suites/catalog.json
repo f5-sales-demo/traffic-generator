@@ -6452,9 +6452,18 @@
       "suite": "dvga-exploits",
       "entrypoint": "suites/dvga-exploits/05-xss-createpaste.sh",
       "kind": "shell",
-      "dependencies": ["bash", "curl", "jq", "python3"],
-      "after": ["dvga-exploits/04-sqli-filter"],
-      "target_paths": ["/dvga/graphql"],
+      "dependencies": [
+        "bash",
+        "curl",
+        "jq",
+        "python3"
+      ],
+      "after": [
+        "dvga-exploits/04-sqli-filter"
+      ],
+      "target_paths": [
+        "/dvga/graphql"
+      ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
@@ -6462,21 +6471,159 @@
       "dispatch_contract": {
         "requirements": [
           {
-            "id": "xss-mutation",
-            "graphql_operation": "createPaste\\(.*(?:onerror|script|onload|javascript|constructor)",
-            "minimum_dispatches": 7,
+            "id": "xss-0",
+            "graphql_operation": "createPaste\\(title:\"tgen-paste-[a-f0-9]{32}-0\",content:.*(?:onerror|script|onload|javascript|constructor)",
+            "minimum_dispatches": 1,
             "payload_class": "graphql-stored-xss",
             "method": "POST",
             "path": "/dvga/graphql",
             "headers": {
               "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": [
+                "data"
+              ]
+            }
+          },
+          {
+            "id": "xss-1",
+            "graphql_operation": "createPaste\\(title:\"tgen-paste-[a-f0-9]{32}-1\",content:.*(?:onerror|script|onload|javascript|constructor)",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-stored-xss",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": [
+                "data"
+              ]
+            }
+          },
+          {
+            "id": "xss-2",
+            "graphql_operation": "createPaste\\(title:\"tgen-paste-[a-f0-9]{32}-2\",content:.*(?:onerror|script|onload|javascript|constructor)",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-stored-xss",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": [
+                "data"
+              ]
+            }
+          },
+          {
+            "id": "xss-3",
+            "graphql_operation": "createPaste\\(title:\"tgen-paste-[a-f0-9]{32}-3\",content:.*(?:onerror|script|onload|javascript|constructor)",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-stored-xss",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": [
+                "data"
+              ]
+            }
+          },
+          {
+            "id": "xss-4",
+            "graphql_operation": "createPaste\\(title:\"tgen-paste-[a-f0-9]{32}-4\",content:.*(?:onerror|script|onload|javascript|constructor)",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-stored-xss",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": [
+                "data"
+              ]
+            }
+          },
+          {
+            "id": "xss-5",
+            "graphql_operation": "createPaste\\(title:\"tgen-paste-[a-f0-9]{32}-5\",content:.*(?:onerror|script|onload|javascript|constructor)",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-stored-xss",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": [
+                "data"
+              ]
+            }
+          },
+          {
+            "id": "xss-6",
+            "graphql_operation": "createPaste\\(title:\"tgen-paste-[a-f0-9]{32}-6\",content:.*(?:onerror|script|onload|javascript|constructor)",
+            "minimum_dispatches": 1,
+            "payload_class": "graphql-stored-xss",
+            "method": "POST",
+            "path": "/dvga/graphql",
+            "headers": {
+              "content-type": "application/json"
+            },
+            "expected_statuses": [
+              200
+            ],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": [
+                "data"
+              ]
             }
           }
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": ["seeded-dvga-pastes"],
-      "fixture_refresh": []
+      "prerequisites": [
+        "seeded-dvga-pastes"
+      ],
+      "fixture_refresh": [],
+      "fixture_contract": {
+        "restore_pastes": true
+      },
+      "functional_contract": {
+        "verifier": "native-dvga-pastes",
+        "behavior": "seven native stored-paste outcomes and exact owned removal"
+      }
     },
     {
       "id": "dvga-exploits/06-os-command-importpaste",

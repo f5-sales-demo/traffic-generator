@@ -6,6 +6,7 @@ import json
 from itertools import pairwise
 from pathlib import Path
 
+from dvga_paste_acceptance import verify_pastes
 from traffic_csd_functional import verify_csd_libraries
 from traffic_dispatch import verify_browser_actions
 from traffic_report import build_report
@@ -689,6 +690,7 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
     specialized = {
+        "native-dvga-pastes": verify_pastes,
         "native-video-deletion": verify_video_deletion,
         "native-dvwa-csrf": verify_csrf,
         "native-role-mutation": verify_role_mutation,

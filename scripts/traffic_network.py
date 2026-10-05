@@ -719,6 +719,29 @@ class NetworkBoundary:
                 "elapsed": time.time() - self.state.started,
             }
 
+    def recover_pastes(self, directory: Path, domain: str, environment: dict) -> bool:
+        """Recover interrupted owned pastes through the same scoped HTTP namespace."""
+        if not (directory / "paste-journal.json").is_file():
+            return False
+        try:
+            completed = subprocess.run(  # noqa: S603 - fixed helper inside owned boundary
+                self.wrap(
+                    [
+                        sys.executable,
+                        str(self.root / "scripts/dvga_paste_fixture.py"),
+                        "restore",
+                        "https://" + domain + "/dvga",
+                    ]
+                ),
+                env=environment,
+                capture_output=True,
+                check=False,
+                timeout=180,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        return completed.returncode == 0
+
     def recover_signup(self, directory: Path) -> bool:
         """Run only exact forced-command recovery outside the HTTP egress namespace."""
         journal = directory / "fixture-journal.json"

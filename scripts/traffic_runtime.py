@@ -345,6 +345,19 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
         result["source_sha256"] = hashlib.sha256(
             (root / scenario["entrypoint"]).read_bytes()
         ).hexdigest()
+        if scenario.get("fixture_contract", {}).get("restore_pastes"):
+            recovery = execute(
+                [
+                    "python3",
+                    str(root / "scripts/dvga_paste_fixture.py"),
+                    "restore",
+                    "https://" + os.environ["TARGET_FQDN"] + "/dvga",
+                ],
+                directory / "paste-recovery.log",
+                environment,
+                180,
+            )
+            result["paste_restoration"] = recovery["outcome"] == "launched"
         result["dispatch_contract_verified"] = False
         scenario_action_verification(directory, scenario, result)
         response_path = directory / "response-events.jsonl"
@@ -808,6 +821,12 @@ def _scenario(
     if scenario.get("fixture_contract", {}).get("restore_signup"):
         result["signup_restoration"] = boundary.recover_signup(directory)
         if not result["signup_restoration"]:
+            result["outcome"] = "fixture_failure"
+    if scenario.get("fixture_contract", {}).get("restore_pastes"):
+        result["paste_restoration"] = boundary.recover_pastes(
+            directory, domain, environment
+        )
+        if not result["paste_restoration"]:
             result["outcome"] = "fixture_failure"
     result["functional_acceptance"] = verify_functional(
         scenario, result, responses, directory
