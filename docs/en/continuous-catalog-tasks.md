@@ -8,7 +8,7 @@
  #711](https://github.com/f5-sales-demo/origin-server/pull/711) and WAAP [PR
  #554](https://github.com/f5-sales-demo/webapp-api-protection/pull/554). That revision is installed from a verified full-commit archive; further discovery and CI repairs are under validation. It is not a complete catalog acceptance receipt.
 
-The source has 164 scenarios across 22 suites: 151 numbered entrypoints, eleven CSD browser scenarios and two benchmarks. All have execution contracts. 
+The source has 164 scenarios across 22 suites: 151 numbered entrypoints, eleven CSD browser scenarios and two benchmarks. All have execution contracts.
 Source at `6aa8bbc` declares 129 native functional contracts; 35 lack them and 36 mutation declarations deliberately fail pending no-change or restoration proof. Declaration does not imply live qualification. Stable DVWA IDs retain 15 SQLi/18 XSS payload mappings.
 
 | Task | Status | Dependencies | Evidence / revision | Remaining acceptance |
