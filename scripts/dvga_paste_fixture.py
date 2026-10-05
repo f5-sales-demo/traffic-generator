@@ -32,10 +32,7 @@ def request(base: str, query: str, benign: bool = False) -> tuple[int, dict]:
         or target.hostname not in json.loads(os.environ["TGEN_AUTHORIZED_DOMAINS"])
         or target.path != "/dvga"
         or target.port not in (None, 443)
-        or target.query
-        or target.fragment
-        or target.username
-        or target.password
+        or any((target.query, target.fragment, target.username, target.password))
     ):
         message = "unauthorized paste fixture target"
         raise ValueError(message)
@@ -177,11 +174,12 @@ class Pastes:
             paste = data["paste"]
             if paste is not None:
                 identifier = paste.get("id")
+                if not str(identifier).isdigit() or int(identifier) <= 0:
+                    message = "invalid native paste identity"
+                    raise ValueError(message)
                 if (
                     paste.get("title") != title
                     or paste.get("content") != CONTENT + "|" + PAYLOADS[index]
-                    or not str(identifier).isdigit()
-                    or int(identifier) <= 0
                     or (item["id"] is not None and str(item["id"]) != str(identifier))
                 ):
                     message = "paste fixture ownership mismatch"
