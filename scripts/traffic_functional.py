@@ -173,8 +173,39 @@ def verify_native_contract(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
+def verify_profile_restoration(scenario: dict, result: dict, directory: Path) -> bool:
+    """Require exact actor snapshot and native after-readback coverage."""
+    try:
+        before = [
+            json.loads(line)
+            for line in (directory / "restaurant-profile-snapshot.jsonl")
+            .read_text()
+            .splitlines()
+        ]
+        receipt = json.loads((directory / "fixture-restoration.json").read_text())
+        actors = receipt.get("actors", [])
+        required = scenario["functional_contract"]["profile_actors"]
+        return (
+            receipt.get("restored") is True
+            and receipt.get("source_commit") == result.get("source_commit")
+            and receipt.get("artifact_sha256") == result.get("artifact_sha256")
+            and len(before) == len(actors) == len(required)
+            and {row.get("actor") for row in before} == set(required)
+            and {row.get("before", {}).get("actor") for row in actors} == set(required)
+            and all(
+                row.get("before") in before
+                and row.get("after", {}).get("username") == row["before"]["username"]
+                and row.get("after", {}).get("phone_number")
+                == row["before"]["phone_number"]
+                for row in actors
+            )
+        )
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+
+
 def verify_composed_native(
-    scenario: dict, result: dict, responses: list[dict], _directory: Path
+    scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
     """Require declared native protocol content plus each specialized tool/fixture gate."""
     requirements = scenario.get("dispatch_contract", {}).get("requirements", [])
@@ -232,6 +263,13 @@ def verify_composed_native(
     ]:
         if field in result:
             checks.append({"id": field, "passed": result[field] is True})  # noqa: PERF401
+    if scenario["functional_contract"].get("profile_actors"):
+        checks.append(
+            {
+                "id": "profile-native-readback",
+                "passed": verify_profile_restoration(scenario, result, directory),
+            }
+        )
     mutation = scenario["functional_contract"].get("mutation_policy")
     if mutation not in ("read-only", "journaled-restoration"):
         return {"passed": False, "reason": "mutation recovery contract missing"}
