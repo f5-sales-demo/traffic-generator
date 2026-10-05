@@ -6,9 +6,11 @@ from itertools import pairwise
 from pathlib import Path
 
 from traffic_csd_functional import verify_csd_libraries
+from traffic_dispatch import verify_browser_actions
 
 CREDENTIAL_COUNT = 15
 CONNECTION_LIMIT = 20
+MIN_RESOURCE_SAMPLES = 2
 
 
 def verify_credentials(scenario: dict, result: dict, directory: Path) -> dict:
@@ -227,11 +229,89 @@ def verify_composed_native(
     }
 
 
+def verify_load(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require every declared native load combination, reports, content and cleanup."""
+    contract = scenario["native_load_contract"]
+    receipt = json.loads((directory / "native-load.json").read_text())
+    workers = receipt.get("workers", [])
+    required = {
+        (tool, path, level, persistent)
+        for tool in contract["tools"]
+        for path in contract["paths"]
+        for level in contract["levels"]
+        for persistent in contract["connection_modes"]
+    }
+    observed = {
+        (w.get("tool"), w.get("path"), w.get("concurrency"), w.get("persistent"))
+        for w in workers
+    }
+    content = receipt.get("content_checks", [])
+    passed = (
+        required <= observed
+        and receipt.get("passed") is True
+        and receipt.get("cleanup") is True
+    )
+    passed = passed and bool(content) and all(c.get("passed") is True for c in content)
+    if contract.get("lua_script"):
+        passed = passed and any(w.get("lua_sha256") for w in workers)
+    if contract.get("resource_profile"):
+        passed = (
+            passed and len(receipt.get("resource_samples", [])) >= MIN_RESOURCE_SAMPLES
+        )
+    return {
+        "passed": passed
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "native_workers": len(workers),
+        "application_content": bool(content),
+    }
+
+
+def verify_display_browser(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require actual browser steps, screenshot digests and cleanup; CSD is display-only."""
+    files = list(directory.glob("*/receipt.json"))
+    if len(files) != 1:
+        return {"passed": False, "reason": "unique browser receipt required"}
+    receipt = json.loads(files[0].read_text())
+    actions = verify_browser_actions(scenario["browser_contract"], receipt)
+    images = []
+    for native in receipt.get("scenarios", []):
+        if native.get("name") != scenario["scenario"]:
+            continue
+        for step in native.get("steps", []):
+            image = step.get("screenshot", {})
+            name = image.get("path", "")
+            file = files[0].parent / name
+            images.append(
+                bool(name)
+                and Path(name).name == name
+                and file.is_file()
+                and hashlib.sha256(file.read_bytes()).hexdigest() == image.get("sha256")
+            )
+    return {
+        "passed": actions["passed"]
+        and bool(images)
+        and all(images)
+        and receipt.get("runtime", {}).get("csdEnabled") is False
+        and receipt.get("runtime", {}).get("sourceCommit")
+        == result.get("source_commit")
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "claim": "display only; no CSD mitigation",
+    }
+
+
 def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-browser-display":
+        return verify_display_browser(scenario, result, directory)
+    if contract.get("verifier") == "native-load":
+        return verify_load(scenario, result, directory)
     if contract.get("verifier") == "composed-native":
         return verify_composed_native(scenario, result, responses, directory)
     if contract.get("verifier") == "native-crapi-signup":

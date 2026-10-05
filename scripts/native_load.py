@@ -10,10 +10,12 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from native_http import request as native_request
 from native_scanner_process import run_scanner
 from stress_reports import report_matches
 from traffic_common import atomic_json
 from traffic_profile import sample_resources
+from traffic_workload import content_identity
 
 
 def command(
@@ -227,7 +229,10 @@ def run_lua(
     return worker
 
 
-def main() -> int:
+HTTP_SUCCESS = 200
+
+
+def main() -> int:  # pylint: disable=too-many-locals
     """Run each source-declared native level/path without replacement request engines."""
     identifier, host = sys.argv[1:3]
     if host != os.environ["TGEN_AUTHORIZED_HOST"]:
@@ -244,6 +249,7 @@ def main() -> int:
     directory = Path(os.environ["TGEN_RESULTS_DIR"])
     workers: list[dict] = []
     samples = []
+    content_checks = []
     stop = threading.Event()
 
     def monitor() -> None:
@@ -263,6 +269,18 @@ def main() -> int:
                 for count in contract["batches"]:
                     for persistent in contract["connection_modes"]:
                         for path in contract["paths"]:
+                            code, headers, body = native_request(
+                                "https://" + host + path
+                            )
+                            content_checks.append(
+                                {
+                                    "path": path,
+                                    "passed": code == HTTP_SUCCESS
+                                    and content_identity(
+                                        path, headers.get("content-type", ""), body
+                                    ),
+                                }
+                            )
                             group = (
                                 [
                                     run_vegeta(
@@ -323,6 +341,7 @@ def main() -> int:
         "execution": "native-load-tools",
         "workers": workers,
         "resource_samples": samples,
+        "content_checks": content_checks,
         "cleanup": bool(workers)
         and all(
             worker.get("process_evidence", {}).get("connections_closed") is True

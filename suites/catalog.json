@@ -3433,6 +3433,10 @@
         "duration_seconds": 2,
         "resource_profile": false,
         "lua_script": "suites/cdn-load-testing/_baseline.lua"
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
@@ -4270,6 +4274,10 @@
         "paths": ["/juice-shop/", "/httpbin/get", "/whoami/", "/dvwa/login.php", "/vampi/users/v1", "/csd-demo/"],
         "duration_seconds": 15,
         "resource_profile": false
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
@@ -4811,6 +4819,10 @@
         "duration_seconds": 5,
         "resource_profile": true,
         "lua_script": "suites/cdn-load-testing/_baseline.lua"
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
@@ -4881,6 +4893,10 @@
         "duration_seconds": 5,
         "resource_profile": true,
         "lua_script": "suites/cdn-load-testing/_baseline.lua"
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
@@ -5664,7 +5680,11 @@
           "cleanup-login-controls"
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-display",
+        "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
+      }
     },
     {
       "id": "csd-violations/registration-harvester",
@@ -5689,7 +5709,11 @@
           "cleanup-registration-controls"
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-display",
+        "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
+      }
     },
     {
       "id": "csd-violations/payment-overlay-card-skimmer",
@@ -5714,7 +5738,11 @@
           "cleanup-payment-overlay"
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-display",
+        "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
+      }
     },
     {
       "id": "csd-violations/obfuscated-loader",
@@ -5817,7 +5845,11 @@
           "cleanup-multi-channel-artifacts"
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-display",
+        "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
+      }
     },
     {
       "id": "csd-violations/high-volume-domain-exfiltration",
@@ -5836,7 +5868,11 @@
         "scenario": "high-volume-domain-exfiltration",
         "steps": ["navigate-login", "attempt-five-scripts-two-posts", "cleanup-high-volume-artifacts"]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-display",
+        "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
+      }
     },
     {
       "id": "csd-violations/form-overlay",
@@ -5855,7 +5891,11 @@
         "scenario": "form-overlay",
         "steps": ["navigate-login", "count-original-fields-and-install-overlay", "cleanup-form-overlay"]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-display",
+        "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
+      }
     },
     {
       "id": "csd-violations/keylogger-simulation",
@@ -5874,7 +5914,11 @@
         "scenario": "keylogger-simulation",
         "steps": ["navigate-login", "count-synthetic-key-events", "cleanup-keylogger-artifacts"]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-display",
+        "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
+      }
     },
     {
       "id": "csd-violations/maximum-detection",
@@ -5901,7 +5945,11 @@
           "cleanup-maximum-artifacts"
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-display",
+        "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
+      }
     },
     {
       "id": "demoapp-attacks/01-sqli-waf-endpoint",
@@ -16626,6 +16674,10 @@
         ],
         "duration_seconds": 2,
         "resource_profile": false
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
@@ -16860,6 +16912,10 @@
         ],
         "duration_seconds": 2,
         "resource_profile": false
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
@@ -16909,6 +16965,10 @@
         "paths": ["/httpbin/get"],
         "duration_seconds": 2,
         "resource_profile": false
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
@@ -17186,6 +17246,10 @@
         ],
         "duration_seconds": 15,
         "resource_profile": true
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
@@ -17301,6 +17365,10 @@
         ],
         "duration_seconds": 2,
         "resource_profile": false
+      },
+      "functional_contract": {
+        "verifier": "native-load",
+        "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
     },
     {
