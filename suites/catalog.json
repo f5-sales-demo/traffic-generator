@@ -6452,18 +6452,9 @@
       "suite": "dvga-exploits",
       "entrypoint": "suites/dvga-exploits/05-xss-createpaste.sh",
       "kind": "shell",
-      "dependencies": [
-        "bash",
-        "curl",
-        "jq",
-        "python3"
-      ],
-      "after": [
-        "dvga-exploits/04-sqli-filter"
-      ],
-      "target_paths": [
-        "/dvga/graphql"
-      ],
+      "dependencies": ["bash", "curl", "jq", "python3"],
+      "after": ["dvga-exploits/04-sqli-filter"],
+      "target_paths": ["/dvga/graphql"],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
@@ -6480,14 +6471,10 @@
             "headers": {
               "content-type": "application/json"
             },
-            "expected_statuses": [
-              200
-            ],
+            "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "json_keys": [
-                "data"
-              ]
+              "json_keys": ["data"]
             }
           },
           {
@@ -6500,14 +6487,10 @@
             "headers": {
               "content-type": "application/json"
             },
-            "expected_statuses": [
-              200
-            ],
+            "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "json_keys": [
-                "data"
-              ]
+              "json_keys": ["data"]
             }
           },
           {
@@ -6520,14 +6503,10 @@
             "headers": {
               "content-type": "application/json"
             },
-            "expected_statuses": [
-              200
-            ],
+            "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "json_keys": [
-                "data"
-              ]
+              "json_keys": ["data"]
             }
           },
           {
@@ -6540,14 +6519,10 @@
             "headers": {
               "content-type": "application/json"
             },
-            "expected_statuses": [
-              200
-            ],
+            "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "json_keys": [
-                "data"
-              ]
+              "json_keys": ["data"]
             }
           },
           {
@@ -6560,14 +6535,10 @@
             "headers": {
               "content-type": "application/json"
             },
-            "expected_statuses": [
-              200
-            ],
+            "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "json_keys": [
-                "data"
-              ]
+              "json_keys": ["data"]
             }
           },
           {
@@ -6580,14 +6551,10 @@
             "headers": {
               "content-type": "application/json"
             },
-            "expected_statuses": [
-              200
-            ],
+            "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "json_keys": [
-                "data"
-              ]
+              "json_keys": ["data"]
             }
           },
           {
@@ -6600,22 +6567,16 @@
             "headers": {
               "content-type": "application/json"
             },
-            "expected_statuses": [
-              200
-            ],
+            "expected_statuses": [200],
             "response_contract": {
               "content_type": "application/json",
-              "json_keys": [
-                "data"
-              ]
+              "json_keys": ["data"]
             }
           }
         ],
         "reject_unmatched_errors": true
       },
-      "prerequisites": [
-        "seeded-dvga-pastes"
-      ],
+      "prerequisites": ["seeded-dvga-pastes"],
       "fixture_refresh": [],
       "fixture_contract": {
         "restore_pastes": true
@@ -6623,7 +6584,18 @@
       "functional_contract": {
         "verifier": "native-dvga-pastes",
         "behavior": "seven native stored-paste outcomes and exact owned removal",
-        "waf_signatures": ["200000098", "200000125", "200001097", "200001130", "200001475", "200101351", "200101566", "200101607", "200101609", "200101615"]
+        "waf_signatures": [
+          "200000098",
+          "200000125",
+          "200001097",
+          "200001130",
+          "200001475",
+          "200101351",
+          "200101566",
+          "200101607",
+          "200101609",
+          "200101615"
+        ]
       }
     },
     {
