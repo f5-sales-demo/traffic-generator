@@ -77,16 +77,17 @@
     "zap"
   ],
   "support_files": [
+    "scripts/cleanup_network.py",
+    "scripts/crapi_signup_fixture.py",
     "scripts/create_native_video.sh",
-    "suites/csd-violations/scenarios.mjs",
-    "suites/csd-violations/run.sh",
-    "suites/parameter-words.txt",
     "scripts/fixture_token.py",
     "scripts/traffic_fixtures.py",
+    "suites/applications.json",
+    "suites/csd-violations/run.sh",
+    "suites/csd-violations/scenarios.mjs",
     "suites/discovery-words.txt",
     "suites/nuclei-config.yaml",
-    "scripts/cleanup_network.py",
-    "suites/applications.json"
+    "suites/parameter-words.txt"
   ],
   "scenarios": [
     {
@@ -4876,13 +4877,16 @@
       "suite": "crapi-exploits",
       "entrypoint": "suites/crapi-exploits/01-register-auth.sh",
       "kind": "shell",
-      "dependencies": ["bash", "curl", "python3"],
+      "dependencies": ["bash", "curl", "python3", "ssh"],
       "after": [],
       "target_paths": [
         "/crapi/health",
+        "/crapi/identity/api/auth/forget-password",
         "/crapi/identity/api/auth/login",
         "/crapi/identity/api/auth/signup",
         "/crapi/identity/api/auth/v2/check-otp",
+        "/crapi/identity/api/v2/vehicle/add_vehicle",
+        "/crapi/identity/api/v2/vehicle/vehicles",
         "/crapi/mailhog/api/v2/messages"
       ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
@@ -4894,36 +4898,94 @@
           {
             "id": "signup",
             "method": "POST",
-            "minimum_dispatches": 1,
-            "payload_class": "registration",
             "path": "/crapi/identity/api/auth/signup",
-            "body_regex": "\"email\".*\"password\"",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
-          },
-          {
-            "id": "otp",
-            "method": "POST",
+            "payload_class": "synthetic-registration",
             "minimum_dispatches": 1,
-            "payload_class": "invalid-otp",
-            "path": "/crapi/identity/api/auth/v2/check-otp",
-            "body_regex": "\"otp\"",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "require_application_response": true,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["message", "status"]
+            }
           },
           {
             "id": "login",
             "method": "POST",
-            "minimum_dispatches": 1,
-            "payload_class": "authentication",
             "path": "/crapi/identity/api/auth/login",
-            "body_regex": "\"password\"",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "payload_class": "issued-actor-authentication",
+            "minimum_dispatches": 2,
+            "require_application_response": true,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["token"]
+            }
+          },
+          {
+            "id": "welcome",
+            "method": "GET",
+            "path": "/crapi/mailhog/api/v2/messages",
+            "payload_class": "exact-native-mail",
+            "minimum_dispatches": 2,
+            "require_application_response": true,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["items"]
+            }
+          },
+          {
+            "id": "vehicle-add",
+            "method": "POST",
+            "path": "/crapi/identity/api/v2/vehicle/add_vehicle",
+            "payload_class": "owned-welcome-vehicle",
+            "minimum_dispatches": 1,
+            "require_application_response": true,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["message"]
+            }
+          },
+          {
+            "id": "reset",
+            "method": "POST",
+            "path": "/crapi/identity/api/auth/forget-password",
+            "payload_class": "native-password-reset",
+            "minimum_dispatches": 1,
+            "require_application_response": true,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["message"]
+            }
+          },
+          {
+            "id": "otp",
+            "method": "POST",
+            "path": "/crapi/identity/api/auth/v2/check-otp",
+            "payload_class": "native-issued-reset-otp",
+            "minimum_dispatches": 1,
+            "require_application_response": true,
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["message"]
+            }
           }
         ],
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "functional_contract": {
+        "verifier": "native-crapi-signup",
+        "behavior": "Origin issues a fresh synthetic signup JWT, welcome VIN/pincode and reset OTP; the journaled actor, vehicle and mail are removed through an enrolled forced-command recovery route"
+      },
+      "fixture_contract": {
+        "restore_signup": true
+      }
     },
     {
       "id": "crapi-exploits/02-bola-vehicle-location",
@@ -5036,7 +5098,9 @@
         "verifier": "native-crapi-otp",
         "behavior": "Native reset mail establishes the isolated actor prerequisite; both sampled guess batches return declared native OTP outcomes and password/mail state is restored"
       },
-      "fixture_contract": { "restore_otp": true },
+      "fixture_contract": {
+        "restore_otp": true
+      },
       "fixture_refresh": ["crapi"]
     },
     {

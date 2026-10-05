@@ -166,11 +166,25 @@ def verify_native_contract(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
-def verify_functional(
+def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-crapi-signup":
+        evidence = json.loads((directory / "signup-functional.json").read_text())
+        recovery = json.loads((directory / "fixture-recovery-receipt.json").read_text())
+        return {
+            "passed": evidence.get("passed") is True
+            and recovery.get("passed") is True
+            and evidence.get("source_commit") == result.get("source_commit")
+            and evidence.get("artifact_sha256") == result.get("artifact_sha256")
+            and result.get("outcome") == "launched"
+            and result.get("dispatch_contract_verified") is True,
+            "behavior": contract["behavior"],
+            "exact_signup_recovery": recovery.get("passed") is True,
+        }
+
     if (
         contract.get("verifier") == "native-dvwa-credentials"
         and scenario["id"] == "bot-simulation/01-playwright-credential-stuff"
