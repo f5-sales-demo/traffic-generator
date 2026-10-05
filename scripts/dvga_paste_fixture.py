@@ -121,7 +121,7 @@ class Pastes:
                 + ",public:true){paste{id title content}}}"
             )
             status, document = request(self.base, query)
-            attempt = {"index": index, "status": status, "stored": False}
+            attempt: dict = {"index": index, "status": status, "stored": False}
             self.journal["attempts"].append(attempt)
             self.persist()
             if status in (403, 429):
