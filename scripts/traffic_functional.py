@@ -1,5 +1,6 @@
 """Functional acceptance from source contracts and observed native responses."""
 
+import base64
 import hashlib
 import json
 from itertools import pairwise
@@ -172,6 +173,55 @@ def verify_native_contract(scenario: dict, result: dict, directory: Path) -> dic
         and result.get("dispatch_contract_verified") is True,
         "behavior": contract["behavior"],
         "native_report_verified": True,
+    }
+
+
+def verify_video_conversion(
+    scenario: dict, result: dict, responses: list[dict], directory: Path
+) -> dict:
+    """Require native conversion phases and exact media/name/parameter recovery."""
+    before = json.loads((directory / "crapi-video-snapshot.json").read_text())
+    recovery = json.loads((directory / "video-restoration.json").read_text())
+    expected = {
+        "id": before["id"],
+        "video_name": before["video_name"],
+        "conversion_params": before["conversion_params"],
+        "media_sha256": hashlib.sha256(
+            base64.b64decode(before["profileVideo"].split(",", 1)[1])
+        ).hexdigest(),
+    }
+    checks = []
+    for requirement in scenario["dispatch_contract"]["requirements"]:
+        rows = [
+            r
+            for r in responses
+            if requirement["id"] in r.get("matched_requirements", [])
+            and r.get("kind") == "scenario"
+        ]
+        checks.append(
+            len(rows) >= requirement["minimum_dispatches"]
+            and all(
+                r.get("upstream_dispatched") is True
+                and not r.get("transport_error")
+                and r.get("response_assertions", {}).get(requirement["id"]) is True
+                and r.get("status") in requirement["expected_statuses"]
+                for r in rows
+            )
+        )
+    return {
+        "passed": all(checks)
+        and bool(checks)
+        and recovery.get("before") == recovery.get("after") == expected
+        and recovery.get("restored") is True
+        and result.get("video_restoration") is True
+        and recovery.get("source_commit") == result.get("source_commit")
+        and recovery.get("artifact_sha256") == result.get("artifact_sha256")
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "claim": "native parameter updates and conversion protocol outcomes; no inferred command execution",
     }
 
 
@@ -641,6 +691,8 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
     }
     if contract.get("verifier") in specialized:
         return specialized[contract["verifier"]](scenario, result, directory)
+    if contract.get("verifier") == "native-video-conversion":
+        return verify_video_conversion(scenario, result, responses, directory)
     if contract.get("verifier") == "composed-native":
         return verify_composed_native(scenario, result, responses, directory)
     if contract.get("verifier") == "native-crapi-signup":

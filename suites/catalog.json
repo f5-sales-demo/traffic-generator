@@ -5641,7 +5641,12 @@
             "payload_class": "video-command-injection",
             "path_regex": "/crapi/identity/api/v2/user/videos/[^/]+",
             "body_regex": "(?:;|&&|\\||\\$\\(|`)",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["id", "video_name", "conversion_params"]
+            }
           },
           {
             "id": "video-conversion-trigger",
@@ -5677,7 +5682,8 @@
                 },
                 "text_contains": ["Thi-S endpoint S-hould be accessed only inte-Rnally."]
               }
-            }
+            },
+            "require_application_response": true
           }
         ],
         "reject_unmatched_errors": true
@@ -5687,7 +5693,11 @@
       "fixture_contract": {
         "restore_video": true
       },
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "functional_contract": {
+        "verifier": "native-video-conversion",
+        "behavior": "All native video parameter updates and conversion triggers have exact protocol evidence and original media/name/parameter restoration; command execution is not inferred"
+      }
     },
     {
       "id": "crapi-exploits/14-unauth-order-access",

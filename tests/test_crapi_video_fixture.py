@@ -1,5 +1,6 @@
 """Video fixtures require exact media/actor restoration and reject blocked setup."""
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -9,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import crapi_video_fixture as fixture
-from traffic_functional import verify_video_deletion
+from traffic_functional import verify_video_conversion, verify_video_deletion
 from traffic_runtime import video_fixture_verification
 
 
@@ -95,3 +96,69 @@ def test_disposable_delete_requires_every_owned_upload_and_native_absence(tmp_pa
     rows[-1]["absent_status"] = 200
     p.write_text(json.dumps(evidence))
     assert not verify_video_deletion(scenario, result, tmp_path)["passed"]
+
+
+def test_video_restore_receipt_binds_media_and_metadata_readback():
+    before = {
+        "id": 8,
+        "video_name": "synthetic.mp4",
+        "conversion_params": "-v codec h264",
+        "profileVideo": "data:image/jpeg;base64,Zml4dHVyZQ==",
+    }
+    with patch.object(fixture, "request", side_effect=[{"id": 8}, {}, before]):
+        receipt = fixture.recover("https://www.example.test/crapi", "synthetic", before)
+    assert receipt["before"] == receipt["after"]
+    assert receipt["before"]["media_sha256"]
+
+
+def test_conversion_functional_requires_all_native_triggers_and_exact_recovery(
+    tmp_path,
+):
+
+    before = {
+        "id": 8,
+        "video_name": "synthetic.mp4",
+        "conversion_params": "-v codec h264",
+        "profileVideo": "data:image/jpeg;base64,Zml4dHVyZQ==",
+    }
+    (tmp_path / "crapi-video-snapshot.json").write_text(json.dumps(before))
+    identity = {k: before[k] for k in ["id", "video_name", "conversion_params"]}
+    identity["media_sha256"] = hashlib.sha256(b"fixture").hexdigest()
+    recovery = {
+        "before": identity,
+        "after": identity,
+        "restored": True,
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+    }
+    (tmp_path / "video-restoration.json").write_text(json.dumps(recovery))
+    scenario = {
+        "functional_contract": {"behavior": "native conversion"},
+        "dispatch_contract": {
+            "requirements": [
+                {"id": "trigger", "minimum_dispatches": 3, "expected_statuses": [200]}
+            ]
+        },
+    }
+    result = {
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+        "video_restoration": True,
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "transport_failures": 0,
+        "tool_cancellations": 0,
+    }
+    rows = [
+        {
+            "kind": "scenario",
+            "matched_requirements": ["trigger"],
+            "upstream_dispatched": True,
+            "status": 200,
+            "response_assertions": {"trigger": True},
+        }
+        for _ in range(3)
+    ]
+    assert verify_video_conversion(scenario, result, rows, tmp_path)["passed"]
+    rows.pop()
+    assert not verify_video_conversion(scenario, result, rows, tmp_path)["passed"]

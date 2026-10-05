@@ -1,6 +1,7 @@
 """Journal and restore a seeded user's exact video through authorized native APIs."""
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -105,7 +106,20 @@ def recover(base: str, token: str, before: dict) -> dict:
         after.get(key) == before.get(key)
         for key in ("id", "video_name", "conversion_params")
     ) and video_bytes(after) == video_bytes(before)
+
+    def identity(document: dict) -> dict:
+        return {
+            "id": document.get("id"),
+            "video_name": document.get("video_name"),
+            "conversion_params": document.get("conversion_params"),
+            "media_sha256": hashlib.sha256(video_bytes(document)).hexdigest(),
+        }
+
     return {
+        "before": identity(before),
+        "after": identity(after),
+        "source_commit": os.environ.get("SOURCE_COMMIT"),
+        "artifact_sha256": os.environ.get("TGEN_ARTIFACT_SHA256"),
         "restored": restored,
         "video_id": identifier,
         "fields": ["video_name", "conversion_params", "profileVideo"],
