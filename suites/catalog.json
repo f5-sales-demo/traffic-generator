@@ -519,7 +519,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "api-attacks/04-ffuf-api-fuzz",
@@ -3629,7 +3634,12 @@
         "reject_unmatched_errors": true
       },
       "adapter": "dynamic-cache",
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "cdn-load-testing/03-accept-encoding-variation",
@@ -3882,7 +3892,12 @@
       },
       "adapter": "dynamic-cache",
       "intentional_negative_paths": ["/health"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "cdn-load-testing/04-thundering-herd",
@@ -3925,7 +3940,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "cdn-load-testing/05-post-put-bypass",
@@ -4164,7 +4184,12 @@
         "reject_unmatched_errors": true
       },
       "adapter": "bounded-multiclient",
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "cdn-load-testing/07-sustained-cache-expiry",
@@ -4711,7 +4736,12 @@
         "wrk": 19,
         "hey": 4
       },
-      "fixture_refresh": ["vampi", "crapi", "juice", "restaurant"]
+      "fixture_refresh": ["vampi", "crapi", "juice", "restaurant"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "cdn-load-testing/bench-keepalive",
@@ -4880,7 +4910,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "crapi-exploits/01-register-auth",
@@ -5024,7 +5059,12 @@
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "crapi-exploits/03-bola-mechanic-reports",
@@ -5145,7 +5185,12 @@
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "crapi-exploits/06-data-exposure-posts",
@@ -5547,7 +5592,12 @@
       },
       "prerequisites": [],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "crapi-exploits/15-jwt-algorithm-confusion",
@@ -5584,7 +5634,12 @@
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "csd-violations/login-credential-skimmer",
@@ -6368,7 +6423,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvwa-exploits/02-command-injection",
@@ -6861,7 +6921,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvwa-exploits/07-sqli-blind",
@@ -6952,7 +7017,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvwa-exploits/08-xss-dom",
@@ -7097,7 +7167,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvwa-exploits/09-xss-reflected",
@@ -7298,7 +7373,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvwa-exploits/10-xss-stored",
@@ -7823,7 +7903,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/01-sqli-login-bypass",
@@ -8115,7 +8200,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/03-xss-dom-reflected",
@@ -8320,7 +8410,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/04-xss-stored-api",
@@ -8895,7 +8990,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["juice"]
+      "fixture_refresh": ["juice"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/07-sensitive-data",
@@ -9054,7 +9154,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/08-nosql-injection",
@@ -9618,7 +9723,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["juice"]
+      "fixture_refresh": ["juice"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/11-api-enumeration",
@@ -13169,7 +13279,12 @@
         "/users",
         "/web.config"
       ],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "mitre-attack/02-initial-access",
@@ -13496,7 +13611,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "mitre-attack/04-credential-access",
@@ -13960,7 +14080,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "mitre-attack/06-collection-exfiltration",
@@ -14274,7 +14399,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "owasp-scanning/02-zap-active-scan",
@@ -14340,7 +14470,12 @@
         "minimum_messages": 1,
         "paths": ["/juice-shop/", "/dvwa/", "/vampi/", "/httpbin/", "/csd-demo/"]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "owasp-scanning/03-nikto-full",
@@ -14429,7 +14564,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "owasp-scanning/04-nuclei-full",
@@ -14498,7 +14638,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "owasp-scanning/05-nmap-vuln-scan",
@@ -16117,7 +16262,12 @@
         "/web.config.tmp",
         "/web.config~"
       ],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "owasp-scanning/08-dalfox-xss-scan",
@@ -16214,7 +16364,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "owasp-scanning/09-arjun-param-discovery",
@@ -16585,7 +16740,12 @@
         "reject_unmatched_errors": true
       },
       "intentional_negative_paths": ["/health"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "performance-testing/03-sustained-load",
@@ -16802,7 +16962,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "performance-testing/06-latency-heatmap",
@@ -16901,7 +17066,12 @@
         "reject_unmatched_errors": true
       },
       "intentional_negative_paths": ["/health"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "performance-testing/07-self-profile-under-load",
@@ -17267,7 +17437,12 @@
         "reject_unmatched_errors": true
       },
       "intentional_negative_paths": ["/health"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "performance-testing/11-vegeta-constant-rate",
@@ -17358,7 +17533,12 @@
         "reject_unmatched_errors": true
       },
       "intentional_negative_paths": ["/health"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "performance-testing/12-hey-quick-bench",
@@ -17457,7 +17637,12 @@
         "reject_unmatched_errors": true
       },
       "intentional_negative_paths": ["/health"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "reconnaissance/01-nmap-service-scan",
@@ -19407,7 +19592,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "restaurant-exploits/04-bopla-mass-assign",
@@ -19984,7 +20174,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "restaurant-exploits/08-full-escalation-chain",
@@ -20087,7 +20282,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "restaurant-exploits/10-api-discovery",
@@ -26071,7 +26271,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/02-xss",
@@ -27817,7 +28022,12 @@
         "/static/../../../etc/passwd%00.jpg",
         "/windows/system32/drivers/etc/hosts"
       ],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/05-nikto-scan",
@@ -27857,7 +28067,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/06-nuclei-scan",
@@ -27897,7 +28112,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/07-xxe",
