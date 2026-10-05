@@ -42,7 +42,7 @@ def test_graphql_helper_preserves_query_quotes_and_variables():
         }
 
 
-def test_complete_depth_sequence_bounds_every_nested_paste_list(tmp_path):
+def test_complete_depth_sequence_bounds_root_list_and_preserves_schema(tmp_path):
     curl = tmp_path / "curl"
     capture = tmp_path / "queries.jsonl"
     curl.write_text(
@@ -66,5 +66,7 @@ def test_complete_depth_sequence_bounds_every_nested_paste_list(tmp_path):
     )
     queries = [json.loads(line)["query"] for line in capture.read_text().splitlines()]
     assert len(queries) == 10
-    assert all("pastes{" not in q and "pastes(limit:1){" in q for q in queries)
+    assert all(
+        q.startswith("{pastes(limit:1){") and q.count("limit:1") == 1 for q in queries
+    )
     assert [q.count("owner{") for q in queries] == [0, 1, 1, 2, 2, 3, 3, 4, 4, 5]
