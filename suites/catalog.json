@@ -4940,7 +4940,7 @@
             "require_application_response": true,
             "expected_statuses": [200],
             "response_contract": {
-              "content_type": "application/json",
+              "content_type": "text/json",
               "json_keys": ["items"]
             }
           },
