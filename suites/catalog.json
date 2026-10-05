@@ -417,7 +417,12 @@
           }
         ]
       },
-      "fixture_refresh": ["vampi"]
+      "fixture_refresh": ["vampi"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "api-attacks/03-arjun-param-discovery",
@@ -2069,7 +2074,12 @@
         "/users",
         "/version"
       ],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "api-attacks/05-broken-auth",
@@ -2255,7 +2265,12 @@
         "reject_unmatched_errors": true
       },
       "expected_http_statuses": [400, 401, 404, 405, 409, 422],
-      "fixture_refresh": ["vampi"]
+      "fixture_refresh": ["vampi"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "api-attacks/06-mass-assignment",
@@ -2441,7 +2456,12 @@
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": [],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "api-protection-verify/02-shadow-endpoints",
@@ -2553,7 +2573,12 @@
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": [],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "api-protection-verify/04-rate-limit-burst",
@@ -4077,7 +4102,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "cdn-load-testing/06-multi-client-simulation",
@@ -4470,7 +4500,12 @@
         "vegeta": 5,
         "ab": 2
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "cdn-load-testing/09-origin-torture",
@@ -5116,7 +5151,12 @@
       },
       "prerequisites": [],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "crapi-exploits/04-otp-bruteforce",
@@ -5366,7 +5406,12 @@
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "crapi-exploits/10-dos-contact-mechanic",
@@ -5469,7 +5514,12 @@
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "crapi-exploits/12-sqli-apply-coupon",
@@ -5504,7 +5554,12 @@
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": ["crapi"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "crapi-exploits/13-command-injection-video",
@@ -6144,7 +6199,12 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvga-exploits/02-deep-recursion",
@@ -6175,7 +6235,12 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvga-exploits/03-field-duplication",
@@ -6217,7 +6282,12 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvga-exploits/04-sqli-filter",
@@ -6248,7 +6318,12 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvga-exploits/05-xss-createpaste",
@@ -6341,7 +6416,12 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvga-exploits/08-path-traversal-upload",
@@ -6793,7 +6873,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvwa-exploits/05-file-upload",
@@ -7635,7 +7720,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvwa-exploits/12-weak-session",
@@ -7778,7 +7868,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "dvwa-exploits/14-open-redirect",
@@ -8020,7 +8115,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/02-sqli-search-union",
@@ -9473,7 +9573,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["juice"]
+      "fixture_refresh": ["juice"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/09-file-upload-xxe",
@@ -11331,7 +11436,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["juice"]
+      "fixture_refresh": ["juice"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "juice-shop-exploits/12-automated-sqlmap",
@@ -11427,7 +11537,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "malicious-user/01-identified-violations",
@@ -12902,7 +13017,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "mitre-attack/01-reconnaissance",
@@ -14816,7 +14936,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "owasp-scanning/07-ffuf-directory-discovery",
@@ -16559,7 +16684,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "performance-testing/01-concurrency-ramp",
@@ -19339,7 +19469,12 @@
       "fixture_contract": {
         "restore_profiles": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "restaurant-exploits/03-bola-orders",
@@ -20769,7 +20904,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "service-policy-verify/01-service-policy-deny",
@@ -22585,7 +22725,12 @@
         "reject_unmatched_errors": true
       },
       "intentional_negative_paths": ["/.env", "/.git/config", "/admin"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "traffic-generation/04-ua-rotation",
@@ -24834,7 +24979,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "waf-encoding-evasion/03-unicode-utf8-evasion",
@@ -25007,7 +25157,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "waf-encoding-evasion/04-mixed-nested-encoding",
@@ -25356,7 +25511,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "waf-encoding-evasion/05-null-byte-iis-base64",
@@ -25819,7 +25979,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "waf-encoding-evasion/07-header-cookie-evasion",
@@ -27024,7 +27189,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/04-path-traversal",
@@ -28324,7 +28494,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/08-ssrf",
@@ -28510,7 +28685,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/09-csrf",
@@ -28652,7 +28832,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/10-file-upload",
