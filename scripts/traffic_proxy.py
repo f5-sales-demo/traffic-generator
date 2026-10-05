@@ -21,6 +21,7 @@ from traffic_dispatch import (
     match_requirements,
     response_content_matches,
 )
+from traffic_native_identity import native_identity
 
 HTTPS_PORT = 443
 
@@ -287,6 +288,9 @@ class Budget:
         if flow.response:
             content_type = flow.response.headers.get("content-type", "")
             body = flow.response.get_text(strict=False) or ""
+            event["native_response_identity"] = native_identity(
+                event["path"], event["method"], status, content_type, body
+            )
             event["response_assertions"] = {}
             for requirement in current.get("dispatch_contract", {}).get(
                 "requirements", []

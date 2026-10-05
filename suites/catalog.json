@@ -2513,7 +2513,12 @@
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": [],
       "intentional_negative_paths": ["/api/internal/healthz-secret", "/api/v0/legacy/accounts/export"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "api-protection-verify/03-protection-deny",
@@ -2572,7 +2577,12 @@
       },
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "prerequisites": [],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "bot-simulation/01-playwright-credential-stuff",
@@ -11379,7 +11389,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "malicious-user/02-forbidden-recon",
@@ -11578,7 +11593,12 @@
         "/server-status",
         "/wp-login.php"
       ],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "malicious-user/03-credential-stuffing",
@@ -17781,7 +17801,12 @@
         "/users",
         "/web.config"
       ],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "reconnaissance/04-feroxbuster-recurse",
@@ -18087,7 +18112,12 @@
         "/users",
         "/web.config"
       ],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "reconnaissance/05-subfinder-enum",
@@ -18712,7 +18742,12 @@
         "/wp-config.php",
         "/wp-login.php"
       ],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "reconnaissance/07-waf-fingerprint",
@@ -18866,7 +18901,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "restaurant-exploits/01-register-auth",
@@ -20502,7 +20542,12 @@
         "reject_unmatched_errors": true
       },
       "intentional_negative_paths": ["/spol-denied"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "ssl-scanning/01-sslscan",
@@ -20639,7 +20684,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "traffic-generation/02-slowloris",
@@ -23672,7 +23722,12 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "waf-encoding-evasion/01-url-encoding",
@@ -24099,7 +24154,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "waf-encoding-evasion/02-html-entity-encoding",
@@ -25293,7 +25353,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "waf-encoding-evasion/06-case-chunked-evasion",
@@ -25745,7 +25810,12 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every declared request returns application-specific native protocol content or an explicit protection candidate; no exploit or mitigation attribution inferred",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "web-app-attacks/01-sqli",

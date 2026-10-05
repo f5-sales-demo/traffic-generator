@@ -166,11 +166,74 @@ def verify_native_contract(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
+def verify_composed_native(
+    scenario: dict, result: dict, responses: list[dict], _directory: Path
+) -> dict:
+    """Require declared native protocol content plus each specialized tool/fixture gate."""
+    requirements = scenario.get("dispatch_contract", {}).get("requirements", [])
+    checks = []
+    for requirement in requirements:
+        rows = [
+            r
+            for r in responses
+            if r.get("kind") == "scenario"
+            and r.get("scenario") == scenario["id"]
+            and requirement["id"] in r.get("matched_requirements", [])
+        ]
+        checks.append(
+            {
+                "id": requirement["id"],
+                "passed": len(rows) >= requirement.get("minimum_dispatches", 1)
+                and all(
+                    r.get("native_response_identity") is True
+                    and not r.get("transport_error")
+                    for r in rows
+                ),
+            }
+        )
+    for field in [
+        "tool_actions",
+        "route_actions",
+        "native_load",
+        "native_reports",
+        "workload",
+        "scanner_phases",
+        "cache_evidence",
+        "multiclient_evidence",
+    ]:
+        if field in result:
+            checks.append({"id": field, "passed": result[field].get("passed") is True})  # noqa: PERF401
+    for field in [
+        "fixture_restoration",
+        "video_restoration",
+        "disposable_video_cleanup",
+        "otp_restoration",
+    ]:
+        if field in result:
+            checks.append({"id": field, "passed": result[field] is True})  # noqa: PERF401
+    mutation = scenario["functional_contract"].get("mutation_policy")
+    if mutation not in ("read-only", "journaled-restoration", "rehearsal-reset"):
+        return {"passed": False, "reason": "mutation recovery contract missing"}
+    return {
+        "passed": bool(checks)
+        and all(c["passed"] for c in checks)
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "checks": checks,
+        "control_attribution": "separate request-bound WAAP event evidence required",
+    }
+
+
 def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "composed-native":
+        return verify_composed_native(scenario, result, responses, directory)
     if contract.get("verifier") == "native-crapi-signup":
         evidence = json.loads((directory / "signup-functional.json").read_text())
         recovery = json.loads((directory / "fixture-recovery-receipt.json").read_text())
