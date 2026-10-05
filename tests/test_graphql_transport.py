@@ -40,3 +40,31 @@ def test_graphql_helper_preserves_query_quotes_and_variables():
             "query": query,
             "variables": {"fixture": "synthetic"},
         }
+
+
+def test_complete_depth_sequence_bounds_every_nested_paste_list(tmp_path):
+    curl = tmp_path / "curl"
+    capture = tmp_path / "queries.jsonl"
+    curl.write_text(
+        "#!/usr/bin/env python3\nimport json,os,sys\na=sys.argv[1:];q=json.loads(a[a.index('-d')+1]);open(os.environ['QUERY_CAPTURE'],'a').write(json.dumps(q)+'\\n');print(json.dumps({'data':{'pastes':[{'title':'synthetic','owner':{'name':'synthetic'}}]}}))\n"
+    )
+    curl.chmod(0o755)
+    subprocess.run(  # noqa: S603 - exact owned script and synthetic recording transport
+        [
+            "/bin/bash",
+            str(ROOT / "suites/dvga-exploits/02-deep-recursion.sh"),
+            "www.example.test",
+        ],
+        env=dict(
+            os.environ,
+            PATH=str(tmp_path) + ":" + os.environ["PATH"],
+            QUERY_CAPTURE=str(capture),
+        ),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    queries = [json.loads(line)["query"] for line in capture.read_text().splitlines()]
+    assert len(queries) == 10
+    assert all("pastes{" not in q and "pastes(limit:1){" in q for q in queries)
+    assert [q.count("owner{") for q in queries] == [0, 1, 1, 2, 2, 3, 3, 4, 4, 5]
