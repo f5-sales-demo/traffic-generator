@@ -5257,7 +5257,7 @@
         "/crapi/health",
         "/crapi/identity/api/auth/login",
         "/crapi/mailhog/api/v2/messages",
-        "/crapi/workshop/api/mechanic"
+        "/crapi/workshop/api/mechanic/"
       ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
@@ -5270,7 +5270,7 @@
             "method": "GET",
             "minimum_dispatches": 1,
             "payload_class": "mechanic-data-exposure",
-            "path": "/crapi/workshop/api/mechanic",
+            "path": "/crapi/workshop/api/mechanic/",
             "expected_statuses": [200],
             "require_application_response": true,
             "response_contract": {
