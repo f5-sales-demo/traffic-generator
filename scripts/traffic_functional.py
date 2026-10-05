@@ -8,6 +8,7 @@ from pathlib import Path
 from traffic_csd_functional import verify_csd_libraries
 from traffic_dispatch import verify_browser_actions
 from traffic_report import build_report
+from traffic_security import bot_attribution
 
 CREDENTIAL_COUNT = 15
 CONNECTION_LIMIT = 20
@@ -338,6 +339,12 @@ def verify_native_routes(scenario: dict, result: dict, directory: Path) -> dict:
     required = scenario["route_contract"]["actions"]
     actions = receipt.get("actions", [])
     images = {identifier: directory / (identifier + ".png") for identifier in required}
+    control_path = directory / "control-attribution.json"
+    controls = (
+        json.loads(control_path.read_text()).get("checks", [])
+        if control_path.is_file() and not control_path.is_symlink()
+        else []
+    )
     passed = (
         len(actions) == len(required)
         and {item.get("id") for item in actions} == set(required)
@@ -346,11 +353,18 @@ def verify_native_routes(scenario: dict, result: dict, directory: Path) -> dict:
         and receipt.get("artifact_sha256") == result.get("artifact_sha256")
         and receipt.get("browser_closed") is True
         and all(
-            item.get("performed") is True
-            and item.get("rendered") is True
-            and item.get("contentMatches") is True
-            and item.get("urlMatches") is True
-            and item.get("status") not in (403, 429)
+            (
+                item.get("performed") is True
+                and item.get("rendered") is True
+                and item.get("contentMatches") is True
+                and item.get("urlMatches") is True
+                and item.get("status") not in (403, 429)
+            )
+            or any(
+                check.get("action_id") == item.get("id")
+                and bot_attribution(item, check.get("response", {}), result, directory)
+                for check in controls
+            )
             for item in actions
         )
         and all(
@@ -372,7 +386,7 @@ def verify_native_routes(scenario: dict, result: dict, directory: Path) -> dict:
             for identifier, file in images.items()
             if file.is_file()
         },
-        "control_attribution": "unattributed browser denials cannot qualify native rendering",
+        "control_attribution": "native routes or request-bound WAF bot blocks; unattributed denials fail",
     }
 
 

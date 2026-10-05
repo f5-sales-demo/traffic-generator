@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from traffic_functional import verify_composed_native, verify_functional, verify_load
+from traffic_security import bot_attribution
 
 
 def test_load_rejects_missing_workers_and_wrong_content(tmp_path):
@@ -259,3 +260,85 @@ def test_native_routes_require_all_rendered_actions_screenshots_and_cleanup(tmp_
     receipt["actions"][0].update(rendered=False, mitigated=True, status=403)
     p.write_text(json.dumps(receipt))
     assert not verify_functional(scenario, result, [], tmp_path)["passed"]
+
+
+def test_bot_denial_requires_exact_request_security_and_effective_firewall(tmp_path):
+
+    response: dict = {
+        "scenario": "bot-simulation/04-rapid-browsing",
+        "domain": "www.example.com",
+        "path": "/juice-shop/",
+        "method": "GET",
+        "status": 403,
+        "synthetic_identity": "showcase-" + "a" * 32 + "-rapid-ua-3",
+        "sent_at": 10.0,
+        "received_at": 11.0,
+        "upstream_dispatched": True,
+        "payload_sha256": "a" * 64,
+        "response_sha256": "b" * 64,
+    }
+    action = {
+        "id": "ua-3-route-0",
+        "performed": True,
+        "rendered": False,
+        "mitigated": True,
+        "status": 403,
+        "fresh_document_response": True,
+    }
+    event = {
+        "req_id": "synthetic-request",
+        "namespace": "example-waap",
+        "vh_name": "ves-io-http-loadbalancer-example-waap",
+        "domain": "www.example.com",
+        "req_path": "/juice-shop/",
+        "method": "GET",
+        "user": "Header-X-Mud-User-" + response["synthetic_identity"],
+        "time": "1970-01-01T00:00:10.500Z",
+        "rsp_code": "403",
+        "action": "block",
+        "sec_event_type": "waf_sec_event",
+        "sec_event_name": "WAF",
+        "app_firewall_name": "example-waap-waf",
+        "enforcement_mode": "Blocking",
+        "waf_mode": "block",
+        "recommended_action": "block",
+        "bot_info": {
+            "classification": "malicious",
+            "anomaly": "Search Engine Verification Failed",
+            "type": "Search Engine",
+            "name": "Google",
+        },
+    }
+    access = {**event}
+    evidence: dict = {
+        "source_commit": "c" * 40,
+        "artifact_sha256": "d" * 64,
+        "scope": {
+            "namespace": "example-waap",
+            "loadbalancer": "example-waap",
+            "domain": "www.example.com",
+        },
+        "clock_bounds": [-1, 1],
+        "firewall": {
+            "metadata": {"name": "example-waap-waf", "namespace": "example-waap"},
+            "spec": {"blocking": {}, "default_bot_setting": {}},
+        },
+        "checks": [
+            {
+                "response": response,
+                "action_id": action["id"],
+                "access": access,
+                "events": [event],
+            }
+        ],
+    }
+    result = {"source_commit": "c" * 40, "artifact_sha256": "d" * 64}
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert bot_attribution(action, response, result, tmp_path)
+    event["req_id"] = "foreign-request"
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not bot_attribution(action, response, result, tmp_path)
+    event["req_id"] = "synthetic-request"
+    evidence["firewall"]["spec"] = {"monitoring": {}}
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not bot_attribution(action, response, result, tmp_path)
