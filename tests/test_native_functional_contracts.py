@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from traffic_dispatch import response_content_matches
 from traffic_functional import (
     verify_composed_native,
+    verify_csrf,
     verify_functional,
     verify_load,
     verify_scraper,
@@ -411,3 +412,29 @@ def test_scraper_requires_every_native_page_receipt_and_cleanup(tmp_path):
     evidence["browser_closed"] = False
     p.write_text(json.dumps(evidence))
     assert not verify_scraper(scenario, result, tmp_path)["passed"]
+
+
+def test_csrf_acceptance_requires_mutation_fresh_login_and_recovery(tmp_path):
+    s = {"functional_contract": {"behavior": "native CSRF"}}
+    r = {
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "transport_failures": 0,
+        "tool_cancellations": 0,
+    }
+    d = {
+        "source_commit": r["source_commit"],
+        "artifact_sha256": r["artifact_sha256"],
+        "actor": "tgen_csrf",
+        "changed": True,
+        "fresh_login": True,
+        "restored": True,
+    }
+    p = tmp_path / "csrf-restoration.json"
+    p.write_text(json.dumps(d))
+    assert verify_csrf(s, r, tmp_path)["passed"]
+    d["fresh_login"] = False
+    p.write_text(json.dumps(d))
+    assert not verify_csrf(s, r, tmp_path)["passed"]

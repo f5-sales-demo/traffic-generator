@@ -173,6 +173,24 @@ def verify_native_contract(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
+def verify_csrf(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require actual isolated password mutation, fresh authentication and recovery."""
+    evidence = json.loads((directory / "csrf-restoration.json").read_text())
+    return {
+        "passed": evidence.get("actor") == "tgen_csrf"
+        and evidence.get("changed") is True
+        and evidence.get("fresh_login") is True
+        and evidence.get("restored") is True
+        and evidence.get("source_commit") == result.get("source_commit")
+        and evidence.get("artifact_sha256") == result.get("artifact_sha256")
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+    }
+
+
 def verify_role_mutation(scenario: dict, result: dict, directory: Path) -> dict:
     """Require every actual role payload readback and exact original profile restoration."""
     before = json.loads((directory / "restaurant-role-snapshot.json").read_text())
@@ -579,20 +597,18 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
-    if contract.get("verifier") == "native-role-mutation":
-        return verify_role_mutation(scenario, result, directory)
-    if contract.get("verifier") == "native-scraper":
-        return verify_scraper(scenario, result, directory)
-    if contract.get("verifier") == "native-browser-routes":
-        return verify_native_routes(scenario, result, directory)
-    if contract.get("verifier") == "native-subfinder":
-        return verify_discovery(scenario, result, directory)
-    if contract.get("verifier") == "current-pass-report":
-        return verify_current_report(scenario, result, directory)
-    if contract.get("verifier") == "native-browser-display":
-        return verify_display_browser(scenario, result, directory)
-    if contract.get("verifier") == "native-load":
-        return verify_load(scenario, result, directory)
+    specialized = {
+        "native-dvwa-csrf": verify_csrf,
+        "native-role-mutation": verify_role_mutation,
+        "native-scraper": verify_scraper,
+        "native-browser-routes": verify_native_routes,
+        "native-subfinder": verify_discovery,
+        "current-pass-report": verify_current_report,
+        "native-browser-display": verify_display_browser,
+        "native-load": verify_load,
+    }
+    if contract.get("verifier") in specialized:
+        return specialized[contract["verifier"]](scenario, result, directory)
     if contract.get("verifier") == "composed-native":
         return verify_composed_native(scenario, result, responses, directory)
     if contract.get("verifier") == "native-crapi-signup":

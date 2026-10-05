@@ -6804,7 +6804,12 @@
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "text/html",
+              "text_contains": ["DVWA", "Password Changed"]
+            }
           },
           {
             "id": "password-restore",
@@ -6820,7 +6825,12 @@
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "require_application_response": true,
+            "response_contract": {
+              "content_type": "text/html",
+              "text_contains": ["DVWA", "Password Changed"]
+            }
           }
         ],
         "reject_unmatched_errors": true
@@ -6828,7 +6838,11 @@
       "fixture_contract": {
         "csrf_restore": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-dvwa-csrf",
+        "behavior": "Isolated synthetic password changes and fresh login are observed, then original credentials authenticate after exact recovery"
+      }
     },
     {
       "id": "dvwa-exploits/04-file-inclusion",
