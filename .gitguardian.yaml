@@ -1,0 +1,13 @@
+---
+version: 2
+secret:
+  ignored_matches:
+    # Reviewed in https://github.com/f5-sales-demo/traffic-generator/issues/723.
+    # suites/catalog.json, algorithm-None in juice-shop-exploits/10-jwt-attacks,
+    # commit 4db3cb3018bea73b6e681f0aaf32db15c97485df (PR #713).
+    # The match is only the encoded {"alg":"None","typ":"JWT"} header of
+    # a regex for unsigned JWT attack simulation, with no payload or signature.
+    # This exact match exception affects ggshield only. The GitGuardian incident
+    # must also be ignored as a false positive in the dashboard.
+    - name: Juice Shop algorithm-None synthetic JWT header regex
+      match: cefe2d84e23774f5dede5c74ac2e470b952664965166a9a12348c495f465f33e
