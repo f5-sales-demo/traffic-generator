@@ -40,3 +40,10 @@ test('a fresh blocked document records the attempted route with its own response
   assert.equal(result.mitigated, true);
   assert.equal(result.fresh_document_response, true);
 });
+
+test('healthy loaded SPA routes preserve their native application document', () => {
+  const { needsFreshDocument } = require('../scripts/rapid_navigation.cjs');
+  assert.equal(needsFreshDocument('https://example.com/juice-shop/#/about', { status: () => 200 }), false);
+  assert.equal(needsFreshDocument('https://example.com/juice-shop/#/about', { status: () => 403 }), true);
+  assert.equal(needsFreshDocument('https://example.com/juice-shop/#/about'), true);
+});

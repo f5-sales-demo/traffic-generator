@@ -209,3 +209,53 @@ def test_discovery_requires_native_report_identity_and_observed_cleanup(tmp_path
     evidence["process"]["timed_out"] = True
     receipt.write_text(json.dumps(evidence))
     assert not verify_functional(scenario, result, [], tmp_path)["passed"]
+
+
+def test_native_routes_require_all_rendered_actions_screenshots_and_cleanup(tmp_path):
+    scenario = {
+        "id": "bot-simulation/04-rapid-browsing",
+        "route_contract": {"actions": ["ua-0-route-0"]},
+        "functional_contract": {
+            "verifier": "native-browser-routes",
+            "behavior": "native rendered route",
+        },
+    }
+    result = {
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+        "transport_failures": 0,
+        "tool_cancellations": 0,
+    }
+    image = tmp_path / "ua-0-route-0.png"
+    image.write_bytes(bytes.fromhex("89504e470d0a1a0a") + b"synthetic")
+    receipt: dict = {
+        "scenario": scenario["id"],
+        "source_commit": result["source_commit"],
+        "artifact_sha256": result["artifact_sha256"],
+        "actions": [
+            {
+                "id": "ua-0-route-0",
+                "performed": True,
+                "rendered": True,
+                "status": 200,
+                "urlMatches": True,
+                "contentMatches": True,
+            }
+        ],
+        "browser_closed": True,
+    }
+    p = tmp_path / "route-actions.json"
+    p.write_text(json.dumps(receipt))
+    assert verify_functional(scenario, result, [], tmp_path)["passed"]
+    image.unlink()
+    assert not verify_functional(scenario, result, [], tmp_path)["passed"]
+    image.write_bytes(bytes.fromhex("89504e470d0a1a0a"))
+    receipt["browser_closed"] = False
+    p.write_text(json.dumps(receipt))
+    assert not verify_functional(scenario, result, [], tmp_path)["passed"]
+    receipt["browser_closed"] = True
+    receipt["actions"][0].update(rendered=False, mitigated=True, status=403)
+    p.write_text(json.dumps(receipt))
+    assert not verify_functional(scenario, result, [], tmp_path)["passed"]

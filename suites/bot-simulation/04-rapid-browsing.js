@@ -9,7 +9,7 @@ const { observeRequests, settleRequests, childHeaders } = require('../../scripts
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
-const { navigation, verifyNavigation } = require('../../scripts/rapid_navigation.cjs');
+const { navigation, verifyNavigation, needsFreshDocument } = require('../../scripts/rapid_navigation.cjs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
 process.on('exit', () => {
   try {
@@ -59,7 +59,13 @@ const USER_AGENTS = [
 
   const directory = process.env.TGEN_RESULTS_DIR;
   if (!directory) throw new Error('Private results directory is required');
-  const receipt = { actions: [], browser_closed: false };
+  const receipt = {
+    scenario: 'bot-simulation/04-rapid-browsing',
+    source_commit: process.env.SOURCE_COMMIT,
+    artifact_sha256: process.env.TGEN_ARTIFACT_SHA256,
+    actions: [],
+    browser_closed: false,
+  };
   let visited = 0;
   let errors = 0;
   const startTime = Date.now();
@@ -109,7 +115,7 @@ const USER_AGENTS = [
             { mode: 0o600 },
           );
           await settleRequests(requestState, 30000, 100);
-          if (new URL(url).hash) {
+          if (needsFreshDocument(url, documentResponse)) {
             await page.goto('about:blank');
             documentResponse = undefined;
           }

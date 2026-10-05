@@ -3325,7 +3325,11 @@
         ],
         "allow_mitigation": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "native-browser-routes",
+        "behavior": "All declared native rendered navigation outcomes have source-bound screenshot evidence and complete browser cleanup; unattributed denials do not qualify rendering"
+      }
     },
     {
       "id": "bot-simulation/05-hydra-brute-force",

@@ -12,6 +12,10 @@ function validOutcome(expectation, observation) {
   return true;
 }
 
+function needsFreshDocument(url, documentResponse) {
+  return Boolean(new URL(url).hash) && documentResponse?.status() !== 200;
+}
+
 async function verifyNavigation(page, response, route, identity, directory, freshDocumentResponse = false) {
   const expected = navigation.find((item) => item.path === route);
   if (!expected) throw new Error('Undeclared rapid navigation');
@@ -64,4 +68,4 @@ async function verifyNavigation(page, response, route, identity, directory, fres
   await page.screenshot({ path: path.join(directory, `${id}.png`) });
   return item;
 }
-module.exports = { navigation, validOutcome, verifyNavigation };
+module.exports = { navigation, validOutcome, verifyNavigation, needsFreshDocument };

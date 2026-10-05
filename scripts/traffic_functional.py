@@ -332,6 +332,50 @@ def verify_display_browser(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
+def verify_native_routes(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require each real rendered route, image bytes, source binding and browser cleanup."""
+    receipt = json.loads((directory / "route-actions.json").read_text())
+    required = scenario["route_contract"]["actions"]
+    actions = receipt.get("actions", [])
+    images = {identifier: directory / (identifier + ".png") for identifier in required}
+    passed = (
+        len(actions) == len(required)
+        and {item.get("id") for item in actions} == set(required)
+        and receipt.get("scenario") == scenario["id"]
+        and receipt.get("source_commit") == result.get("source_commit")
+        and receipt.get("artifact_sha256") == result.get("artifact_sha256")
+        and receipt.get("browser_closed") is True
+        and all(
+            item.get("performed") is True
+            and item.get("rendered") is True
+            and item.get("contentMatches") is True
+            and item.get("urlMatches") is True
+            and item.get("status") not in (403, 429)
+            for item in actions
+        )
+        and all(
+            file.is_file()
+            and file.read_bytes().startswith(bytes.fromhex("89504e470d0a1a0a"))
+            for file in images.values()
+        )
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0
+    )
+    return {
+        "passed": passed,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "rendered_actions": len(actions),
+        "screenshot_sha256": {
+            identifier: hashlib.sha256(file.read_bytes()).hexdigest()
+            for identifier, file in images.items()
+            if file.is_file()
+        },
+        "control_attribution": "unattributed browser denials cannot qualify native rendering",
+    }
+
+
 def verify_discovery(scenario: dict, result: dict, directory: Path) -> dict:
     """Read real passive discovery rows and require source-bound native process cleanup."""
     evidence = json.loads((directory / "native-discovery.json").read_text())
@@ -403,6 +447,8 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-browser-routes":
+        return verify_native_routes(scenario, result, directory)
     if contract.get("verifier") == "native-subfinder":
         return verify_discovery(scenario, result, directory)
     if contract.get("verifier") == "current-pass-report":
