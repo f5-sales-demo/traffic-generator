@@ -14,6 +14,7 @@ CREDENTIAL_COUNT = 15
 CONNECTION_LIMIT = 20
 MIN_RESOURCE_SAMPLES = 2
 SHA256_LENGTH = 64
+HTTP_OK = 200
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -338,6 +339,39 @@ def verify_display_browser(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
+def verify_scraper(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require native content and screenshots for every declared scraped page."""
+    evidence = json.loads((directory / "scraper-functional.json").read_text())
+    actions = evidence.get("actions", [])
+    required = scenario["scrape_contract"]["paths"]
+    return {
+        "passed": len(actions) == len(required)
+        and {a.get("path") for a in actions} == set(required)
+        and evidence.get("scenario") == scenario["id"]
+        and evidence.get("source_commit") == result.get("source_commit")
+        and evidence.get("artifact_sha256") == result.get("artifact_sha256")
+        and evidence.get("browser_closed") is True
+        and all(
+            a.get("passed") is True
+            and a.get("content_matches") is True
+            and a.get("status") == HTTP_OK
+            and len(a.get("response_sha256", "")) == SHA256_LENGTH
+            and Path(a.get("screenshot", "")).name == a.get("screenshot")
+            and (directory / a["screenshot"]).is_file()
+            and (directory / a["screenshot"])
+            .read_bytes()
+            .startswith(bytes.fromhex("89504e470d0a1a0a"))
+            for a in actions
+        )
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "native_pages": len(actions),
+    }
+
+
 def verify_native_routes(scenario: dict, result: dict, directory: Path) -> dict:
     """Require each real rendered route, image bytes, source binding and browser cleanup."""
     receipt = json.loads((directory / "route-actions.json").read_text())
@@ -466,6 +500,8 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-scraper":
+        return verify_scraper(scenario, result, directory)
     if contract.get("verifier") == "native-browser-routes":
         return verify_native_routes(scenario, result, directory)
     if contract.get("verifier") == "native-subfinder":

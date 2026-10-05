@@ -2653,9 +2653,15 @@
       "dependencies": ["node", "playwright", "timeout"],
       "after": ["bot-simulation/01-playwright-credential-stuff"],
       "target_paths": [
+        "/csd-demo/",
         "/dvwa/",
+        "/dvwa/setup.php",
+        "/",
         "/httpbin/",
+        "/httpbin/get",
         "/juice-shop/",
+        "/juice-shop/api/Feedbacks/",
+        "/juice-shop/api/Products/",
         "/juice-shop/rest/products/search",
         "/vampi/",
         "/vampi/users/v1",
@@ -2691,7 +2697,27 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "scrape_contract": {
+        "paths": [
+          "/juice-shop/",
+          "/juice-shop/rest/products/search?q=",
+          "/juice-shop/api/Products/",
+          "/juice-shop/api/Feedbacks/",
+          "/dvwa/",
+          "/dvwa/setup.php",
+          "/vampi/",
+          "/vampi/users/v1",
+          "/httpbin/get",
+          "/whoami/",
+          "/csd-demo/",
+          "/"
+        ]
+      },
+      "functional_contract": {
+        "verifier": "native-scraper",
+        "behavior": "Every declared scraped native page has matched content, response digest and screenshot evidence with complete browser cleanup"
+      }
     },
     {
       "id": "bot-simulation/03-headless-form-fill",

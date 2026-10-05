@@ -8,7 +8,12 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from traffic_dispatch import response_content_matches
-from traffic_functional import verify_composed_native, verify_functional, verify_load
+from traffic_functional import (
+    verify_composed_native,
+    verify_functional,
+    verify_load,
+    verify_scraper,
+)
 from traffic_security import bot_attribution
 
 
@@ -363,3 +368,46 @@ def test_graphql_read_contracts_require_native_data_not_generic_errors():
     assert not response_content_matches(
         contract, "application/json", '{"data":{"pastes":[{"unrelated":true}]}}'
     )
+
+
+def test_scraper_requires_every_native_page_receipt_and_cleanup(tmp_path):
+    scenario = {
+        "id": "bot-simulation/02-puppeteer-scraper",
+        "scrape_contract": {"paths": ["/vampi/"]},
+        "functional_contract": {"behavior": "native scraping"},
+    }
+    result = {
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "transport_failures": 0,
+        "tool_cancellations": 0,
+    }
+    image = tmp_path / "scrape-0.png"
+    image.write_bytes(bytes.fromhex("89504e470d0a1a0a"))
+    evidence = {
+        "scenario": scenario["id"],
+        "source_commit": result["source_commit"],
+        "artifact_sha256": result["artifact_sha256"],
+        "browser_closed": True,
+        "actions": [
+            {
+                "path": "/vampi/",
+                "passed": True,
+                "status": 200,
+                "content_matches": True,
+                "screenshot": "scrape-0.png",
+                "response_sha256": "c" * 64,
+            }
+        ],
+    }
+    p = tmp_path / "scraper-functional.json"
+    p.write_text(json.dumps(evidence))
+    assert verify_scraper(scenario, result, tmp_path)["passed"]
+    evidence["actions"] = []
+    p.write_text(json.dumps(evidence))
+    assert not verify_scraper(scenario, result, tmp_path)["passed"]
+    evidence["browser_closed"] = False
+    p.write_text(json.dumps(evidence))
+    assert not verify_scraper(scenario, result, tmp_path)["passed"]
