@@ -105,3 +105,29 @@ def test_retention_removes_only_orphaned_owned_child_markers(tmp_path):
     assert (markers / "live.json").exists()
     assert not (markers / "stale.json").exists()
     assert (markers / "foreign.json").exists()
+
+
+def test_nested_child_records_functional_failure(tmp_path, monkeypatch):
+    monkeypatch.setenv("TGEN_RESULTS_DIR", str(tmp_path))
+    monkeypatch.setenv("TARGET_FQDN", "www.example.test")
+    monkeypatch.setenv("TGEN_RUNTIME_DIR", str(tmp_path))
+    scenario = {
+        "id": "synthetic/action",
+        "entrypoint": "scripts/traffic_dispatch.py",
+        "kind": "shell",
+        "budget": "http",
+        "timeout_seconds": 1,
+    }
+
+    def dispatched(_directory, _scenario, result):
+        result["dispatch_contract_verified"] = True
+
+    with (
+        patch.object(runtime, "execute", return_value={"outcome": "launched"}),
+        patch.object(runtime, "scenario_action_verification", side_effect=dispatched),
+        patch.object(runtime, "verify_functional", return_value={"passed": False}),
+    ):
+        assert runtime.run_nested(Path(__file__).resolve().parents[1], [scenario]) == 1
+    receipt = json.loads((tmp_path / "synthetic--action/receipt.json").read_text())
+    assert receipt["functional_verified"] is False
+    assert receipt["functional_acceptance"]["passed"] is False

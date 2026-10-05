@@ -12,8 +12,6 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
     if status is None:
         return False
     media = content_type.partition(";")[0]
-    if status in (403, 429):
-        return bool(body) and media in ("text/html", "application/json", "text/plain")
     if method == "HEAD" or status in (204, 304):
         return body == ""
     if status in (301, 302, 307, 308):

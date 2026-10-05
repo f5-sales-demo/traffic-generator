@@ -1,11 +1,13 @@
 """Native load acceptance requires complete combinations, actual content and cleanup."""
 
+import hashlib
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
-from traffic_functional import verify_load
+from traffic_functional import verify_composed_native, verify_functional, verify_load
 
 
 def test_load_rejects_missing_workers_and_wrong_content(tmp_path):
@@ -40,3 +42,119 @@ def test_load_rejects_missing_workers_and_wrong_content(tmp_path):
     receipt["workers"].pop()
     path.write_text(json.dumps(receipt))
     assert not verify_load(scenario, result, tmp_path)["passed"]
+
+
+def composed_fixture():
+    scenario = {
+        "id": "synthetic/read",
+        "dispatch_contract": {
+            "requirements": [
+                {
+                    "id": "read",
+                    "method": "GET",
+                    "path": "/vampi/users/v1",
+                    "expected_statuses": [200],
+                    "minimum_dispatches": 1,
+                }
+            ]
+        },
+        "functional_contract": {
+            "behavior": "native read",
+            "mutation_policy": "read-only",
+        },
+    }
+    result = {
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "transport_failures": 0,
+        "tool_cancellations": 0,
+    }
+    event = {
+        "kind": "scenario",
+        "scenario": scenario["id"],
+        "method": "GET",
+        "path": "/vampi/users/v1",
+        "status": 200,
+        "matched_requirements": ["read"],
+        "native_response_identity": True,
+        "upstream_dispatched": True,
+    }
+    return scenario, result, event
+
+
+def test_composed_rejects_unattributed_denial(tmp_path):
+    scenario, result, event = composed_fixture()
+    assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    event["status"] = 403
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+
+
+def test_composed_rejects_unexpected_status_or_undispatched_response(tmp_path):
+    scenario, result, event = composed_fixture()
+    event["status"] = 503
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    event["status"] = 200
+    event["upstream_dispatched"] = False
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+
+
+def test_composed_restoration_label_requires_observed_recovery(tmp_path):
+    scenario, result, event = composed_fixture()
+    scenario["functional_contract"]["mutation_policy"] = "journaled-restoration"
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    scenario["functional_contract"]["restoration_fields"] = ["video_restoration", "otp_restoration"]
+    result["video_restoration"] = True
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    result["otp_restoration"] = True
+    assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    scenario["functional_contract"]["mutation_policy"] = "rehearsal-reset"
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+
+
+def test_report_functional_acceptance_uses_current_dependency_receipts(tmp_path):
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "child.sh").write_text("synthetic source")
+    catalog = {"scenarios": [{"id": "synthetic/child", "entrypoint": "child.sh"}]}
+    (source / "suites").mkdir()
+    (source / "suites/catalog.json").write_text(json.dumps(catalog))
+    active = tmp_path / "pass-current"
+    directory = active / "synthetic--report"
+    directory.mkdir(parents=True)
+    child = active / "synthetic--child"
+    child.mkdir()
+    receipt = {
+        "id": "synthetic/child",
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "functional_verified": True,
+        "source_sha256": hashlib.sha256((source / "child.sh").read_bytes()).hexdigest(),
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+    }
+    path = child / "receipt.json"
+    path.write_text(json.dumps(receipt))
+    scenario = {
+        "id": "synthetic/report",
+        "report_contract": {"dependencies": ["synthetic/child"]},
+        "functional_contract": {
+            "verifier": "current-pass-report",
+            "behavior": "current dependency outcomes",
+        },
+    }
+    result = {
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+    }
+    with patch("traffic_functional.SOURCE_ROOT", source):
+        assert verify_functional(scenario, result, [], directory)["passed"]
+        receipt["functional_verified"] = False
+        path.write_text(json.dumps(receipt))
+        assert not verify_functional(scenario, result, [], directory)["passed"]
+        receipt["functional_verified"] = True
+        receipt["source_commit"] = "c" * 40
+        path.write_text(json.dumps(receipt))
+        assert not verify_functional(scenario, result, [], directory)["passed"]

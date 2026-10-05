@@ -7,10 +7,12 @@ from pathlib import Path
 
 from traffic_csd_functional import verify_csd_libraries
 from traffic_dispatch import verify_browser_actions
+from traffic_report import build_report
 
 CREDENTIAL_COUNT = 15
 CONNECTION_LIMIT = 20
 MIN_RESOURCE_SAMPLES = 2
+SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
 def verify_credentials(scenario: dict, result: dict, directory: Path) -> dict:
@@ -187,7 +189,16 @@ def verify_composed_native(
                 "id": requirement["id"],
                 "passed": len(rows) >= requirement.get("minimum_dispatches", 1)
                 and all(
-                    r.get("native_response_identity") is True
+                    r.get("upstream_dispatched") is True
+                    and r.get("native_response_identity") is True
+                    and r.get("status") in requirement.get("expected_statuses", [])
+                    and (
+                        r.get("status") not in (403, 429)
+                        or r.get("status_specific_assertions", {}).get(
+                            requirement["id"]
+                        )
+                        is True
+                    )
                     and not r.get("transport_error")
                     for r in rows
                 ),
@@ -214,8 +225,25 @@ def verify_composed_native(
         if field in result:
             checks.append({"id": field, "passed": result[field] is True})  # noqa: PERF401
     mutation = scenario["functional_contract"].get("mutation_policy")
-    if mutation not in ("read-only", "journaled-restoration", "rehearsal-reset"):
+    if mutation not in ("read-only", "journaled-restoration"):
         return {"passed": False, "reason": "mutation recovery contract missing"}
+    recovery_fields = scenario["functional_contract"].get("restoration_fields", [])
+    if mutation == "journaled-restoration" and (
+        not recovery_fields
+        or not all(
+            field
+            in (
+                "fixture_restoration",
+                "video_restoration",
+                "disposable_video_cleanup",
+                "otp_restoration",
+                "signup_restoration",
+            )
+            and result.get(field) is True
+            for field in recovery_fields
+        )
+    ):
+        return {"passed": False, "reason": "observed mutation recovery missing"}
     return {
         "passed": bool(checks)
         and all(c["passed"] for c in checks)
@@ -303,11 +331,43 @@ def verify_display_browser(scenario: dict, result: dict, directory: Path) -> dic
     }
 
 
+def verify_current_report(scenario: dict, result: dict, directory: Path) -> dict:
+    """Recompute current-pass dependencies against installed source and artifact bytes."""
+    dependencies = scenario["report_contract"]["dependencies"]
+    catalog = json.loads((SOURCE_ROOT / "suites/catalog.json").read_text())
+    digests = {
+        item["id"]: hashlib.sha256(
+            (SOURCE_ROOT / item["entrypoint"]).read_bytes()
+        ).hexdigest()
+        for item in catalog["scenarios"]
+        if item["id"] in dependencies
+    }
+    report = build_report(
+        directory.parent,
+        dependencies,
+        digests,
+        source_commit=result.get("source_commit"),
+        artifact_sha256=result.get("artifact_sha256"),
+    )
+    return {
+        "passed": report["passed"]
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and bool(result.get("source_commit"))
+        and bool(result.get("artifact_sha256")),
+        "behavior": scenario["functional_contract"]["behavior"],
+        "dependencies": report["dependencies"],
+        "claim": "current-pass native outcomes; no inferred exploit or control success",
+    }
+
+
 def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "current-pass-report":
+        return verify_current_report(scenario, result, directory)
     if contract.get("verifier") == "native-browser-display":
         return verify_display_browser(scenario, result, directory)
     if contract.get("verifier") == "native-load":

@@ -28985,7 +28985,11 @@
           "mitre-attack/07-impact"
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "current-pass-report",
+        "behavior": "Recompute every declared dependency from current-pass native functional receipts bound to the installed source and immutable artifact"
+      }
     },
     {
       "id": "owasp-scanning/10-full-owasp-report",
@@ -29022,7 +29026,11 @@
           "owasp-scanning/09-arjun-param-discovery"
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "functional_contract": {
+        "verifier": "current-pass-report",
+        "behavior": "Recompute every declared dependency from current-pass native functional receipts bound to the installed source and immutable artifact"
+      }
     }
   ],
   "required_assets": [

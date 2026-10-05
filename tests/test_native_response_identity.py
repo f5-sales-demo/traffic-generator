@@ -40,3 +40,12 @@ def test_httpbin_requires_an_actual_echo_or_native_rejection():
         "text/html",
         '<a href="login.php">DVWA</a>',
     )
+
+
+def test_denial_status_does_not_establish_native_application_identity():
+    assert not native_identity(
+        "/vampi/users/v1", "GET", 403, "text/html", "Request blocked"
+    )
+    assert not native_identity(
+        "/crapi/identity/api/auth/login", "POST", 429, "text/plain", "Too many requests"
+    )

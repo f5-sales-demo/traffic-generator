@@ -385,8 +385,26 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
         ).hexdigest()
         result["dispatch_contract_verified"] = False
         scenario_action_verification(directory, scenario, result)
+        response_path = directory / "response-events.jsonl"
+        responses = (
+            [
+                json.loads(line)
+                for line in response_path.read_text().splitlines()
+                if line.strip()
+            ]
+            if response_path.exists()
+            else []
+        )
+        result["transport_failures"] = sum(
+            bool(row.get("transport_error")) for row in responses
+        )
+        result["tool_cancellations"] = result.get("tool_cancellations", 0)
+        result["functional_acceptance"] = verify_functional(
+            scenario, result, responses, directory
+        )
+        result["functional_verified"] = result["functional_acceptance"]["passed"]
         atomic_json(directory / "receipt.json", result)
-        failed |= result["outcome"] != "launched"
+        failed |= result["outcome"] != "launched" or not result["functional_verified"]
     return int(failed)
 
 
