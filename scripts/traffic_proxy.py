@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import hashlib
 import http.client as http_client
 import json
 import os
@@ -174,6 +175,14 @@ class Budget:
         await event
         flow.metadata.pop("tgen_pending_slot", None)
         flow.metadata["tgen_upstream_dispatched"] = True
+        flow.metadata["tgen_request_sent_at"] = time.time()
+        flow.metadata["tgen_request_domain"] = host
+        flow.metadata["tgen_synthetic_identity"] = flow.request.headers.get(
+            "X-MUD-User", ""
+        )
+        flow.metadata["tgen_payload_sha256"] = hashlib.sha256(
+            flow.request.content or b""
+        ).hexdigest()
         try:
             current = flow.metadata["tgen_scenario"]
             event_path = Path(current["dispatch_path"])
@@ -272,6 +281,11 @@ class Budget:
             message = "response evidence escaped the owned results directory"
             raise ValueError(message)
         event = {
+            "domain": flow.metadata.get("tgen_request_domain"),
+            "synthetic_identity": flow.metadata.get("tgen_synthetic_identity"),
+            "sent_at": flow.metadata.get("tgen_request_sent_at"),
+            "received_at": time.time(),
+            "payload_sha256": flow.metadata.get("tgen_payload_sha256"),
             "worker_marker": flow.metadata.get("tgen_worker", ""),
             "upstream_dispatched": flow.metadata.get("tgen_upstream_dispatched", False),
             "scenario": current["id"],
@@ -288,6 +302,9 @@ class Budget:
         if flow.response:
             content_type = flow.response.headers.get("content-type", "")
             body = flow.response.get_text(strict=False) or ""
+            event["response_sha256"] = hashlib.sha256(
+                flow.response.content or b""
+            ).hexdigest()
             event["native_response_identity"] = native_identity(
                 event["path"], event["method"], status, content_type, body
             )

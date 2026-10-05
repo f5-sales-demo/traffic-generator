@@ -282,6 +282,86 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             assert event["matched_requirements"] == ["connect"]
             assert flow.metadata["tgen_dispatched_method"] == "CONNECT"
 
+    async def test_response_records_actual_request_join_fields_without_credentials(
+        self,
+    ):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.dict(
+                os.environ,
+                {
+                    "TGEN_DOMAINS": '["www.example.test","api.example.test"]',
+                    "TGEN_PROXY_METRICS": tmp + "/metrics.json",
+                },
+            ),
+        ):
+            spec = importlib.util.spec_from_file_location(
+                "join_proxy", ROOT / "scripts/traffic_proxy.py"
+            )
+            assert spec is not None
+            assert spec.loader is not None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            budget = module.Budget()
+            identity = "showcase-" + "a" * 32 + "-rapid-ua-0"
+            evidence = pathlib.Path(tmp) / "dispatch-events.jsonl"
+            budget.scenario_file.write_text(
+                json.dumps(
+                    {
+                        "id": "synthetic/action",
+                        "phase": "execution",
+                        "dispatch_path": str(evidence),
+                        "dispatch_contract": {
+                            "requirements": [
+                                {
+                                    "id": "read",
+                                    "method": "GET",
+                                    "path": "/httpbin/get",
+                                    "payload_class": "synthetic",
+                                    "minimum_dispatches": 1,
+                                }
+                            ]
+                        },
+                    }
+                )
+            )
+            flow = SimpleNamespace(
+                metadata={},
+                request=SimpleNamespace(
+                    content=b"synthetic",
+                    headers={
+                        "Host": "www.example.test",
+                        "X-MUD-User": identity,
+                        "Authorization": "Bearer private-token",
+                    },
+                    host="www.example.test",
+                    port=443,
+                    method="GET",
+                    path="/httpbin/get?q=synthetic",
+                    get_text=lambda **_: "synthetic",
+                ),
+            )
+            pending = asyncio.create_task(budget.request(flow))
+            await asyncio.sleep(0)
+            budget.maximum_pending_fillers = 0
+            budget.running()
+            await pending
+            budget.done()
+            flow.response = module.http.Response.make(
+                200,
+                b'{"url":"https://www.example.test/httpbin/get","headers":{}}',
+                {"content-type": "application/json"},
+            )
+            budget.record_outcome(flow, status=200)
+            event = json.loads(evidence.with_name("response-events.jsonl").read_text())
+            assert event["domain"] == "www.example.test"
+            assert event["synthetic_identity"] == identity
+            assert event["sent_at"] <= event["received_at"]
+            assert len(event["payload_sha256"]) == 64
+            assert len(event["response_sha256"]) == 64
+            assert "private-token" not in json.dumps(event)
+            assert "headers" not in event
+
 
 if __name__ == "__main__":
     unittest.main()
