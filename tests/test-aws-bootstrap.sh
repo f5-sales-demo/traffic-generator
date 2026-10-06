@@ -120,7 +120,7 @@ for fixture in valid wrong-name wrong-architecture wrong-version; do
   mkdir -p "$TMP/$fixture/DEBIAN"
   # Shared CI parents may carry setgid; Debian control metadata must not inherit it.
   chmod 00755 "$TMP/$fixture/DEBIAN"
-  printf 'Package: %s\nArchitecture: %s\nVersion: %s\nMaintainer: Fixture <fixture@example.invalid>\nDescription: Offline CloudWatch metadata regression\n' \
+  printf 'Package: %s\nArchitecture: %s\nVersion: %s\nMaintainer: Fixture <fixture@example.com>\nDescription: Offline CloudWatch metadata regression\n' \
     "$package_name" "$package_architecture" "$package_version" >"$TMP/$fixture/DEBIAN/control"
   dpkg-deb --build "$TMP/$fixture" "$TMP/$fixture.deb" >/dev/null
   fixture_digest=$(sha256sum "$TMP/$fixture.deb" | cut -d' ' -f1)

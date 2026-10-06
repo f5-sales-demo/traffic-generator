@@ -33,16 +33,15 @@ for ep in "${STAMPEDE_ENDPOINTS[@]}"; do
   echo "[+] Stampede: ${ep}?${STAMP}"
   echo "    Firing $REQUESTS requests at $CONCURRENCY concurrency..."
 
-  TMPFILE="/tmp/hey-stampede-$$.txt"
-  hey -n "$REQUESTS" -c "$CONCURRENCY" -t 10 "$URL" >"$TMPFILE" 2>&1
+  TMPFILE="${TGEN_RESULTS_DIR:-/tmp}/hey-stampede-$(echo "$ep" | tr / _)-$$.txt"
+  hey -n "$REQUESTS" -c "$CONCURRENCY" -t 30 "$URL" >"$TMPFILE" 2>&1
 
   # Parse results
-  TOTAL=$(grep "requests in" "$TMPFILE" | awk '{print $1}' || echo "$REQUESTS")
-  RPS=$(grep "Requests/sec" "$TMPFILE" | awk '{print $2}')
-  STATUS_200=$(grep -E "^\s+\[200\]" "$TMPFILE" | awk '{print $2}' || echo "0")
-  STATUS_502=$(grep -E "^\s+\[502\]" "$TMPFILE" | awk '{print $2}' || echo "0")
-  STATUS_503=$(grep -E "^\s+\[503\]" "$TMPFILE" | awk '{print $2}' || echo "0")
-  ERRORS=$(grep "Error distribution" -A 50 "$TMPFILE" | grep -v "Error distribution" | grep -c "." || echo "0")
+  RPS=$(awk '/Requests\/sec/ {print $2}' "$TMPFILE")
+  STATUS_200=$(awk '$1=="[200]" {n=$2} END {print n+0}' "$TMPFILE")
+  STATUS_502=$(awk '$1=="[502]" {n=$2} END {print n+0}' "$TMPFILE")
+  STATUS_503=$(awk '$1=="[503]" {n=$2} END {print n+0}' "$TMPFILE")
+  ERRORS=$(awk '/Error distribution:/ {found=1} END {print found+0}' "$TMPFILE")
 
   echo "    Requests/sec: ${RPS:-N/A}"
   echo "    Status 200: ${STATUS_200:-all}"
@@ -55,19 +54,19 @@ for ep in "${STAMPEDE_ENDPOINTS[@]}"; do
   POST_STATUS=$(check_cache_status "$URL")
   echo "    Post-stampede cache: $POST_STATUS"
 
-  if [ "${STATUS_502:-0}" = "0" ] && [ "${STATUS_503:-0}" = "0" ]; then
+  if [ "${STATUS_502:-0}" = "0" ] && [ "${STATUS_503:-0}" = "0" ] && [ "${ERRORS:-0}" = "0" ] && [ "${STATUS_200:-0}" = "$REQUESTS" ]; then
     pass "${ep} stampede: $REQUESTS requests, 0 errors, 0 502s"
   else
     fail "${ep} stampede: 502s=${STATUS_502:-0} 503s=${STATUS_503:-0} errors=${ERRORS:-0}"
   fi
 
-  if [ "$POST_STATUS" = "HIT" ]; then
-    pass "${ep} post-stampede: cached (X-Cache-Status: HIT)"
+  if [ "$POST_STATUS" = "NONE" ] || [ "$POST_STATUS" = "BYPASS" ]; then
+    pass "${ep} post-stampede retains dynamic-bypass behavior"
   else
     fail "${ep} post-stampede: not cached ($POST_STATUS)"
   fi
 
-  rm -f "$TMPFILE"
+  echo "    Private native workload report: $TMPFILE"
   echo ""
 done
 

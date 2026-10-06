@@ -10,7 +10,60 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
+from traffic_dispatch import validate_dispatch_contract
+
 MAX_SCENARIO_SECONDS = 900
+APPLICATION_COUNT = 9
+
+
+def validate_native_execution(scenario: dict) -> None:
+    """Reject retired substitutes and undeclared connection scanner execution."""
+    if scenario.get("adapter") in ("bounded-workload", "bounded-benchmark"):
+        message = "retired substitute execution adapter"
+        raise ValueError(message)
+    if scenario["budget"] == "connection" and scenario.get("adapter") not in (
+        "native-scanner",
+        "native-masscan",
+        "native-slow-headers",
+    ):
+        message = "connection scenario must invoke its declared native tool"
+        raise ValueError(message)
+
+
+def validate_execution_contract(scenario: dict) -> None:
+    """Missing observed-action contracts fail catalog discovery."""
+    if scenario["budget"] != "connection" and not any(
+        key in scenario
+        for key in ("dispatch_contract", "browser_contract", "report_contract")
+    ):
+        message = "scenario execution contract missing"
+        raise ValueError(message)
+
+
+def validate_fixture_refresh(scenario: dict) -> None:
+    """Explicit fixture families cannot silently expand or disappear at runtime."""
+    families = scenario.get("fixture_refresh")
+    if (
+        not isinstance(families, list)
+        or any(not isinstance(family, str) for family in families)
+        or len(set(families)) != len(families)
+        or not set(families) <= {"vampi", "crapi", "juice", "restaurant"}
+    ):
+        message = "scenario fixture refresh contract missing or invalid"
+        raise ValueError(message)
+
+
+def validate_target_contract(scenario: dict) -> None:
+    """Every exact executable request target must be present in the published matrix."""
+    actual = {
+        requirement["path"]
+        for requirement in scenario.get("dispatch_contract", {}).get("requirements", [])
+        if "path" in requirement
+    }
+    actual.update(scenario.get("workload_contract", {}).get("paths", []))
+    if not actual <= set(scenario["target_paths"]):
+        message = "execution endpoint missing from scenario target matrix"
+        raise ValueError(message)
 
 
 def validate_catalog(root: Path, catalog: dict) -> None:
@@ -31,13 +84,37 @@ def validate_catalog(root: Path, catalog: dict) -> None:
         str(path.relative_to(root))
         for path in (root / "suites/cdn-load-testing").glob("bench-*.sh")
     }
+    applications = json.loads((root / "suites/applications.json").read_text())[
+        "applications"
+    ]
+    prefixes = {app["prefix"]: app["id"] for app in applications}
+    if len(prefixes) != APPLICATION_COUNT:
+        message = "traffic application inventory must contain nine published prefixes"
+        raise ValueError(message)
     seen: set[str] = set()
     recorded: set[str] = set()
     for scenario in catalog["scenarios"]:
         identifier = scenario["id"]
+        validate_execution_contract(scenario)
+        validate_native_execution(scenario)
+        validate_fixture_refresh(scenario)
+        if "dispatch_contract" in scenario:
+            validate_dispatch_contract(scenario["dispatch_contract"])
         if identifier in seen or not set(scenario["after"]) <= seen:
             msg = "duplicate scenario or missing ordered dependency"
             raise ValueError(msg)
+        for path in scenario["target_paths"]:
+            if (
+                path not in scenario.get("intentional_negative_paths", [])
+                and path != "/"
+                and not any(
+                    path.startswith(prefix) or path == prefix.rstrip("/")
+                    for prefix in prefixes
+                )
+            ):
+                message = "scenario target has no declared application"
+                raise ValueError(message)
+        validate_target_contract(scenario)
         seen.add(identifier)
         path = root / scenario["entrypoint"]
         if not path.is_file() or not path.resolve().is_relative_to(root.resolve()):

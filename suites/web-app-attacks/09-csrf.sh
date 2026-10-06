@@ -85,7 +85,7 @@ csrf_test "juice-shop POST /api/Users (forged Origin)" \
   -X POST "${BASE}/juice-shop/api/Users" \
   -H "Content-Type: application/json" \
   -H "Origin: http://evil.example" \
-  -d '{"email":"csrf@evil.example","password":"Test1234","passwordRepeat":"Test1234"}'
+  -d '{"email":"csrf@example.com","password":"Test1234","passwordRepeat":"Test1234"}'
 
 echo ""
 

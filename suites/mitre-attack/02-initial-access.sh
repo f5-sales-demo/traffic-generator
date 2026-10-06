@@ -47,7 +47,7 @@ fi
 
 echo ""
 echo "  [T1078.b] Juice Shop known accounts:"
-for cred in "admin@juice-sh.op:admin123" "jim@juice-sh.op:ncc-1701" "bender@juice-sh.op:OhG0dPlease1nsique"; do
+for cred in "admin@example.com:admin123" "jim@example.com:ncc-1701" "bender@example.com:OhG0dPlease1nsique"; do
   user="${cred%%:*}"
   pass="${cred##*:}"
   code=$(curl -sf -o /dev/null -w "%{http_code}" -X POST "${BASE}/juice-shop/rest/user/login" \

@@ -15,7 +15,7 @@ echo ""
 echo "[+] Registering test user..."
 REG_RESP=$(curl -sk -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"attacker","password":"attacker123","email":"attacker@evil.example"}' \
+  -d '{"username":"attacker","password":"attacker123","email":"attacker@example.com"}' \
   --max-time 10) || true
 echo "    Register response: ${REG_RESP}"
 
@@ -28,10 +28,7 @@ LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
 echo "    Login response: ${LOGIN_RESP}"
 
 TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // .authToken // empty' 2>/dev/null || true)
-if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
-  TOKEN=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py" vampi_token)
-  echo "[FIXTURE] Using a real seeded VAmPI token after blocked authentication"
-fi
+
 if [[ -z "$TOKEN" ]]; then
   echo "WARN: Could not extract auth token, continuing with empty token"
   TOKEN="invalid-token-for-testing"
