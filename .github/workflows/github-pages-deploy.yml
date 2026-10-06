@@ -21,7 +21,7 @@ jobs:
   docs:
     uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@ba4098fc3e66075bfcc11147cc10ad659b81cb70
     with:
-      builder-image: ${{ github.repository == 'f5-sales-demo/statistics' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:1734521c61f385c5e708339760faf617620d057a4b78e823039d1c36bc3f6e79' || github.repository == 'f5-sales-demo/canada' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:988e1fbf4e5acdbb15eb0c9aa6430f7968603d4fc96e713a28ca09846eedadd4' || github.repository == 'f5-sales-demo/custom-responses' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:988e1fbf4e5acdbb15eb0c9aa6430f7968603d4fc96e713a28ca09846eedadd4' || 'ghcr.io/f5-sales-demo/docs-builder:latest' }}
+      builder-image: ${{ github.repository == 'f5-sales-demo/statistics' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:dde859b87fbbd97431f3b5982566624760526dfe5fd3125f3c3e3a063c0b93c2' || github.repository == 'f5-sales-demo/canada' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:988e1fbf4e5acdbb15eb0c9aa6430f7968603d4fc96e713a28ca09846eedadd4' || github.repository == 'f5-sales-demo/custom-responses' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:988e1fbf4e5acdbb15eb0c9aa6430f7968603d4fc96e713a28ca09846eedadd4' || 'ghcr.io/f5-sales-demo/docs-builder:latest' }}
       content-ref: ${{ github.sha }}
       content-path: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' && 'documentation' || 'docs' }}
       socketless_runner_label: managed-socketless
