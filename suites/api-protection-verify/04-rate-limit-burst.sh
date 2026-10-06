@@ -13,7 +13,7 @@ TARGET="${1:?Usage: 04-rate-limit-burst.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-https}://${TARGET}"
 UA="sp5-api-verify"
 BURST="${BURST:-120}"
-HOT_PATH="${HOT_PATH:-/vampi/users/v1}"
+HOT_PATH="${HOT_PATH:-/httpbin/anything/rate-limit}"
 
 echo "[*] Rate-limit burst against ${BASE}${HOT_PATH} (${BURST} requests)"
 

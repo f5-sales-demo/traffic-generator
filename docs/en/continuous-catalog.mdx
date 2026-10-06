@@ -17,9 +17,8 @@ HTTP budget at 200 requests/sec: 90 benign requests/sec per authorized domain an
 shared 20 requests/sec attack budget. A Linux namespace routes every HTTP scenario
 subprocess, scanner, browser, and nested worker through one transparent pacing proxy.
 Spare attack slots carry attributed synthetic filler; filler never satisfies a scenario's
-meaningful-launch requirement. TLS and slow-header probes use bounded equivalents on
-application ports, at most 20 attempts/sec and 20 slow connections. Manual benchmark
-adapters preserve multiple paths and connection behavior without changing host tuning.
+meaningful-launch requirement. Native TLS scanners and OpenSSL slow-header clients run on
+authorized application ports, at most 20 attempts/sec and 20 slow connections. Native benchmark adapters invoke wrk, hey, Vegeta, ab and Lua phases with real reports/resource samples; complete host/content/connection qualification remains open.
 
 CSD simulations use the existing reusable browser engine through `azure.mjs`. They visit
 the authorized Juice Shop route and redirect reviewed synthetic counter/loader activity
@@ -38,3 +37,29 @@ seven days or 10 GiB, evicting the oldest completed runs first.
 Cloud-init and live updates use the same installer and pinned commit/digest. Installed
 readiness checks tools, wordlists, browser executable, certificates and application routes
 before the explicitly enabled supervised service starts.
+
+## Operate and discover
+
+[Runner](../06-runner/) documents `tgen-control start|stop|status|run-once`, private structured configuration and prerequisite failure. [Traffic suites](../05-suites/) lists every stable ID. The [current task tracker](../continuous-catalog-tasks/) and [historical task archive](../archive/continuous-catalog-history/) retain incomplete acceptance and original failure classifications.
+
+Named scanners and load tools run natively; discovery uses actual Subfinder and never expands scan scope to
+discoveries. FFmpeg/FFprobe produce and validate real synthetic video. No fabricated OTP, authentication
+token, browser response or tool output supplies acceptance. Mutation fixtures require exact recovery. The
+[native audit](../native-tool-remediation/) records focused reports and remaining qualification.
+
+## Native functional acceptance
+
+Catalog dispatch receipts prove the declared request was sent. Catalog acceptance additionally requires every
+scenario to pass a source-declared functional contract against the installed application. Existing unit tests
+and test doubles are development checks and cannot supply live acceptance.
+
+Read-only native contracts require complete action coverage, application content assertions, observed upstream
+dispatch, declared response status, and zero transport failures or tool cancellations. Missing contracts
+remain unqualified. A generic 200, login page, or unverified mitigation response cannot qualify the scenario.
+Mutation contracts require scoped fixture postconditions and recovery before they can be accepted. WAAP
+control attribution remains a separate gate.
+
+Fourteen declared functional contracts are present on generator `4c2f528`; 150 scenarios lack them. Declared
+presence is not installed qualification. Two complete accepted current-source catalog passes, sustained 200
+aggregate HTTP requests/sec within five percent, at least 99% benign success, zero transport failures,
+separate control attribution and lifecycle/clean-rebuild convergence remain required.

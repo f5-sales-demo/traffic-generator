@@ -105,7 +105,7 @@ Provide the exact values required by `terraform/aws/`; do not discover or select
 
 The observed jumpbox public address was `142.127.218.190/32` when these instructions were revised. It is an example, not a permanent allowlist. Revalidate the jumpbox's current public IPv4 immediately before every plan or apply and update the input when it changes.
 
-On jumpbox `robin@192.168.2.240`, an existing public key may be supplied as `/home/robin/.ssh/id_ed25519.pub`. Do not generate keys as part of deployment, commit public key bytes, or expose the private key to Terraform. Terraform reads the public key file and creates the EC2 key pair; the private key remains untracked on the jumpbox.
+On the deployment jumpbox, supply an existing public key such as `/home/<USER>/.ssh/id_ed25519.pub`. Do not generate keys as part of deployment, commit public key bytes, or expose the private key to Terraform. Terraform reads the public key file and creates the EC2 key pair; the private key remains untracked on the jumpbox.
 
 Do not place credentials, AMIs, plan hashes, browser data, public key material, private key paths, or other live identifiers in Git.
 

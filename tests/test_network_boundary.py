@@ -5,6 +5,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -34,6 +35,14 @@ class BoundaryTests(unittest.TestCase):
             root = pathlib.Path(tmp)
             runtime = root / "runtime"
             runtime.mkdir()
+            (root / "fixtures.json").write_text(
+                json.dumps(
+                    {
+                        "juice_email": "tgen@example.com",
+                        "juice_password": "Synthetic!123",
+                    }
+                )
+            )
             boundary = NetworkBoundary(
                 ROOT, {"domains": ["www.example.test", "api.example.test"]}, runtime
             )
@@ -42,15 +51,30 @@ class BoundaryTests(unittest.TestCase):
                 "fixture_login",
                 side_effect=[
                     {"auth_token": "vampi"},
+                    {"token": "disposable-video"},
                     {"token": "crapi-a"},
                     {"token": "crapi-b"},
                     {"authentication": {"token": "juice"}},
                     {"access_token": "customer"},
                     {"access_token": "chef"},
+                    {"access_token": "attacker"},
+                    {"access_token": "victim"},
+                    *[
+                        {"access_token": role}
+                        for role in ("admin", "bola_chef", "manager", "root")
+                    ],
                 ],
             ):
                 boundary.refresh_fixtures("www.example.test")
             data = json.loads((root / "fixtures.json").read_text())
+            assert (
+                data["restaurant_attacker"]["username"]
+                != data["restaurant_victim"]["username"]
+            )
+            assert (
+                data["restaurant_attacker"]["token"]
+                != data["restaurant_victim"]["token"]
+            )
             assert data["crapi_tokens"] == ["crapi-a", "crapi-b"]
             assert data["vampi_token"] == "vampi"  # noqa: S105 - synthetic mock token
             with (
@@ -63,9 +87,15 @@ class BoundaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             receipt = root / "network-owner.json"
+            foreign_namespace = "foreign"
+            owned_namespace = "tgen-abcdef0"
             receipt.write_text(
                 json.dumps(
-                    {"namespace": "foreign", "host_link": "eth0", "chain": "INPUT"}
+                    {
+                        "namespace": foreign_namespace,
+                        "host_link": "eth0",
+                        "chain": "INPUT",
+                    }
                 )
             )
             with patch("cleanup_network.subprocess.run") as run:
@@ -75,7 +105,7 @@ class BoundaryTests(unittest.TestCase):
             receipt.write_text(
                 json.dumps(
                     {
-                        "namespace": "tgen-abcdef0",
+                        "namespace": owned_namespace,
                         "host_link": "tghabcdef0",
                         "chain": "TGENABCDEF0",
                     }
@@ -106,10 +136,40 @@ class BoundaryTests(unittest.TestCase):
         with patch("traffic_network.http.client.HTTPSConnection") as connection:
             response = connection.return_value.getresponse.return_value
             response.status = 200
+            response.read.return_value = b'{"data": []}'
+            response.getheader.return_value = "application/json"
             boundary.request("www.example.test")
         assert boundary.state.benign["benign_requests"] == 1
         assert boundary.state.benign["benign_completed"] == 1
         assert boundary.state.benign["benign_success"] == 1
+        with (
+            patch("traffic_network.subprocess.run"),
+            patch("traffic_network.shutil.rmtree"),
+        ):
+            boundary.__exit__(None, None, None)
+
+    def test_benign_rotation_dispatches_each_application_once(self):
+        boundary = NetworkBoundary(
+            ROOT, {"domains": ["www.example.test", "api.example.test"]}, ROOT
+        )
+        with patch("traffic_network.http.client.HTTPSConnection") as connection:
+            connection.return_value.getresponse.return_value.status = 200
+            connection.return_value.getresponse.return_value.getheader.return_value = (
+                "application/json"
+            )
+            connection.return_value.getresponse.return_value.read.return_value = (
+                b'{"data": []}'
+            )
+            for _ in range(9):
+                boundary.request("www.example.test")
+            paths = [
+                call.args[1] for call in connection.return_value.request.call_args_list
+            ]
+        assert len(set(paths)) == 9
+        assert all(
+            count == 1
+            for count in boundary.state.benign["benign_per_application"].values()
+        )
         with (
             patch("traffic_network.subprocess.run"),
             patch("traffic_network.shutil.rmtree"),
@@ -133,3 +193,83 @@ class BoundaryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProxyImportTests(unittest.TestCase):
+    """Installed proxy helpers are discoverable independently of caller cwd."""
+
+    def test_proxy_environment_contains_the_immutable_helper_directory(self):
+        """The proxy must import dispatch matchers from the installed source."""
+        source = (ROOT / "scripts/traffic_network.py").read_text()
+        assert 'PYTHONPATH=str(self.root / "scripts")' in source
+
+
+def test_benign_200_wrong_landing_page_is_not_success():
+    boundary = NetworkBoundary(
+        ROOT, {"domains": ["www.example.test", "api.example.test"]}, ROOT
+    )
+    with patch("traffic_network.http.client.HTTPSConnection") as connection:
+        response = connection.return_value.getresponse.return_value
+        response.status = 200
+        response.getheader.return_value = "text/html"
+        response.read.return_value = b"Origin Server"
+        boundary.request("www.example.test")
+    assert boundary.state.benign["benign_success"] == 0
+    with (
+        patch("traffic_network.subprocess.run"),
+        patch("traffic_network.shutil.rmtree"),
+    ):
+        boundary.__exit__(None, None, None)
+
+
+def test_fixture_transport_failure_is_not_silently_replaced_with_stale_token(tmp_path):
+    boundary = NetworkBoundary(
+        ROOT, {"domains": ["www.example.test", "api.example.test"]}, tmp_path
+    )
+    try:
+        with (
+            patch(
+                "traffic_network.subprocess.run",
+                return_value=SimpleNamespace(returncode=28, stdout="\n000"),
+            ),
+            pytest.raises(ValueError, match="transport"),
+        ):
+            boundary.fixture_login(
+                "www.example.test",
+                "/crapi/identity/api/auth/login",
+                {"email": "synthetic"},
+            )
+        receipt = json.loads((tmp_path / "fixture-authentication.jsonl").read_text())
+        assert receipt["outcome"] == "transport_failure"
+        assert "email" not in receipt
+    finally:
+        boundary.state.pool.shutdown()
+        boundary.browser_temp.rmdir()
+
+
+def test_blocked_fixture_authentication_retains_mitigation_receipt(tmp_path):
+    boundary = NetworkBoundary(
+        ROOT, {"domains": ["www.example.test", "api.example.test"]}, tmp_path
+    )
+    try:
+        with (
+            patch(
+                "traffic_network.subprocess.run",
+                return_value=SimpleNamespace(
+                    returncode=0, stdout="<html>Request Rejected</html>\n403"
+                ),
+            ),
+            pytest.raises(ValueError, match="prerequisite failed: mitigation"),
+        ):
+            boundary.fixture_login(
+                "www.example.test", "/crapi/identity/api/auth/login", {}
+            )
+        assert (
+            json.loads((tmp_path / "fixture-authentication.jsonl").read_text())[
+                "outcome"
+            ]
+            == "mitigation"
+        )
+    finally:
+        boundary.state.pool.shutdown()
+        boundary.browser_temp.rmdir()

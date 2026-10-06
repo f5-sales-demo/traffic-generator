@@ -1,298 +1,337 @@
 ---
-title: Traffic Suites
-description: "Reference for the traffic suites, including the canonical 11-scenario Client-Side Defense browser evidence contract"
+title: Traffic suites
+description: "All 164 stable scenario IDs across 22 suites and native qualification boundaries."
 sidebar:
   order: 5
 ---
 
-import { Aside } from "@astrojs/starlight/components";
+The authoritative `suites/catalog.json` declares **164 scenarios across 22 suites**: 151 numbered shell/JavaScript entrypoints, eleven CSD browser scenarios and two standalone benchmarks. Stable IDs below are receipt identities, including two legacy IDs retained for DVWA payload history. They do not establish functional qualification.
 
-Each traffic suite is a directory under `/opt/traffic-generator/suites/` containing numbered shell scripts executed in order by `runner.sh`. Every script accepts the target FQDN as its first argument and writes output to both stdout and the results directory.
+Preview the full inventory without reading configuration, writing results or sending traffic:
+
+```bash
+bash suites/runner.sh catalog --dry-run
+```
+
+Use [Runner](../06-runner/) and [Continuous catalog](../continuous-catalog/) for installed operation, pacing
+and native outcomes. The [DVWA mapping](../dvwa-payload-mapping/) preserves all 15 SQLi and 18 XSS payloads
+against native authenticated DVWA; DemoApp is not an application coverage claim. [Native tool
+audit](../native-tool-remediation/) retains failures and qualification limits. The AWS deployment
+independently supports the canonical eleven-scenario CSD suite and its own browser/upload contract.
+
+## Suite inventory
+
+| Suite | Scenarios |
+| --- | --- |
+| [api-attacks](#api-attacks) | 6 |
+| [api-protection-verify](#api-protection-verify) | 4 |
+| [bot-simulation](#bot-simulation) | 5 |
+| [cdn-load-testing](#cdn-load-testing) | 11 |
+| [challenge-verify](#challenge-verify) | 1 |
+| [crapi-exploits](#crapi-exploits) | 15 |
+| [csd-violations](#csd-violations) | 11 |
+| [dvga-exploits](#dvga-exploits) | 8 |
+| [dvwa-exploits](#dvwa-exploits) | 14 |
+| [dvwa-payloads](#dvwa-payloads) | 2 |
+| [juice-shop-exploits](#juice-shop-exploits) | 12 |
+| [malicious-user](#malicious-user) | 3 |
+| [mitre-attack](#mitre-attack) | 8 |
+| [owasp-scanning](#owasp-scanning) | 10 |
+| [performance-testing](#performance-testing) | 12 |
+| [reconnaissance](#reconnaissance) | 7 |
+| [restaurant-exploits](#restaurant-exploits) | 10 |
+| [service-policy-verify](#service-policy-verify) | 1 |
+| [ssl-scanning](#ssl-scanning) | 3 |
+| [traffic-generation](#traffic-generation) | 4 |
+| [waf-encoding-evasion](#waf-encoding-evasion) | 7 |
+| [web-app-attacks](#web-app-attacks) | 10 |
 
 ## api-attacks
 
-**Scripts:** 4 | **Estimated Duration:** 10-17 minutes
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `api-attacks/01-vampi-owasp-top10` | `suites/api-attacks/01-vampi-owasp-top10.sh` | shell | Missing — unqualified |
+| `api-attacks/02-sqlmap-api` | `suites/api-attacks/02-sqlmap-api.sh` | shell | Missing — unqualified |
+| `api-attacks/03-arjun-param-discovery` | `suites/api-attacks/03-arjun-param-discovery.sh` | shell | Missing — unqualified |
+| `api-attacks/04-ffuf-api-fuzz` | `suites/api-attacks/04-ffuf-api-fuzz.sh` | shell | Missing — unqualified |
+| `api-attacks/05-broken-auth` | `suites/api-attacks/05-broken-auth.sh` | shell | Missing — unqualified |
+| `api-attacks/06-mass-assignment` | `suites/api-attacks/06-mass-assignment.sh` | shell | Missing — unqualified |
 
-OWASP API Security Top 10 testing against VAmPI through F5 XC. Registers a test user, obtains an auth token, then tests BOLA, brute-force authentication, excessive data exposure, broken function-level authorization, SSRF patterns, SQL injection against REST API endpoints, hidden parameter discovery, and endpoint fuzzing. Targets the VAmPI application.
+## api-protection-verify
 
-**F5 XC Feature:** API Security / API Discovery
-
-| Order | Script                        | Tools      | Description                                                                                                                                                                                                                                                                             |
-| ----- | ----------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01    | `01-vampi-owasp-top10.sh`     | `curl`, jq | Comprehensive OWASP API Top 10 test suite. Registers a test user, obtains an auth token, then tests BOLA (accessing other users' data), brute-force authentication, excessive data exposure, broken function-level authorization, SSRF patterns, and security misconfiguration probing. |
-| 02    | `02-sqlmap-api.sh`            | sqlmap     | SQL injection against VAmPI REST API endpoints: user lookup, login (POST), and register (POST) with JSON payloads.                                                                                                                                                                      |
-| 03    | `03-arjun-param-discovery.sh` | arjun      | Hidden parameter discovery across Juice Shop, DVWA, and VAmPI endpoints. Discovers undocumented query parameters that may accept injection payloads.                                                                                                                                    |
-| 04    | `04-ffuf-api-fuzz.sh`         | ffuf       | Two-phase fuzzing: endpoint discovery using a wordlist of common API paths (api, swagger, `graphql`, admin, .env, .git) across all application prefixes, then HTTP method fuzzing (GET, POST, PUT, DELETE, PATCH, OPTIONS, TRACE, PROPFIND) against key endpoints.                      |
-
-**Expected F5 XC Behavior:** API Discovery should map the VAmPI API endpoints and identify unusual request patterns. API Security policies should flag unauthorized access attempts, injection payloads in JSON bodies, and enumeration patterns. The API Inventory in F5 XC will show discovered endpoints with request counts.
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `api-protection-verify/01-schema-violation` | `suites/api-protection-verify/01-schema-violation.sh` | shell | Missing — unqualified |
+| `api-protection-verify/02-shadow-endpoints` | `suites/api-protection-verify/02-shadow-endpoints.sh` | shell | Missing — unqualified |
+| `api-protection-verify/03-protection-deny` | `suites/api-protection-verify/03-protection-deny.sh` | shell | Missing — unqualified |
+| `api-protection-verify/04-rate-limit-burst` | `suites/api-protection-verify/04-rate-limit-burst.sh` | shell | Missing — unqualified |
 
 ## bot-simulation
 
-**Scripts:** 4 | **Estimated Duration:** 5-10 minutes
-
-Automated browser activity and bot-like crawling patterns through F5 XC. Includes headless Chrome, Puppeteer with stealth plugin, rapid crawling, and automated form interaction. Targets all applications.
-
-**F5 XC Feature:** Bot Defense
-
-| Order | Script                    | Tools                                     | Description                                                                                                                                                                                                                 |
-| ----- | ------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01    | `01-headless-chrome.sh`   | playwright                                | Headless Chromium browsing: loads the target, navigates between application paths, extracts page titles and content, takes screenshots. Generates browser-based traffic without stealth plugins (detectable as automation). |
-| 02    | `02-puppeteer-stealth.sh` | puppeteer, puppeteer-extra-plugin-stealth | Stealth browsing using puppeteer-extra with the stealth plugin. Attempts to evade bot detection by patching navigator properties, WebGL, and other browser fingerprints.                                                    |
-| 03    | `03-rapid-crawl.sh`       | `curl`, wget                              | High-frequency HTTP requests using `curl` and `wget` in rapid succession. Simulates scraper behavior with no delay between requests and aggressive User-Agent rotation.                                                     |
-| 04    | `04-form-interaction.sh`  | playwright                                | Automated form filling and submission against DVWA login, Juice Shop registration, and VAmPI API endpoints using Playwright's form interaction APIs.                                                                        |
-
-**Expected F5 XC Behavior:** Bot Defense should classify traffic as automated based on browser fingerprint analysis, request timing, and JavaScript challenge results. Headless Chrome without stealth should be detected immediately. Stealth Puppeteer tests whether advanced evasion techniques bypass detection. The Bot Defense dashboard will show bot classification categories and mitigation actions.
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `bot-simulation/01-playwright-credential-stuff` | `suites/bot-simulation/01-playwright-credential-stuff.js` | JavaScript | native-dvwa-credentials |
+| `bot-simulation/02-puppeteer-scraper` | `suites/bot-simulation/02-puppeteer-scraper.js` | JavaScript | Missing — unqualified |
+| `bot-simulation/03-headless-form-fill` | `suites/bot-simulation/03-headless-form-fill.js` | JavaScript | Missing — unqualified |
+| `bot-simulation/04-rapid-browsing` | `suites/bot-simulation/04-rapid-browsing.js` | JavaScript | Missing — unqualified |
+| `bot-simulation/05-hydra-brute-force` | `suites/bot-simulation/05-hydra-brute-force.sh` | shell | Missing — unqualified |
 
 ## cdn-load-testing
 
-**Scripts:** 18 | **Estimated Duration:** 20-30 minutes
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `cdn-load-testing/01-baseline-throughput` | `suites/cdn-load-testing/01-baseline-throughput.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/02-query-string-isolation` | `suites/cdn-load-testing/02-query-string-isolation.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/03-accept-encoding-variation` | `suites/cdn-load-testing/03-accept-encoding-variation.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/04-thundering-herd` | `suites/cdn-load-testing/04-thundering-herd.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/05-post-put-bypass` | `suites/cdn-load-testing/05-post-put-bypass.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/06-multi-client-simulation` | `suites/cdn-load-testing/06-multi-client-simulation.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/07-sustained-cache-expiry` | `suites/cdn-load-testing/07-sustained-cache-expiry.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/08-kraken-cdn-max` | `suites/cdn-load-testing/08-kraken-cdn-max.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/09-origin-torture` | `suites/cdn-load-testing/09-origin-torture.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/bench-keepalive` | `suites/cdn-load-testing/bench-keepalive.sh` | shell | Missing — unqualified |
+| `cdn-load-testing/bench-vm-compare` | `suites/cdn-load-testing/bench-vm-compare.sh` | shell | Missing — unqualified |
 
-CDN cache behavior and origin protection testing. Includes baseline throughput, query string
-isolation, accept-encoding variation, thundering herd simulation, POST/PUT bypass, cache key
-collision, conditional GET, range request, purge simulation, connection pool exhaustion,
-keepalive optimization, TLS handshake overhead, large object caching, multi-origin failover,
-rate limiting, gzip ratio testing, HTTP/2 multiplexing, and combined kraken benchmark. Targets
-the CDN Simulator application.
+## challenge-verify
 
-**F5 XC Feature:** CDN Integration
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `challenge-verify/01-js-challenge-interstitial` | `suites/challenge-verify/01-js-challenge-interstitial.sh` | shell | Missing — unqualified |
 
 ## crapi-exploits
 
-**Scripts:** 16 | **Estimated Duration:** 15-25 minutes
-
-OWASP crAPI (Completely Ridiculous API) challenge exploitation. Includes register/auth, BOLA
-vehicle location, BOLA mechanic reports, OTP bruteforce, data exposure mechanics, excessive data
-exposure, mass assignment orders, SSRF coupon validation, NoSQL injection, JWT manipulation,
-IDOR dashboard, 2FA bypass, internal API access, server-side parameter pollution, user deletion,
-and video upload IDOR. Targets the crAPI application.
-
-**F5 XC Feature:** API Security
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `crapi-exploits/01-register-auth` | `suites/crapi-exploits/01-register-auth.sh` | shell | Missing — unqualified |
+| `crapi-exploits/02-bola-vehicle-location` | `suites/crapi-exploits/02-bola-vehicle-location.sh` | shell | Missing — unqualified |
+| `crapi-exploits/03-bola-mechanic-reports` | `suites/crapi-exploits/03-bola-mechanic-reports.sh` | report | Missing — unqualified |
+| `crapi-exploits/04-otp-bruteforce` | `suites/crapi-exploits/04-otp-bruteforce.sh` | shell | native-crapi-otp |
+| `crapi-exploits/05-data-exposure-mechanics` | `suites/crapi-exploits/05-data-exposure-mechanics.sh` | shell | Missing — unqualified |
+| `crapi-exploits/06-data-exposure-posts` | `suites/crapi-exploits/06-data-exposure-posts.sh` | shell | native response requirements |
+| `crapi-exploits/07-bfla-admin-video` | `suites/crapi-exploits/07-bfla-admin-video.sh` | shell | Missing — unqualified |
+| `crapi-exploits/08-mass-assignment-orders` | `suites/crapi-exploits/08-mass-assignment-orders.sh` | shell | Missing — unqualified |
+| `crapi-exploits/09-ssrf-contact-mechanic` | `suites/crapi-exploits/09-ssrf-contact-mechanic.sh` | shell | Missing — unqualified |
+| `crapi-exploits/10-dos-contact-mechanic` | `suites/crapi-exploits/10-dos-contact-mechanic.sh` | shell | Missing — unqualified |
+| `crapi-exploits/11-nosql-injection-coupon` | `suites/crapi-exploits/11-nosql-injection-coupon.sh` | shell | Missing — unqualified |
+| `crapi-exploits/12-sqli-apply-coupon` | `suites/crapi-exploits/12-sqli-apply-coupon.sh` | shell | Missing — unqualified |
+| `crapi-exploits/13-command-injection-video` | `suites/crapi-exploits/13-command-injection-video.sh` | shell | Missing — unqualified |
+| `crapi-exploits/14-unauth-order-access` | `suites/crapi-exploits/14-unauth-order-access.sh` | shell | Missing — unqualified |
+| `crapi-exploits/15-jwt-algorithm-confusion` | `suites/crapi-exploits/15-jwt-algorithm-confusion.sh` | shell | Missing — unqualified |
 
 ## csd-violations
 
-**Scenarios:** 11 browser scenarios | **Runtime:** headed Chrome under Xvfb on AWS
-
-`csd-violations` is the only maintained Client-Side Defense scenario source. Its versioned
-manifest defines ordered navigation, evaluation, and explicit cleanup operations. The runner records each
-operation's immediate outcome, browser-observed network state, screenshots, and cleanup status.
-
-Every scenario ends with an explicit cleanup manifest step. That step removes run-scoped scripts,
-links, images, overlays, listeners, timers, and synthetic controls where applicable, then asserts zero
-remaining artifacts, zero populated controls, zero sensitive display values, zero tracked timers, and no
-attached key listener. Network-request evidence objects are receipt data and require no DOM cleanup.
-
-Every setup, action, assertion, and cleanup manifest step, plus each scenario's final state, must
-produce a screenshot; a missing screenshot fails the scenario. The eleven scenarios therefore produce
-45 step screenshots and 11 final screenshots (56 total) when the full suite runs. Final cleanup remains
-a safety net before the final screenshot and browser-context destruction.
-
-`receipt.json` contains the schema version, run ID, sanitized target protocol and host, run timestamps,
-aggregate counts, scenario and step results, terminal network outcomes, instrumentation counts,
-screenshot metadata, and browser/context cleanup. Screenshot metadata includes capture status, relative
-path, intended object key, pending upload status, SHA-256, and masked-input count. The runtime does not
-rewrite that receipt after upload. The separate `SHA256SUMS` file covers the local evidence files before
-upload.
-
-| Stable scenario | Route | Implemented browser activity and immediate evidence |
-| --- | --- | --- |
-| `login-credential-skimmer` | `/#/login` | Observes login fields, posts only the field count to `www.httpbin.org`, and asserts the terminal request state. |
-| `registration-harvester` | `/#/register` | Observes registration controls, posts only the control count to `jsonplaceholder.typicode.com`, and asserts the terminal request state. |
-| `payment-overlay-card-skimmer` | `/#/login` | Counts original controls, installs a masked display-only payment overlay, posts only the original-field count, then removes the overlay. |
-| `obfuscated-loader` | `/` | Base64-decodes the fixed reviewed jsDelivr Lodash URL, injects it, and asserts `finished` or `blocked`. |
-| `multi-cdn-injection` | `/` | Injects reviewed jsDelivr, esm.sh, unpkg, and ga.jspm.io scripts and records each terminal state. |
-| `tag-manager-hijack` | `/` | Injects a reviewed jsDelivr Chart.js candidate with run-scoped tag-manager metadata, then removes the injected artifact. |
-| `multi-channel-exfiltration` | `/#/login` | Observes login fields, then attempts counter-only fetch POST, image beacon, and link-prefetch channels to reviewed benign destinations. |
-| `high-volume-domain-exfiltration` | `/#/login` | Attempts five reviewed script loads and two counter-only POSTs, retaining seven stable named sanitized outcomes and asserting each is terminal plus the aggregate counts. “High volume” means seven synthetic attempts, not volumetric load. |
-| `form-overlay` | `/#/login` | Counts original controls, installs a value-free synthetic login overlay, asserts its geometry, then removes it. |
-| `keylogger-simulation` | `/#/login` | Generates five synthetic keydown events, retains only the aggregate count, and asserts listener detachment and timer cleanup. |
-| `maximum-detection` | `/#/login` | Composes the canonical field-observation, four-CDN, three-channel, banner, and cleanup primitives without duplicating implementations. |
-
-The high-volume outcomes are `scriptJsdelivr`, `scriptEsm`, `scriptUnpkg`, `scriptJspm`,
-`scriptChartjs`, `postHttpbin`, and `postJsonplaceholder`. Allowed terminal values are
-`finished`, `blocked`, `failed`, and `timed-out`; `pending` fails the assertion.
-
-The suite records whether the CSD sensor and `__imp_apg__/api/dip` requests appeared in the browser. That is browser evidence only; tenant observation remains a separate read-only correlation.
-
-Headed Chrome under Xvfb, successful operations, screenshots, and uploaded evidence do **not** guarantee an F5 Distributed Cloud detection, timing, or risk classification; datacenter reputation, automation signals, population thresholds, aggregation, and filtering can affect observation.
-
-<Aside type="caution">
-  The external traffic-generator catalog does not automatically trigger
-  Client-Side Defense detections. Run only against the authorized target, and
-  present tenant telemetry only when it was actually observed.
-</Aside>
-
-## demoapp-attacks
-
-**Scripts:** 2 | **Estimated Duration:** 2-3 minutes
-
-Targeted attack payloads against the F5 DemoApp's built-in WAF testing endpoints (`/WAF/SQL`, `/WAF/XSS`, `/WAF/DIR`). Sends SQL injection, XSS, and path traversal payloads directly at the endpoints designed to demonstrate WAF blocking behavior. Use this suite when targeting the DemoApp content server instead of the standard origin-server applications.
-
-**F5 XC Feature:** WAF (Web Application Firewall)
-
-| Order | Script                    | Tools           | Description                                                                                                                                                                                       |
-| ----- | ------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01    | `01-sqli-waf-endpoint.sh` | `curl`, python3 | 15 SQL injection payloads against `/WAF/SQL?age=` including UNION SELECT, DROP TABLE, WAITFOR DELAY, xp_cmdshell, comment-based bypass, and boolean logic payloads.                               |
-| 02    | `02-xss-waf-endpoint.sh`  | `curl`, python3 | 18 XSS payloads against `/WAF/XSS?update=` including script tags, event handlers (onerror, onload, ontoggle, onfocus), base64 eval, style expression, polyglot payloads, and cookie exfiltration. |
-
-**Expected F5 XC Behavior:** WAF should block requests containing SQL injection and XSS payloads and return a block page. The Security Events dashboard will show violation categories and signature matches for each blocked request.
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `csd-violations/login-credential-skimmer` | `suites/csd-violations/run.mjs` | csd-browser | Missing — unqualified |
+| `csd-violations/registration-harvester` | `suites/csd-violations/run.mjs` | csd-browser | Missing — unqualified |
+| `csd-violations/payment-overlay-card-skimmer` | `suites/csd-violations/run.mjs` | csd-browser | Missing — unqualified |
+| `csd-violations/obfuscated-loader` | `suites/csd-violations/run.mjs` | csd-browser | native-csd-libraries |
+| `csd-violations/multi-cdn-injection` | `suites/csd-violations/run.mjs` | csd-browser | native-csd-libraries |
+| `csd-violations/tag-manager-hijack` | `suites/csd-violations/run.mjs` | csd-browser | native-csd-libraries |
+| `csd-violations/multi-channel-exfiltration` | `suites/csd-violations/run.mjs` | csd-browser | Missing — unqualified |
+| `csd-violations/high-volume-domain-exfiltration` | `suites/csd-violations/run.mjs` | csd-browser | Missing — unqualified |
+| `csd-violations/form-overlay` | `suites/csd-violations/run.mjs` | csd-browser | Missing — unqualified |
+| `csd-violations/keylogger-simulation` | `suites/csd-violations/run.mjs` | csd-browser | Missing — unqualified |
+| `csd-violations/maximum-detection` | `suites/csd-violations/run.mjs` | csd-browser | Missing — unqualified |
 
 ## dvga-exploits
 
-**Scripts:** 9 | **Estimated Duration:** 8-12 minutes
-
-GraphQL-specific vulnerability exploitation against the Damn Vulnerable GraphQL Application. Includes batch query DoS, deep recursion, field duplication, SQL injection via filter, XSS via createPaste, alias-based DoS, introspection abuse, authorization bypass, and information disclosure. Targets the DVGA application.
-
-**F5 XC Feature:** API Security (GraphQL)
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `dvga-exploits/01-batch-query-dos` | `suites/dvga-exploits/01-batch-query-dos.sh` | shell | Missing — unqualified |
+| `dvga-exploits/02-deep-recursion` | `suites/dvga-exploits/02-deep-recursion.sh` | shell | Missing — unqualified |
+| `dvga-exploits/03-field-duplication` | `suites/dvga-exploits/03-field-duplication.sh` | shell | Missing — unqualified |
+| `dvga-exploits/04-sqli-filter` | `suites/dvga-exploits/04-sqli-filter.sh` | shell | Missing — unqualified |
+| `dvga-exploits/05-xss-createpaste` | `suites/dvga-exploits/05-xss-createpaste.sh` | shell | Missing — unqualified |
+| `dvga-exploits/06-os-command-importpaste` | `suites/dvga-exploits/06-os-command-importpaste.sh` | shell | Missing — unqualified |
+| `dvga-exploits/07-jwt-forgery-me` | `suites/dvga-exploits/07-jwt-forgery-me.sh` | shell | Missing — unqualified |
+| `dvga-exploits/08-path-traversal-upload` | `suites/dvga-exploits/08-path-traversal-upload.sh` | shell | Missing — unqualified |
 
 ## dvwa-exploits
 
-**Scripts:** 14 | **Estimated Duration:** 15-25 minutes
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `dvwa-exploits/01-brute-force` | `suites/dvwa-exploits/01-brute-force.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/02-command-injection` | `suites/dvwa-exploits/02-command-injection.sh` | shell | native-dvwa-command |
+| `dvwa-exploits/03-csrf-password-change` | `suites/dvwa-exploits/03-csrf-password-change.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/04-file-inclusion` | `suites/dvwa-exploits/04-file-inclusion.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/05-file-upload` | `suites/dvwa-exploits/05-file-upload.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/06-sqli` | `suites/dvwa-exploits/06-sqli.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/07-sqli-blind` | `suites/dvwa-exploits/07-sqli-blind.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/08-xss-dom` | `suites/dvwa-exploits/08-xss-dom.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/09-xss-reflected` | `suites/dvwa-exploits/09-xss-reflected.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/10-xss-stored` | `suites/dvwa-exploits/10-xss-stored.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/11-csp-bypass` | `suites/dvwa-exploits/11-csp-bypass.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/12-weak-session` | `suites/dvwa-exploits/12-weak-session.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/13-authbypass` | `suites/dvwa-exploits/13-authbypass.sh` | shell | Missing — unqualified |
+| `dvwa-exploits/14-open-redirect` | `suites/dvwa-exploits/14-open-redirect.sh` | shell | Missing — unqualified |
 
-OWASP Top 10 testing against the Damn Vulnerable Web Application. Includes brute force, command injection, CSRF password change, file inclusion, file upload, SQL injection (blind), SQL injection (union), XSS (DOM), XSS (reflected), XSS (stored), CAPTCHA bypass, weak session IDs, insecure CORS, and open redirect. Targets the DVWA application.
+## dvwa-payloads
 
-**F5 XC Feature:** WAF
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `demoapp-attacks/01-sqli-waf-endpoint` | `suites/dvwa-payloads/01-sqli-waf-endpoint.sh` | shell | Missing — unqualified |
+| `demoapp-attacks/02-xss-waf-endpoint` | `suites/dvwa-payloads/02-xss-waf-endpoint.sh` | shell | Missing — unqualified |
 
 ## juice-shop-exploits
 
-**Scripts:** 12 | **Estimated Duration:** 10-18 minutes
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `juice-shop-exploits/01-sqli-login-bypass` | `suites/juice-shop-exploits/01-sqli-login-bypass.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/02-sqli-search-union` | `suites/juice-shop-exploits/02-sqli-search-union.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/03-xss-dom-reflected` | `suites/juice-shop-exploits/03-xss-dom-reflected.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/04-xss-stored-api` | `suites/juice-shop-exploits/04-xss-stored-api.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/05-idor-basket-access` | `suites/juice-shop-exploits/05-idor-basket-access.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/06-admin-access` | `suites/juice-shop-exploits/06-admin-access.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/07-sensitive-data` | `suites/juice-shop-exploits/07-sensitive-data.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/08-nosql-injection` | `suites/juice-shop-exploits/08-nosql-injection.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/09-file-upload-xxe` | `suites/juice-shop-exploits/09-file-upload-xxe.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/10-jwt-attacks` | `suites/juice-shop-exploits/10-jwt-attacks.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/11-api-enumeration` | `suites/juice-shop-exploits/11-api-enumeration.sh` | shell | Missing — unqualified |
+| `juice-shop-exploits/12-automated-sqlmap` | `suites/juice-shop-exploits/12-automated-sqlmap.sh` | shell | Missing — unqualified |
 
-OWASP Juice Shop challenge exploitation. Includes SQL injection login bypass, SQL injection search union, XSS DOM reflected, XSS stored API, IDOR basket access, admin section access, forged feedback, null byte file access, reflected XSS in search, HTTP header injection, repetitive registration, and login brute-force. Targets the Juice Shop application.
+## malicious-user
 
-**F5 XC Feature:** WAF, Bot Defense
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `malicious-user/01-identified-violations` | `suites/malicious-user/01-identified-violations.sh` | shell | Missing — unqualified |
+| `malicious-user/02-forbidden-recon` | `suites/malicious-user/02-forbidden-recon.sh` | shell | Missing — unqualified |
+| `malicious-user/03-credential-stuffing` | `suites/malicious-user/03-credential-stuffing.sh` | shell | Missing — unqualified |
 
 ## mitre-attack
 
-**Scripts:** 8 | **Estimated Duration:** 10-15 minutes
-
-MITRE ATT&CK framework tactic simulation. Includes reconnaissance (external scanning), initial
-access (credential stuffing), execution (command injection), credential access (default
-passwords), discovery (directory enumeration), lateral movement simulation, collection (data
-scraping), and exfiltration simulation. Maps each script to a specific MITRE ATT&CK tactic for
-structured threat coverage reporting. Targets all applications.
-
-**F5 XC Feature:** WAF, Bot Defense, API Security
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `mitre-attack/01-reconnaissance` | `suites/mitre-attack/01-reconnaissance.sh` | shell | Missing — unqualified |
+| `mitre-attack/02-initial-access` | `suites/mitre-attack/02-initial-access.sh` | shell | Missing — unqualified |
+| `mitre-attack/03-execution` | `suites/mitre-attack/03-execution.sh` | shell | Missing — unqualified |
+| `mitre-attack/04-credential-access` | `suites/mitre-attack/04-credential-access.sh` | shell | Missing — unqualified |
+| `mitre-attack/05-discovery` | `suites/mitre-attack/05-discovery.sh` | shell | Missing — unqualified |
+| `mitre-attack/06-collection-exfiltration` | `suites/mitre-attack/06-collection-exfiltration.sh` | shell | Missing — unqualified |
+| `mitre-attack/07-impact` | `suites/mitre-attack/07-impact.sh` | shell | Missing — unqualified |
+| `mitre-attack/08-attck-coverage-report` | `suites/mitre-attack/08-attck-coverage-report.sh` | report | Missing — unqualified |
 
 ## owasp-scanning
 
-**Scripts:** 10 | **Estimated Duration:** 20-35 minutes
-
-Comprehensive OWASP scanning suite using dedicated vulnerability scanners. Includes ZAP baseline scan, ZAP active scan, Nikto full scan, Nuclei full scan, Nmap vulnerability scan, SSL/TLS audit, directory fuzzing, subdomain enumeration, technology fingerprinting, and combined OWASP report generation. Targets all applications.
-
-**F5 XC Feature:** WAF, Web App Scanning
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `owasp-scanning/01-zap-baseline` | `suites/owasp-scanning/01-zap-baseline.sh` | shell | Missing — unqualified |
+| `owasp-scanning/02-zap-active-scan` | `suites/owasp-scanning/02-zap-active-scan.sh` | shell | Missing — unqualified |
+| `owasp-scanning/03-nikto-full` | `suites/owasp-scanning/03-nikto-full.sh` | shell | Missing — unqualified |
+| `owasp-scanning/04-nuclei-full` | `suites/owasp-scanning/04-nuclei-full.sh` | shell | Missing — unqualified |
+| `owasp-scanning/05-nmap-vuln-scan` | `suites/owasp-scanning/05-nmap-vuln-scan.sh` | shell | native-scanner |
+| `owasp-scanning/06-sqlmap-comprehensive` | `suites/owasp-scanning/06-sqlmap-comprehensive.sh` | shell | Missing — unqualified |
+| `owasp-scanning/07-ffuf-directory-discovery` | `suites/owasp-scanning/07-ffuf-directory-discovery.sh` | shell | Missing — unqualified |
+| `owasp-scanning/08-dalfox-xss-scan` | `suites/owasp-scanning/08-dalfox-xss-scan.sh` | shell | Missing — unqualified |
+| `owasp-scanning/09-arjun-param-discovery` | `suites/owasp-scanning/09-arjun-param-discovery.sh` | shell | Missing — unqualified |
+| `owasp-scanning/10-full-owasp-report` | `suites/owasp-scanning/10-full-owasp-report.sh` | report | Missing — unqualified |
 
 ## performance-testing
 
-**Scripts:** 12 | **Estimated Duration:** 15-30 minutes
-
-Performance characteristics testing under various load patterns. Includes concurrency ramp, per-app throughput, sustained load, connection churn, mixed attack+load, spike testing, endurance test, breakpoint discovery, response time percentiles, error rate under load, resource exhaustion, and latency distribution analysis. Targets all applications.
-
-**F5 XC Feature:** DDoS, Rate Limiting
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `performance-testing/01-concurrency-ramp` | `suites/performance-testing/01-concurrency-ramp.sh` | shell | Missing — unqualified |
+| `performance-testing/02-per-app-throughput` | `suites/performance-testing/02-per-app-throughput.sh` | shell | Missing — unqualified |
+| `performance-testing/03-sustained-load` | `suites/performance-testing/03-sustained-load.sh` | shell | Missing — unqualified |
+| `performance-testing/04-connection-churn` | `suites/performance-testing/04-connection-churn.sh` | shell | Missing — unqualified |
+| `performance-testing/05-mixed-attack-load` | `suites/performance-testing/05-mixed-attack-load.sh` | shell | Missing — unqualified |
+| `performance-testing/06-latency-heatmap` | `suites/performance-testing/06-latency-heatmap.sh` | shell | Missing — unqualified |
+| `performance-testing/07-self-profile-under-load` | `suites/performance-testing/07-self-profile-under-load.sh` | shell | Missing — unqualified |
+| `performance-testing/08-ephemeral-port-stress` | `suites/performance-testing/08-ephemeral-port-stress.sh` | shell | Missing — unqualified |
+| `performance-testing/09-parallel-suite-stress` | `suites/performance-testing/09-parallel-suite-stress.sh` | shell | Missing — unqualified |
+| `performance-testing/10-wrk-benchmark` | `suites/performance-testing/10-wrk-benchmark.sh` | shell | Missing — unqualified |
+| `performance-testing/11-vegeta-constant-rate` | `suites/performance-testing/11-vegeta-constant-rate.sh` | shell | Missing — unqualified |
+| `performance-testing/12-hey-quick-bench` | `suites/performance-testing/12-hey-quick-bench.sh` | shell | Missing — unqualified |
 
 ## reconnaissance
 
-**Scripts:** 6 | **Estimated Duration:** 8-15 minutes
-
-Network scanning, service enumeration, and directory brute-forcing against the target infrastructure. Includes nmap service detection, masscan port sweeps, directory brute-forcing, subdomain enumeration, web technology fingerprinting, and DNS reconnaissance. Targets all applications.
-
-**F5 XC Feature:** WAF / Bot Defense
-
-| Order | Script                      | Tools                 | Description                                                                                 |
-| ----- | --------------------------- | --------------------- | ------------------------------------------------------------------------------------------- |
-| 01    | `01-nmap-scan.sh`           | nmap                  | Service version detection and default script scan against the target's HTTP/HTTPS ports.    |
-| 02    | `02-masscan-sweep.sh`       | masscan               | High-speed port scan of common web ports (80, 443, 8080, 8443) with rate limiting.          |
-| 03    | `03-gobuster-dirs.sh`       | gobuster              | Directory brute-forcing using SecLists common wordlist against all application prefixes.    |
-| 04    | `04-subfinder-enum.sh`      | subfinder, httpx      | Passive subdomain enumeration for the target domain, then HTTP probing of discovered hosts. |
-| 05    | `05-whatweb-fingerprint.sh` | whatweb               | Web technology fingerprinting of the target and all application paths.                      |
-| 06    | `06-dns-recon.sh`           | dnsrecon, fierce, dig | DNS record enumeration, zone transfer attempts, and reverse lookups for the target domain.  |
-
-**Expected F5 XC Behavior:** WAF should detect and log scanning activity. Bot Defense may classify rapid sequential requests as automated. The Security Events dashboard will show reconnaissance signatures and scanning tool User-Agent strings.
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `reconnaissance/01-nmap-service-scan` | `suites/reconnaissance/01-nmap-service-scan.sh` | shell | native-scanner |
+| `reconnaissance/02-masscan-port-sweep` | `suites/reconnaissance/02-masscan-port-sweep.sh` | shell | native-masscan |
+| `reconnaissance/03-gobuster-dir` | `suites/reconnaissance/03-gobuster-dir.sh` | shell | Missing — unqualified |
+| `reconnaissance/04-feroxbuster-recurse` | `suites/reconnaissance/04-feroxbuster-recurse.sh` | shell | Missing — unqualified |
+| `reconnaissance/05-subfinder-enum` | `suites/reconnaissance/05-subfinder-enum.sh` | shell | Missing — unqualified |
+| `reconnaissance/06-sensitive-files` | `suites/reconnaissance/06-sensitive-files.sh` | shell | Missing — unqualified |
+| `reconnaissance/07-waf-fingerprint` | `suites/reconnaissance/07-waf-fingerprint.sh` | shell | Missing — unqualified |
 
 ## restaurant-exploits
 
-**Scripts:** 11 | **Estimated Duration:** 10-18 minutes
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `restaurant-exploits/01-register-auth` | `suites/restaurant-exploits/01-register-auth.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/02-bola-profile` | `suites/restaurant-exploits/02-bola-profile.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/03-bola-orders` | `suites/restaurant-exploits/03-bola-orders.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/04-bopla-mass-assign` | `suites/restaurant-exploits/04-bopla-mass-assign.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/05-bfla-privilege` | `suites/restaurant-exploits/05-bfla-privilege.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/06-ssrf-menu-image` | `suites/restaurant-exploits/06-ssrf-menu-image.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/07-command-injection` | `suites/restaurant-exploits/07-command-injection.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/08-full-escalation-chain` | `suites/restaurant-exploits/08-full-escalation-chain.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/09-jwt-secret-crack` | `suites/restaurant-exploits/09-jwt-secret-crack.sh` | shell | Missing — unqualified |
+| `restaurant-exploits/10-api-discovery` | `suites/restaurant-exploits/10-api-discovery.sh` | shell | Missing — unqualified |
 
-OWASP API Security Top 10 2023 testing against the Restaurant API application. Includes register/auth, BOLA profile, BOLA orders, BOPLA mass assignment, BFLA privilege escalation, rate limiting bypass, SQL injection menu, command injection disk stats, SSRF image URL, JWT weak secret, and sensitive data exposure. Targets the Restaurant API application.
+## service-policy-verify
 
-**F5 XC Feature:** API Security
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `service-policy-verify/01-service-policy-deny` | `suites/service-policy-verify/01-service-policy-deny.sh` | shell | Missing — unqualified |
 
 ## ssl-scanning
 
-**Scripts:** 3 | **Estimated Duration:** 3-5 minutes
-
-TLS/SSL configuration analysis of the F5 XC load balancer's HTTPS endpoint. Enumerates cipher suites, protocol versions, certificate details, and checks for known TLS vulnerabilities. Targets the F5 XC load balancer endpoint.
-
-**F5 XC Feature:** WAF (informational)
-
-| Order | Script          | Tools      | Description                                                                                                                                 |
-| ----- | --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01    | `01-sslscan.sh` | sslscan    | Enumerates supported cipher suites, protocol versions, and certificate details.                                                             |
-| 02    | `02-sslyze.sh`  | sslyze     | Comprehensive TLS analysis including certificate validation, cipher suite ordering, and vulnerability checks (Heartbleed, ROBOT, etc.).     |
-| 03    | `03-testssl.sh` | testssl.sh | Full TLS assessment using the testssl.sh framework. Tests protocol support, cipher preferences, header analysis, and known vulnerabilities. |
-
-**Expected F5 XC Behavior:** SSL scanning generates many TLS handshakes with unusual cipher suite proposals. While F5 XC does not typically block these, the traffic pattern is visible in access logs. The primary value is verifying that the F5 XC TLS configuration meets security best practices.
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `ssl-scanning/01-sslscan` | `suites/ssl-scanning/01-sslscan.sh` | shell | native-scanner |
+| `ssl-scanning/02-sslyze` | `suites/ssl-scanning/02-sslyze.sh` | shell | native-scanner |
+| `ssl-scanning/03-testssl` | `suites/ssl-scanning/03-testssl.sh` | shell | native-scanner |
 
 ## traffic-generation
 
-**Scripts:** 4 | **Estimated Duration:** 5-10 minutes (configurable)
-
-High-volume legitimate HTTP traffic for baseline measurement and load testing. Establishes normal traffic patterns in F5 XC analytics for comparison with attack suite traffic. Targets all applications.
-
-**F5 XC Feature:** All (baseline comparison)
-
-| Order | Script                  | Tools      | Description                                                                                                                                                                 |
-| ----- | ----------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01    | `01-baseline-http.sh`   | `curl`     | Sequential HTTP GET requests to all application paths with standard browser User-Agent. Establishes a baseline of normal traffic in F5 XC analytics.                        |
-| 02    | `02-concurrent-load.sh` | `curl`     | Parallel HTTP requests using `curl` with multiple concurrent connections. Tests load handling and establishes throughput baselines.                                         |
-| 03    | `03-mixed-methods.sh`   | `curl`     | Mixed HTTP methods (GET, POST, PUT, DELETE) against API endpoints with valid payloads. Generates normal API traffic patterns for comparison with attack traffic.            |
-| 04    | `04-user-journey.sh`    | playwright | Simulates a realistic user journey: browsing pages, searching products, filling forms, and navigating between applications using Playwright with standard browser settings. |
-
-**Expected F5 XC Behavior:** All requests in this suite should pass through without WAF or Bot Defense intervention. Use this suite to generate "clean" traffic in the analytics dashboard, then compare with attack suite traffic to demonstrate the difference between legitimate and malicious request patterns.
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `traffic-generation/01-curl-flood` | `suites/traffic-generation/01-curl-flood.sh` | shell | Missing — unqualified |
+| `traffic-generation/02-slowloris` | `suites/traffic-generation/02-slowloris.sh` | shell | native-slow-headers |
+| `traffic-generation/03-http-methods` | `suites/traffic-generation/03-http-methods.sh` | shell | Missing — unqualified |
+| `traffic-generation/04-ua-rotation` | `suites/traffic-generation/04-ua-rotation.sh` | shell | Missing — unqualified |
 
 ## waf-encoding-evasion
 
-**Scripts:** 7 | **Estimated Duration:** 5-10 minutes
-
-Multi-layer encoding evasion attacks designed to test whether a WAF properly normalizes and
-decodes payloads before inspection. Covers single, double, and triple URL encoding; HTML entity
-encoding (decimal, hex, named, zero-padded); Unicode/UTF-8 insertion (zero-width space, BOM,
-fullwidth characters, soft hyphen, overlong sequences); mixed/nested multi-layer encoding
-(URL-encoded HTML entities, double-URL inside entities, 3-layer stacks); null byte injection; IIS
-%uXXXX encoding; case manipulation; chunked transfer encoding body splitting; Base64 parameter
-evasion; and header/cookie encoded payloads. Targets any application.
-
-**F5 XC Feature:** WAF (encoding normalization depth)
-
-| Order | Script                        | Tools           | Description                                                                                                                                                                                                                            |
-| ----- | ----------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01    | `01-url-encoding.sh`          | `curl`          | Single, double, and triple URL encoding of SQLi, XSS, and path traversal payloads across multiple endpoint paths. Tests whether the WAF decodes URL parameters recursively.                                                            |
-| 02    | `02-html-entity-encoding.sh`  | `curl`, python3 | Decimal, hex, named, and zero-padded HTML entity encoding of attack payloads in both GET parameters and POST bodies. Includes template injection via `&#123;&#123;7*7&#125;&#125;`.                                                    |
-| 03    | `03-unicode-utf8-evasion.sh`  | `curl`          | Zero-width space (U+200B), BOM (U+FEFF), fullwidth character, soft hyphen, and ZWNJ insertion into SQL keywords and XSS tags. Tests overlong UTF-8 sequences (2-byte and 3-byte).                                                      |
-| 04    | `04-mixed-nested-encoding.sh` | `curl`          | Multi-layer payloads: URL-encoded HTML entities, double-URL inside entities, triple-layer stacks, JSON body with Unicode escapes (`<`), and the user's specific `{{7*7}}` template injection pattern.                                  |
-| 05    | `05-null-byte-iis-base64.sh`  | `curl`          | Null byte injection (`%00`) for extension bypass, IIS `%uXXXX` Unicode encoding, and Base64-encoded payloads in URL parameters with decode flags.                                                                                      |
-| 06    | `06-case-chunked-evasion.sh`  | `curl`          | Case randomization combined with encoding (`%3CsCrIpT%3E`), chunked transfer encoding to split SQL/XSS keywords across HTTP chunks, Content-Length/Transfer-Encoding conflict probes, and alternate path separators (`%5c`, `%c0%af`). |
-| 07    | `07-header-cookie-evasion.sh` | `curl`          | Encoded attack payloads injected via Cookie, Referer, User-Agent, X-Forwarded-For, and X-Original-URL headers. Tests whether the WAF inspects and decodes all HTTP header fields, not just query parameters and POST bodies.           |
-
-**Expected F5 XC Behavior:** A properly configured WAF should normalize all encoding layers
-before pattern matching. Single-encoded payloads should be blocked immediately. Double and triple
-encoding tests reveal the depth of the WAF's decode pipeline. Unicode insertion tests reveal
-whether invisible characters are stripped before keyword matching. Results where encoded variants
-pass while plain-text equivalents are blocked indicate normalization gaps in the WAF policy.
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `waf-encoding-evasion/01-url-encoding` | `suites/waf-encoding-evasion/01-url-encoding.sh` | shell | Missing — unqualified |
+| `waf-encoding-evasion/02-html-entity-encoding` | `suites/waf-encoding-evasion/02-html-entity-encoding.sh` | shell | Missing — unqualified |
+| `waf-encoding-evasion/03-unicode-utf8-evasion` | `suites/waf-encoding-evasion/03-unicode-utf8-evasion.sh` | shell | Missing — unqualified |
+| `waf-encoding-evasion/04-mixed-nested-encoding` | `suites/waf-encoding-evasion/04-mixed-nested-encoding.sh` | shell | Missing — unqualified |
+| `waf-encoding-evasion/05-null-byte-iis-base64` | `suites/waf-encoding-evasion/05-null-byte-iis-base64.sh` | shell | Missing — unqualified |
+| `waf-encoding-evasion/06-case-chunked-evasion` | `suites/waf-encoding-evasion/06-case-chunked-evasion.sh` | shell | Missing — unqualified |
+| `waf-encoding-evasion/07-header-cookie-evasion` | `suites/waf-encoding-evasion/07-header-cookie-evasion.sh` | shell | Missing — unqualified |
 
 ## web-app-attacks
 
-**Scripts:** 6 | **Estimated Duration:** 12-20 minutes
+| Stable scenario ID | Entrypoint | Kind | Declared functional verifier |
+| --- | --- | --- | --- |
+| `web-app-attacks/01-sqli` | `suites/web-app-attacks/01-sqli.sh` | shell | Missing — unqualified |
+| `web-app-attacks/02-xss` | `suites/web-app-attacks/02-xss.sh` | shell | Missing — unqualified |
+| `web-app-attacks/03-command-injection` | `suites/web-app-attacks/03-command-injection.sh` | shell | Missing — unqualified |
+| `web-app-attacks/04-path-traversal` | `suites/web-app-attacks/04-path-traversal.sh` | shell | Missing — unqualified |
+| `web-app-attacks/05-nikto-scan` | `suites/web-app-attacks/05-nikto-scan.sh` | shell | Missing — unqualified |
+| `web-app-attacks/06-nuclei-scan` | `suites/web-app-attacks/06-nuclei-scan.sh` | shell | Missing — unqualified |
+| `web-app-attacks/07-xxe` | `suites/web-app-attacks/07-xxe.sh` | shell | Missing — unqualified |
+| `web-app-attacks/08-ssrf` | `suites/web-app-attacks/08-ssrf.sh` | shell | Missing — unqualified |
+| `web-app-attacks/09-csrf` | `suites/web-app-attacks/09-csrf.sh` | shell | Missing — unqualified |
+| `web-app-attacks/10-file-upload` | `suites/web-app-attacks/10-file-upload.sh` | shell | Missing — unqualified |
 
-OWASP Top 10 web application vulnerability testing against Juice Shop and DVWA through F5 XC. Includes SQL injection, XSS, command injection, path traversal, Nikto scanning, and Nuclei template-based scanning. Targets the Juice Shop and DVWA applications.
+## Native execution and evidence
 
-**F5 XC Feature:** WAF (Web Application Firewall)
+Named scanner entries invoke actual Nmap, SSLScan, SSLyze, testssl and Masscan with scoped/measured connection
+attempts and native reports. Slow-header execution uses actual OpenSSL clients. Load and benchmark phases use
+native wrk, hey, Vegeta, ab, cURL and declared Lua phases with resource sampling and observed worker cleanup;
+complete phase/content/host comparison acceptance remains open. Subfinder performs passive discovery of the
+approved root; discoveries are not scanned.
 
-| Order | Script                    | Tools          | Description                                                                                                                                                                                                    |
-| ----- | ------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01    | `01-sqli.sh`              | sqlmap, `curl` | SQL injection payloads against Juice Shop search API and DVWA SQLi endpoint. Runs sqlmap automated scans then sends 10 direct `curl`-based injection payloads.                                                 |
-| 02    | `02-xss.sh`               | dalfox, `curl` | Cross-site scripting against Juice Shop and DVWA XSS reflected/stored endpoints. Runs dalfox automated scans then sends 12 direct XSS payloads including script tags, event handlers, and cookie exfiltration. |
-| 03    | `03-command-injection.sh` | `curl`         | OS command injection payloads against DVWA exec endpoint. Sends 12 payloads including pipe chains, semicolons, URL-encoded newlines, and reverse shell patterns.                                               |
-| 04    | `04-path-traversal.sh`    | `curl`         | Directory traversal against multiple application endpoints. Tests standard `../` traversals, URL-encoded variants, double-encoded variants, null-byte variants, and Unicode variants across 6 endpoint paths.  |
-| 05    | `05-nikto-scan.sh`        | nikto          | Full web server vulnerability scan with 120-second time limit. Generates diverse HTTP requests that trigger WAF signature matching.                                                                            |
-| 06    | `06-nuclei-scan.sh`       | nuclei         | Template-based vulnerability scanning at medium, high, and critical severity levels. Rate-limited to 50 requests/second.                                                                                       |
+CSD loaders fetch pinned executable library assets from the owned origin and assert library identity, behavior
+and cleanup. Browser test doubles are source checks only. FFmpeg encodes real synthetic media and FFprobe
+checks it; upload/conversion dispatch without complete native postconditions remains unqualified. All tool
+dependencies must be present; silent substitutes or fabricated authentication/results cannot qualify
+execution.
 
-**Expected F5 XC Behavior:** WAF should block or flag requests containing SQL injection, XSS, command injection, and path traversal payloads. The Security Events dashboard will show violation categories, signature IDs, and request details for each blocked request.
+Fourteen scenarios currently declare functional contracts; 150 do not. Source execution contracts cover every entry, but full installed catalog acceptance requires every functional contract, actual reports/content, fixture recovery and independent control attribution. CSD is display-only with `csd_enabled=false` in the WAAP showcase.

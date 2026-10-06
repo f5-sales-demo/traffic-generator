@@ -7,6 +7,15 @@ sidebar:
 
 Every tool listed below is pre-installed during cloud-init provisioning. No manual installation is needed after deployment.
 
+## Execution boundary
+
+This inventory describes installed tools, not permission to launch them outside the catalog. Use
+[Runner](../06-runner/) and [Traffic suites](../05-suites/) for the shared pacing boundary, actual native
+entrypoints, dependency checks and complete qualification. Native FFmpeg/FFprobe are mandatory for media
+fixtures; Nmap/TLS/Masscan/OpenSSL and wrk/hey/Vegeta/ab/cURL execute actual binaries. Subfinder performs
+passive discovery without expanding the scan target set. Missing dependencies fail acceptance. The [native
+audit](../native-tool-remediation/) records report/phase gaps.
+
 ## Web Application Testing
 
 | Tool | Install Method | Example Command | Used By Suite |

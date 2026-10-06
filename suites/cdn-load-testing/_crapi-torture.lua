@@ -28,10 +28,10 @@ local requests_list = {
   -- SQL injection
   { method = "POST", path = "/workshop/api/shop/apply_coupon", body = '{"coupon_code":"TRAC075\' OR \'1\'=\'1"}' },
   -- OTP brute-force (v2 no rate limit)
-  { method = "POST", path = "/identity/api/auth/v2/check-otp", body = '{"email":"test@test.com","otp":"0000"}' },
-  { method = "POST", path = "/identity/api/auth/v2/check-otp", body = '{"email":"test@test.com","otp":"1234"}' },
-  { method = "POST", path = "/identity/api/auth/v2/check-otp", body = '{"email":"test@test.com","otp":"5678"}' },
-  { method = "POST", path = "/identity/api/auth/v2/check-otp", body = '{"email":"test@test.com","otp":"9999"}' },
+  { method = "POST", path = "/identity/api/auth/v2/check-otp", body = '{"email":"test@example.com","otp":"0000"}' },
+  { method = "POST", path = "/identity/api/auth/v2/check-otp", body = '{"email":"test@example.com","otp":"1234"}' },
+  { method = "POST", path = "/identity/api/auth/v2/check-otp", body = '{"email":"test@example.com","otp":"5678"}' },
+  { method = "POST", path = "/identity/api/auth/v2/check-otp", body = '{"email":"test@example.com","otp":"9999"}' },
   -- Identity endpoints
   { method = "GET", path = "/" },
   { method = "GET", path = "/identity/api/auth/signup" },

@@ -26,24 +26,20 @@ Azure and AWS are parallel deployment choices with separate Terraform roots and 
 | Azure  | `terraform/`     | Existing public-IP and SSH workflow                                                 | Existing cloud-init tool installation                                                            |
 | AWS    | `terraform/aws/` | Elastic IP; Ubuntu SSH from one revalidated jumpbox `/32`; Systems Manager recovery | Immutable source checkout, verified Node 22 and Chrome for Testing archives, Xvfb headed browser |
 
-## Azure Architecture
+## Azure architecture
 
-```mermaid
-graph LR
-    TG[Azure Traffic Generator VM<br/>Ubuntu 24.04<br/>Standard_F16s_v2] -->|Attack Traffic<br/>HTTPS| XCHLB[F5 XC HTTP LB<br/>WAF / Bot Defense<br/>API Security / CSD]
-    XCHLB -->|Filtered Traffic<br/>HTTP| ORIGIN[Origin Server VM<br/>nginx + Docker Apps]
-    TG -->|Direct Baseline<br/>HTTP optional| ORIGIN
-    RUNNER[runner.sh] --> SUITES[Existing Traffic Suites]
-    SUITES --> TG
-```
+The nine-application WAAP showcase uses a shared immutable traffic installer/runtime on the Azure generator
+VM. Read-only `runner.sh <SUITE> --dry-run` discovers catalog entries. `tgen-control` manages readiness-gated
+continuous or one-shot execution. Private structured configuration fixes 200 aggregate HTTP requests/sec (180
+benign plus 20 scenario/filler), with separate connection caps.
 
-The Azure Traffic Generator VM uses:
+A namespace routes native scanners, browsers, nested workers and load tools through one pacing proxy. Actual
+tool reports, fixture recovery, source digests and process cleanup supplement dispatch evidence. Fourteen
+functional contracts are declared; full current catalog qualification remains incomplete. See
+[Runner](../06-runner/), [native audit](../native-tool-remediation/) and [current
+tasks](../continuous-catalog-tasks/).
 
-- **Ubuntu 24.04 LTS** as the base image
-- **50+ security tools** installed via cloud-init during provisioning
-- **19 organized traffic suites** with numbered scripts executed in order
-- **runner.sh** orchestrator for suite execution with results logging
-- **config.env** for target configuration (FQDN, origin IP)
+Standalone Azure VM/tool bootstrap and shared catalog installation are distinct. Do not treat a legacy bootstrap health file as catalog readiness or use target environment overrides around the shared boundary.
 
 ## AWS Architecture
 
@@ -73,7 +69,8 @@ addressing relationship is explicit before first boot. The worker security group
 `operator_ssh_cidr`, which must be one canonical IPv4 `/32`; the VPC default security group is managed with
 no ingress or egress. Systems Manager remains the recovery and constrained scenario-execution path.
 
-Terraform creates an EC2 key pair by reading an existing public key from `ssh_public_key_path` with `file(pathexpand(...))`. Public key bytes are not committed and the private key never enters Terraform configuration or state. The current observed jumpbox address `142.127.218.190/32` is an example only and must be revalidated immediately before every plan or apply.
+Terraform creates an EC2 key pair by reading an existing public key from `ssh_public_key_path` with `file(pathexpand(...))`. Public key bytes are not committed and the private key never enters Terraform configuration or state. Use documentation CIDR `192.0.2.10/32` only as a symbolic example; the operator must supply and revalidate
+ the approved jumpbox address immediately before every plan or apply.
 
 AWS provisioning checks out an exact 40-character source commit and verifies pinned Node 22 and Chrome for Testing archives before installation. Browser scenarios run under Xvfb with a headed Chrome process.
 

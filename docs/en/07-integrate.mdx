@@ -179,24 +179,13 @@ Complete the checklist deterministically:
   tenant evidence must be observed separately.
 </Aside>
 
-## Azure Integration
+## Azure integration
 
-The Azure deployment continues to target an F5 Distributed Cloud HTTP load balancer through `TARGET_FQDN`; `TARGET_ORIGIN_IP` remains an optional direct-origin baseline.
+The shared catalog targets the two approved domains in private `catalog-config.json`. Both origin and WAAP publish the nine manifest prefixes through nginx; crAPI uses `/crapi/`, RESTaurant Swagger uses `/restaurant/`, and VAmPI returns JSON. The immutable origin installer seeds actual synthetic identities and private fixture/session exports.
 
-```text
-Azure Traffic Generator -> F5 XC HTTP LB -> Azure Origin Server
-              |                         |
-              +-> SSH runner            +-> WAF / Bot / API / CSD policies
-```
+Use [Runner](../06-runner/) for catalog discovery and `tgen-control` supervision. All HTTP traffic shares 200 aggregate requests/sec; native connection caps are accounted separately. CSD remains display-only and disabled for enforcement. Direct-origin comparison requires the origin owner's approved scope and cannot replace control attribution.
 
-The [origin server](https://f5-sales-demo.github.io/origin-server/) supplies the application paths used by the existing Azure suites, including Juice Shop, DVWA, VAmPI, crAPI, DVGA, Restaurant API, and the CSD demo. Configure the Azure runner in `/opt/traffic-generator/config.env`:
-
-```bash
-TARGET_FQDN=demo.example.com
-TARGET_ORIGIN_IP=20.10.5.100
-```
-
-Run the existing Azure suites over SSH as documented in [Runner](./06-runner/). Direct-origin comparison is optional and valid only when the origin owner has authorized it. A script exit count is execution evidence, not proof that an attack succeeded or a security control detected it; verify application and F5 Distributed Cloud telemetry independently.
+[Application workflows](https://f5-sales-demo.github.io/origin-server/en/application-workflows/) documents native signup, VIN/pincode, reset OTP and exact recovery. Missing real prerequisites fail. Mutation receipts, source/native tool reports, actual response content, browser cleanup and independent WAAP correlation remain distinct.
 
 ## Deployment Order
 
@@ -205,7 +194,7 @@ Run the existing Azure suites over SSH as documented in [Runner](./06-runner/). 
 3. Enable and verify the security capability required by the selected demo.
 4. Deploy **one** traffic-generator root—Azure or AWS—with its own state.
 5. Verify the runner access paths: source-restricted SSH and Systems Manager recovery for AWS, or SSH for Azure.
-6. Execute `csd-violations` on AWS, or an applicable shell suite on Azure, and preserve its evidence outside Git.
+6. Execute `csd-violations` on AWS, or the supervised shared catalog on Azure, and preserve its evidence outside Git.
 7. Correlate platform telemetry only after browser or shell execution is proven.
 
 The origin, F5 Distributed Cloud configuration, Azure traffic generator, and AWS traffic generator may have separate owners and state. Teardown one component only from its owning configuration; never use one state to delete another component's resources.

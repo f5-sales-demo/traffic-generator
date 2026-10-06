@@ -5,8 +5,11 @@
 // Estimated duration: 1-2 minutes
 
 const { chromium } = require('playwright');
+const { observeRequests, settleRequests, childHeaders } = require('../../scripts/browser_requests.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
+const crypto = require('node:crypto');
+const { navigation, verifyNavigation, needsFreshDocument } = require('../../scripts/rapid_navigation.cjs');
 const PROFILE_DIR = `/tmp/pw-profile-${path.basename(__filename, '.js')}-${process.pid}`;
 process.on('exit', () => {
   try {
@@ -23,32 +26,7 @@ if (!TARGET_FQDN) {
 const BASE_URL = `${process.env.TARGET_PROTOCOL || 'http'}://${TARGET_FQDN}`;
 
 // Pages to hit rapidly
-const PAGES = [
-  '/juice-shop/',
-  '/juice-shop/#/search',
-  '/juice-shop/#/login',
-  '/juice-shop/#/register',
-  '/juice-shop/#/about',
-  '/juice-shop/#/contact',
-  '/juice-shop/#/recycle',
-  '/juice-shop/#/complain',
-  '/juice-shop/#/basket',
-  '/juice-shop/#/order-completion',
-  '/juice-shop/#/track-result',
-  '/juice-shop/#/score-board',
-  '/dvwa/',
-  '/dvwa/login.php',
-  '/dvwa/vulnerabilities/sqli/',
-  '/dvwa/vulnerabilities/xss_r/',
-  '/dvwa/vulnerabilities/exec/',
-  '/vampi/',
-  '/vampi/users/v1',
-  '/vampi/users/v1/login',
-  '/juice-shop/rest/products/search?q=',
-  '/juice-shop/api/Users/',
-  '/juice-shop/api/Products/',
-  '/juice-shop/api/Feedbacks/',
-];
+const PAGES = navigation.map((item) => item.path);
 
 // Rotating user agents
 const USER_AGENTS = [
@@ -79,44 +57,148 @@ const USER_AGENTS = [
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--ignore-certificate-errors'],
   });
 
+  const directory = process.env.TGEN_RESULTS_DIR;
+  if (!directory) throw new Error('Private results directory is required');
+  const receipt = {
+    scenario: 'bot-simulation/04-rapid-browsing',
+    source_commit: process.env.SOURCE_COMMIT,
+    artifact_sha256: process.env.TGEN_ARTIFACT_SHA256,
+    actions: [],
+    browser_closed: false,
+  };
   let visited = 0;
   let errors = 0;
   const startTime = Date.now();
+  const actorRun = crypto.randomUUID().replaceAll('-', '');
 
-  for (const ua of USER_AGENTS.slice(0, Number(process.env.TGEN_BROWSER_IDENTITIES || USER_AGENTS.length))) {
-    const context = await browser.newContext({
-      ignoreHTTPSErrors: true,
-      userAgent: ua,
-    });
-    const page = await context.newPage();
-    page.setDefaultTimeout(10000);
+  try {
+    for (const [identity, ua] of USER_AGENTS.entries()) {
+      const context = await browser.newContext({
+        extraHTTPHeaders: {
+          ...childHeaders(),
+          'X-MUD-User': `showcase-${actorRun}-rapid-ua-${identity}`,
+        },
+        ignoreHTTPSErrors: true,
+        userAgent: ua,
+      });
+      const page = await context.newPage();
+      const requestState = observeRequests(page);
+      let documentResponse;
+      const browserErrors = [];
+      page.on('pageerror', () => browserErrors.push({ kind: 'console-error' }));
+      page.on('requestfailed', (request) =>
+        browserErrors.push({
+          kind: 'request-failure',
+          path: new URL(request.url()).pathname,
+        }),
+      );
+      page.on('response', (response) => {
+        if (response.status() >= 400)
+          browserErrors.push({
+            kind: 'http-error',
+            path: new URL(response.url()).pathname,
+            status: response.status(),
+          });
+      });
+      page.setDefaultTimeout(10000);
 
-    const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
-    console.log(`[+] UA: ${uaShort}`);
+      const uaShort = ua.length > 40 ? `${ua.substring(0, 40)}...` : ua;
+      console.log(`[+] UA: ${uaShort}`);
 
-    for (const path of PAGES) {
-      try {
-        const url = `${BASE_URL}${path}`;
-        const response = await page.goto(url, {
-          waitUntil: 'domcontentloaded',
-          timeout: 5000,
-        });
-        const status = response ? response.status() : 'N/A';
-        console.log(`    ${path} -> ${status}`);
-        visited++;
-      } catch (err) {
-        console.log(`    ${path} -> ERR: ${err.message.substring(0, 60)}`);
-        errors++;
+      for (const path of PAGES) {
+        const errorOffset = browserErrors.length;
+        try {
+          const url = `${BASE_URL}${path}`;
+          fs.writeFileSync(
+            require('node:path').join(directory, 'browser-cleanup.json'),
+            JSON.stringify({ phase: 'navigating', route: path }),
+            { mode: 0o600 },
+          );
+          await settleRequests(requestState, 30000, 100);
+          if (needsFreshDocument(url, documentResponse)) {
+            await page.goto('about:blank');
+            documentResponse = undefined;
+          }
+          const response = await page.goto(url, {
+            waitUntil: 'commit',
+            timeout: 30000,
+          });
+          if (response) documentResponse = response;
+          const status = response ? response.status() : 'N/A';
+          console.log(`    ${path} -> ${status}`);
+          fs.writeFileSync(
+            require('node:path').join(directory, 'browser-cleanup.json'),
+            JSON.stringify({ phase: 'execution', route: path }),
+            { mode: 0o600 },
+          );
+          await settleRequests(requestState, 30000, 100);
+          const item = await verifyNavigation(
+            page,
+            response || documentResponse,
+            path,
+            identity,
+            directory,
+            Boolean(response),
+          );
+          receipt.actions.push(item);
+          if (!item.rendered && !item.mitigated) throw new Error('Declared navigation outcome was not rendered');
+          visited++;
+        } catch (err) {
+          const id = `ua-${identity}-route-${PAGES.indexOf(path)}`;
+          await page.screenshot({ path: require('node:path').join(directory, `${id}-failed.png`) }).catch(() => {});
+          receipt.actions.push({
+            id,
+            performed: false,
+            attempted: true,
+            rendered: false,
+            error: 'browser-route-failure',
+            status: documentResponse?.status(),
+            document_bytes: documentResponse
+              ? (await documentResponse.body().catch(() => Buffer.alloc(0))).length
+              : null,
+            scripts: await page
+              .locator('script[src]')
+              .count()
+              .catch(() => 0),
+            browser_errors: browserErrors.slice(errorOffset),
+            pending_requests: [...requestState.pending].map((request) => ({
+              path: new URL(request.url()).pathname,
+              host: new URL(request.url()).hostname,
+            })),
+            body_characters: (
+              await page
+                .locator('body')
+                .innerText()
+                .catch(() => '')
+            ).length,
+          });
+          console.log(`    ${path} -> ERR: ${err.message.substring(0, 60)}`);
+          errors++;
+        }
+        // Minimal delay between requests (bot behavior)
+        await page.waitForTimeout(50).catch(() => {});
       }
-      // Minimal delay between requests (bot behavior)
-      await page.waitForTimeout(50).catch(() => {});
+
+      await settleRequests(requestState, 30000, 100).catch(() => {
+        errors++;
+      });
+      receipt.browser_errors = [...(receipt.browser_errors || []), ...browserErrors];
+      fs.writeFileSync(require('node:path').join(directory, 'route-actions.json'), JSON.stringify(receipt), {
+        mode: 0o600,
+      });
+      fs.writeFileSync(
+        require('node:path').join(directory, 'browser-cleanup.json'),
+        JSON.stringify({ phase: 'closing-browser' }),
+        { mode: 0o600 },
+      );
+      await context.close();
+      console.log('');
     }
-
-    await context.close().catch(() => {});
-    console.log('');
+  } finally {
+    await browser.close();
+    receipt.browser_closed = true;
+    fs.writeFileSync(path.join(directory, 'route-actions.json'), JSON.stringify(receipt), { mode: 0o600 });
   }
-
-  await browser.close();
   fs.rmSync(PROFILE_DIR, { recursive: true, force: true });
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -124,5 +206,6 @@ const USER_AGENTS = [
 
   console.log('[*] Rapid browsing simulation complete');
   console.log(`    Pages visited: ${visited} | Errors: ${errors}`);
+  if (errors) process.exitCode = 1;
   console.log(`    Duration: ${elapsed}s | Rate: ${rate} req/s`);
 })();

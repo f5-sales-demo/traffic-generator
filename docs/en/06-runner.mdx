@@ -1,261 +1,70 @@
 ---
 title: Runner
-description: "Separate Azure shell-runner and AWS Systems Manager browser-worker execution, evidence, and status workflows"
+description: "Read-only catalog discovery, supervised Azure controls and independent AWS evidence operation."
 sidebar:
   order: 6
 ---
 
-import { Steps, Aside } from "@astrojs/starlight/components";
+## Azure catalog operation
 
-## Choose the Runner
-
-- **Azure:** the existing `/opt/traffic-generator/suites/runner.sh` interface below remains supported over SSH.
-- **AWS:** Terraform hydration starts recurring `csd-violations` traffic by default; no manual start is needed. Use the `terraform/aws` `ssh_command` output for administration and Systems Manager for recovery or deliberate one-shot execution after pausing/draining recurrence.
-
-The two runners have separate hosts, result stores, and Terraform state. Do not use Azure output names or credentials with the AWS deployment.
-
-## Overview
-
-`runner.sh` is the suite orchestrator that executes all numbered scripts in a suite directory in order, captures output, and records results metadata. It is installed at `/opt/traffic-generator/suites/runner.sh` on the VM.
-
-## Usage
+The supported discovery command is `bash suites/runner.sh <SUITE> --dry-run` from the source root, or the same command under `/opt/traffic-generator/current` after installation. It reads the explicit catalog only. Select `catalog` for all 164 scenarios. There is no non-dry-run `runner.sh` execution mode or `config.env` target override in this interface.
 
 ```bash
-runner.sh <suite-name> [--dry-run]
+bash suites/runner.sh catalog --dry-run
+bash suites/runner.sh dvwa-payloads --dry-run
 ```
 
-**Arguments:**
-
-| Argument     | Required | Description                                                          |
-| ------------ | -------- | -------------------------------------------------------------------- |
-| `suite-name` | Yes      | Name of the suite directory (e.g., `web-app-attacks`, `api-attacks`) |
-| `--dry-run`  | No       | Print what would execute without running any scripts                 |
-
-**Examples:**
+On the owned installed generator, use the supervised control interface:
 
 ```bash
-# Run the web-app-attacks suite
-/opt/traffic-generator/suites/runner.sh web-app-attacks
-
-# Dry-run to preview api-attacks scripts
-/opt/traffic-generator/suites/runner.sh api-attacks --dry-run
-
-# Run bot simulation
-/opt/traffic-generator/suites/runner.sh bot-simulation
+sudo tgen-control status
+sudo tgen-control stop
+sudo tgen-control run-once
+sudo tgen-control start
 ```
 
-## Configuration
+| Verb | Behavior |
+| --- | --- |
+| `status` | Read private runtime status plus actual service active/enabled state |
+| `stop` | Disable and stop `tgen-continuous.service` |
+| `run-once` | Reject active continuous execution, check readiness, then run one complete catalog pass; incomplete acceptance returns nonzero |
+| `start` | Check readiness, then enable/start continuous supervision |
 
-### config.env
+Set `TGEN_ROOT` or `CATALOG_CONFIG` only for an explicitly owned alternate installation. Default private configuration is `/opt/traffic-generator/catalog-config.json`; runtime/source use `current` and the venv supplied by the immutable installer. Root privileges are required for namespace/systemd operation. Do not launch individual attack or benchmark scripts around the pacing boundary.
 
-The runner reads configuration from `/opt/traffic-generator/config.env`:
+## Configuration and prerequisites
 
-```bash
-# Required: target FQDN (F5 XC load balancer domain)
-TARGET_FQDN=demo.example.com
+`suites/catalog-config.example.json` documents the structured input contract. Materialize real approved
+domains, source commit and archive SHA-256 privately; zero/example values are symbolic, not a working
+deployment. Keep approved credentials/session exports out of docs. `catalog_readiness.py --config` checks
+required binaries/assets, browser, certificates, application routes and fixtures before execution. Missing
+tools or auth fail prerequisites instead of substituting dummy tokens, sessions or responses.
 
-# Optional: direct origin IP for baseline testing (bypasses F5 XC)
-TARGET_ORIGIN_IP=
-```
+The shared HTTP boundary fixes 200 aggregate requests/sec: 180 benign (90 per approved domain, rotated across
+nine application paths) plus a shared 20 scenario/filler budget. Every scanner/browser/subprocess/nested load
+request crosses the namespace pacing proxy. Filler is attributed separately and cannot satisfy a meaningful
+scenario action. Connection attempts are capped at 20/sec with up to 20 held slow connections; those caps are
+separate from HTTP accounting. The per-scenario deadline is 900 seconds. Exact native phase configuration,
+connection behavior and resource samples remain required even when pacing limits throughput.
 
-This file is written automatically during Terraform provisioning from the `target_fqdn` and `target_origin_ip` variables. To change the target after deployment, edit this file directly on the VM.
+## Receipts, restoration and attribution
 
-### Environment Variable Override
+Launch/action receipts, actual native reports, source/binary/adapter digests, process cleanup and browser
+screenshots remain private. The runtime heartbeat records exact installed provenance, scenario/pass inventory,
+measured rates and failures. Fixture mutation journals capture baseline/native postconditions and exact
+restoration; preserve failure and interruption receipts. crAPI OTP uses a distinct synthetic mutation actor
+and real recipient-bound MIME mail. Recurring signup/vehicle/reset ownership integration remains open.
 
-Any variable in `config.env` can be overridden by exporting it before running the suite:
+Functional acceptance is separate from request dispatch. Native response content/status, tool phase completion
+and observed process cleanup must match the declared contract. Missing contracts, skipped prerequisites, tool
+errors, timeout, transport failure and cancellation cannot pass. Expected native application rejection remains
+distinct from a mitigation candidate; correlated WAAP control evidence lives in a separate receipt.
+`csd_enabled=false`: browser library execution and cleanup prove display activity only.
 
-```bash
-# Override target FQDN for a single run
-TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
-
-# Override via export
-export TARGET_FQDN=staging.example.com
-/opt/traffic-generator/suites/runner.sh web-app-attacks
-```
-
-The config file path itself can also be overridden:
-
-```bash
-CONFIG_FILE=/tmp/my-config.env /opt/traffic-generator/suites/runner.sh web-app-attacks
-```
-
-## Dry-Run Mode
-
-The `--dry-run` flag prints each script that would be executed without running it:
-
-```bash
-/opt/traffic-generator/suites/runner.sh web-app-attacks --dry-run
-```
-
-Output:
-
-```text
-=== 01-sqli.sh ===
-[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
-=== 02-xss.sh ===
-[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/02-xss.sh demo.example.com
-=== 03-command-injection.sh ===
-[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/03-command-injection.sh demo.example.com
-=== 04-path-traversal.sh ===
-[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/04-path-traversal.sh demo.example.com
-=== 05-nikto-scan.sh ===
-[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/05-nikto-scan.sh demo.example.com
-=== 06-nuclei-scan.sh ===
-[DRY-RUN] Would execute: /opt/traffic-generator/suites/web-app-attacks/06-nuclei-scan.sh demo.example.com
-=== Suite Complete ===
-Passed: 0 | Failed: 0 | Skipped: 6
-Results: /opt/traffic-generator/results/20260425-143000-web-app-attacks
-```
-
-Use dry-run to verify suite structure after deployment or before running a suite against a new target.
-
-## Results Directory
-
-Each suite run creates a timestamped results directory:
-
-```text
-/opt/traffic-generator/results/<YYYYMMDD-HHMMSS>-<suite-name>/
-```
-
-**Structure:**
-
-```text
-/opt/traffic-generator/results/20260425-143000-web-app-attacks/
-  meta.json
-  01-sqli.sh.log
-  02-xss.sh.log
-  03-command-injection.sh.log
-  04-path-traversal.sh.log
-  05-nikto-scan.sh.log
-  06-nuclei-scan.sh.log
-```
-
-Each script's stdout and stderr are captured to a `.log` file named after the script.
-
-### meta.json Format
-
-The `meta.json` file records suite execution metadata:
-
-```json
-{
-  "suite": "web-app-attacks",
-  "target": "demo.example.com",
-  "started": "2026-04-25T14:30:00Z",
-  "completed": "2026-04-25T14:45:23Z",
-  "status": "completed",
-  "passed": 5,
-  "failed": 1,
-  "skipped": 0
-}
-```
-
-| Field       | Description                                           |
-| ----------- | ----------------------------------------------------- |
-| `suite`     | Suite name                                            |
-| `target`    | Target FQDN used for the run                          |
-| `started`   | UTC timestamp when the suite started                  |
-| `completed` | UTC timestamp when the suite finished                 |
-| `status`    | `running` during execution, `completed` when done     |
-| `passed`    | Number of scripts that exited with code 0             |
-| `failed`    | Number of scripts that exited with non-zero code      |
-| `skipped`   | Number of scripts skipped (not executable or dry-run) |
-
-<Aside type="tip">
-  A non-zero exit code from a script does not necessarily mean the suite failed.
-  Many security tools exit non-zero when they find vulnerabilities, which is the
-  expected behavior during attack traffic generation.
-</Aside>
-
-## Running Individual Scripts
-
-Each script can be executed standalone without the runner:
-
-```bash
-# Run a single script directly
-/opt/traffic-generator/suites/web-app-attacks/01-sqli.sh demo.example.com
-
-# Run a specific API attack
-/opt/traffic-generator/suites/api-attacks/01-vampi-owasp-top10.sh demo.example.com
-```
-
-Scripts accept the target FQDN as the first positional argument. They do not read `config.env` directly -- only the runner does that. When running standalone, you must pass the FQDN explicitly.
-
-## Running All Suites in Sequence
-
-To run every suite back-to-back:
-
-```bash
-for suite in web-app-attacks api-attacks bot-simulation reconnaissance ssl-scanning traffic-generation; do
-  echo "========================================="
-  echo "Starting suite: ${suite}"
-  echo "========================================="
-  /opt/traffic-generator/suites/runner.sh "$suite"
-  echo ""
-done
-```
-
-This runs the selected Azure shell suites back-to-back. Duration and security telemetry depend on the target and enabled policies; verify actual results rather than assuming coverage from execution alone.
-
-## Remote Execution via SSH
-
-Run suites from your local machine without maintaining an SSH session:
-
-```bash
-TGEN_IP=$(terraform output -raw public_ip)
-
-# Run a single suite
-ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
-
-# Run a suite with target override
-ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
-
-# Run in background (disconnection-safe)
-ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
-
-# Check results later
-ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
-ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
-```
-
-For long-running suites, use `nohup` or `tmux` to prevent SSH disconnection from killing the process:
-
-```bash
-ssh azureuser@${TGEN_IP} 'tmux new-session -d -s traffic "/opt/traffic-generator/suites/runner.sh reconnaissance"'
-
-# Reattach later to watch progress
-ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
-```
-
-## Execution Flow
-
-<Steps>
-
-1. **Load configuration** -- Runner reads `config.env` (or `CONFIG_FILE` override), then checks for `TARGET_FQDN` in environment.
-
-2. **Validate suite** -- Confirms the named suite directory exists under the suites directory. Lists available suites if not found.
-
-3. **Create results directory** -- Creates `/opt/traffic-generator/results/<timestamp>-<suite>/` and writes initial `meta.json` with `status: running`.
-
-4. **Execute scripts** -- Iterates through files matching `[0-9]*` in the suite directory, sorted by name. Skips non-executable files. Passes `TARGET_FQDN` as the first argument. Captures output to `<script-name>.log`.
-
-5. **Record results** -- Updates `meta.json` with completion timestamp and pass/fail/skip counts.
-
-</Steps>
-
-## Browser Test Boundary
-
-Developer workstations run only the unit, fake-CDP, and runner-contract portions of
-`node --test tests/csd-violations.test.mjs`. The headed-Chrome case is reported as skipped unless the
-deployed worker explicitly sets `CSD_AWS_RUNTIME=1`; no local fixture certificate, local Chrome path,
-or developer screenshot directory is supported.
-
-On AWS, scenario execution is fail-closed. It requires Linux, `/opt/traffic-generator/status.json` with
-`status: ready`, `runtime: aws`, and the exact `SOURCE_COMMIT`, executable `/opt/chrome/chrome`,
-readable `/opt/traffic-generator/node_modules/playwright-core`, a live Xvfb display socket, a safe
-`RUN_ID`, and `CSD_AWS_OUTPUT_DIR` exactly equal to
-`/opt/traffic-generator/runtime/results/<run-id>`. The first-boot `csd-worker-health.service` performs
-only a headed Chrome smoke navigation to local `about:blank`; it executes no CSD scenario and does
-not validate application reachability or detection.
+Detailed runtime evidence is bounded to seven days or 10 GiB, evicting oldest completed runs. Keep
+state/credentials/mail and screenshots private. See [Continuous catalog](../continuous-catalog/), [current
+tasks](../continuous-catalog-tasks/) and [native audit](../native-tool-remediation/). Complete exact-source
+catalog passes, sustained rates, recovery and showcase clean rebuild remain open.
 
 ## AWS SSH Access
 
@@ -455,7 +264,7 @@ COMMAND_DOCUMENT=$(terraform output -raw ssm_document_name)
 INSTANCE_ID=$(terraform output -raw instance_id)
 
 COMMAND_ID=$(aws ssm send-command \
-  --profile 280469140135_Users \
+  --profile "$AWS_PROFILE" \
   --region us-east-1 \
   --document-name "${COMMAND_DOCUMENT}" \
   --instance-ids "${INSTANCE_ID}" \
@@ -486,7 +295,7 @@ for scenario in \
   maximum-detection
 do
   command_id=$(aws ssm send-command \
-    --profile 280469140135_Users \
+    --profile "$AWS_PROFILE" \
     --region us-east-1 \
     --document-name "${COMMAND_DOCUMENT}" \
     --instance-ids "${INSTANCE_ID}" \
@@ -498,7 +307,7 @@ do
   deadline=$((SECONDS + 1860))
   while :; do
     status=$(aws ssm get-command-invocation \
-      --profile 280469140135_Users \
+      --profile "$AWS_PROFILE" \
       --region us-east-1 \
       --command-id "${command_id}" \
       --instance-id "${INSTANCE_ID}" \
@@ -573,7 +382,7 @@ exits nonzero. Retry from the worker without rerunning Chrome:
 ```bash
 sudo -u tgen env RUNTIME_ENV=/etc/traffic-generator/runtime.env \
   /bin/bash /opt/traffic-generator/source/suites/csd-violations/run.sh \
-  --retry-upload /opt/traffic-generator/runtime/results/<run-id>/<scenario>
+  --retry-upload "$EVIDENCE_RUN_DIR"
 ```
 
 Retry revalidates the frozen local checksum set and exact run/scenario key prefix. For every expected
@@ -612,7 +421,7 @@ Record browser-observed sensor and `__imp_apg__/api/dip` requests separately fro
 After the exact-prefix `upload-commit.json` and its referenced evidence digests validate, convert receipt
 `startedAt` and `completedAt` ISO timestamps to epoch seconds. The operator must then use the structured
 `xcsh_api` method/path/params/payload workflow in
-[Integrate](./07-integrate/#operator-side-post-receipt-correlation):
+[Integrate](../07-integrate/#operator-side-post-receipt-correlation):
 `GET /api/shape/csd/namespaces/{namespace}/detected_domains`,
 `POST /api/shape/csd/namespaces/{namespace}/scripts` with snake_case `start_time` and `end_time`, and
 `GET /api/shape/csd/namespaces/{namespace}/formFields` with those query parameters. Compare exact

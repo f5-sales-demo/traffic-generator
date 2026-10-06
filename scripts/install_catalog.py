@@ -105,6 +105,11 @@ def install_service(destination: Path, system_root: Path = Path("/")) -> None:
     service = system_root / "etc/systemd/system/tgen-continuous.service"
     control.parent.mkdir(parents=True, exist_ok=True)
     service.parent.mkdir(parents=True, exist_ok=True)
+    if system_root == Path("/"):
+        subprocess.run(  # noqa: S603 - installed verified catalog dependency adapter
+            ["/usr/bin/python3", str(source / "install_native_wrk.py")],
+            check=True,
+        )
     control.write_text(
         (source / "tgen-control")
         .read_text()

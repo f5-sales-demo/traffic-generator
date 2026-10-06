@@ -45,7 +45,7 @@ echo "[+] Test 3: BOLA — access other users' resources with attacker token"
 # Register
 curl -sk -X POST "${BASE}/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d '{"username":"authtest","password":"authtest123","email":"authtest@evil.example"}' \
+  -d '{"username":"authtest","password":"authtest123","email":"authtest@example.com"}' \
   --max-time 10 >/dev/null 2>&1 || true
 
 # Login
@@ -55,12 +55,9 @@ LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
   --max-time 10) || true
 
 TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // empty' 2>/dev/null || true)
-if [[ -z "$TOKEN" && -n "${TGEN_FIXTURES:-}" ]]; then
-  TOKEN=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py" vampi_token)
-fi
 if [[ -z "$TOKEN" ]]; then
-  echo "    WARN: Could not get token, using dummy"
-  TOKEN="dummy-token-for-testing"
+  echo "[FAIL] Native authentication prerequisite failed" >&2
+  exit 1
 fi
 
 for user in admin user1 root superadmin; do
