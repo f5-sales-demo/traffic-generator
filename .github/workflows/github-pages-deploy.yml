@@ -19,9 +19,9 @@ concurrency:
 
 jobs:
   docs:
-    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@de8d6e94e8046207802e8c0a6c43735194310b86
+    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@ba4098fc3e66075bfcc11147cc10ad659b81cb70
     with:
-      builder-image: ${{ github.repository == 'f5-sales-demo/canada' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:72ab6ad2488d391b86d737c1375f782876cce16501f567d327db1caae0f3a7ae' || github.repository == 'f5-sales-demo/custom-responses' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:72ab6ad2488d391b86d737c1375f782876cce16501f567d327db1caae0f3a7ae' || 'ghcr.io/f5-sales-demo/docs-builder:latest' }}
+      builder-image: ${{ github.repository == 'f5-sales-demo/canada' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:988e1fbf4e5acdbb15eb0c9aa6430f7968603d4fc96e713a28ca09846eedadd4' || github.repository == 'f5-sales-demo/custom-responses' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:988e1fbf4e5acdbb15eb0c9aa6430f7968603d4fc96e713a28ca09846eedadd4' || 'ghcr.io/f5-sales-demo/docs-builder:latest' }}
       content-ref: ${{ github.sha }}
       content-path: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' && 'documentation' || 'docs' }}
       socketless_runner_label: managed-socketless
