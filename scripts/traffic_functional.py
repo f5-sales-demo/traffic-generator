@@ -716,11 +716,49 @@ def verify_weak_sessions(scenario: dict, result: dict, responses: list[dict]) ->
     }
 
 
+def verify_dvwa_corpus(
+    scenario: dict, result: dict, responses: list[dict], directory: Path
+) -> dict:
+    """Require each preserved payload and native content or exact WAF block attribution."""
+    required = {
+        hashlib.sha256(value.encode()).hexdigest()
+        for value in scenario["dispatch_contract"]["payloads"]
+    }
+    rows = [
+        row
+        for row in responses
+        if row.get("scenario") == scenario["id"] and row.get("kind") == "scenario"
+    ]
+    observed = {row.get("corpus_payload_sha256") for row in rows}
+    passed = required <= observed and all(
+        row.get("upstream_dispatched") is True
+        and not row.get("transport_error")
+        and (
+            (row.get("status") == HTTP_OK and row.get("native_body_verified") is True)
+            or waf_attribution(
+                row,
+                result,
+                directory,
+                scenario["functional_contract"]["waf_signatures"],
+            )
+        )
+        for row in rows
+    )
+    return {
+        "passed": passed
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True,
+        "behavior": scenario["functional_contract"]["behavior"],
+    }
+
+
 def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-dvwa-corpus":
+        return verify_dvwa_corpus(scenario, result, responses, directory)
     if contract.get("verifier") == "native-dvwa-weak-session":
         return verify_weak_sessions(scenario, result, responses)
     specialized = {

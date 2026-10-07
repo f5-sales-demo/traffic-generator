@@ -632,3 +632,31 @@ def test_weak_session_requires_all_native_cookie_values(tmp_path):
     rows[-1]["native_session_id"] = "unobserved"
     assert not verify_functional(scenario, result, rows, tmp_path)["passed"]
     assert not verify_functional(scenario, result, rows[:1], tmp_path)["passed"]
+
+
+def test_dvwa_corpus_rejects_missing_payload_or_wrong_native_content(tmp_path):
+    scenario = {
+        "id": "synthetic/corpus",
+        "dispatch_contract": {"payloads": ["one", "two"]},
+        "functional_contract": {
+            "verifier": "native-dvwa-corpus",
+            "behavior": "native corpus",
+            "waf_signatures": [],
+        },
+    }
+    result = {"outcome": "launched", "dispatch_contract_verified": True}
+    rows: list[dict] = [
+        {
+            "scenario": scenario["id"],
+            "kind": "scenario",
+            "status": 200,
+            "upstream_dispatched": True,
+            "native_body_verified": True,
+            "corpus_payload_sha256": hashlib.sha256(value.encode()).hexdigest(),
+        }
+        for value in ["one", "two"]
+    ]
+    assert verify_functional(scenario, result, rows, tmp_path)["passed"]
+    assert not verify_functional(scenario, result, rows[:1], tmp_path)["passed"]
+    rows[0]["native_body_verified"] = False
+    assert not verify_functional(scenario, result, rows, tmp_path)["passed"]

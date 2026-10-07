@@ -14,6 +14,7 @@ from http.cookies import SimpleCookie
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
@@ -325,6 +326,19 @@ class Budget:
                 event["native_session_id"] = (
                     cookies["dvwaSession"].value if "dvwaSession" in cookies else None
                 )
+            corpus = current.get("dispatch_contract", {})
+            if (
+                corpus.get("payloads")
+                and current.get("functional_contract", {}).get("verifier")
+                == "native-dvwa-corpus"
+            ):
+                payload = parse_qs(flow.request.path.partition("?")[2]).get(
+                    corpus["parameter"], [""]
+                )[0]
+                event["corpus_payload_sha256"] = hashlib.sha256(
+                    payload.encode()
+                ).hexdigest()
+                event["native_body_verified"] = event["native_response_identity"]
             event["response_assertions"] = {}
             for requirement in current.get("dispatch_contract", {}).get(
                 "requirements", []
