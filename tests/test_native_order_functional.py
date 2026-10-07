@@ -17,7 +17,7 @@ def test_order_mutation_requires_real_fields_and_host_baseline(tmp_path):
         "outcome": "launched",
         "dispatch_contract_verified": True,
     }
-    rows = [
+    rows: list[dict] = [
         {
             "response": {"status": "returned", "quantity": 100},
             "readback": {"status": "returned", "quantity": 100},

@@ -3,6 +3,7 @@
 import json
 import sys
 from pathlib import Path
+from threading import Event
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -10,11 +11,12 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from traffic_order_host import host_jobs
 
 
-class OnePoll:
+class OnePoll(Event):
     def __init__(self):
+        super().__init__()
         self.calls = 0
 
-    def wait(self, _seconds):
+    def wait(self, timeout: float | None = None) -> bool:
         self.calls += 1
         return self.calls > 1
 
