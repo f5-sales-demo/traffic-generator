@@ -49,3 +49,26 @@ def test_denial_status_does_not_establish_native_application_identity():
     assert not native_identity(
         "/crapi/identity/api/auth/login", "POST", 429, "text/plain", "Too many requests"
     )
+
+
+def test_declared_native_error_shapes_are_content_verified():
+    assert native_identity(
+        "/vampi/missing", "GET", 404, "text/html", "<h1>404 Not Found</h1>"
+    )
+    assert not native_identity(
+        "/vampi/missing", "GET", 404, "text/html", "generic landing"
+    )
+    assert native_identity(
+        "/crapi/identity/api/v2/admin/users/debug",
+        "GET",
+        401,
+        "application/json",
+        '{"error":"Unauthorized","path":"/api/v2/admin/users/debug"}',
+    )
+    assert not native_identity(
+        "/crapi/identity/api/v2/admin/users/debug",
+        "GET",
+        401,
+        "application/json",
+        '{"unrelated":true}',
+    )

@@ -39,6 +39,12 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
                 )
             )
         )
+    if (
+        path.startswith("/vampi/")
+        and status >= HTTP_ERROR_START
+        and media == "text/html"
+    ):
+        return "404 Not Found" in body or "405 Method Not Allowed" in body
     if path.startswith("/vampi/"):
         return document is not None and (
             isinstance(document, list)
@@ -73,6 +79,9 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
                         & {
                             "message",
                             "status",
+                            "error",
+                            "path",
+                            "timestamp",
                             "token",
                             "items",
                             "id",

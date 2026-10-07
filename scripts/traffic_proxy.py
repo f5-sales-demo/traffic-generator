@@ -14,7 +14,7 @@ from http.cookies import SimpleCookie
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
@@ -339,6 +339,12 @@ class Budget:
                     payload.encode()
                 ).hexdigest()
                 event["native_body_verified"] = event["native_response_identity"]
+            location = flow.response.headers.get("location", "")
+            if status in (301, 302, 307, 308) and not body and location:
+                redirect = urlsplit(location)
+                event["native_response_identity"] = (
+                    not redirect.hostname or redirect.hostname == event["domain"]
+                )
             event["response_assertions"] = {}
             for requirement in current.get("dispatch_contract", {}).get(
                 "requirements", []
