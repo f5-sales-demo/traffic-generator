@@ -2577,7 +2577,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -4538,7 +4538,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -7153,7 +7153,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -25326,7 +25326,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -25504,7 +25504,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -25858,7 +25858,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -26326,7 +26326,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -27536,7 +27536,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -29032,7 +29032,7 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "read-only"
       }
     },
     {
