@@ -68,6 +68,29 @@ The protected default branch accepts changes through pull requests. The linked-i
 the closing reference; reviewers verify that the issue itself contains the problem, scope, and
 objective acceptance criteria.
 
+### Authorization and required input
+
+Use authorization already provided in the conversation. Continue authorized work without requesting
+approval again for routine implementation, verification, commits, PR repair, or delivery steps within
+that scope. Authorization persists across turns unless the user changes or withdraws it.
+
+Require input only for missing authorization for the next action, an unresolved material decision,
+explicitly required human acceptance, or an operational failure preventing that action. When input
+is required, identify the action and unmet requirement, ask a focused question or report the failure,
+pause dependent work, and continue independent authorized work. A material decision is one that
+affects scope or acceptance and cannot be resolved from the conversation or applicable instructions.
+
+Require separate human acceptance only when the user, applicable instructions, or agreed acceptance
+criteria explicitly require it. An already-authorized user-facing behavior or UX change does not by
+itself require a separate approval. When physical acceptance is explicitly required, wait for that
+evidence before completing the dependent step; automated checks do not replace it.
+
+Required CI checks, branch protection, and merge prerequisites must pass through the normal workflow;
+they do not inherently require asking the user for permission. Repair checks and satisfy prerequisites
+within the authorized scope. Plan Mode remains non-mutating: research, reviews, diagnostics, and
+planning do not authorize edits, commits, or delivery. This guidance does not change runtime approval
+settings or grant authorization beyond the user's request.
+
 ## Step 1: Create an Issue
 
 Every change starts with a detailed issue. Use one of the provided templates and complete its
@@ -213,8 +236,7 @@ background:
    compare each changed file's manifest blob SHA across the complete downstream inventory and repair
    missing files, API errors, or mismatches until fleet convergence is complete.
 
-Pause this loop only for uncertain authorization, destructive-risk approval, an unavailable
-credential, or a product decision that requires the user.
+Apply [Authorization and required input](#authorization-and-required-input) throughout this loop.
 
 ## Translations
 
@@ -310,8 +332,9 @@ apply what fits.
 - Every PR must carry that verification evidence in its description (see the PR
   template): the commands you ran and their output, and a link to the green run.
   Reviewers merge after the evidence is present.
-- Where a change needs human judgment (user-facing behavior, UX, product decisions), get
-  explicit human acceptance before merge — green CI alone is not acceptance.
+- Obtain separate human acceptance before merge only when explicitly required, following
+  [Authorization and required input](#authorization-and-required-input). Required acceptance evidence
+  remains a merge prerequisite even when CI is green.
 - When a change triggers GitHub Actions, use the Step 5 background waiter and active PR repair loop.
   A watcher receipt and GitHub's `MERGED` state prove the terminal head result.
 - When a change publishes a new version or artifact, close the loop end-to-end: download,

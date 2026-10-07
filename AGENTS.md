@@ -1,6 +1,6 @@
 # Repository Agent Instructions
 
-This file adds F5 sales-demo procedures. Use the coding assistant's normal defaults otherwise.
+This file adds fleet procedures. Use the assistant's normal defaults otherwise.
 
 ## Authorized defensive work
 
@@ -36,33 +36,34 @@ repository classes for every coding assistant.
 
 ## Continuous contribution lifecycle
 
+Use authorization already provided in the conversation. Continue authorized work without requesting
+approval again for routine implementation, verification, commits, PR repair, or delivery steps within
+that scope. See [the full policy](CONTRIBUTING.md#authorization-and-required-input).
+
+Require input only for missing authorization for the next action, an unresolved material decision,
+explicitly required human acceptance, or an operational failure preventing that action. When input
+is required, identify the action and unmet requirement, pause dependent work, and continue independent
+authorized work.
+
 Carry non-trivial work through this path:
 
 `detailed issue → fresh worktree and feature branch → implement and verify →
 push feature branch → linked PR → repair loop → MERGED → cleanup → fleet convergence`
 
-1. Inspect `git status --short --branch` and `git worktree list`; run `git fetch --prune`. Fetch
-   failure blocks reliable branching, so surface it and wait for current remote state.
-2. Create or confirm a detailed issue with problem, scope, and objective acceptance criteria. Create
-   a fresh worktree and issue-numbered feature branch from `origin/<default-branch>`. Preserve work
-   using `CONTRIBUTING.md`; destructive Git operations require explicit user authorization.
-3. Implement the whole issue and run required checks.
-4. Push the feature branch and open a completed PR with `Closes #<issue>`. Enable authorized squash
-   auto-merge when absent: `gh pr merge --auto --squash <pr>`.
-5. Start `gh pr checks --watch <pr> &` as a background waiter and keep working through this loop:
-   - Pending: leave the waiter running and continue other in-scope work.
-   - Failed: inspect logs, fix the root cause, verify, and push.
-   - `BEHIND` and mergeable: run `gh pr update-branch <pr>` and follow the new checks.
-   - `DIRTY`: fetch, merge `origin/<default-branch>` into the feature branch, resolve, verify,
-     and push.
-   - Auto-merge absent: run `gh pr merge --auto --squash <pr>`.
-6. Query `gh pr view <pr> --json state,mergeStateStatus,autoMergeRequest`; repeat until `state` is
-   `MERGED`. Pause only for uncertain authorization, destructive-risk approval, an unavailable
-   credential, or a product decision requiring the user.
-7. After merge, follow `CONTRIBUTING.md`: inspect ignored files, retire this task's worktree, delete
-   its confirmed-merged local branch, fetch/prune, and report git hygiene. For docs-control managed
-   changes, confirm fleet convergence by matching each changed file's manifest blob SHA in every
-   downstream repository; missing files, API errors, or mismatches remain active work.
+1. Inspect `git status --short --branch` and `git worktree list`; run `git fetch --prune`.
+   Surface fetch failures before branching.
+2. Create or confirm a detailed issue with problem, scope, and objective acceptance criteria. Use a
+   fresh worktree and issue-numbered feature branch from `origin/<default-branch>`. Preserve work;
+   destructive Git operations require explicit user authorization.
+3. Implement and verify the whole issue. Push the feature branch; open a PR with `Closes #<issue>`.
+4. Enable authorized auto-merge when absent: `gh pr merge --auto --squash <pr>`.
+5. Start `gh pr checks --watch <pr> &`; continue in-scope work while pending. Repair failures,
+   verify, and push. For mergeable `BEHIND`, run `gh pr update-branch <pr>`. For `DIRTY`, fetch,
+   merge `origin/<default-branch>`, resolve, verify, and push.
+6. Query `gh pr view <pr> --json state,mergeStateStatus,autoMergeRequest` until `state` is `MERGED`.
+7. Follow `CONTRIBUTING.md` for ignored-file inspection, task worktree and confirmed-merged branch
+   cleanup, fetch/prune, and git hygiene. Prove fleet convergence: match each changed file's manifest
+   blob SHA in every downstream repository; missing files, API errors, or mismatches remain active work.
 
 ## Engineering and verification
 
