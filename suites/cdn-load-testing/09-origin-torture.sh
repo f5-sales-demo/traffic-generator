@@ -221,7 +221,8 @@ while true; do
 
   # Origin health probe
   ORIGIN_START=$(date +%s%N)
-  ORIGIN_HTTP=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 5 "${BASE}/health" 2>/dev/null || echo "000")
+  ORIGIN_HTTP=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 \
+    -H "X-MUD-User: waap-origin-health-benign" "${BASE}/health" 2>/dev/null) || ORIGIN_HTTP="000"
   ORIGIN_END=$(date +%s%N)
   ORIGIN_MS=$(((ORIGIN_END - ORIGIN_START) / 1000000))
 
