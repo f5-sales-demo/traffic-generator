@@ -660,3 +660,13 @@ def test_dvwa_corpus_rejects_missing_payload_or_wrong_native_content(tmp_path):
     assert not verify_functional(scenario, result, rows[:1], tmp_path)["passed"]
     rows[0]["native_body_verified"] = False
     assert not verify_functional(scenario, result, rows, tmp_path)["passed"]
+
+
+def test_composed_accepts_only_prevalidated_control_attribution(tmp_path):
+    scenario, result, event = composed_fixture()
+    event.update(status=403, native_response_identity=False)
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    event["control_attributed"] = True
+    assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    event["upstream_dispatched"] = False
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]

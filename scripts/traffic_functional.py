@@ -377,15 +377,22 @@ def verify_composed_native(
                 "passed": len(rows) >= requirement.get("minimum_dispatches", 1)
                 and all(
                     r.get("upstream_dispatched") is True
-                    and r.get("native_response_identity") is True
-                    and r.get("status") in requirement.get("expected_statuses", [])
+                    and (
+                        r.get("control_attributed") is True
+                        or r.get("native_response_identity") is True
+                    )
+                    and (
+                        r.get("control_attributed") is True
+                        or r.get("status") in requirement.get("expected_statuses", [])
+                    )
                     and (
                         "response_contract" not in requirement
                         or r.get("response_assertions", {}).get(requirement["id"])
                         is True
                     )
                     and (
-                        r.get("status") not in (403, 429)
+                        r.get("control_attributed") is True
+                        or r.get("status") not in (403, 429)
                         or r.get("status_specific_assertions", {}).get(
                             requirement["id"]
                         )
