@@ -9,6 +9,7 @@ from pathlib import Path
 from dvga_paste_acceptance import verify_pastes
 from traffic_csd_functional import verify_csd_libraries
 from traffic_dispatch import verify_browser_actions
+from traffic_family_functional import family_restored
 from traffic_order_functional import verify_order_mutation
 from traffic_report import build_report
 from traffic_security import bot_attribution, waf_attribution
@@ -435,6 +436,8 @@ def verify_composed_native(
     if mutation not in ("read-only", "journaled-restoration"):
         return {"passed": False, "reason": "mutation recovery contract missing"}
     recovery_fields = scenario["functional_contract"].get("restoration_fields", [])
+    if "family_restoration" in recovery_fields:
+        result["family_restoration"] = family_restored(result, directory)
     if mutation == "journaled-restoration" and (
         not recovery_fields
         or not all(
@@ -445,6 +448,7 @@ def verify_composed_native(
                 "disposable_video_cleanup",
                 "otp_restoration",
                 "signup_restoration",
+                "family_restoration",
             )
             and result.get(field) is True
             for field in recovery_fields

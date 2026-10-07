@@ -18,10 +18,17 @@ from traffic_common import atomic_json
 def host_jobs(root: Path, runtime: Path, config: dict, stop: threading.Event) -> None:
     """Process task-owned nested order requests with fixed helper argv and source binding."""
     while not stop.wait(0.5):
-        for file in runtime.glob("pass-*/**/order-host-request.json"):
+        for file in [
+            *runtime.glob("pass-*/**/order-host-request.json"),
+            *runtime.glob("pass-*/**/family-host-request.json"),
+        ]:
             if file.is_symlink():
                 continue
-            response = file.with_name("order-host-response.json")
+            response = file.with_name(
+                "family-host-response.json"
+                if file.name.startswith("family-")
+                else "order-host-response.json"
+            )
             if response.exists():
                 continue
             request = json.loads(file.read_text())
@@ -38,14 +45,30 @@ def host_jobs(root: Path, runtime: Path, config: dict, stop: threading.Event) ->
                 SOURCE_COMMIT=config["source_commit"],
                 TGEN_ARTIFACT_SHA256=config["artifact_sha256"],
             )
-            result = subprocess.run(  # noqa: S603 - fixed recovery helper outside HTTP namespace
+            family = file.name.startswith("family-")
+            if family and request.get("family") != "vampi":
+                atomic_json(response, {"passed": False, "request": request})
+                continue
+            command = (
                 [
+                    sys.executable,
+                    "-B",
+                    str(root / "scripts/traffic_family_fixture.py"),
+                    request["action"],
+                    request["family"],
+                    str(file.parent),
+                ]
+                if family
+                else [
                     sys.executable,
                     "-B",
                     str(root / "scripts/crapi_order_fixture.py"),
                     request["action"],
                     str(file.parent),
-                ],
+                ]
+            )
+            result = subprocess.run(  # noqa: S603 - fixed recovery helper outside HTTP namespace
+                command,
                 env=environment,
                 capture_output=True,
                 check=False,

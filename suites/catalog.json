@@ -174,7 +174,7 @@
             "payload_class": "credential-guessing",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"admin\",\"password\":\"password\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "guess-123456",
@@ -183,7 +183,7 @@
             "payload_class": "credential-guessing",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"admin\",\"password\":\"123456\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "guess-admin",
@@ -192,7 +192,7 @@
             "payload_class": "credential-guessing",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"admin\",\"password\":\"admin\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "guess-admin123",
@@ -201,7 +201,7 @@
             "payload_class": "credential-guessing",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"admin\",\"password\":\"admin123\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "guess-letmein",
@@ -210,7 +210,7 @@
             "payload_class": "credential-guessing",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"admin\",\"password\":\"letmein\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "users",
@@ -221,7 +221,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "delete-admin",
@@ -232,7 +232,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "escalate",
@@ -244,7 +244,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "ssrf-0",
@@ -345,7 +345,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["vampi"]
+      "fixture_refresh": ["vampi"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "vampi"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every preserved native VAmPI payload has application-specific protocol content or exact protection attribution; all declared synthetic actors and book references on four replicas are restored to the host-captured baseline",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "api-attacks/02-sqlmap-api",
@@ -420,8 +430,13 @@
       "fixture_refresh": ["vampi"],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Every preserved native VAmPI payload has application-specific protocol content or exact protection attribution; all declared synthetic actors and book references on four replicas are restored to the host-captured baseline",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "vampi"
       }
     },
     {
@@ -930,7 +945,7 @@
             "path": "/vampi/api",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-32",
@@ -938,7 +953,7 @@
             "path": "/vampi/api/v1",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-33",
@@ -946,7 +961,7 @@
             "path": "/vampi/api/v2",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-34",
@@ -954,7 +969,7 @@
             "path": "/vampi/api/v3",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-35",
@@ -962,7 +977,7 @@
             "path": "/vampi/rest",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-36",
@@ -970,7 +985,7 @@
             "path": "/vampi/graphql",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-37",
@@ -978,7 +993,7 @@
             "path": "/vampi/swagger",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-38",
@@ -986,7 +1001,7 @@
             "path": "/vampi/swagger.json",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-39",
@@ -994,7 +1009,7 @@
             "path": "/vampi/openapi.json",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-40",
@@ -1002,7 +1017,7 @@
             "path": "/vampi/docs",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-41",
@@ -1010,7 +1025,7 @@
             "path": "/vampi/admin",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-42",
@@ -1018,7 +1033,7 @@
             "path": "/vampi/users",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-43",
@@ -1026,7 +1041,7 @@
             "path": "/vampi/login",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-44",
@@ -1034,7 +1049,7 @@
             "path": "/vampi/register",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-45",
@@ -1042,7 +1057,7 @@
             "path": "/vampi/health",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-46",
@@ -1050,7 +1065,7 @@
             "path": "/vampi/healthz",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-47",
@@ -1058,7 +1073,7 @@
             "path": "/vampi/status",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-48",
@@ -1066,7 +1081,7 @@
             "path": "/vampi/metrics",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-49",
@@ -1074,7 +1089,7 @@
             "path": "/vampi/debug",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-50",
@@ -1082,7 +1097,7 @@
             "path": "/vampi/console",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-51",
@@ -1090,7 +1105,7 @@
             "path": "/vampi/config",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-52",
@@ -1098,7 +1113,7 @@
             "path": "/vampi/env",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-53",
@@ -1106,7 +1121,7 @@
             "path": "/vampi/info",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-54",
@@ -1114,7 +1129,7 @@
             "path": "/vampi/version",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-55",
@@ -1122,7 +1137,7 @@
             "path": "/vampi/actuator",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-56",
@@ -1130,7 +1145,7 @@
             "path": "/vampi/actuator/health",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-57",
@@ -1138,7 +1153,7 @@
             "path": "/vampi/.env",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-58",
@@ -1146,7 +1161,7 @@
             "path": "/vampi/.git",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-59",
@@ -1154,7 +1169,7 @@
             "path": "/vampi/.git/config",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-60",
@@ -1162,7 +1177,7 @@
             "path": "/vampi/robots.txt",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-61",
@@ -1170,7 +1185,7 @@
             "path": "/vampi/sitemap.xml",
             "payload_class": "api-path-fuzzing",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "path-62",
@@ -2077,8 +2092,13 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Every preserved native VAmPI payload has application-specific protocol content or exact protection attribution; all declared synthetic actors and book references on four replicas are restored to the host-captured baseline",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "vampi"
       }
     },
     {
@@ -2298,7 +2318,7 @@
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"masstest1\",\"password\":\"Test1234\",\"email\":\"mass1@example.com\",\"admin\":true}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "registration-2",
@@ -2307,7 +2327,7 @@
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"masstest2\",\"password\":\"Test1234\",\"email\":\"mass2@example.com\",\"role\":\"admin\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "registration-3",
@@ -2316,7 +2336,7 @@
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"masstest3\",\"password\":\"Test1234\",\"email\":\"mass3@example.com\",\"balance\":99999}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "registration-4",
@@ -2325,7 +2345,7 @@
             "payload_class": "mass-assignment",
             "minimum_dispatches": 1,
             "body_exact": "{\"username\":\"masstest4\",\"password\":\"Test1234\",\"email\":\"mass4@example.com\",\"admin\":true,\"role\":\"superadmin\",\"is_staff\":true,\"is_superuser\":true,\"balance\":99999}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "privilege",
@@ -2337,7 +2357,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "prototype",
@@ -2349,7 +2369,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "roles",
@@ -2361,7 +2381,7 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           },
           {
             "id": "email",
@@ -2373,13 +2393,23 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
           }
         ],
         "reject_unmatched_errors": true
       },
       "expected_http_statuses": [400, 401, 404, 405, 409, 422],
-      "fixture_refresh": ["vampi"]
+      "fixture_refresh": ["vampi"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "vampi"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every preserved native VAmPI payload has application-specific protocol content or exact protection attribution; all declared synthetic actors and book references on four replicas are restored to the host-captured baseline",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "api-protection-verify/01-schema-violation",
