@@ -42,23 +42,8 @@ echo ""
 # --- 3. Register a user, then use their token for BOLA ---
 echo "[+] Test 3: BOLA — access other users' resources with attacker token"
 
-# Register
-curl -sk -X POST "${BASE}/users/v1/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"authtest","password":"authtest123","email":"authtest@example.com"}' \
-  --max-time 10 >/dev/null 2>&1 || true
-
-# Login
-LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"authtest","password":"authtest123"}' \
-  --max-time 10) || true
-
-TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // empty' 2>/dev/null || true)
-if [[ -z "$TOKEN" ]]; then
-  echo "[FAIL] Native authentication prerequisite failed" >&2
-  exit 1
-fi
+TOKEN=$(python3 -c 'import json,os; print(json.load(open(os.environ["TGEN_FIXTURES"]))["vampi_token"])')
+[[ -n "$TOKEN" ]] || exit 1
 
 for user in admin user1 root superadmin; do
   auth_test "GET /users/v1/${user} (BOLA with authtest token)" \
