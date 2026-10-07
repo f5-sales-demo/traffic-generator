@@ -38,6 +38,8 @@ check_method_bypass() {
 
   if [[ ! "$http_code" =~ ^[1-5][0-9][0-9]$ ]]; then
     fail "No HTTP response for ${label}"
+  elif [ "$http_code" -ge 500 ]; then
+    fail "${label} — unexpected server failure ($http_code)"
   elif [ "$cache_status" = "HIT" ]; then
     fail "${label} — returned HIT (non-GET should not be cached)"
   else
@@ -47,7 +49,7 @@ check_method_bypass() {
 
 # httpbin echo endpoints
 echo "[+] httpbin method testing"
-check_method_bypass "POST" "/httpbin/post" '{"test":true,"method":"POST","ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
+check_method_bypass "POST" "/httpbin/post" '{"demo_id":"synthetic-cache-bypass","test":true,"method":"POST","ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
 check_method_bypass "PUT" "/httpbin/put" '{"test":true,"method":"PUT","ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
 check_method_bypass "DELETE" "/httpbin/delete" '{"test":true,"method":"DELETE"}'
 check_method_bypass "PATCH" "/httpbin/patch" '{"test":true,"method":"PATCH"}'
@@ -55,14 +57,14 @@ echo ""
 
 # VAmPI API endpoints
 echo "[+] VAmPI API testing"
-check_method_bypass "POST" "/vampi/users/v1/register" '{"username":"cdn-test-'"$RANDOM"'","password":"testpass123","email":"cdn'"$RANDOM"'@test.com"}'
+check_method_bypass "POST" "/vampi/users/v1/register" '{"username":"admin","password":"invalid-synthetic","email":"admin@example.com"}'
 check_method_bypass "POST" "/vampi/users/v1/login" '{"username":"admin","password":"pass1"}'
 echo ""
 
 # Juice Shop endpoints
 echo "[+] Juice Shop testing"
 check_method_bypass "POST" "/juice-shop/rest/user/login" '{"email":"admin@example.com","password":"admin123"}'
-check_method_bypass "POST" "/juice-shop/api/Feedbacks/" '{"comment":"CDN test","rating":5}'
+check_method_bypass "POST" "/juice-shop/api/Feedbacks/" '{"comment":"Synthetic invalid feedback","rating":5,"captchaId":0,"captcha":"invalid-synthetic"}'
 echo ""
 
 # Verify GET still caches after POST testing
@@ -77,3 +79,4 @@ else
 fi
 
 summary
+[ "$FAIL_COUNT" -eq 0 ]
