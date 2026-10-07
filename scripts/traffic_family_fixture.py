@@ -17,7 +17,11 @@ def operation(directory: Path, action: str, family: str) -> None:
     """Retain ownership before mutation and restore only the host-captured baseline."""
     fixtures = json.loads(Path(os.environ["TGEN_FIXTURES"]).read_text())
     settings = fixtures["family_recovery"]
-    if action not in ("prepare", "restore") or family not in ("vampi", "dvwa", "restaurant"):
+    if action not in ("prepare", "restore") or family not in (
+        "vampi",
+        "dvwa",
+        "restaurant",
+    ):
         message = "invalid declared family action"
         raise ValueError(message)
     journal = directory / "family-journal.json"

@@ -114,7 +114,6 @@ def test_video_restore_receipt_binds_media_and_metadata_readback():
 def test_conversion_functional_requires_all_native_triggers_and_exact_recovery(
     tmp_path,
 ):
-
     before = {
         "id": 8,
         "video_name": "synthetic.mp4",

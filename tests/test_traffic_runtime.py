@@ -240,7 +240,6 @@ class RuntimeTests(unittest.TestCase):
             assert result["completed"] - result["started"] < 2
 
     def test_retention_handles_disappearing_atomic_write_temporary(self):
-
         temporary = Mock()
         temporary.is_file.return_value = True
         temporary.is_symlink.return_value = False

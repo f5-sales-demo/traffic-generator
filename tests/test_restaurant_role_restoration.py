@@ -126,7 +126,6 @@ def test_role_restore_receipt_contains_native_before_after_and_source(
 
 
 def test_role_mutation_rejects_missing_payload_or_failed_restoration(tmp_path):
-
     before = {"username": "tgen_bola_attacker", "role": "Customer"}
     (tmp_path / "restaurant-role-snapshot.json").write_text(json.dumps(before))
     result = {
