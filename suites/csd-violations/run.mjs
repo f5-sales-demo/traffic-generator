@@ -208,9 +208,10 @@ export function createHeaderPairTracker(target, selector) {
         record.status === 200 &&
         record.wireSelector?.present === injected &&
         (!injected || record.wireSelector.matchesSelected) &&
-        Object.entries(HEADER_VALUES).every(([name]) =>
-          record.headers?.[name]?.present === !(injected && name === selector) &&
-          record.headers?.[name]?.matchesCanonical === !(injected && name === selector),
+        Object.entries(HEADER_VALUES).every(
+          ([name]) =>
+            record.headers?.[name]?.present === !(injected && name === selector) &&
+            record.headers?.[name]?.matchesCanonical === !(injected && name === selector),
         );
       const observation = (method, playwrightStatus) => {
         const candidates = records.filter(
@@ -219,18 +220,23 @@ export function createHeaderPairTracker(target, selector) {
             req.method === method &&
             (method === 'HEAD' || req.resourceType === 'Document'),
         );
-        const terminal = method === 'HEAD' ? {
-          terminal: { state: 'pending', canceled: false, errorCode: null, responseReceivedBeforeTerminal: false },
-        } : {};
+        const terminal =
+          method === 'HEAD'
+            ? {
+                terminal: { state: 'pending', canceled: false, errorCode: null, responseReceivedBeforeTerminal: false },
+              }
+            : {};
         if (method === 'GET' ? candidates.length !== 1 : candidates.length < 1) {
           evidenceInvalid = true;
           return { status: null, observed: false, headers: null, ...terminal };
         }
         const injected = mode === 'mutation' && (method === 'GET' || scope === 'same-origin');
-        const observed = candidates.every((record) =>
-          verified(record, injected) && record.status === playwrightStatus &&
-          record.req.frameId === topFrameId &&
-          (method === 'GET' || (record.req.scriptInitiated && naturalHeadObserved)),
+        const observed = candidates.every(
+          (record) =>
+            verified(record, injected) &&
+            record.status === playwrightStatus &&
+            record.req.frameId === topFrameId &&
+            (method === 'GET' || (record.req.scriptInitiated && naturalHeadObserved)),
         );
         if (!observed) evidenceInvalid = true;
         // Consume every distinct HEAD. A failed terminal is retained conservatively
@@ -259,9 +265,12 @@ export function createHeaderPairTracker(target, selector) {
         try {
           const url = new URL(req?.url);
           return (
-            req.method === 'GET' && req.resourceType === 'Script' &&
+            req.method === 'GET' &&
+            req.resourceType === 'Script' &&
             /^\/__imp_apg__\/js\/[A-Za-z0-9_-]+\.js$/.test(url.pathname) &&
-            url.protocol === 'https:' && !url.username && !url.password &&
+            url.protocol === 'https:' &&
+            !url.username &&
+            !url.password &&
             (url.origin === new URL(target).origin ||
               APPROVED_CSD_COLLECTORS.some(({ host }) => url.origin === `https://${host}`))
           );

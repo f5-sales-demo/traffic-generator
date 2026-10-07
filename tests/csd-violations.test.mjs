@@ -1149,28 +1149,47 @@ function pairAdapter({
 test('approved worker trace consumes two distinct canceled HEADs and approved crossorigin loader', async () => {
   for (const [scenario, selector] of Object.entries(HEADER_SCENARIO_SELECTORS))
     for (const scope of ['same-origin', 'document']) {
-    const adapter = pairAdapter({
-      naturalHeads: 1,
-      loaderUrl: 'https://us.gimp.zeronaught.com/__imp_apg__/js/volt-f5_sales_demo_rljyvvmw_client_side_defense-04ba724f.js',
-      headFailure: { canceled: true, errorText: 'net::ERR_ABORTED' },
-    });
-    const pair = await runHeaderPair({ ...adapter, target: targetOrigin, selector, scope, operationTimeoutMs: 500 });
-    assert.equal(pair.result, 'passed', JSON.stringify(pair));
-    for (const phase of [pair.control, pair.mutation]) {
-      assert.equal(phase.head.observed, true);
-      assert.equal(phase.sensor.finishedHttp2xx, 1);
-      assert.equal(phase.selectorRequests.observed, scope === 'document' ? 1 : 3);
-      assert.equal(phase.selectorRequests[phase.mode === 'control' ? 'stripped' : 'injected'], scope === 'document' ? 1 : 3);
-      assert.equal(phase.head.headers[selector].present, scope === 'document' || phase.mode === 'control');
+      const adapter = pairAdapter({
+        naturalHeads: 1,
+        loaderUrl:
+          'https://us.gimp.zeronaught.com/__imp_apg__/js/volt-f5_sales_demo_rljyvvmw_client_side_defense-04ba724f.js',
+        headFailure: { canceled: true, errorText: 'net::ERR_ABORTED' },
+      });
+      const pair = await runHeaderPair({ ...adapter, target: targetOrigin, selector, scope, operationTimeoutMs: 500 });
+      assert.equal(pair.result, 'passed', JSON.stringify(pair));
+      for (const phase of [pair.control, pair.mutation]) {
+        assert.equal(phase.head.observed, true);
+        assert.equal(phase.sensor.finishedHttp2xx, 1);
+        assert.equal(phase.selectorRequests.observed, scope === 'document' ? 1 : 3);
+        assert.equal(
+          phase.selectorRequests[phase.mode === 'control' ? 'stripped' : 'injected'],
+          scope === 'document' ? 1 : 3,
+        );
+        assert.equal(phase.head.headers[selector].present, scope === 'document' || phase.mode === 'control');
+      }
+      assert.equal(projectHeaderPair(pair, scenario).result, 'passed');
     }
-    assert.equal(projectHeaderPair(pair, scenario).result, 'passed');
-  }
 });
 
 test('every extra eligible GET and distinct HEAD must prove wire, selector, headers and terminal', () => {
   for (const mode of ['control', 'mutation']) {
     for (const method of ['GET', 'HEAD']) {
-      for (const fault of ['none', 'missing-wire', 'missing-request-wire', 'wrong-selector', 'headers', 'duplicate-header', 'raw-header', 'pending', 'non2xx', 'unknown', 'other', 'null', 'wrong-frame', 'duplicate-id']) {
+      for (const fault of [
+        'none',
+        'missing-wire',
+        'missing-request-wire',
+        'wrong-selector',
+        'headers',
+        'duplicate-header',
+        'raw-header',
+        'pending',
+        'non2xx',
+        'unknown',
+        'other',
+        'null',
+        'wrong-frame',
+        'duplicate-id',
+      ]) {
         const selector = 'cache-control';
         const headers = { ...HEADER_VALUES };
         if (mode === 'mutation') delete headers[selector];
@@ -1183,20 +1202,39 @@ test('every extra eligible GET and distinct HEAD must prove wire, selector, head
           if (params.requestId === 'extra') {
             if (fault === 'missing-wire' && event === 'Network.responseReceivedExtraInfo') return;
             if (fault === 'missing-request-wire' && event === 'Network.requestWillBeSentExtraInfo') return;
-            if (fault === 'wrong-frame' && event === 'Network.requestWillBeSent') params = { ...params, frameId: 'other-frame' };
+            if (fault === 'wrong-frame' && event === 'Network.requestWillBeSent')
+              params = { ...params, frameId: 'other-frame' };
           }
           send(event, params);
         };
         const extra = {
-          ...options, id: 'extra', method, type: 'Fetch',
+          ...options,
+          id: 'extra',
+          method,
+          type: 'Fetch',
           selector: fault === 'wrong-selector' ? 'x-frame-options' : options.selector,
-          headers: fault === 'headers' ? {} : fault === 'duplicate-header' ? { ...headers, 'X-Frame-Options': 'DENY' } : fault === 'raw-header' ? { ...headers, 'x-frame-options': 'DENY\nDENY' } : headers,
-          finished: fault !== 'pending', status: fault === 'non2xx' ? 503 : fault === 'unknown' ? null : 200,
+          headers:
+            fault === 'headers'
+              ? {}
+              : fault === 'duplicate-header'
+                ? { ...headers, 'X-Frame-Options': 'DENY' }
+                : fault === 'raw-header'
+                  ? { ...headers, 'x-frame-options': 'DENY\nDENY' }
+                  : headers,
+          finished: fault !== 'pending',
+          status: fault === 'non2xx' ? 503 : fault === 'unknown' ? null : 200,
           initiator: ['other', 'null'].includes(fault) ? (fault === 'null' ? null : 'other') : 'script',
         };
         wireEvent(tracker, extra);
         if (fault === 'duplicate-id') wireEvent(tracker, extra);
-        const facts = tracker.value({ mode, scope: 'same-origin', topFrameId: 'private-top-frame', naturalHeadObserved: true, documentStatus: 200, headStatus: 200 });
+        const facts = tracker.value({
+          mode,
+          scope: 'same-origin',
+          topFrameId: 'private-top-frame',
+          naturalHeadObserved: true,
+          documentStatus: 200,
+          headStatus: 200,
+        });
         const fails = fault !== 'none' && (method === 'HEAD' || !['other', 'null', 'wrong-frame'].includes(fault));
         assert.equal(facts.invalid, fails, `${mode} ${method} ${fault}`);
         if (method === 'HEAD') assert.equal(facts.head.observed, !fails, `${mode} ${fault}`);
@@ -1209,17 +1247,33 @@ test('every extra eligible GET and distinct HEAD must prove wire, selector, head
 test('document scope consumes every canonical HEAD even when only navigation is selector eligible', () => {
   for (const fault of ['none', 'headers', 'selector', 'unknown', 'other', 'null', 'frame']) {
     const tracker = createHeaderPairTracker(targetOrigin, 'cache-control');
-    wireEvent(tracker, { selector: 'cache-control', headers: { 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY' } });
+    wireEvent(tracker, {
+      selector: 'cache-control',
+      headers: { 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY' },
+    });
     wireEvent(tracker, { id: 'head', method: 'HEAD', type: 'Fetch' });
     const send = tracker.event;
-    tracker.event = (event, params) => send(event, fault === 'frame' && event === 'Network.requestWillBeSent' ? { ...params, frameId: 'other' } : params);
+    tracker.event = (event, params) =>
+      send(
+        event,
+        fault === 'frame' && event === 'Network.requestWillBeSent' ? { ...params, frameId: 'other' } : params,
+      );
     wireEvent(tracker, {
-      id: 'extra', method: 'HEAD', type: 'Fetch',
+      id: 'extra',
+      method: 'HEAD',
+      type: 'Fetch',
       headers: fault === 'headers' ? {} : HEADER_VALUES,
       selector: fault === 'selector' ? 'cache-control' : null,
       initiator: fault === 'null' ? null : ['unknown', 'other'].includes(fault) ? fault : 'script',
     });
-    const facts = tracker.value({ mode: 'mutation', scope: 'document', topFrameId: 'private-top-frame', naturalHeadObserved: true, documentStatus: 200, headStatus: 200 });
+    const facts = tracker.value({
+      mode: 'mutation',
+      scope: 'document',
+      topFrameId: 'private-top-frame',
+      naturalHeadObserved: true,
+      documentStatus: 200,
+      headStatus: 200,
+    });
     assert.equal(facts.selectorRequests.observed, 1);
     assert.equal(facts.head.observed, fault === 'none', fault);
     assert.equal(facts.invalid, fault !== 'none', fault);
@@ -1227,9 +1281,22 @@ test('document scope consumes every canonical HEAD even when only navigation is 
 });
 
 test('loader evidence requires known wire headers, no selector and finished 2xx', () => {
-  for (const setup of [{}, { status: 503 }, { status: null }, { extra: false }, { duplicate: true }, { finished: false }, { selector: 'cache-control' }]) {
+  for (const setup of [
+    {},
+    { status: 503 },
+    { status: null },
+    { extra: false },
+    { duplicate: true },
+    { finished: false },
+    { selector: 'cache-control' },
+  ]) {
     const tracker = createHeaderPairTracker(targetOrigin, 'cache-control');
-    wireEvent(tracker, { id: 'loader', type: 'Script', url: 'https://us.gimp.zeronaught.com/__imp_apg__/js/fixture.js', ...setup });
+    wireEvent(tracker, {
+      id: 'loader',
+      type: 'Script',
+      url: 'https://us.gimp.zeronaught.com/__imp_apg__/js/fixture.js',
+      ...setup,
+    });
     assert.equal(tracker.value().sensor.finishedHttp2xx, Object.keys(setup).length ? 0 : 1);
   }
 });
@@ -1242,7 +1309,12 @@ test('loader routing rejects unknown hosts, DIP and non-anchored paths', async (
     `${targetOrigin.origin}/__imp_apg__/js/nested/test.js`,
     `${targetOrigin.origin}/__imp_apg__/js/test`,
   ]) {
-    const pair = await runHeaderPair({ ...pairAdapter({ loaderUrl }), target: targetOrigin, selector: 'cache-control', operationTimeoutMs: 20 });
+    const pair = await runHeaderPair({
+      ...pairAdapter({ loaderUrl }),
+      target: targetOrigin,
+      selector: 'cache-control',
+      operationTimeoutMs: 20,
+    });
     assert.equal(pair.result, 'failed', loaderUrl);
     assert.equal(pair.control.sensor.observed, 0, loaderUrl);
   }
