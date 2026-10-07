@@ -602,3 +602,33 @@ def test_direct_native_api_requires_nested_content_and_observed_response(tmp_pat
     row["response_assertions"]["posts"] = False
     assert not verify_functional(scenario, result, [row], tmp_path)["passed"]
     assert not verify_functional(scenario, result, [], tmp_path)["passed"]
+
+
+def test_weak_session_requires_all_native_cookie_values(tmp_path):
+    scenario = {
+        "id": "dvwa-exploits/12-weak-session",
+        "functional_contract": {
+            "verifier": "native-dvwa-weak-session",
+            "behavior": "native predictable cookies",
+        },
+    }
+    result = {
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "transport_failures": 0,
+    }
+    rows = [
+        {
+            "scenario": scenario["id"],
+            "kind": "scenario",
+            "matched_requirements": ["generate"],
+            "native_session_id": str(index),
+            "status": 200,
+            "upstream_dispatched": True,
+        }
+        for index in range(20)
+    ]
+    assert verify_functional(scenario, result, rows, tmp_path)["passed"]
+    rows[-1]["native_session_id"] = "unobserved"
+    assert not verify_functional(scenario, result, rows, tmp_path)["passed"]
+    assert not verify_functional(scenario, result, rows[:1], tmp_path)["passed"]

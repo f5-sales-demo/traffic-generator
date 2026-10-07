@@ -10,6 +10,7 @@ import re
 import ssl
 import time
 import uuid
+from http.cookies import SimpleCookie
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -315,6 +316,15 @@ class Budget:
             event["native_response_identity"] = native_identity(
                 event["path"], event["method"], status, content_type, body
             )
+            if (
+                current.get("functional_contract", {}).get("verifier")
+                == "native-dvwa-weak-session"
+            ):
+                cookies = SimpleCookie()
+                cookies.load(flow.response.headers.get("set-cookie", ""))
+                event["native_session_id"] = (
+                    cookies["dvwaSession"].value if "dvwaSession" in cookies else None
+                )
             event["response_assertions"] = {}
             for requirement in current.get("dispatch_contract", {}).get(
                 "requirements", []

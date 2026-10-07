@@ -19,6 +19,7 @@ SHA256_LENGTH = 64
 HTTP_OK = 200
 VIDEO_ATTEMPTS = 4
 HTTP_NOT_FOUND = 404
+WEAK_SESSION_COUNT = 20
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -684,11 +685,44 @@ def verify_current_report(scenario: dict, result: dict, directory: Path) -> dict
     }
 
 
+def verify_weak_sessions(scenario: dict, result: dict, responses: list[dict]) -> dict:
+    """Require twenty generated numeric cookies with consecutive native values."""
+    rows = [
+        row
+        for row in responses
+        if row.get("scenario") == scenario["id"]
+        and row.get("kind") == "scenario"
+        and "generate" in row.get("matched_requirements", [])
+    ]
+    values = [row.get("native_session_id") for row in rows]
+    numeric = len(values) == WEAK_SESSION_COUNT and all(
+        isinstance(value, str) and value.isdigit() for value in values
+    )
+    consecutive = numeric and all(
+        int(str(right)) == int(str(left)) + 1 for left, right in pairwise(values)
+    )
+    return {
+        "passed": consecutive
+        and all(
+            row.get("status") == HTTP_OK
+            and row.get("upstream_dispatched") is True
+            and not row.get("transport_error")
+            for row in rows
+        )
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+    }
+
+
 def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-dvwa-weak-session":
+        return verify_weak_sessions(scenario, result, responses)
     specialized = {
         "native-dvga-pastes": verify_pastes,
         "native-video-deletion": verify_video_deletion,

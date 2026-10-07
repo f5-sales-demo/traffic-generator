@@ -287,6 +287,7 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
             "phase": "execution",
             "dispatch_path": str(directory / "dispatch-events.jsonl"),
             "dispatch_contract": scenario.get("dispatch_contract", {}),
+            "functional_contract": scenario.get("functional_contract", {}),
             "expected_statuses": scenario.get("expected_http_statuses", []),
         }
         (runtime_directory / "children").mkdir(mode=0o700, exist_ok=True)
@@ -722,6 +723,7 @@ def _scenario(
             "phase": "prerequisite",
             "dispatch_path": str(directory / "dispatch-events.jsonl"),
             "dispatch_contract": scenario.get("dispatch_contract", {}),
+            "functional_contract": scenario.get("functional_contract", {}),
             "expected_statuses": scenario.get("expected_http_statuses", []),
         },
     )
@@ -739,6 +741,7 @@ def _scenario(
             "phase": "execution",
             "dispatch_path": str(directory / "dispatch-events.jsonl"),
             "dispatch_contract": scenario.get("dispatch_contract", {}),
+            "functional_contract": scenario.get("functional_contract", {}),
             "expected_statuses": scenario.get("expected_http_statuses", []),
         },
     )

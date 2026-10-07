@@ -8032,6 +8032,11 @@
         ],
         "reject_unmatched_errors": true
       },
+      "functional_contract": {
+        "verifier": "native-dvwa-weak-session",
+        "behavior": "Twenty native generated session cookies have consecutive numeric values",
+        "mutation_policy": "read-only"
+      },
       "fixture_refresh": []
     },
     {
