@@ -196,3 +196,63 @@ def test_connect_rejection_is_exact_route_method_status_and_body():
     assert not native_identity(
         "/vampi/users/v1", "CONNECT", 500, "text/plain", "Bad Request"
     )
+
+
+def test_declared_health_identity_requires_exact_inventory_and_route():
+    body = json.dumps(
+        {
+            "status": "healthy",
+            "component": "origin-server",
+            "applications": [
+                "juice-shop",
+                "dvwa",
+                "vampi",
+                "httpbin",
+                "whoami",
+                "csd-demo",
+                "dvga",
+                "restaurant",
+                "crapi",
+            ],
+        }
+    )
+    assert native_identity("/health", "GET", 200, "application/json", body)
+    assert not native_identity("/health", "POST", 200, "application/json", body)
+    assert not native_identity(
+        "/health", "GET", 200, "application/json", '{"status":"healthy"}'
+    )
+
+
+def test_httpbin_headers_identity_is_endpoint_scoped():
+    body = '{"headers":{"Host":"demo.example.test","User-Agent":"synthetic"}}'
+    assert native_identity("/httpbin/headers", "GET", 200, "application/json", body)
+    assert not native_identity("/httpbin/get", "GET", 200, "application/json", body)
+    assert not native_identity(
+        "/httpbin/headers", "POST", 200, "application/json", body
+    )
+    assert not native_identity(
+        "/httpbin/headers", "GET", 200, "application/json", '{"headers":{}}'
+    )
+
+
+def test_csd_checkout_identity_requires_declared_page_markers():
+    body = '<title>ShopDemo - Checkout</title><div id="attackPanel"></div><form id="checkoutForm"></form>'
+    assert native_identity("/csd-demo/", "GET", 200, "text/html", body)
+    assert not native_identity(
+        "/csd-demo/", "GET", 200, "text/html", "<title>ShopDemo - Checkout</title>"
+    )
+    assert not native_identity("/csd-demo/other", "GET", 200, "text/html", body)
+
+
+def test_native_captcha_error_requires_exact_route_method_status_and_body():
+    body = "Wrong answer to CAPTCHA. Please try again."
+    assert native_identity("/juice-shop/api/Feedbacks/", "POST", 401, "text/html", body)
+    assert not native_identity(
+        "/juice-shop/api/Feedbacks/", "GET", 401, "text/html", body
+    )
+    assert not native_identity(
+        "/juice-shop/rest/user/login", "POST", 401, "text/html", body
+    )
+    assert not native_identity(
+        "/juice-shop/api/Feedbacks/", "POST", 401, "text/html", body + "unexpected"
+    )

@@ -139,7 +139,65 @@ def crapi_known_error(
     )
 
 
-def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
+def auxiliary_identity(
+    path: str, method: str, status: int, media: str, body: str, document: object
+) -> bool:
+    """Recognize exact health, header echo, checkout and CAPTCHA responses."""
+    if path == "/health":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and media == "application/json"
+            and document
+            == {
+                "status": "healthy",
+                "component": "origin-server",
+                "applications": [
+                    "juice-shop",
+                    "dvwa",
+                    "vampi",
+                    "httpbin",
+                    "whoami",
+                    "csd-demo",
+                    "dvga",
+                    "restaurant",
+                    "crapi",
+                ],
+            }
+        )
+    if path == "/httpbin/headers" and status == HTTP_SUCCESS:
+        return (
+            method == "GET"
+            and media == "application/json"
+            and isinstance(document, dict)
+            and set(document) == {"headers"}
+            and isinstance(document["headers"], dict)
+            and bool(document["headers"].get("Host"))
+        )
+    if path == "/csd-demo/":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and media == "text/html"
+            and all(
+                value in body
+                for value in (
+                    "<title>ShopDemo - Checkout</title>",
+                    'id="attackPanel"',
+                    'id="checkoutForm"',
+                )
+            )
+        )
+    if path == "/juice-shop/api/Feedbacks/" and status == HTTP_UNAUTHORIZED:
+        return (
+            method == "POST"
+            and media == "text/html"
+            and body == "Wrong answer to CAPTCHA. Please try again."
+        )
+    return False
+
+
+def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-statements,too-many-branches
     path: str, method: str, status: int | None, content_type: str, body: str
 ) -> bool:
     """Reject a wrong-content success and classify expected native protocol rejections."""
@@ -170,6 +228,10 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             document = json.loads(body)
         except ValueError:
             return crapi_known_error(path, method, status, media, body)
+    if path in {"/health", "/httpbin/headers", "/csd-demo/"} or (
+        path == "/juice-shop/api/Feedbacks/" and status == HTTP_UNAUTHORIZED
+    ):
+        return auxiliary_identity(path, method, status, media, body, document)
     if path.startswith("/httpbin/"):
         return (
             isinstance(document, dict)
