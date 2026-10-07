@@ -32,6 +32,7 @@ from traffic_dispatch import (
     verify_tool_actions,
     verify_workload,
 )
+from traffic_family_native import host_action as family_host_action
 from traffic_fixture_recovery import recover_fixtures
 from traffic_functional import verify_functional
 from traffic_network import NetworkBoundary
@@ -346,6 +347,13 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 directory / "scenario.log",
                 environment,
                 scenario["timeout_seconds"],
+            )
+        if (
+            scenario.get("fixture_contract", {}).get("family_restore")
+            and not (directory / "family-restoration.json").is_file()
+        ):
+            family_host_action(
+                directory, "restore", scenario["fixture_contract"]["family_restore"]
             )
         result["id"] = scenario["id"]
         result["source_commit"] = os.environ.get("SOURCE_COMMIT")
