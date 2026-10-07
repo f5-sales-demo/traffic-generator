@@ -312,7 +312,7 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 + ",*sys.argv[1:]])\n"
             )
             wrapper.chmod(0o700)
-        command = scenario_command(root, scenario, os.environ["TARGET_FQDN"])
+        command = scenario_command(root, scenario, os.environ["TARGET_FQDN"], directory)
         # Native connection tools cannot bypass the isolated HTTP egress from nested runs.
         if scenario["budget"] == "connection":
             result = {

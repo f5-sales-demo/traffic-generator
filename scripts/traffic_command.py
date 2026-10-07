@@ -3,14 +3,18 @@
 from pathlib import Path
 
 
-def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
+def scenario_command(
+    root: Path, scenario: dict, domain: str, directory: Path | None = None
+) -> list[str]:
     """Invoke native tools through explicit scoped adapters and shared pacing."""
     if scenario.get("adapter") == "native-order-mutation":
         return [
             "python3",
             str(root / "scripts/crapi_order_fixture.py"),
             "run",
-            __import__("os").environ["TGEN_RESULTS_DIR"],
+            str(directory)
+            if directory is not None
+            else __import__("os").environ["TGEN_RESULTS_DIR"],
         ]
     adapters = {
         "dynamic-cache": "traffic_cache.py",

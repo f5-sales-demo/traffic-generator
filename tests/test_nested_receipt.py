@@ -131,3 +131,30 @@ def test_nested_child_records_functional_failure(tmp_path, monkeypatch):
     receipt = json.loads((tmp_path / "synthetic--action/receipt.json").read_text())
     assert receipt["functional_verified"] is False
     assert receipt["functional_acceptance"]["passed"] is False
+
+
+def test_nested_order_command_uses_its_own_directory(tmp_path, monkeypatch):
+    monkeypatch.setenv("TGEN_RESULTS_DIR", str(tmp_path))
+    monkeypatch.setenv("TARGET_FQDN", "www.example.test")
+    monkeypatch.setenv("TGEN_RUNTIME_DIR", str(tmp_path))
+    scenario = {
+        "id": "synthetic/order",
+        "entrypoint": "scripts/traffic_dispatch.py",
+        "kind": "shell",
+        "budget": "http",
+        "timeout_seconds": 1,
+        "adapter": "native-order-mutation",
+    }
+    commands = []
+
+    def execute(command, _log, environment, _timeout):
+        commands.append((command, environment["TGEN_RESULTS_DIR"]))
+        return {"outcome": "launched"}
+
+    with (
+        patch.object(runtime, "execute", side_effect=execute),
+        patch.object(runtime, "scenario_action_verification"),
+        patch.object(runtime, "verify_functional", return_value={"passed": True}),
+    ):
+        runtime.run_nested(Path(__file__).resolve().parents[1], [scenario])
+    assert commands[0][0][-1] == commands[0][1] == str(tmp_path / "synthetic--order")
