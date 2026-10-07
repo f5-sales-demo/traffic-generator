@@ -753,6 +753,26 @@ class NetworkBoundary:
             return False
         return completed.returncode == 0
 
+    def order_fixture(self, directory: Path, action: str) -> bool:
+        """Prepare/recover only the named dedicated actor outside HTTP egress."""
+        environment = dict(
+            os.environ, TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json")
+        )
+        result = subprocess.run(  # noqa: S603 - fixed native recovery helper and private paths
+            [
+                sys.executable,
+                "-B",
+                str(self.root / "scripts/crapi_order_fixture.py"),
+                action,
+                str(directory),
+            ],
+            env=environment,
+            capture_output=True,
+            check=False,
+            timeout=90,
+        )
+        return result.returncode == 0
+
     def recover_signup(self, directory: Path) -> bool:
         """Run only exact forced-command recovery outside the HTTP egress namespace."""
         journal = directory / "fixture-journal.json"

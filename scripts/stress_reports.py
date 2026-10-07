@@ -77,3 +77,14 @@ def verify_native_reports(directory: Path, contract: dict) -> dict:
         "passed": bool(checks) and all(check["passed"] for check in checks),
         "checks": checks,
     }
+
+
+def native_report_verification(directory: Path, scenario: dict, result: dict) -> None:
+    """Supplement dispatch with every declared native worker completion report."""
+    if "native_report_contract" in scenario:
+        result["native_reports"] = verify_native_reports(
+            directory, scenario["native_report_contract"]
+        )
+        result["dispatch_contract_verified"] &= result["native_reports"]["passed"]
+        if not result["native_reports"]["passed"]:
+            result["outcome"] = "tool_failure"

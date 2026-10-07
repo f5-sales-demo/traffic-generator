@@ -19,7 +19,7 @@ from pathlib import Path
 from catalog_pass_receipt import pass_traffic
 from crapi_otp_fixture import verify_restoration
 from scanner_phase_contract import verify_scanner_phases
-from stress_reports import verify_native_reports
+from stress_reports import native_report_verification
 from traffic_catalog import load_catalog, readiness
 from traffic_command import scenario_command
 from traffic_common import atomic_json, terminate
@@ -572,17 +572,6 @@ def video_fixture_verification(directory: Path, scenario: dict, result: dict) ->
             result["outcome"] = "fixture_failure"
 
 
-def native_report_verification(directory: Path, scenario: dict, result: dict) -> None:
-    """Supplement dispatch with every declared native worker completion report."""
-    if "native_report_contract" in scenario:
-        result["native_reports"] = verify_native_reports(
-            directory, scenario["native_report_contract"]
-        )
-        result["dispatch_contract_verified"] &= result["native_reports"]["passed"]
-        if not result["native_reports"]["passed"]:
-            result["outcome"] = "tool_failure"
-
-
 def native_load_verification(directory: Path, scenario: dict, result: dict) -> None:
     """Require each native load worker to complete its real report."""
     if "native_load_contract" in scenario:
@@ -755,6 +744,12 @@ def _scenario(
             "expected_statuses": scenario.get("expected_http_statuses", []),
         },
     )
+    if scenario.get("fixture_contract", {}).get(
+        "order_restore"
+    ) and not boundary.order_fixture(directory, "prepare"):
+        return prerequisite_failure(
+            scenario["id"], directory, state, "order journal snapshot failed"
+        )
     before = boundary.metrics()
     command = boundary.wrap(
         scenario_command(root, scenario, domain),
@@ -843,6 +838,10 @@ def _scenario(
             directory, domain, environment
         )
         if not result["paste_restoration"]:
+            result["outcome"] = "fixture_failure"
+    if scenario.get("fixture_contract", {}).get("order_restore"):
+        result["order_restoration"] = boundary.order_fixture(directory, "restore")
+        if not result["order_restoration"]:
             result["outcome"] = "fixture_failure"
     result["functional_acceptance"] = verify_functional(
         scenario, result, attributed_responses(scenario, result, directory), directory

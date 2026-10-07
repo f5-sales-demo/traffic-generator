@@ -5,6 +5,13 @@ from pathlib import Path
 
 def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
     """Invoke native tools through explicit scoped adapters and shared pacing."""
+    if scenario.get("adapter") == "native-order-mutation":
+        return [
+            "python3",
+            str(root / "scripts/crapi_order_fixture.py"),
+            "run",
+            __import__("os").environ["TGEN_RESULTS_DIR"],
+        ]
     adapters = {
         "dynamic-cache": "traffic_cache.py",
         "native-load": "native_load.py",

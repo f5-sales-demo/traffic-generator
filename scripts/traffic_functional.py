@@ -9,6 +9,7 @@ from pathlib import Path
 from dvga_paste_acceptance import verify_pastes
 from traffic_csd_functional import verify_csd_libraries
 from traffic_dispatch import verify_browser_actions
+from traffic_order_functional import verify_order_mutation
 from traffic_report import build_report
 from traffic_security import bot_attribution, waf_attribution
 
@@ -844,6 +845,7 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
         "native-browser-display": verify_display_browser,
         "native-load": verify_load,
         "native-nested-suites": verify_nested,
+        "native-order-mutation": verify_order_mutation,
     }
     if contract.get("verifier") in specialized:
         return specialized[contract["verifier"]](scenario, result, directory)

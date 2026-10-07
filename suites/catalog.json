@@ -5556,18 +5556,40 @@
           {
             "id": "order-mutation",
             "method": "PUT",
-            "minimum_dispatches": 2,
+            "minimum_dispatches": 3,
             "payload_class": "order-mass-assignment",
             "path_regex": "/crapi/workshop/api/shop/orders/[^/]+",
             "body_regex": "\"(?:status|quantity|credit|price|user_id)\"",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 400],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "application/json",
+                "json_nested_keys": {
+                  "orders": ["id", "quantity", "status"]
+                }
+              },
+              "400": {
+                "content_type": "application/json",
+                "json_keys": ["message"]
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
       },
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
-      "fixture_refresh": ["crapi"]
+      "fixture_refresh": [],
+      "adapter": "native-order-mutation",
+      "fixture_contract": {
+        "order_restore": true
+      },
+      "functional_contract": {
+        "verifier": "native-order-mutation",
+        "behavior": "Three preserved native order mutation payloads act only on the dedicated synthetic actor/order; native response and fresh readback prove changed fields, then the host journal restores exact original order and account credit",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["order_restoration"]
+      }
     },
     {
       "id": "crapi-exploits/09-ssrf-contact-mechanic",
