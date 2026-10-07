@@ -1,8 +1,29 @@
 """Application-specific native response identity; no inferred exploit or mitigation success."""
 
 import json
+import re
 
 HTTP_ERROR_START = 400
+NATIVE_MISSING_ORDER_STATUS = 500
+
+
+def missing_order_identity(
+    path: str, method: str, status: int | None, media: str, body: str
+) -> bool:
+    """Recognize only the observed native missing-order response on its exact route."""
+    return (
+        re.fullmatch(r"/crapi/workshop/api/shop/orders/[0-9]+", path) is not None
+        and method == "GET"
+        and status == NATIVE_MISSING_ORDER_STATUS
+        and media == "text/html"
+        and all(
+            text in body
+            for text in (
+                "<title>Server Error (500)</title>",
+                "<h1>Server Error (500)</h1>",
+            )
+        )
+    )
 
 
 def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
@@ -69,38 +90,44 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
         )
     if path.startswith("/crapi/"):
         return (
-            document is not None
-            and (
-                isinstance(document, list)
-                or (
-                    isinstance(document, dict)
-                    and bool(
-                        set(document)
-                        & {
-                            "message",
-                            "status",
-                            "error",
-                            "path",
-                            "timestamp",
-                            "token",
-                            "items",
-                            "id",
-                            "profileVideo",
-                            "vehicles",
-                            "data",
-                            "mechanics",
-                            "posts",
-                            "video_name",
-                            "vehicle",
-                            "name",
-                            "email",
-                            "content",
-                            "count",
-                        }
+            (
+                document is not None
+                and (
+                    isinstance(document, list)
+                    or (
+                        isinstance(document, dict)
+                        and bool(
+                            set(document)
+                            & {
+                                "message",
+                                "status",
+                                "error",
+                                "path",
+                                "timestamp",
+                                "token",
+                                "items",
+                                "id",
+                                "profileVideo",
+                                "vehicles",
+                                "data",
+                                "mechanics",
+                                "posts",
+                                "video_name",
+                                "vehicle",
+                                "name",
+                                "email",
+                                "content",
+                                "count",
+                                "order",
+                                "payment",
+                            }
+                        )
                     )
                 )
             )
-        ) or (media == "text/html" and ("crAPI" in body or "MailHog" in body))
+            or (media == "text/html" and ("crAPI" in body or "MailHog" in body))
+            or missing_order_identity(path, method, status, media, body)
+        )
     if path.startswith("/dvwa/"):
         return (
             media == "text/html"

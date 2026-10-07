@@ -72,3 +72,23 @@ def test_declared_native_error_shapes_are_content_verified():
         "application/json",
         '{"unrelated":true}',
     )
+
+
+def test_order_missing_object_error_is_exact_and_endpoint_scoped():
+    body = "<title>Server Error (500)</title><h1>Server Error (500)</h1>"
+    assert native_identity(
+        "/crapi/workshop/api/shop/orders/20", "GET", 500, "text/html", body
+    )
+    assert not native_identity(
+        "/crapi/workshop/api/shop/orders/20", "GET", 500, "text/html", "generic error"
+    )
+    assert not native_identity(
+        "/crapi/identity/api/auth/login", "POST", 500, "text/html", body
+    )
+    assert native_identity(
+        "/crapi/workshop/api/shop/orders/1",
+        "GET",
+        200,
+        "application/json",
+        '{"order":{"id":1}}',
+    )

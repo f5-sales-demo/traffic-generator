@@ -760,11 +760,34 @@ def verify_dvwa_corpus(
     }
 
 
+def verify_orders(
+    scenario: dict, result: dict, responses: list[dict], directory: Path
+) -> dict:
+    """Require real unauthenticated order exposure and exact missing-object outcomes."""
+    verified = verify_composed_native(scenario, result, responses, directory)
+    positive = any(
+        row.get("scenario") == scenario["id"]
+        and row.get("kind") == "scenario"
+        and row.get("status") == HTTP_OK
+        and "unauthenticated-order" in row.get("matched_requirements", [])
+        and row.get("response_assertions", {}).get("unauthenticated-order") is True
+        for row in responses
+    )
+    verified["positive_order_exposure"] = positive
+    verified["passed"] = verified["passed"] and positive
+    verified["claim"] = (
+        "observed native unauthenticated order exposure; missing-object HTTP 500 is an application defect"
+    )
+    return verified
+
+
 def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
     """Require explicit scope, content assertions, and complete native outcomes."""
     contract = scenario.get("functional_contract", {})
+    if contract.get("verifier") == "native-crapi-orders":
+        return verify_orders(scenario, result, responses, directory)
     if contract.get("verifier") == "native-dvwa-corpus":
         return verify_dvwa_corpus(scenario, result, responses, directory)
     if contract.get("verifier") == "native-dvwa-weak-session":

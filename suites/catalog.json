@@ -5779,7 +5779,12 @@
       "kind": "shell",
       "dependencies": ["bash", "curl", "python3"],
       "after": ["crapi-exploits/13-command-injection-video"],
-      "target_paths": ["/crapi/health", "/crapi/identity/api/auth/login", "/crapi/mailhog/api/v2/messages"],
+      "target_paths": [
+        "/crapi/health",
+        "/crapi/identity/api/auth/login",
+        "/crapi/mailhog/api/v2/messages",
+        "/crapi/workshop/api/shop/orders/1"
+      ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
@@ -5793,7 +5798,93 @@
             "payload_class": "unauthenticated-order-id",
             "path_regex": "/crapi/workshop/api/shop/orders/[^/]+",
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 401, 404, 500],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "application/json",
+                "json_nested_keys": {
+                  "order": ["id", "user", "product", "quantity", "status", "transaction_id", "created_on"],
+                  "order.user": ["email", "number"],
+                  "order.product": ["id", "name", "price"]
+                }
+              },
+              "500": {
+                "content_type": "text/html",
+                "text_contains": ["<title>Server Error (500)</title>", "<h1>Server Error (500)</h1>"]
+              },
+              "401": {
+                "content_type": "application/json",
+                "json_keys": ["detail"]
+              },
+              "404": {
+                "content_type": "application/json",
+                "json_keys": ["detail"]
+              }
+            }
+          },
+          {
+            "id": "empty-auth-order",
+            "method": "GET",
+            "path": "/crapi/workshop/api/shop/orders/1",
+            "payload_class": "invalid-auth-order-access",
+            "minimum_dispatches": 1,
+            "expected_statuses": [200, 401, 404, 500],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "application/json",
+                "json_nested_keys": {
+                  "order": ["id", "user", "product", "quantity", "status", "transaction_id", "created_on"],
+                  "order.user": ["email", "number"],
+                  "order.product": ["id", "name", "price"]
+                }
+              },
+              "500": {
+                "content_type": "text/html",
+                "text_contains": ["<title>Server Error (500)</title>", "<h1>Server Error (500)</h1>"]
+              },
+              "401": {
+                "content_type": "application/json",
+                "json_keys": ["detail"]
+              },
+              "404": {
+                "content_type": "application/json",
+                "json_keys": ["detail"]
+              }
+            },
+            "absent_headers": ["authorization"]
+          },
+          {
+            "id": "invalid-token-order",
+            "method": "GET",
+            "path": "/crapi/workshop/api/shop/orders/1",
+            "payload_class": "invalid-auth-order-access",
+            "minimum_dispatches": 1,
+            "expected_statuses": [200, 401, 404, 500],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "application/json",
+                "json_nested_keys": {
+                  "order": ["id", "user", "product", "quantity", "status", "transaction_id", "created_on"],
+                  "order.user": ["email", "number"],
+                  "order.product": ["id", "name", "price"]
+                }
+              },
+              "500": {
+                "content_type": "text/html",
+                "text_contains": ["<title>Server Error (500)</title>", "<h1>Server Error (500)</h1>"]
+              },
+              "401": {
+                "content_type": "application/json",
+                "json_keys": ["detail"]
+              },
+              "404": {
+                "content_type": "application/json",
+                "json_keys": ["detail"]
+              }
+            },
+            "headers": {
+              "authorization": "Bearer invalidtoken123"
+            }
           }
         ],
         "reject_unmatched_errors": true
@@ -5802,8 +5893,8 @@
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "fixture_refresh": [],
       "functional_contract": {
-        "verifier": "composed-native",
-        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
+        "verifier": "native-crapi-orders",
+        "behavior": "At least one real native order exposes concrete user and product data without authentication; all twenty order probes and invalid credentials return exact native objects, native missing-object error pages, or attributed protection",
         "mutation_policy": "read-only"
       }
     },

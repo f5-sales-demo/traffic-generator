@@ -670,3 +670,32 @@ def test_composed_accepts_only_prevalidated_control_attribution(tmp_path):
     assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
     event["upstream_dispatched"] = False
     assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+
+
+def test_orders_require_nested_native_data_and_real_positive_exposure(tmp_path):
+    scenario, result, event = composed_fixture()
+    scenario["functional_contract"].update(verifier="native-crapi-orders")
+    requirement = scenario["dispatch_contract"]["requirements"][0]
+    requirement["id"] = "unauthenticated-order"
+    requirement["response_contract"] = {
+        "content_type": "application/json",
+        "json_nested_keys": {"order": ["id", "user"], "order.user": ["email"]},
+    }
+    assert response_content_matches(
+        requirement["response_contract"],
+        "application/json",
+        '{"order":{"id":1,"user":{"email":"synthetic@example.com"}}}',
+    )
+    assert not response_content_matches(
+        requirement["response_contract"],
+        "application/json",
+        '{"order":{"id":1,"user":{}}}',
+    )
+    event.update(
+        matched_requirements=["unauthenticated-order"],
+        response_assertions={"unauthenticated-order": True},
+    )
+    assert verify_functional(scenario, result, [event], tmp_path)["passed"]
+    requirement["expected_statuses"] = [500]
+    event["status"] = 500
+    assert not verify_functional(scenario, result, [event], tmp_path)["passed"]

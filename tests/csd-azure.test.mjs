@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
-import { validateAzure } from '../suites/csd-violations/azure.mjs';
+import { azureRoutes, validateAzure } from '../suites/csd-violations/azure.mjs';
 import { waitForRequestsTerminal } from '../suites/csd-violations/run.mjs';
 
 const environment = {
@@ -33,4 +36,36 @@ test('browser cleanup waits for application assets and fails unresolved requests
   assert.equal((await waitForRequestsTerminal(requests, 100)).passed, true);
   requests.set(2, { path: '/juice-shop/socket.io/', terminal: 'pending' });
   assert.equal((await waitForRequestsTerminal(requests, 1)).passed, true);
+});
+
+test('Azure shutdown blocks late asset dispatch without hiding failed in-flight requests', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'csd-route-cleanup-'));
+  try {
+    const routes = azureRoutes(new URL(environment.TARGET_URL), { ...environment, TGEN_RESULTS_DIR: directory });
+    let handler;
+    let continued = 0;
+    let aborted = 0;
+    await routes.routeSetup({
+      route: async (_pattern, callback) => {
+        handler = callback;
+      },
+    });
+    const request = (url) => ({
+      request: () => ({ url: () => url }),
+      continue: () => {
+        continued += 1;
+      },
+      abort: () => {
+        aborted += 1;
+      },
+    });
+    await handler(request('https://www.example.test/csd-demo/static/vendor/lodash.min.js'));
+    await handler(request('https://outside.example.test/asset.js'));
+    await routes.routeCleanup();
+    await handler(request('https://www.example.test/csd-demo/static/vendor/lodash.min.js'));
+    assert.equal(continued, 1);
+    assert.equal(aborted, 2);
+  } finally {
+    await rm(directory, { recursive: true });
+  }
 });

@@ -18,8 +18,34 @@ export function validateAzure(environment) {
   return target;
 }
 
+export function azureRoutes(target, environment) {
+  let closing = false;
+  return {
+    routeCleanup: async () => {
+      closing = true;
+      await writeFile(
+        resolve(environment.TGEN_RESULTS_DIR, 'browser-cleanup.json'),
+        JSON.stringify({
+          sourceCommit: environment.SOURCE_COMMIT,
+          phase: 'closing-browser',
+        }),
+        { mode: 0o600 },
+      );
+    },
+    routeSetup: async (context) => {
+      await context.route('**/*', async (route) => {
+        if (closing) return route.abort('blockedbyclient');
+        const url = new URL(route.request().url());
+        if (url.hostname === target.hostname) return route.continue();
+        return route.abort('blockedbyclient');
+      });
+    },
+  };
+}
+
 export async function runAzure(environment = process.env, options = {}) {
   const target = validateAzure(environment);
+  const routes = azureRoutes(target, environment);
   const require = createRequire(import.meta.url);
   const playwright = options.playwright ?? require('playwright');
   const chrome = environment.CHROME_PATH ?? playwright.chromium.executablePath();
@@ -43,24 +69,7 @@ export async function runAzure(environment = process.env, options = {}) {
       artifactDigest: environment.TGEN_ARTIFACT_SHA256,
       csdEnabled: false,
     },
-    routeCleanup: async (context) => {
-      await context.unrouteAll({ behavior: 'wait' });
-      await writeFile(
-        resolve(environment.TGEN_RESULTS_DIR, 'browser-cleanup.json'),
-        JSON.stringify({
-          sourceCommit: environment.SOURCE_COMMIT,
-          phase: 'closing-browser',
-        }),
-        { mode: 0o600 },
-      );
-    },
-    routeSetup: async (context) => {
-      await context.route('**/*', async (route) => {
-        const url = new URL(route.request().url());
-        if (url.hostname === target.hostname) return route.continue();
-        return route.abort('blockedbyclient');
-      });
-    },
+    ...routes,
     ...options,
   });
 }

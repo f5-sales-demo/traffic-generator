@@ -2,6 +2,7 @@
 
 import json
 import re
+from typing import Any
 from urllib.parse import parse_qs
 
 from traffic_connections import tls_matrix
@@ -515,6 +516,19 @@ def graphql_list_matches(contract: dict, body: str) -> bool:
     )
 
 
+def nested_keys_match(document: dict, specification: dict) -> bool:
+    """Require concrete nested native object fields rather than a generic JSON body."""
+    for path, fields in specification.items():
+        value: Any = document
+        for part in path.split("."):
+            value = value.get(part) if isinstance(value, dict) else None
+        if not isinstance(value, dict) or any(
+            field not in value or value[field] is None for field in fields
+        ):
+            return False
+    return True
+
+
 def response_content_matches(contract: dict, content_type: str, body: str) -> bool:
     """Evaluate transient response content and retain only assertion booleans."""
     if content_type.split(";", 1)[0] != contract.get("content_type") or any(
@@ -536,6 +550,7 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
             "json_nonempty_lists",
             "json_document_equals",
             "json_nested_list_matches",
+            "json_nested_keys",
         )
     ):
         try:
@@ -560,6 +575,7 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
             and nested_list_matches(
                 document, contract.get("json_nested_list_matches", {})
             )
+            and nested_keys_match(document, contract.get("json_nested_keys", {}))
         )
     return True
 
