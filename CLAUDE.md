@@ -15,6 +15,9 @@ detailed docs-control issue and let the managed-file workflow propagate the resu
 
 ## Workflow
 
+- Use authorization already provided in the conversation. Continue authorized work without
+  requesting approval again for routine implementation, verification, commits, PR repair, or delivery
+  steps within that scope. See [the full policy](CONTRIBUTING.md#authorization-and-required-input).
 - **Start from current.** `git fetch --prune` and confirm the remote state before you plan, branch,
   or edit; create a fresh worktree and issue-numbered feature branch from
   `origin/<default-branch>`. The git status injected at session start is a snapshot with no
@@ -32,8 +35,10 @@ detailed docs-control issue and let the managed-file workflow propagate the resu
 - Query `gh pr view <pr> --json state,mergeStateStatus,autoMergeRequest` and continue until
   `state` is `MERGED`. Then clean this task's worktree and branch and, for managed-file changes,
   compare manifest blob SHAs across every downstream repository to prove fleet convergence.
-- Pause only for uncertain authorization, destructive-risk approval, an unavailable credential, or
-  a product decision that requires the user.
+- Require input only for missing authorization for the next action, an unresolved material decision,
+  explicitly required human acceptance, or an operational failure preventing that action. When input
+  is required, identify the action and unmet requirement, pause dependent work, and continue independent
+  authorized work.
 
 ## Worktrees
 
