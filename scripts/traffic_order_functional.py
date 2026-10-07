@@ -5,6 +5,7 @@ from pathlib import Path
 
 ORDER_PAYLOAD_COUNT = 3
 ORDER_MUTATED_QUANTITY = 100
+EXPECTED_STATUSES = [200, 200, 400]
 
 
 def verify_order_mutation(scenario: dict, result: dict, directory: Path) -> dict:
@@ -18,6 +19,7 @@ def verify_order_mutation(scenario: dict, result: dict, directory: Path) -> dict
         and functional.get("source_commit") == result.get("source_commit")
         and functional.get("artifact_sha256") == result.get("artifact_sha256")
         and len(attempts) == ORDER_PAYLOAD_COUNT
+        and [row.get("status") for row in attempts] == EXPECTED_STATUSES
         and attempts[0].get("response", {}).get("status") == "returned"
         and attempts[0].get("response", {}).get("quantity") == ORDER_MUTATED_QUANTITY
         and all(row.get("response") == row.get("readback") for row in attempts)

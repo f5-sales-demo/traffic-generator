@@ -24,6 +24,8 @@ def test_order_mutation_requires_real_fields_and_host_baseline(tmp_path):
         }
         for _ in range(3)
     ]
+    for row, status in zip(rows, [200, 200, 400], strict=True):
+        row["status"] = status
     functional = {
         "passed": True,
         "source_commit": result["source_commit"],

@@ -141,7 +141,12 @@ def run(directory: Path) -> None:
             message = "native order mutation readback mismatch"
             raise ValueError(message)
         rows.append(
-            {"payload": payload, "response": native, "readback": after["order"]}
+            {
+                "payload": payload,
+                "status": status,
+                "response": native,
+                "readback": after["order"],
+            }
         )
     atomic_json(
         directory / "order-functional.json",
