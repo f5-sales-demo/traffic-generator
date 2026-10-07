@@ -34,6 +34,7 @@ from traffic_dispatch import (
 )
 from traffic_functional import verify_functional
 from traffic_network import NetworkBoundary
+from traffic_order_host import restore_receipt
 from traffic_pass import current_pass_receipt
 from traffic_report import build_report
 from traffic_security import attributed_responses, await_control_evidence
@@ -363,6 +364,8 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 180,
             )
             result["paste_restoration"] = recovery["outcome"] == "launched"
+        if scenario.get("fixture_contract", {}).get("order_restore"):
+            result["order_restoration"] = restore_receipt(directory)
         result["dispatch_contract_verified"] = False
         scenario_action_verification(directory, scenario, result)
         response_path = directory / "response-events.jsonl"

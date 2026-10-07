@@ -20,6 +20,7 @@ from types import SimpleNamespace
 from typing import Self
 
 from traffic_common import Pacer, atomic_json, terminate
+from traffic_order_host import host_jobs
 from traffic_tool import native_binary
 from traffic_workload import content_identity
 
@@ -300,6 +301,13 @@ class NetworkBoundary:
         except BaseException:
             self.__exit__(None, None, None)
             raise
+        order_worker = threading.Thread(
+            target=host_jobs,
+            args=(self.root, self.runtime, self.config, self.state.stop),
+            daemon=True,
+        )
+        order_worker.start()
+        self.state.threads.append(order_worker)
         return self
 
     def request(self, domain: str) -> None:

@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import uuid
 from http import HTTPStatus
 from pathlib import Path
@@ -161,6 +162,30 @@ def run(directory: Path) -> None:
     )
 
 
+def host_action(directory: Path, action: str) -> None:
+    """Request journal work from the owning host, with bounded source-bound response."""
+    job = {
+        "action": action,
+        "source_commit": os.environ["SOURCE_COMMIT"],
+        "artifact_sha256": os.environ["TGEN_ARTIFACT_SHA256"],
+        "identity": uuid.uuid4().hex,
+    }
+    response = directory / "order-host-response.json"
+    response.unlink(missing_ok=True)
+    atomic_json(directory / "order-host-request.json", job)
+    deadline = time.monotonic() + 95
+    while time.monotonic() < deadline:
+        if response.exists():
+            receipt = json.loads(response.read_text())
+            if receipt.get("request") != job or receipt.get("passed") is not True:
+                message = "host order journal action failed"
+                raise ValueError(message)
+            return
+        time.sleep(0.5)
+    message = "host order journal deadline exceeded"
+    raise ValueError(message)
+
+
 def main() -> None:
     """Prepare and recover outside the network namespace; attacks use paced native APIs."""
     action, destination = sys.argv[1:3]
@@ -170,7 +195,14 @@ def main() -> None:
     elif action == "restore":
         recovery(directory, "restore")
     elif action == "run":
-        run(directory)
+        if os.environ.get("TGEN_NESTED_EXECUTION"):
+            host_action(directory, "prepare")
+            try:
+                run(directory)
+            finally:
+                host_action(directory, "restore")
+        else:
+            run(directory)
     else:
         message = "invalid order fixture action"
         raise ValueError(message)
