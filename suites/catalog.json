@@ -3410,7 +3410,8 @@
             "path": "/dvwa/login.php",
             "body_regex": "(?:^|&)password=",
             "minimum_dispatches": 2,
-            "payload_class": "password-guessing"
+            "payload_class": "password-guessing",
+            "expected_statuses": [200, 302, 400, 401]
           },
           {
             "id": "juice-passwords",
@@ -3418,7 +3419,18 @@
             "path": "/juice-shop/rest/user/login",
             "body_regex": "\"password\"",
             "minimum_dispatches": 2,
-            "payload_class": "password-guessing"
+            "payload_class": "password-guessing",
+            "expected_statuses": [200, 302, 400, 401, 415, 422],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "application/json",
+                "json_keys": ["authentication"]
+              },
+              "401": {
+                "content_type": "text/plain",
+                "text_contains": ["Invalid email or password."]
+              }
+            }
           },
           {
             "id": "vampi-passwords",
@@ -3426,12 +3438,50 @@
             "path": "/vampi/users/v1/login",
             "body_regex": "\"password\"",
             "minimum_dispatches": 2,
-            "payload_class": "password-guessing"
+            "payload_class": "password-guessing",
+            "expected_statuses": [200, 302, 400, 401, 415, 422],
+            "response_contract_by_status": {
+              "400": {
+                "content_type": "application/json",
+                "json_keys": ["message"]
+              },
+              "200": {
+                "content_type": "application/json",
+                "json_keys": ["auth_token"]
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "tool_contract": {
+        "requirements": [
+          {
+            "id": "hydra-dvwa",
+            "tool": "hydra",
+            "argument_regex": "/dvwa/login\\.php:username=\\^USER\\^&password=\\^PASS\\^",
+            "minimum": 1
+          },
+          {
+            "id": "hydra-juice",
+            "tool": "hydra",
+            "argument_regex": "/juice-shop/rest/user/login:.*\\^PASS\\^",
+            "minimum": 1
+          },
+          {
+            "id": "hydra-vampi",
+            "tool": "hydra",
+            "argument_regex": "/vampi/users/v1/login:.*\\^PASS\\^",
+            "minimum": 1
+          }
+        ]
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Native Hydra completes all three declared credential-guessing invocations with binary provenance and observed native login protocol responses for every dispatched guess; protection responses require request-bound WAF evidence",
+        "mutation_policy": "read-only"
+      }
     },
     {
       "id": "cdn-load-testing/01-baseline-throughput",
