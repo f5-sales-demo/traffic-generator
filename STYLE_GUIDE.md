@@ -219,6 +219,38 @@ When output genuinely must be shown:
 - For certificate and key material, generate a throwaway self-signed pair specifically for the
   document and say so in a note. Never excerpt from a real chain.
 
+### Shared personalized examples
+
+Use `XCSH_` for guide environment variables and `<XCSH_VARIABLE_NAME>` for
+canonical authoring placeholders. The browser also supports legacy
+`xXCSH_VARIABLE_NAMEx` during adoption.
+
+Common fields are `XCSH_API_URL`, `XCSH_API_TOKEN`, `XCSH_NAMESPACE`,
+`XCSH_LB_NAME`, and `XCSH_DOMAINNAME`. Select these names from the shared
+docs-builder field catalog in a version 2 `docs/placeholders.json` manifest.
+Use `example-corp` for tenant examples, `demo-app` for namespaces, reserved
+`example.com` subdomains, and the role-specific documentation address ranges
+above. Credentials and account identifiers use angle-bracket placeholders.
+
+Keep DNS zones (`XCSH_DNS_ZONE`), application hostnames
+(`XCSH_DOMAINNAME`), origin identities, and repository-specific fields distinct.
+Preserve native tool inputs such as `TF_VAR_*`; map guide values to those inputs.
+Calculate query times and discover telemetry identities rather than adding them
+to the form.
+
+Annotate runnable shell blocks with `data-xcsh-context="shell"` and
+`data-xcsh-fields="XCSH_API_URL XCSH_NAMESPACE"` on a surrounding `div`.
+The displayed and copied block includes shell-quoted exports of those fields.
+Use `data-xcsh-context="json"` or `"hcl"` for structured templates.
+Protect historical measurements with `data-personalize="off"`.
+Keep downloadable scripts dependent on exported configuration; browser edits
+must never change download bytes, static Markdown, or machine content.
+
+Reader edits to noncredential fields share one versioned browser-origin record.
+Untouched fields retain guide defaults. Credentials use tab-session storage,
+never persistent storage. Show separate reset-shared-values and clear-credentials
+controls and explain browser storage behavior.
+
 ### Tenant, namespace, and account identifiers
 
 Treat these as sensitive even though they are not secrets. They identify a real customer and

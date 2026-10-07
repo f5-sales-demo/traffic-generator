@@ -2626,6 +2626,43 @@ assert_violation "inline suppression markers are not an escape hatch" "$repo" --
 mkdir -p "${WORK}/not-a-repository"
 assert_error "non-repository fails closed" "${WORK}/not-a-repository" --scope head --mode enforce
 
+repo=$(new_repo personalized-shell-blocks)
+cat >"${repo}/fixture.mdx" <<'EOF'
+<div data-xcsh-context="shell" data-xcsh-fields="XCSH_NAMESPACE">
+
+```bash
+operation=$1 kind=$2 namespace=$3 name=$4 result=$5
+jq -e --arg name "$name" --arg ns "$XCSH_NAMESPACE" --arg domain "$domain" '
+  .metadata.name == $name and .metadata.namespace == $ns and
+  .spec.mitigated_domain == $domain
+' response.json
+jq -er '
+  def rank: {mitigated_domain:1,namespace:6}[.];
+  sort_by(.kind | rank)[] | [.kind,.namespace,.name] | @tsv
+' ledger.json
+curl "https://example.com/api/web/namespaces/system/quota/usage?namespace=system"
+```
+
+</div>
+EOF
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm personalized-shell-blocks
+assert_clean "personalized shell dynamic values and API constants" "$repo" --scope head --mode enforce
+
+repo=$(new_repo personalized-shell-literal)
+cat >"${repo}/fixture.mdx" <<'EOF'
+<div data-xcsh-context="shell">
+
+```bash
+namespace=private-customer
+```
+
+</div>
+EOF
+git -C "$repo" add fixture.mdx
+git -C "$repo" commit -qm personalized-shell-literal
+assert_customer_identifier "personalized shell literal identities remain enforced" "$repo" --scope head --mode enforce
+
 if [ "$FAIL" -ne 0 ]; then
   echo "check-pii tests FAILED"
   exit 1
