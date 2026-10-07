@@ -1,6 +1,7 @@
 """Evidence exchange rejects foreign paths, stale source and changed request bytes."""
 
 import hashlib
+import io
 import json
 import sys
 from pathlib import Path
@@ -8,7 +9,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
-from catalog_evidence import install, pending
+from catalog_evidence import MAX_EVIDENCE_BYTES, install, pending, read_bundle
 
 
 def fixture(tmp_path):
@@ -95,3 +96,26 @@ def test_active_nested_evidence_round_trip_and_completed_ancestor_skip(tmp_path)
     (nested / "control-attribution.json").unlink()
     (directory / "receipt.json").write_text("{}")
     assert not pending(tmp_path)
+
+
+def test_complete_large_telemetry_round_trip_keeps_raw_records(tmp_path):
+    directory, bundle = fixture(tmp_path)
+    bundle["evidence"]["checks"] = [
+        {"request_id": str(index), "raw_event": "x" * 9000} for index in range(594)
+    ]
+    raw = json.dumps(bundle).encode()
+    assert len(raw) > 5_000_000
+    decoded = read_bundle(io.BytesIO(raw))
+    install(tmp_path, decoded)
+    assert (
+        json.loads((directory / "control-attribution.json").read_text())
+        == bundle["evidence"]
+    )
+    assert not pending(tmp_path)
+
+
+def test_oversized_or_truncated_telemetry_is_rejected():
+    with pytest.raises(ValueError, match="exceeds bounded input"):
+        read_bundle(io.BytesIO(b" " * (MAX_EVIDENCE_BYTES + 1)))
+    with pytest.raises(json.JSONDecodeError):
+        read_bundle(io.BytesIO(b'{"evidence":'))

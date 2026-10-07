@@ -7,10 +7,13 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import BinaryIO
 
 from traffic_common import atomic_json
 
-MAX_EVIDENCE_BYTES = 4_000_000
+# Hydra's 594 request-bound records exceed 5 MB with complete XC events.
+# Keep a finite input bound while retaining every raw attribution record.
+MAX_EVIDENCE_BYTES = 32_000_000
 
 
 def identity(root: Path) -> dict:
@@ -104,6 +107,15 @@ def install(root: Path, bundle: dict) -> None:
     atomic_json(directory / "control-attribution.json", evidence)
 
 
+def read_bundle(stream: BinaryIO) -> dict:
+    """Read complete request-bound telemetry with a finite memory limit."""
+    raw = stream.read(MAX_EVIDENCE_BYTES + 1)
+    if len(raw) > MAX_EVIDENCE_BYTES:
+        message = "evidence exceeds bounded input"
+        raise ValueError(message)
+    return json.loads(raw)
+
+
 def main() -> None:
     """The transport carries evidence JSON only, never a shell command or API secret."""
     root = Path("/opt/traffic-generator")
@@ -113,11 +125,7 @@ def main() -> None:
     if sys.argv[1:] != ["install"]:
         message = "expected pending or install"
         raise ValueError(message)
-    raw = sys.stdin.buffer.read(MAX_EVIDENCE_BYTES + 1)
-    if len(raw) > MAX_EVIDENCE_BYTES:
-        message = "evidence exceeds bounded input"
-        raise ValueError(message)
-    install(root, json.loads(raw))
+    install(root, read_bundle(sys.stdin.buffer))
 
 
 if __name__ == "__main__":
