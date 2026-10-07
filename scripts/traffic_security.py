@@ -167,10 +167,21 @@ def waf_attribution(
             and event.get("enforcement_mode") == "Blocking"
             and event.get("waf_mode") == "block"
             and event.get("recommended_action") == "block"
-            and any(
-                (not signatures or str(sig.get("id")) in signatures)
-                and sig.get("state") == "Enabled"
-                for sig in event.get("signatures", [])
+            and (
+                any(
+                    (not signatures or str(sig.get("id")) in signatures)
+                    and sig.get("state") == "Enabled"
+                    for sig in event.get("signatures", [])
+                )
+                or (
+                    not signatures
+                    and "default_bot_setting" in firewall["spec"]
+                    and event.get("bot_info", {}).get("classification") == "malicious"
+                    and isinstance(event.get("bot_info", {}).get("name"), str)
+                    and bool(event["bot_info"]["name"])
+                    and isinstance(event.get("bot_info", {}).get("type"), str)
+                    and bool(event["bot_info"]["type"])
+                )
             )
             for event in checks[0]["events"]
         )

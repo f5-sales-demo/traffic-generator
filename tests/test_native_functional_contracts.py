@@ -520,6 +520,11 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
         },
     }
     event["signatures"] = [{"id": "200003915", "state": "Enabled"}]
+    event["bot_info"] = {
+        "classification": "malicious",
+        "type": "Network Scanner",
+        "name": "Fuzz Faster",
+    }
     access = {**event}
     evidence: dict = {
         "source_commit": "c" * 40,
@@ -547,6 +552,15 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert waf_attribution(response, result, tmp_path, ["200003915"])
     assert waf_attribution(response, result, tmp_path, [])
+    event.pop("signatures")
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert waf_attribution(response, result, tmp_path, [])
+    assert not waf_attribution(response, result, tmp_path, ["200003915"])
+    event["bot_info"]["classification"] = "unknown"
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, [])
+    event["bot_info"]["classification"] = "malicious"
+    event["signatures"] = [{"id": "200003915", "state": "Enabled"}]
     event["req_id"] = "foreign-request"
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not waf_attribution(response, result, tmp_path, ["200003915"])
