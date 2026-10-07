@@ -122,10 +122,9 @@ for (let i = 0; i < IDENTITIES.length; i++) {
 
       // Select a real loaded question through the native combobox.
       const question = page.getByRole('combobox', { name: 'Selection list for the security question' });
-      await question.focus();
-      await question.press('ArrowDown');
-      await question.press('Enter');
-      await question.press('Escape');
+      await question.click();
+      await page.getByRole('option').first().waitFor({ state: 'visible' });
+      await page.getByRole('option').first().click();
       await page.fill('#securityAnswerControl', 'bot answer');
 
       if (!(await page.locator('#registerButton').isEnabled()))
