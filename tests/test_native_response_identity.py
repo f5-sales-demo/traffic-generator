@@ -1,5 +1,6 @@
 """Native protocol identity rejects wrong-content 200s and preserves failure boundaries."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -118,4 +119,30 @@ def test_native_validation_media_and_empty_coupon_error_are_route_scoped():
         200,
         "application/json",
         "{}",
+    )
+
+
+def test_vampi_proxy_problem_response_requires_exact_protocol_shape():
+    body = json.dumps(
+        {
+            "type": "about:blank",
+            "title": "Method Not Allowed",
+            "status": 405,
+            "detail": "The method is not allowed for the requested URL.",
+        }
+    )
+    assert native_identity(
+        "/vampi/users/v1/_debug", "POST", 405, "application/problem+json", body
+    )
+    assert not native_identity(
+        "/vampi/users/v1/_debug", "POST", 200, "application/problem+json", body
+    )
+    assert not native_identity(
+        "/vampi/users/v1/_debug", "POST", 404, "application/problem+json", body
+    )
+    assert not native_identity(
+        "/vampi/users/v1/_debug", "POST", 405, "application/json", body
+    )
+    assert not native_identity(
+        "/vampi/users/v1/_debug", "POST", 405, "application/problem+json", "{}"
     )

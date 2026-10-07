@@ -22,8 +22,20 @@ def pending(root: Path) -> list[dict]:
     """Return requests only from the currently installed source and owned pass paths."""
     expected = identity(root)
     result = []
-    for file in (root / "runtime").glob("pass-*/*/control-evidence-request.json"):
-        if file.is_symlink() or not file.is_file():
+    for file in (root / "runtime").glob("pass-*/**/control-evidence-request.json"):
+        if (
+            file.is_symlink()
+            or not file.is_file()
+            or (file.parent / "receipt.json").exists()
+        ):
+            continue
+        relative = file.parent.relative_to(root / "runtime")
+        pass_directory = root / "runtime" / relative.parts[0]
+        if any(
+            (parent / "receipt.json").exists()
+            for parent in (file.parent, *file.parent.parents)
+            if parent == pass_directory or parent.is_relative_to(pass_directory)
+        ):
             continue
         request = json.loads(file.read_text())
         if any(
@@ -35,7 +47,8 @@ def pending(root: Path) -> list[dict]:
             continue
         result.append(
             {
-                "pass": file.parent.parent.name,
+                "pass": relative.parts[0],
+                "directory": str(relative),
                 "request": request,
                 "request_sha256": hashlib.sha256(file.read_bytes()).hexdigest(),
             }
@@ -51,7 +64,19 @@ def install(root: Path, bundle: dict) -> None:
     ):
         message = "invalid evidence pass or scenario identity"
         raise ValueError(message)
-    directory = root / "runtime" / pass_id / scenario.replace("/", "--")
+    relative = Path(
+        bundle.get("directory", pass_id + "/" + scenario.replace("/", "--"))
+    )
+    if (
+        relative.is_absolute()
+        or ".." in relative.parts
+        or relative.parts[0] != pass_id
+        or relative.name != scenario.replace("/", "--")
+        or any(not re.fullmatch(r"[a-z0-9-]+", part) for part in relative.parts)
+    ):
+        message = "invalid evidence directory"
+        raise ValueError(message)
+    directory = root / "runtime" / relative
     if any(parent.is_symlink() for parent in (directory, *directory.parents)):
         message = "evidence path traverses a symbolic link"
         raise ValueError(message)

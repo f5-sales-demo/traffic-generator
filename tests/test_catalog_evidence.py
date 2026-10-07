@@ -65,3 +65,33 @@ def test_symlink_destination_never_accepts(tmp_path):
     directory.symlink_to(moved)
     with pytest.raises(ValueError, match="symbolic link"):
         install(tmp_path, bundle)
+
+
+def test_completed_pass_requests_do_not_delay_current_evidence(tmp_path):
+    directory, bundle = fixture(tmp_path)
+    (directory / "receipt.json").write_text(json.dumps({"functional_verified": False}))
+    assert not pending(tmp_path)
+    nested = directory / "nested" / "synthetic--child"
+    nested.mkdir(parents=True)
+    request = {**bundle["request"], "scenario": "synthetic/child"}
+    (nested / "control-evidence-request.json").write_text(json.dumps(request))
+    assert not pending(tmp_path)
+
+
+def test_active_nested_evidence_round_trip_and_completed_ancestor_skip(tmp_path):
+    directory, bundle = fixture(tmp_path)
+    nested = directory / "nested-api" / "synthetic--child"
+    nested.mkdir(parents=True)
+    request = {**bundle["request"], "scenario": "synthetic/child"}
+    file = nested / "control-evidence-request.json"
+    file.write_text(json.dumps(request))
+    requests = pending(tmp_path)
+    child = next(
+        item for item in requests if item["request"]["scenario"] == "synthetic/child"
+    )
+    assert child["directory"] == str(nested.relative_to(tmp_path / "runtime"))
+    install(tmp_path, {**child, "evidence": bundle["evidence"]})
+    assert (nested / "control-attribution.json").exists()
+    (nested / "control-attribution.json").unlink()
+    (directory / "receipt.json").write_text("{}")
+    assert not pending(tmp_path)

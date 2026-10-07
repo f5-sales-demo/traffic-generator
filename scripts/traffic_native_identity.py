@@ -55,6 +55,60 @@ def dvwa_identity(path: str, method: str, status: int, media: str, body: str) ->
     )
 
 
+def vampi_problem_identity(status: int, body: str) -> bool:
+    """Recognize only the exact observed prefix-adapter problem errors."""
+    try:
+        problem = json.loads(body)
+    except ValueError:
+        return False
+    expected = {
+        404: (
+            "Not Found",
+            "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+        ),
+        405: ("Method Not Allowed", "The method is not allowed for the requested URL."),
+    }.get(status)
+    return expected is not None and problem == {
+        "type": "about:blank",
+        "status": status,
+        "title": expected[0],
+        "detail": expected[1],
+    }
+
+
+def vampi_identity(status: int, media: str, body: str, document: object) -> bool:
+    """Recognize the native application and its exact prefix-adapter errors."""
+    if media == "application/problem+json":
+        return vampi_problem_identity(status, body)
+    if status >= HTTP_ERROR_START and media == "text/html":
+        return "404 Not Found" in body or "405 Method Not Allowed" in body
+    return (
+        document is not None
+        and not (isinstance(document, dict) and document.get("type") == "about:blank")
+        and (
+            isinstance(document, list)
+            or (
+                isinstance(document, dict)
+                and bool(
+                    set(document)
+                    & {
+                        "message",
+                        "auth_token",
+                        "users",
+                        "Books",
+                        "book_title",
+                        "error",
+                        "status",
+                        "openapi",
+                        "User",
+                        "username",
+                    }
+                )
+            )
+        )
+    )
+
+
 def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     path: str, method: str, status: int | None, content_type: str, body: str
 ) -> bool:
@@ -94,34 +148,8 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
                 )
             )
         )
-    if (
-        path.startswith("/vampi/")
-        and status >= HTTP_ERROR_START
-        and media == "text/html"
-    ):
-        return "404 Not Found" in body or "405 Method Not Allowed" in body
     if path.startswith("/vampi/"):
-        return document is not None and (
-            isinstance(document, list)
-            or (
-                isinstance(document, dict)
-                and bool(
-                    set(document)
-                    & {
-                        "message",
-                        "auth_token",
-                        "users",
-                        "Books",
-                        "book_title",
-                        "error",
-                        "status",
-                        "openapi",
-                        "User",
-                        "username",
-                    }
-                )
-            )
-        )
+        return vampi_identity(status, media, body, document)
     if path.startswith("/crapi/"):
         return (
             (
