@@ -184,12 +184,34 @@ screenshot `objectKey` names the exact uploaded object beneath `runs/<run-id>/<s
 scenario segment appearing once. A successful browser run does not itself prove an F5 Distributed Cloud
 Client-Side Defense detection; verify that separately through the approved API or console workflow.
 
+## Header circulation contract
+
+Hydration requires manifest version `1.1.0` and its exact source-file SHA-256 at the reviewed merge
+commit. All fourteen names must be present, with the original eleven unchanged and the three
+`header-omit-*` selectors appended. Runtime validation rejects an older version or saved state;
+replace through the guarded saved-plan procedure rather than migrating or rewriting old evidence.
+
+Chrome DevTools Protocol (CDP) intercepts requests in fresh control/mutation contexts; it does not
+click DevTools UI or fabricate responses. A bounded `X-CSD-Page-Tamper` selector asks the authorized
+origin to omit one header on the exact payment Document and page-initiated HEAD. Collectors and
+other paths are excluded. Pair success requires observed wire headers plus completed 2xx sensor GET
+and approved DIP transport, not merely a request-start event. Real Chrome HEAD cancellation is
+accepted only for exact canceled `net::ERR_ABORTED` after complete unique HTTP 200 wire evidence;
+its terminal provenance remains explicit. Missing or failed transport fails closed. Owned Fetch
+pauses drain before Fetch disable, session detach, and context close.
+
+Circulation cadence includes all fourteen slots, retries, upload delays, locks, and maintenance;
+it is not an hourly alert guarantee. Baseline age/eligibility and tenant alert classification are
+separate observations. Local headed trusted-HTTPS fixture proof establishes CDP transport and
+cleanup only, not live CSD detection. Follow the explicit Linux host verification commands and
+receipt details in [the runner guide](https://github.com/f5-sales-demo/traffic-generator/blob/main/docs/en/06-runner.mdx).
+
 ## Unattended recurrence, status, and control
 
 The root-owned `csd-continuous.service` invokes pinned Node with `continuous.mjs tick`. Each timer
 firing executes at most one existing scenario, or one due frozen-upload retry without starting Chrome.
-The dispatcher imports the canonical 11-name order from `scenarios.mjs`, advances through terminal
-decisions, then wraps. `completedCycles` counts decisions, not eleven successful detections or uploads.
+The dispatcher imports the canonical 14-name order from `scenarios.mjs`, advances through terminal
+decisions, then wraps. `completedCycles` counts decisions, not fourteen successful detections or uploads.
 This is separate from the newer generic catalog scheduler, which excludes CSD; do not configure both
 as alternative owners of CSD traffic.
 
@@ -217,7 +239,7 @@ systemctl is-active csd-continuous.timer csd-continuous.service
 
 An inactive oneshot between ticks is normal. Status exposes cursor, attempted/browser-passed/committed/
 failed/timeout/interrupted counters, completed cycles, current run/scenario, heartbeat, retry schedule,
-last outcome, and bounded pending uploads; it does not expose raw infrastructure identities, credentials,
+last outcome, bounded pending uploads, and observed per-selector `headerCadence` start/completion epochs and outcome; it does not expose raw infrastructure identities, credentials,
 or error bodies. Root atomically persists private state under
 `/opt/traffic-generator/runtime/continuous/state.json`. A fatal blocked state survives reboot: diagnose
 and correct the cause rather than deleting state or treating a restart as recovery.
@@ -245,7 +267,7 @@ nonblocking lock for normal and upload-retry execution; reboot tmpfiles recreate
 
 **Page Tamper UAT requires explicit pause and drain for the entire quiet, baseline, canary, and recovery
 window.** There is no automatic reservation integration with the CSD controller. This timer schedules
-only the existing 11 browser scenarios, never a Page Tamper baseline/canary/header matrix.
+fourteen slots, including three CDP header-omission pairs; this is not a dedicated Page Tamper baseline/canary/header-matrix UAT.
 
 ### Failure bounds and evidence retention
 
@@ -261,7 +283,7 @@ upload and a 120-second retry deadline. A tick retries at most one due upload an
 in the same tick. Exhausted retries remain visible; queue/disk limits block new browser work rather
 than deleting pending evidence. `execution-result.json` (schema version 1) lives under the run root,
 outside the frozen scenario directory, and separates browser exit, upload exit/commit, outcome, failure
-category, and signal. Missing or inconsistent results are failures, not inferred successes.
+category, signal, and strictly projected `headerPair` (null for ordinary scenarios). Receipt schema 3, scheduler state schema 2, upload manifest schema 2, and upload commit schema 1 retain their distinct contracts. Upload-only retries preserve original pair epochs and result. Missing or inconsistent results are failures, not inferred successes.
 
 Only completed committed run directories are eligible for oldest-first pruning after seven days or
 when total local detail exceeds 5 GiB. New work is rejected below 1 GiB free space; pending evidence
@@ -270,7 +292,7 @@ has a 2 GiB subcap. Active and pending evidence is never silently pruned. Log ro
 a disk block and preserve required evidence before authorized cleanup; never remove live run paths
 or frozen pending evidence to make status green.
 
-Verify fresh hydration with committed, hash-validated evidence for all eleven names over two cycles,
+Verify fresh hydration with committed, hash-validated evidence for all fourteen names over two cycles,
 monotonic counters, bounded disk usage, no owned-child leaks, and controlled reboot recurrence. A ready
 probe, active timer, successful browser run, or upload commit does **not** guarantee CSD detection.
 These are acceptance checks for later approved deployment, not claims that this source change has

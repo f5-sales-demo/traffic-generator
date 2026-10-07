@@ -11,6 +11,7 @@ RESULTS_ROOT=/opt/traffic-generator/runtime/results
 PRIMARY_EXIT=0 SIGNAL="" OUTCOME=ok UPLOAD_EXIT=0 UPLOAD_COMMITTED=false
 NODE_PID="" XVFB_PID="" FINALIZING=0
 FINALIZATION_DEADLINE=0
+HEADER_PAIR=null
 # Policy belongs to the dispatcher module; shell consumes its exact bounds.
 read_policy() {
   local values
@@ -59,13 +60,46 @@ process.exit(SCENARIO_NAMES.includes(process.argv[3]) ? 0 : 64);
 NODE
 }
 
+# Browser receipt is the only source of pair epochs; paths stay out of argv/errors.
+read_header_pair() {
+  local projection
+  projection=$(
+    CSD_RECEIPT_PATH="${SCENARIO_DIR}/receipt.json" CSD_RECEIPT_MODULE="${SCRIPT_DIR}/run.mjs" \
+      "$NODE_BIN" --input-type=module - 2>/dev/null <<'NODE'
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+try {
+  const { projectHeaderPair } = await import(pathToFileURL(process.env.CSD_RECEIPT_MODULE));
+  const receipt = JSON.parse(readFileSync(process.env.CSD_RECEIPT_PATH, 'utf8'));
+  const scenario = receipt.scenarios?.[0];
+  if (receipt.schemaVersion !== 3 || receipt.runId !== process.env.RUN_ID ||
+      !Array.isArray(receipt.scenarios) || receipt.scenarios.length !== 1 ||
+      scenario?.name !== process.env.CSD_SCENARIO || !Array.isArray(scenario.steps)) throw 0;
+  const pair = scenario.steps[0]?.evidence?.headerPair;
+  const summary = projectHeaderPair(pair, scenario.name);
+  if (summary && (scenario.steps.length !== 1 || scenario.steps[0].operation !== 'header-pair' ||
+      scenario.status !== summary.result || scenario.steps[0].status !== summary.result)) throw 0;
+  if (!summary && scenario.steps.some((step) => step.evidence?.headerPair != null)) throw 0;
+  process.stdout.write(JSON.stringify(summary));
+} catch {
+  process.exitCode = 66;
+}
+NODE
+  ) || {
+    echo 'HEADER_PAIR_INVALID' >&2
+    HEADER_PAIR=null
+    return 66
+  }
+  HEADER_PAIR=$projection
+}
+
 write_execution_result() {
   local failure=null temporary="${RESULTS_DIR}/execution-result.json.tmp-$$"
   [[ "$OUTCOME" == ok ]] || failure="\"${OUTCOME}\""
   jq -cn --arg scenario "$CSD_SCENARIO" --arg runId "$RUN_ID" --arg outcome "$OUTCOME" \
     --arg signal "$SIGNAL" --argjson browserExit "$PRIMARY_EXIT" --argjson uploadExit "$UPLOAD_EXIT" \
-    --argjson uploadCommitted "$UPLOAD_COMMITTED" --argjson failureCategory "$failure" \
-    '{schemaVersion:1,scenario:$scenario,runId:$runId,outcome:$outcome,browserExit:$browserExit,uploadExit:$uploadExit,uploadCommitted:$uploadCommitted,failureCategory:$failureCategory,signal:$signal}' >"$temporary" &&
+    --argjson uploadCommitted "$UPLOAD_COMMITTED" --argjson failureCategory "$failure" --argjson headerPair "$HEADER_PAIR" \
+    '{schemaVersion:1,scenario:$scenario,runId:$runId,outcome:$outcome,browserExit:$browserExit,uploadExit:$uploadExit,uploadCommitted:$uploadCommitted,failureCategory:$failureCategory,signal:$signal,headerPair:$headerPair}' >"$temporary" &&
     mv "$temporary" "${RESULTS_DIR}/execution-result.json"
 }
 
@@ -272,6 +306,24 @@ finalize() {
   stop_owned_group "$NODE_PID"
   stop_owned_group "$XVFB_PID"
   if [[ "$MODE" == normal && "$PRIMARY_EXIT" -eq 0 && "$initial" -ne 0 ]]; then PRIMARY_EXIT=$initial; fi
+  export RUN_ID CSD_SCENARIO
+  # Validate before the first immutable write, including unsuccessful/cancelled runs.
+  if ! read_header_pair; then
+    UPLOAD_EXIT=66
+    OUTCOME=fatal_integrity
+    rc=66
+    if [[ "${CANCELLED:-0}" -eq 1 || "$PRIMARY_EXIT" -eq 130 || "$PRIMARY_EXIT" -eq 143 ]]; then
+      OUTCOME=interrupted
+      rc=$PRIMARY_EXIT
+    elif [[ "$PRIMARY_EXIT" -eq 0 ]]; then
+      PRIMARY_EXIT=66
+    fi
+    write_failure_marker 66 receipt || true
+    write_execution_result || exit 66
+    exit "$rc"
+  fi
+  if [[ "$PRIMARY_EXIT" -eq 0 && "$HEADER_PAIR" != null ]] &&
+    [[ "$(jq -r '.result' <<<"$HEADER_PAIR")" != passed ]]; then PRIMARY_EXIT=1; fi
   export SCENARIO_DIR RUN_ID CSD_SCENARIO PRIMARY_EXIT SIGNAL SOURCE_COMMIT DEPLOYMENT_MANIFEST_SHA256
   export AWS_CLI_BIN EVIDENCE_BUCKET COMMIT_FILE FAILURE_FILE MODE
   export -f write_status write_upload_manifest write_checksums write_upload_commit remote_object_sha256 bounded_aws upload_if_missing upload_manifest_objects upload_final_metadata validate_frozen_evidence commit_upload upload_worker
@@ -333,7 +385,9 @@ if [[ "${1:-}" == --finalize-test ]]; then
   SCENARIO_DIR=$2 RUN_ID=$3 CSD_SCENARIO=$4
   SOURCE_COMMIT=0123456789abcdef0123456789abcdef01234567
   DEPLOYMENT_MANIFEST_SHA256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-  write_status && write_upload_manifest && write_checksums && validate_frozen_evidence && write_upload_commit
+  NODE_BIN=$(command -v node) || exit 69
+  export RUN_ID CSD_SCENARIO
+  read_header_pair && write_status && write_upload_manifest && write_checksums && validate_frozen_evidence && write_upload_commit
   exit $?
 fi
 
@@ -391,8 +445,11 @@ trap 'preflight_result' EXIT
 [[ "$(timeout 5 "$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" == "$AWS_CLI_VERSION" ]] || exit 78
 if [[ "$MODE" == retry ]]; then
   [[ -d "$SCENARIO_DIR" ]] || exit 66
-  PRIMARY_EXIT=$(jq -er '.browserExit | select(type == "number" and floor == . and . >= 0 and . <= 255)' "${SCENARIO_DIR}/run-status.json") || exit 66
-  SIGNAL=$(jq -er '.signal | select(. == "" or . == "TERM" or . == "INT")' "${SCENARIO_DIR}/run-status.json") || exit 66
+  PRIMARY_EXIT=$(jq -er '.browserExit | select(type == "number" and floor == . and . >= 0 and . <= 255)' "${SCENARIO_DIR}/run-status.json" 2>/dev/null) || exit 66
+  SIGNAL=$(jq -er '.signal | select(. == "" or . == "TERM" or . == "INT")' "${SCENARIO_DIR}/run-status.json" 2>/dev/null) || exit 66
+  validate_frozen_evidence 2>/dev/null || exit $?
+  export RUN_ID CSD_SCENARIO
+  read_header_pair || exit 66
   # Preserve the frozen browser signal; only new signals set CANCELLED.
   trap 'finalize' EXIT
   trap 'on_signal TERM 143' TERM

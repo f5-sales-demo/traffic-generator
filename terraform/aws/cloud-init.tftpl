@@ -88,7 +88,7 @@ write_files:
       set +a
       scenario="$${1:-}"
       case "$scenario" in
-        login-credential-skimmer|registration-harvester|payment-overlay-card-skimmer|obfuscated-loader|multi-cdn-injection|tag-manager-hijack|multi-channel-exfiltration|high-volume-domain-exfiltration|form-overlay|keylogger-simulation|maximum-detection) ;;
+        login-credential-skimmer|registration-harvester|payment-overlay-card-skimmer|obfuscated-loader|multi-cdn-injection|tag-manager-hijack|multi-channel-exfiltration|high-volume-domain-exfiltration|form-overlay|keylogger-simulation|maximum-detection|header-omit-x-content-type-options|header-omit-x-frame-options|header-omit-cache-control) ;;
         *) echo "ERROR: invalid scenario" >&2; exit 64 ;;
       esac
       imds_token="$(curl --fail --silent --show-error --request PUT --header 'X-aws-ec2-metadata-token-ttl-seconds: 60' http://169.254.169.254/latest/api/token)"
@@ -127,6 +127,7 @@ write_files:
       test "$(stat -c '%U:%G:%a' /opt/traffic-generator/source/suites/csd-violations/continuous.mjs)" = "root:root:444"
       test "$(sha256sum /opt/traffic-generator/source/suites/csd-violations/scenarios.mjs | cut -d' ' -f1)" = "$DEPLOYMENT_MANIFEST_SHA256"
       /opt/node/bin/node --check /opt/traffic-generator/source/suites/csd-violations/continuous.mjs
+      /opt/node/bin/node --input-type=module -e 'const { readFileSync } = await import("node:fs"); const { validateConfig } = await import("/opt/traffic-generator/source/suites/csd-violations/continuous.mjs"); validateConfig(readFileSync("/etc/traffic-generator/runtime.env", "utf8"));'
       test "$(/opt/node/bin/node -p 'require("/opt/traffic-generator/node_modules/playwright-core/package.json").version')" = "${playwright_core_version}"
       sudo -u tgen test -x "$AWS_CLI_BIN"
       test "$(sudo -u tgen "$AWS_CLI_BIN" --version 2>&1 | cut -d/ -f2 | cut -d' ' -f1)" = "$AWS_CLI_VERSION"
@@ -393,7 +394,14 @@ write_files:
           test -f "$1/suites/csd-violations/continuous.mjs" &&
           test -f "$1/suites/csd-violations/run.sh" && test -f "$1/suites/csd-violations/run.mjs" &&
           test "$(git -C "$1" rev-parse HEAD 2>/dev/null)" = "$commit" &&
-          test "$(sha256sum "$1/$manifest" | cut -d' ' -f1)" = "$digest"
+          test "$(sha256sum "$1/$manifest" | cut -d' ' -f1)" = "$digest" &&
+          /opt/node/bin/node --input-type=module - "$1/$manifest" '${deployment_manifest_version}' <<'NODE'
+      import { pathToFileURL } from 'node:url';
+      const { SCENARIO_NAMES, SUITE_MANIFEST } = await import(pathToFileURL(process.argv[2]));
+      if (process.argv[3] !== '1.1.0' || SUITE_MANIFEST.schemaVersion !== process.argv[3] ||
+          SCENARIO_NAMES.length !== 14 || new Set(SCENARIO_NAMES).size !== 14 ||
+          JSON.stringify(SUITE_MANIFEST.scenarios.map(({ name }) => name)) !== JSON.stringify(SCENARIO_NAMES)) process.exit(1);
+      NODE
       }
       if ! valid "$dst"; then
         rm -rf "$dst" "$tmp"
