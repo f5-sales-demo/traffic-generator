@@ -340,6 +340,7 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                     headers={
                         "Host": "www.example.test",
                         "X-MUD-User": identity,
+                        "X-TGen-Action": "ua-3-route-0",
                         "Authorization": "Bearer private-token",
                     },
                     host="www.example.test",
@@ -364,6 +365,8 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             event = json.loads(evidence.with_name("response-events.jsonl").read_text())
             assert event["domain"] == "www.example.test"
             assert event["synthetic_identity"] == identity
+            assert event["action_id"] == "ua-3-route-0"
+            assert "X-TGen-Action" not in flow.request.headers
             assert event["sent_at"] <= event["received_at"]
             assert len(event["payload_sha256"]) == 64
             assert len(event["response_sha256"]) == 64

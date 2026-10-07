@@ -47,3 +47,18 @@ test('healthy loaded SPA routes preserve their native application document', () 
   assert.equal(needsFreshDocument('https://example.com/juice-shop/#/about', { status: () => 403 }), true);
   assert.equal(needsFreshDocument('https://example.com/juice-shop/#/about'), true);
 });
+
+test('blocked route retains the actual response identity for telemetry binding', async () => {
+  const { verifyNavigation } = require('../scripts/rapid_navigation.cjs');
+  const page = { url: () => 'https://example.com/juice-shop/#/login', screenshot: async () => {} };
+  const response = {
+    status: () => 403,
+    url: () => 'https://example.com/juice-shop/',
+    body: async () => Buffer.from('blocked'),
+    request: () => ({ method: () => 'GET' }),
+  };
+  const result = await verifyNavigation(page, response, '/juice-shop/#/login', 0, '/tmp', true);
+  assert.equal(result.response_path, '/juice-shop/');
+  assert.equal(result.response_method, 'GET');
+  assert.equal(result.response_sha256, require('node:crypto').createHash('sha256').update('blocked').digest('hex'));
+});

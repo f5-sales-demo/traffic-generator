@@ -60,8 +60,15 @@ def test_exact_endpoint_rule_and_request_are_required(tmp_path):
     assert endpoint_attribution(response, result, tmp_path)
     evidence["checks"][0]["security_request_id"] = event["req_id"]
     evidence["checks"][0]["access"] = None
+    evidence["event_recording_delay_seconds"] = 20
+    event["time"] = "1970-01-01T00:00:25.000Z"
     file.write_text(json.dumps(evidence))
     assert endpoint_attribution(response, result, tmp_path)
+    evidence["event_recording_delay_seconds"] = 21
+    file.write_text(json.dumps(evidence))
+    assert not endpoint_attribution(response, result, tmp_path)
+    evidence["event_recording_delay_seconds"] = 20
+    event["time"] = "1970-01-01T00:00:10.500Z"
     evidence["checks"][0]["security_request_id"] = "foreign"
     file.write_text(json.dumps(evidence))
     assert not endpoint_attribution(response, result, tmp_path)

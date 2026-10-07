@@ -12,6 +12,7 @@ FORBIDDEN = 403
 PAIR_LENGTH = 2
 MAX_CLOCK_OFFSET = 5
 SHA256_LENGTH = 64
+MAX_EVENT_RECORDING_DELAY_SECONDS = 20
 RESPONSE_IDENTITY_FIELDS = (
     "scenario",
     "domain",
@@ -31,14 +32,24 @@ def request_identity(row: dict) -> tuple:
     return tuple(row.get(key) for key in RESPONSE_IDENTITY_FIELDS)
 
 
-def joined(record: dict, response: dict, scope: dict, bounds: list) -> bool:
+def joined(
+    record: dict, response: dict, scope: dict, bounds: list, delay: int = 0
+) -> bool:
     """Require scope, request identity, response status and calibrated time."""
     try:
+        if (
+            not isinstance(delay, int)
+            or isinstance(delay, bool)
+            or not 0 <= delay <= MAX_EVENT_RECORDING_DELAY_SECONDS
+        ):
+            return False
+        if not str(response.get("synthetic_identity", "")).endswith("-request"):
+            delay = 0
         moment = datetime.fromisoformat(record["time"]).timestamp()
         return (
             response["sent_at"] + bounds[0]
             <= moment
-            <= response["received_at"] + bounds[1]
+            <= response["received_at"] + bounds[1] + delay
             and record.get("namespace") == scope["namespace"]
             and record.get("vh_name")
             == "ves-io-http-loadbalancer-" + scope["loadbalancer"]
@@ -54,7 +65,7 @@ def joined(record: dict, response: dict, scope: dict, bounds: list) -> bool:
 
 
 def security_request_id(
-    check: dict, response: dict, scope: dict, bounds: list
+    check: dict, response: dict, scope: dict, bounds: list, delay: int = 0
 ) -> str | None:
     """Bind an actual security record; sampled-out access stays absent."""
     request_id = check.get("security_request_id")
@@ -63,7 +74,7 @@ def security_request_id(
         if (
             not isinstance(access, dict)
             or not access.get("req_id")
-            or not joined(access, response, scope, bounds)
+            or not joined(access, response, scope, bounds, delay)
         ):
             return None
         if request_id is not None and request_id != access["req_id"]:
@@ -76,7 +87,7 @@ def security_request_id(
     candidates = {
         event.get("req_id")
         for event in check.get("events", [])
-        if joined(event, response, scope, bounds)
+        if joined(event, response, scope, bounds, delay)
     }
     return request_id if candidates == {request_id} else None
 
@@ -122,12 +133,24 @@ def bot_attribution(
         ]
         if len(checks) != 1:
             return False
-        request_id = security_request_id(checks[0], response, scope, bounds)
+        request_id = security_request_id(
+            checks[0],
+            response,
+            scope,
+            bounds,
+            evidence.get("event_recording_delay_seconds", 0),
+        )
         if request_id is None:
             return False
         return any(
             event.get("req_id") == request_id
-            and joined(event, response, scope, bounds)
+            and joined(
+                event,
+                response,
+                scope,
+                bounds,
+                evidence.get("event_recording_delay_seconds", 0),
+            )
             and event.get("action") == "block"
             and event.get("sec_event_type") == "waf_sec_event"
             and event.get("sec_event_name") == "WAF"
@@ -182,12 +205,24 @@ def waf_attribution(
         ]
         if len(checks) != 1:
             return False
-        request_id = security_request_id(checks[0], response, scope, bounds)
+        request_id = security_request_id(
+            checks[0],
+            response,
+            scope,
+            bounds,
+            evidence.get("event_recording_delay_seconds", 0),
+        )
         if request_id is None:
             return False
         return any(
             event.get("req_id") == request_id
-            and joined(event, response, scope, bounds)
+            and joined(
+                event,
+                response,
+                scope,
+                bounds,
+                evidence.get("event_recording_delay_seconds", 0),
+            )
             and event.get("action") == "block"
             and event.get("sec_event_type") == "waf_sec_event"
             and event.get("sec_event_name") == "WAF"
@@ -247,14 +282,26 @@ def endpoint_attribution(response: dict, result: dict, directory: Path) -> bool:
         ):
             return False
         check = checks[0]
-        request_id = security_request_id(check, response, scope, bounds)
+        request_id = security_request_id(
+            check,
+            response,
+            scope,
+            bounds,
+            evidence.get("event_recording_delay_seconds", 0),
+        )
         if request_id is None:
             return False
         policy = "ves-io-http-loadbalancer-api-protection-" + scope["loadbalancer"]
         rule = "ves-io-service-policy-" + policy + "-api-protection-0"
         return any(
             event.get("req_id") == request_id
-            and joined(event, response, scope, bounds)
+            and joined(
+                event,
+                response,
+                scope,
+                bounds,
+                evidence.get("event_recording_delay_seconds", 0),
+            )
             and event.get("action") == "block"
             and event.get("sec_event_type") == "api_sec_event"
             and event.get("sec_event_name") == "API Protection Rule"

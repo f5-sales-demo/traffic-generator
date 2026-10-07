@@ -1,6 +1,7 @@
 // Verify each rapid navigation against its declared rendered route or API outcome.
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../suites/catalog.json'), 'utf8'));
 const scenario = catalog.scenarios.find((item) => item.id === 'bot-simulation/04-rapid-browsing');
 const navigation = scenario.navigation_contract;
@@ -31,6 +32,14 @@ async function verifyNavigation(page, response, route, identity, directory, fres
       mitigated: true,
       status: response.status(),
       fresh_document_response: freshDocumentResponse,
+      response_path: response.url ? new URL(response.url()).pathname + new URL(response.url()).search : null,
+      response_method: response.request ? response.request().method() : null,
+      response_sha256: response.body
+        ? crypto
+            .createHash('sha256')
+            .update(await response.body())
+            .digest('hex')
+        : null,
       expected_outcome: 'mitigation-candidate',
     };
   }

@@ -141,6 +141,15 @@ class Budget:
                 raise ValueError(message)
             flow.request.headers["X-TGen-Family"] = family["marker"]
 
+    @staticmethod
+    def browser_action(flow: http.HTTPFlow) -> None:
+        """Retain only the declared native navigation marker in private response metadata."""
+        action_id = flow.request.headers.pop("X-TGen-Action", "")
+        if action_id and not re.fullmatch(r"ua-[0-9]+-route-[0-9]+", action_id):
+            message = "invalid native browser action identity"
+            raise ValueError(message)
+        flow.metadata["tgen_action_id"] = action_id
+
     async def request(self, flow: http.HTTPFlow) -> None:
         """All tool/browser descendants queue here immediately before upstream forwarding."""
         host = (
@@ -185,6 +194,7 @@ class Budget:
             message = "invalid native worker attribution"
             raise ValueError(message)
         flow.metadata["tgen_worker"] = worker_marker
+        self.browser_action(flow)
         self.family_marker(flow, current)
         flow.metadata["tgen_scenario"] = current
         event = asyncio.get_running_loop().create_future()
@@ -276,7 +286,10 @@ class Budget:
             return http.Response.make(
                 response.status,
                 response.read(1024 * 1024),
-                {"X-TGen-Execution": "paced raw CONNECT probe"},
+                {
+                    "X-TGen-Execution": "paced raw CONNECT probe",
+                    "Content-Type": response.getheader("content-type", ""),
+                },
             )
         except (OSError, http_client.HTTPException):
             self.counts["scenario_transport_failures"] += 1
@@ -313,6 +326,7 @@ class Budget:
             "method": flow.metadata.get("tgen_dispatched_method", flow.request.method),
             "path": flow.request.path.split("?", 1)[0],
             "status": status,
+            "action_id": flow.metadata.get("tgen_action_id") or None,
             "matched_requirements": flow.metadata.get("tgen_matched_requirements", []),
             "transport_error": transport_error,
             "expected_statuses": current.get("expected_statuses", []),

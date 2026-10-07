@@ -181,3 +181,18 @@ def test_observed_protocol_errors_are_route_and_content_scoped():
     assert not native_identity(
         "/crapi/workshop/api/internal/metrics", "GET", 200, "text/html", body
     )
+
+
+def test_connect_rejection_is_exact_route_method_status_and_body():
+    assert native_identity(
+        "/vampi/users/v1", "CONNECT", 400, "text/plain", "Bad Request"
+    )
+    assert not native_identity(
+        "/vampi/users/v1", "GET", 400, "text/plain", "Bad Request"
+    )
+    assert not native_identity(
+        "/unrelated", "CONNECT", 400, "text/plain", "Bad Request"
+    )
+    assert not native_identity(
+        "/vampi/users/v1", "CONNECT", 500, "text/plain", "Bad Request"
+    )

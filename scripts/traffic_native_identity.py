@@ -4,6 +4,7 @@ import json
 import re
 
 HTTP_SUCCESS = 200
+HTTP_BAD_REQUEST = 400
 HTTP_UNAUTHORIZED = 401
 HTTP_NOT_FOUND = 404
 HTTP_ERROR_START = 400
@@ -145,6 +146,15 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
     if status is None:
         return False
     media = content_type.partition(";")[0]
+    if method == "CONNECT":
+        return (
+            status == HTTP_BAD_REQUEST
+            and path
+            in {"/vampi/users/v1", "/juice-shop/rest/products/search", "/dvwa/"}
+            and media == "text/plain"
+            and body == "Bad Request"
+        )
+
     if method == "HEAD" or status in (204, 304):
         return body == ""
     if status in (301, 302, 307, 308):

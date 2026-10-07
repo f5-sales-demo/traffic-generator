@@ -109,6 +109,7 @@ const USER_AGENTS = [
         const errorOffset = browserErrors.length;
         try {
           const url = `${BASE_URL}${path}`;
+          await page.setExtraHTTPHeaders({ 'X-TGen-Action': `ua-${identity}-route-${PAGES.indexOf(path)}` });
           fs.writeFileSync(
             require('node:path').join(directory, 'browser-cleanup.json'),
             JSON.stringify({ phase: 'navigating', route: path }),
