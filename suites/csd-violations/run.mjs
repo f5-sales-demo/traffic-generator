@@ -194,45 +194,51 @@ export function createHeaderPairTracker(target, selector) {
           approvedDip: approvedDip(req?.url),
         };
       });
+      let evidenceInvalid = invalid || records.some(({ req }) => !req);
+      const completed = (record) =>
+        record.terminal === 'finished' ||
+        (record.method === 'HEAD' &&
+          record.terminalEvidence.state === 'failed' &&
+          record.terminalEvidence.canceled &&
+          record.terminalEvidence.errorCode === 'ERR_ABORTED' &&
+          record.terminalEvidence.responseReceivedBeforeTerminal);
+      const verified = (record, injected) =>
+        record.observed &&
+        completed(record) &&
+        record.status === 200 &&
+        record.wireSelector?.present === injected &&
+        (!injected || record.wireSelector.matchesSelected) &&
+        Object.entries(HEADER_VALUES).every(([name]) =>
+          record.headers?.[name]?.present === !(injected && name === selector) &&
+          record.headers?.[name]?.matchesCanonical === !(injected && name === selector),
+        );
       const observation = (method, playwrightStatus) => {
         const candidates = records.filter(
           ({ req }) =>
             req?.url === `${new URL(target).origin}${PAYMENT_PATH}` &&
             req.method === method &&
-            req.frameId === topFrameId &&
-            (method === 'GET' ? req.resourceType === 'Document' : req.scriptInitiated && naturalHeadObserved),
+            (method === 'HEAD' || req.resourceType === 'Document'),
         );
-        const terminal =
-          method === 'HEAD'
-            ? {
-                terminal: { state: 'pending', canceled: false, errorCode: null, responseReceivedBeforeTerminal: false },
-              }
-            : {};
-        if (candidates.length !== 1) return { status: null, observed: false, headers: null, ...terminal };
-        const record = candidates[0];
+        const terminal = method === 'HEAD' ? {
+          terminal: { state: 'pending', canceled: false, errorCode: null, responseReceivedBeforeTerminal: false },
+        } : {};
+        if (method === 'GET' ? candidates.length !== 1 : candidates.length < 1) {
+          evidenceInvalid = true;
+          return { status: null, observed: false, headers: null, ...terminal };
+        }
         const injected = mode === 'mutation' && (method === 'GET' || scope === 'same-origin');
-        const selectorMatches =
-          record.wireSelector &&
-          record.wireSelector.present === injected &&
-          (!injected || record.wireSelector.matchesSelected);
-        // Chromium may abort a bodyless HEAD after exposing its complete response.
-        // This is wire-header evidence, never finished transport or backend acceptance.
-        const completed =
-          record.terminal === 'finished' ||
-          (method === 'HEAD' &&
-            record.terminalEvidence.state === 'failed' &&
-            record.terminalEvidence.canceled &&
-            record.terminalEvidence.errorCode === 'ERR_ABORTED' &&
-            record.terminalEvidence.responseReceivedBeforeTerminal);
+        const observed = candidates.every((record) =>
+          verified(record, injected) && record.status === playwrightStatus &&
+          record.req.frameId === topFrameId &&
+          (method === 'GET' || (record.req.scriptInitiated && naturalHeadObserved)),
+        );
+        if (!observed) evidenceInvalid = true;
+        // Consume every distinct HEAD. A failed terminal is retained conservatively
+        // when any HEAD has the narrow canceled-after-response Chromium outcome.
+        const record = candidates.find(({ terminal }) => terminal === 'failed') ?? candidates[0];
         return {
           status: record.status,
-          observed:
-            !invalid &&
-            record.observed &&
-            completed &&
-            selectorMatches &&
-            record.status === playwrightStatus &&
-            (method !== 'HEAD' || record.status === 200),
+          observed: !invalid && observed,
           headers: record.headers,
           ...(method === 'HEAD' ? { terminal: { ...record.terminalEvidence } } : {}),
         };
@@ -245,16 +251,19 @@ export function createHeaderPairTracker(target, selector) {
       for (const record of records)
         if (record.req && selectorRequestAllowed(record.req, target, scope)) {
           selectorRequests.observed++;
+          if (!verified(record, mode === 'mutation')) evidenceInvalid = true;
           if (record.wireSelector?.present) selectorRequests.injected++;
           else if (record.wireSelector) selectorRequests.stripped++;
         }
       const sensor = records.filter(({ req }) => {
         try {
+          const url = new URL(req?.url);
           return (
-            req?.method === 'GET' &&
-            req.resourceType === 'Script' &&
-            SENSOR_RE.test(new URL(req.url).pathname) &&
-            new URL(req.url).origin === new URL(target).origin
+            req.method === 'GET' && req.resourceType === 'Script' &&
+            /^\/__imp_apg__\/js\/[A-Za-z0-9_-]+\.js$/.test(url.pathname) &&
+            url.protocol === 'https:' && !url.username && !url.password &&
+            (url.origin === new URL(target).origin ||
+              APPROVED_CSD_COLLECTORS.some(({ host }) => url.origin === `https://${host}`))
           );
         } catch {
           return false;
@@ -270,10 +279,11 @@ export function createHeaderPairTracker(target, selector) {
         sensor: {
           observed: sensor.length,
           finishedHttp2xx: sensor.filter(
-            ({ terminal, status }) => terminal === 'finished' && status >= 200 && status < 300,
+            ({ observed, wireSelector, terminal, status }) =>
+              observed && wireSelector?.present === false && terminal === 'finished' && status >= 200 && status < 300,
           ).length,
         },
-        invalid,
+        invalid: evidenceInvalid,
         transportReady: records.some(
           ({ approvedDip: approved, method, terminal, status }) =>
             approved && method === 'POST' && terminal === 'finished' && status >= 200 && status < 300,
@@ -306,9 +316,9 @@ const phasePassed = (phase, selector, scope) =>
   phase.collectorSelectorsKnown === true &&
   phase.excludedCollectorOverrideCount === 0 &&
   phase.invalid === false &&
-  phase.selectorRequests.observed === (scope === 'document' ? 1 : 2) &&
-  phase.selectorRequests.injected === (phase.mode === 'mutation' ? (scope === 'document' ? 1 : 2) : 0) &&
-  phase.selectorRequests.stripped === (phase.mode === 'control' ? (scope === 'document' ? 1 : 2) : 0);
+  (scope === 'document' ? phase.selectorRequests.observed === 1 : phase.selectorRequests.observed >= 2) &&
+  phase.selectorRequests.injected === (phase.mode === 'mutation' ? phase.selectorRequests.observed : 0) &&
+  phase.selectorRequests.stripped === (phase.mode === 'control' ? phase.selectorRequests.observed : 0);
 
 const HEADER_ERROR_CODES = Object.freeze([
   'HEADER_CAPTURE_FAILED',
