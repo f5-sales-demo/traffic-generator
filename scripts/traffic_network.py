@@ -784,6 +784,34 @@ class NetworkBoundary:
         )
         return result.returncode == 0
 
+    def recover_family(self, directory: Path, family: str) -> bool:
+        """Restore interrupted family journals from the owning host outside HTTP egress."""
+        if (
+            not (directory / "family-journal.json").is_file()
+            and not (directory / "family-bundle-identity.json").is_file()
+        ):
+            return False
+        result = subprocess.run(  # noqa: S603 - fixed forced-command journal helper
+            [
+                sys.executable,
+                "-B",
+                str(self.root / "scripts/traffic_family_fixture.py"),
+                "restore",
+                family,
+                str(directory),
+            ],
+            env={
+                **os.environ,
+                "TGEN_FIXTURES": str(self.runtime.parent / "fixtures.json"),
+                "SOURCE_COMMIT": self.config["source_commit"],
+                "TGEN_ARTIFACT_SHA256": self.config["artifact_sha256"],
+            },
+            capture_output=True,
+            check=False,
+            timeout=180,
+        )
+        return result.returncode == 0
+
     def recover_signup(self, directory: Path) -> bool:
         """Run only exact forced-command recovery outside the HTTP egress namespace."""
         journal = directory / "fixture-journal.json"

@@ -32,6 +32,7 @@ from traffic_dispatch import (
     verify_tool_actions,
     verify_workload,
 )
+from traffic_fixture_recovery import recover_fixtures
 from traffic_functional import verify_functional
 from traffic_network import NetworkBoundary
 from traffic_order_host import restore_receipt
@@ -835,20 +836,7 @@ def _scenario(
         and result["http_requests"] == 0
     ):
         result["outcome"] = "fixture_failure"
-    if scenario.get("fixture_contract", {}).get("restore_signup"):
-        result["signup_restoration"] = boundary.recover_signup(directory)
-        if not result["signup_restoration"]:
-            result["outcome"] = "fixture_failure"
-    if scenario.get("fixture_contract", {}).get("restore_pastes"):
-        result["paste_restoration"] = boundary.recover_pastes(
-            directory, domain, environment
-        )
-        if not result["paste_restoration"]:
-            result["outcome"] = "fixture_failure"
-    if scenario.get("fixture_contract", {}).get("order_restore"):
-        result["order_restoration"] = boundary.order_fixture(directory, "restore")
-        if not result["order_restoration"]:
-            result["outcome"] = "fixture_failure"
+    recover_fixtures(boundary, scenario, result, directory, domain, environment)
     result["functional_acceptance"] = verify_functional(
         scenario, result, attributed_responses(scenario, result, directory), directory
     )

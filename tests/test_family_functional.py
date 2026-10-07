@@ -7,9 +7,12 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
+from unittest.mock import patch
+
 from traffic_family_fixture import bundle_operation
 from traffic_family_functional import family_restored
 from traffic_native_identity import native_identity
+from traffic_network import NetworkBoundary
 
 
 def test_family_recovery_requires_exact_four_replica_baselines(tmp_path):
@@ -122,3 +125,13 @@ def test_partial_bundle_snapshot_restores_prepared_families(tmp_path, monkeypatc
         bundle_operation(tmp_path, "prepare")
     assert ("restore", "vampi") in calls
     assert ("restore", "dvwa") in calls
+
+
+def test_host_recovery_never_executes_without_owned_journal(tmp_path):
+    boundary = object.__new__(NetworkBoundary)
+    boundary.root = tmp_path
+    boundary.runtime = tmp_path / "runtime"
+    boundary.config = {"source_commit": "a" * 40, "artifact_sha256": "b" * 64}
+    with patch("traffic_network.subprocess.run") as run:
+        assert not boundary.recover_family(tmp_path, "vampi")
+        run.assert_not_called()
