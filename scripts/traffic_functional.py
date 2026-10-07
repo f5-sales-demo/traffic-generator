@@ -760,6 +760,38 @@ def verify_dvwa_corpus(
     }
 
 
+def verify_nested(scenario: dict, result: dict, directory: Path) -> dict:
+    """Require exact source-bound functional receipts for every preserved child suite."""
+    catalog = json.loads((SOURCE_ROOT / "suites/catalog.json").read_text())
+    expected = {
+        item["id"]: hashlib.sha256(
+            (SOURCE_ROOT / item["entrypoint"]).read_bytes()
+        ).hexdigest()
+        for item in catalog["scenarios"]
+    }
+    reports = [
+        build_report(
+            directory / ("nested-" + suite),
+            identifiers,
+            expected,
+            source_commit=result.get("source_commit"),
+            artifact_sha256=result.get("artifact_sha256"),
+        )
+        for suite, identifiers in scenario["nested_contract"].items()
+    ]
+    return {
+        "passed": bool(reports)
+        and all(report["passed"] for report in reports)
+        and result.get("outcome") == "launched"
+        and result.get("dispatch_contract_verified") is True
+        and result.get("transport_failures") == 0
+        and result.get("tool_cancellations") == 0,
+        "behavior": scenario["functional_contract"]["behavior"],
+        "child_suites": reports,
+        "claim": "each preserved child must independently verify its native behavior and recovery",
+    }
+
+
 def verify_orders(
     scenario: dict, result: dict, responses: list[dict], directory: Path
 ) -> dict:
@@ -803,6 +835,7 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
         "current-pass-report": verify_current_report,
         "native-browser-display": verify_display_browser,
         "native-load": verify_load,
+        "native-nested-suites": verify_nested,
     }
     if contract.get("verifier") in specialized:
         return specialized[contract["verifier"]](scenario, result, directory)

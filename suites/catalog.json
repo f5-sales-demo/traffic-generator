@@ -18061,7 +18061,13 @@
           "api-attacks/06-mass-assignment"
         ]
       },
-      "fixture_refresh": ["vampi", "crapi", "juice", "restaurant"]
+      "fixture_refresh": ["vampi", "crapi", "juice", "restaurant"],
+      "functional_contract": {
+        "verifier": "native-nested-suites",
+        "behavior": "Both preserved child suites complete every exact source-bound scenario with independent native behavior and fixture recovery; the parent requires no transport or tool cancellation",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["nested_actions"]
+      }
     },
     {
       "id": "performance-testing/10-wrk-benchmark",

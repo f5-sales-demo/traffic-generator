@@ -123,7 +123,6 @@ def test_composed_restoration_label_requires_observed_recovery(tmp_path):
 
 
 def test_report_functional_acceptance_uses_current_dependency_receipts(tmp_path):
-
     source = tmp_path / "source"
     source.mkdir()
     (source / "child.sh").write_text("synthetic source")
@@ -270,7 +269,6 @@ def test_native_routes_require_all_rendered_actions_screenshots_and_cleanup(tmp_
 
 
 def test_bot_denial_requires_exact_request_security_and_effective_firewall(tmp_path):
-
     response: dict = {
         "scenario": "bot-simulation/04-rapid-browsing",
         "domain": "www.example.com",
@@ -476,7 +474,6 @@ def test_native_mechanic_shape_uses_nested_objects_and_string_identity():
 
 
 def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
-
     response: dict = {
         "scenario": "bot-simulation/04-rapid-browsing",
         "domain": "www.example.com",
@@ -699,3 +696,50 @@ def test_orders_require_nested_native_data_and_real_positive_exposure(tmp_path):
     requirement["expected_statuses"] = [500]
     event["status"] = 500
     assert not verify_functional(scenario, result, [event], tmp_path)["passed"]
+
+
+def test_nested_functional_requires_each_source_bound_child_and_cleanup(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "suites").mkdir()
+    (source / "child.sh").write_text("synthetic child")
+    (source / "suites/catalog.json").write_text(
+        json.dumps({"scenarios": [{"id": "synthetic/child", "entrypoint": "child.sh"}]})
+    )
+    child = tmp_path / "nested-synthetic/synthetic--child"
+    child.mkdir(parents=True)
+    receipt = {
+        "id": "synthetic/child",
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+        "source_sha256": hashlib.sha256((source / "child.sh").read_bytes()).hexdigest(),
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "functional_verified": True,
+    }
+    path = child / "receipt.json"
+    path.write_text(json.dumps(receipt))
+    scenario = {
+        "functional_contract": {
+            "verifier": "native-nested-suites",
+            "behavior": "native child recovery",
+        },
+        "nested_contract": {"synthetic": ["synthetic/child"]},
+    }
+    result = {
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "transport_failures": 0,
+        "tool_cancellations": 0,
+    }
+    with patch("traffic_functional.SOURCE_ROOT", source):
+        assert verify_functional(scenario, result, [], tmp_path)["passed"]
+        receipt["functional_verified"] = False
+        path.write_text(json.dumps(receipt))
+        assert not verify_functional(scenario, result, [], tmp_path)["passed"]
+        receipt["functional_verified"] = True
+        receipt["source_commit"] = "c" * 40
+        path.write_text(json.dumps(receipt))
+        assert not verify_functional(scenario, result, [], tmp_path)["passed"]
