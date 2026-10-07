@@ -3523,6 +3523,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "user": "alice"
@@ -3533,6 +3534,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "user": "bob"
@@ -3543,6 +3545,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "user": "charlie"
@@ -3553,6 +3556,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "user": "dave"
@@ -3563,6 +3567,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "user": "eve"
@@ -3573,6 +3578,7 @@
             "method": "GET",
             "path": "/juice-shop/rest/products/search",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "q": "apple"
@@ -3583,6 +3589,7 @@
             "method": "GET",
             "path": "/juice-shop/rest/products/search",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "q": "banana"
@@ -3593,6 +3600,7 @@
             "method": "GET",
             "path": "/juice-shop/rest/products/search",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "q": "cherry"
@@ -3603,6 +3611,7 @@
             "method": "GET",
             "path": "/juice-shop/rest/products/search",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "q": "orange"
@@ -3613,6 +3622,7 @@
             "method": "GET",
             "path": "/juice-shop/rest/products/search",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "q": "lemon"
@@ -3623,6 +3633,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "v": "1"
@@ -3633,6 +3644,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "v": "2"
@@ -3643,6 +3655,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "v": "3"
@@ -3653,6 +3666,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "v": "4"
@@ -3663,6 +3677,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 2,
             "query_values": {
               "v": "5"
@@ -3673,6 +3688,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "random-query-isolation",
+            "expected_statuses": [200],
             "minimum_dispatches": 40,
             "query_regex": "r=[a-f0-9-]{36}"
           },
@@ -3681,6 +3697,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "cross-contamination-control",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "query_regex": "iso=alpha-[0-9]+"
           },
@@ -3689,6 +3706,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "cross-contamination-control",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "query_regex": "iso=bravo-[0-9]+"
           }
@@ -3722,6 +3740,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip"
@@ -3732,6 +3751,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "br"
@@ -3742,6 +3762,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip, deflate"
@@ -3752,6 +3773,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip, deflate, br"
@@ -3762,6 +3784,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "identity"
@@ -3772,6 +3795,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "no-accept-encoding",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "absent_headers": ["accept-encoding"]
           },
@@ -3780,6 +3804,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip"
@@ -3790,6 +3815,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "br"
@@ -3800,6 +3826,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip, deflate"
@@ -3810,6 +3837,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip, deflate, br"
@@ -3820,6 +3848,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "identity"
@@ -3830,6 +3859,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "no-accept-encoding",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "absent_headers": ["accept-encoding"]
           },
@@ -3838,6 +3868,7 @@
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip"
@@ -3848,6 +3879,7 @@
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "br"
@@ -3858,6 +3890,7 @@
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip, deflate"
@@ -3868,6 +3901,7 @@
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip, deflate, br"
@@ -3878,6 +3912,7 @@
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "identity"
@@ -3888,6 +3923,7 @@
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "no-accept-encoding",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "absent_headers": ["accept-encoding"]
           },
@@ -3896,6 +3932,7 @@
             "method": "GET",
             "path": "/health",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip"
@@ -3906,6 +3943,7 @@
             "method": "GET",
             "path": "/health",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "br"
@@ -3916,6 +3954,7 @@
             "method": "GET",
             "path": "/health",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip, deflate"
@@ -3926,6 +3965,7 @@
             "method": "GET",
             "path": "/health",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "gzip, deflate, br"
@@ -3936,6 +3976,7 @@
             "method": "GET",
             "path": "/health",
             "payload_class": "accept-encoding-variation",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "headers": {
               "accept-encoding": "identity"
@@ -3946,6 +3987,7 @@
             "method": "GET",
             "path": "/health",
             "payload_class": "no-accept-encoding",
+            "expected_statuses": [200],
             "minimum_dispatches": 1,
             "absent_headers": ["accept-encoding"]
           }
@@ -3980,6 +4022,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "same-query-concurrent-burst",
+            "expected_statuses": [200],
             "minimum_dispatches": 100,
             "query_regex": "^stampede-[0-9]+-[0-9]+$"
           },
@@ -3988,6 +4031,7 @@
             "method": "GET",
             "path": "/juice-shop/",
             "payload_class": "same-query-concurrent-burst",
+            "expected_statuses": [200],
             "minimum_dispatches": 100,
             "query_regex": "^stampede-[0-9]+-[0-9]+$"
           },
@@ -3996,6 +4040,7 @@
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "same-query-concurrent-burst",
+            "expected_statuses": [200],
             "minimum_dispatches": 100,
             "query_regex": "^stampede-[0-9]+-[0-9]+$"
           }
@@ -4176,6 +4221,7 @@
             "method": "GET",
             "path": "/httpbin/headers",
             "payload_class": "correlated-client-ip-headers",
+            "expected_statuses": [200],
             "minimum_dispatches": 100,
             "header_regex": {
               "x-forwarded-for": "(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]+",
@@ -4189,6 +4235,7 @@
             "method": "GET",
             "path": "/juice-shop/rest/products/search",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           },
           {
@@ -4196,6 +4243,7 @@
             "method": "GET",
             "path": "/dvwa/login.php",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           },
           {
@@ -4203,6 +4251,7 @@
             "method": "GET",
             "path": "/vampi/",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           },
           {
@@ -4210,6 +4259,7 @@
             "method": "GET",
             "path": "/httpbin/get",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           },
           {
@@ -4217,6 +4267,7 @@
             "method": "GET",
             "path": "/whoami/",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           },
           {
@@ -4224,6 +4275,7 @@
             "method": "GET",
             "path": "/csd-demo/",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           },
           {
@@ -4231,6 +4283,7 @@
             "method": "GET",
             "path": "/dvga/",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           },
           {
@@ -4238,6 +4291,7 @@
             "method": "GET",
             "path": "/restaurant/openapi.json",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           },
           {
@@ -4245,6 +4299,7 @@
             "method": "GET",
             "path": "/crapi/",
             "payload_class": "independent-client-application-rotation",
+            "expected_statuses": [200],
             "minimum_dispatches": 20
           }
         ],

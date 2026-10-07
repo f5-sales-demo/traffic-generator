@@ -457,8 +457,11 @@ def cache_action_verification(directory: Path, scenario: dict, result: dict) -> 
     """Require cache content and isolation receipts when declared."""
     if scenario.get("adapter") == "dynamic-cache":
         evidence = directory / "cache-evidence.json"
+        result["cache_evidence"] = (
+            json.loads(evidence.read_text()) if evidence.exists() else {"passed": False}
+        )
         result["dispatch_contract_verified"] &= (
-            evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
+            result["cache_evidence"].get("passed") is True
         )
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "fixture_failure"
@@ -470,8 +473,11 @@ def multiclient_action_verification(
     """Require per-client echoed identity and cleanup evidence."""
     if scenario.get("adapter") == "bounded-multiclient":
         evidence = directory / "multiclient-evidence.json"
+        result["multiclient_evidence"] = (
+            json.loads(evidence.read_text()) if evidence.exists() else {"passed": False}
+        )
         result["dispatch_contract_verified"] &= (
-            evidence.exists() and json.loads(evidence.read_text()).get("passed") is True
+            result["multiclient_evidence"].get("passed") is True
         )
         if not result["dispatch_contract_verified"]:
             result["outcome"] = "fixture_failure"
