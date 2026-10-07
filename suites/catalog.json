@@ -8540,11 +8540,11 @@
             "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
             "payload_class": "authorization-bypass",
             "minimum_dispatches": 2,
-            "body_exact": "{\"id\":1,\"first_name\":\"Example\",\"surname\":\"ByTest\"}",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":1,\"first_name\":\"t[a-f0-9]{12}\",\"surname\":\"t[a-f0-9]{12}\"\\}"
           },
           {
             "id": "change-2",
@@ -8552,11 +8552,11 @@
             "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
             "payload_class": "horizontal-authorization-bypass",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":2,\"first_name\":\"TestHack\",\"surname\":\"User2\"}",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":2,\"first_name\":\"t[a-f0-9]{12}\",\"surname\":\"t[a-f0-9]{12}\"\\}"
           },
           {
             "id": "change-3",
@@ -8564,11 +8564,11 @@
             "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
             "payload_class": "horizontal-authorization-bypass",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":3,\"first_name\":\"TestHack\",\"surname\":\"User3\"}",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":3,\"first_name\":\"t[a-f0-9]{12}\",\"surname\":\"t[a-f0-9]{12}\"\\}"
           },
           {
             "id": "change-4",
@@ -8576,11 +8576,11 @@
             "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
             "payload_class": "horizontal-authorization-bypass",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":4,\"first_name\":\"TestHack\",\"surname\":\"User4\"}",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":4,\"first_name\":\"t[a-f0-9]{12}\",\"surname\":\"t[a-f0-9]{12}\"\\}"
           },
           {
             "id": "change-5",
@@ -8588,11 +8588,11 @@
             "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
             "payload_class": "horizontal-authorization-bypass",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":5,\"first_name\":\"TestHack\",\"surname\":\"User5\"}",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":5,\"first_name\":\"t[a-f0-9]{12}\",\"surname\":\"t[a-f0-9]{12}\"\\}"
           },
           {
             "id": "no-auth-change",
@@ -8600,9 +8600,9 @@
             "path": "/dvwa/vulnerabilities/authbypass/change_user_details.php",
             "payload_class": "unauthenticated-modification",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":1,\"first_name\":\"Example\",\"surname\":\"Test\"}",
             "absent_headers": ["cookie"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":1,\"first_name\":\"t[a-f0-9]{12}\",\"surname\":\"t[a-f0-9]{12}\"\\}"
           }
         ],
         "reject_unmatched_errors": true
@@ -8611,7 +8611,12 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvwa"
       }
     },
     {
@@ -15289,14 +15294,16 @@
             "minimum_dispatches": 20,
             "query_values": {
               "q": "test"
-            }
+            },
+            "expected_statuses": [200, 201, 400, 401, 404, 405, 409, 422]
           },
           {
             "id": "delay",
             "method": "GET",
             "path": "/httpbin/delay/2",
             "payload_class": "delayed-response-workload",
-            "minimum_dispatches": 20
+            "minimum_dispatches": 20,
+            "expected_statuses": [200, 201, 400, 401, 404, 405, 409, 422]
           },
           {
             "id": "feedback",
@@ -15304,7 +15311,8 @@
             "path": "/juice-shop/api/Feedbacks",
             "payload_class": "synthetic-data-manipulation",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"[MITRE T1565] Data manipulation test - injected feedback\",\"rating\":1}"
+            "expected_statuses": [200, 201, 400, 401, 404, 405, 409, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:\\[MITRE\\ T1565\\]\\ Data\\ manipulation\\ test\\ \\-\\ injected\\ feedback\",\"rating\":1\\}"
           },
           {
             "id": "assignment",
@@ -15312,7 +15320,8 @@
             "path": "/vampi/users/v1/register",
             "payload_class": "privilege-mass-assignment",
             "minimum_dispatches": 1,
-            "body_regex": "\"admin\":true,\"role\":\"admin\""
+            "body_regex": "\"admin\":true,\"role\":\"admin\"",
+            "expected_statuses": [200, 201, 400, 401, 404, 405, 409, 422]
           },
           {
             "id": "guestbook",
@@ -15320,12 +15329,23 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "synthetic-defacement",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=MITRE&mtxMessage=<h1>Defaced by T1491</h1>&btnSign=Sign+Guestbook"
+            "expected_statuses": [200, 201, 400, 401, 404, 405, 409, 422],
+            "body_regex": "txtName=MITRE\\&mtxMessage=tgen-[a-f0-9]{32}:<h1>Defaced\\ by\\ T1491</h1>\\&btnSign=Sign\\+Guestbook"
           }
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Native load and payload actions require declared protocol content or exact protection attribution; marked registration, guestbook and feedback writes require twenty-replica journal restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "owasp-scanning/01-zap-baseline",
@@ -15760,7 +15780,12 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
       }
     },
     {
@@ -17508,7 +17533,12 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
       }
     },
     {
@@ -29783,7 +29813,12 @@
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
       }
     },
     {
