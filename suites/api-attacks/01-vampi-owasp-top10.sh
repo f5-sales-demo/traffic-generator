@@ -11,29 +11,9 @@ BASE="${TARGET_PROTOCOL:-http}://${TARGET}/vampi"
 echo "[*] OWASP API Top 10 suite against VAmPI at ${TARGET}"
 echo ""
 
-# --- Step 1: Register a test user ---
-echo "[+] Registering test user..."
-REG_RESP=$(curl -sk -X POST "${BASE}/users/v1/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"attacker","password":"attacker123","email":"attacker@example.com"}' \
-  --max-time 10) || true
-echo "    Register response: ${REG_RESP}"
-
-# --- Step 2: Login and get token ---
-echo "[+] Logging in as test user..."
-LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"attacker","password":"attacker123"}' \
-  --max-time 10) || true
-echo "    Login response: ${LOGIN_RESP}"
-
-TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // .authToken // empty' 2>/dev/null || true)
-
-if [[ -z "$TOKEN" ]]; then
-  echo "WARN: Could not extract auth token, continuing with empty token"
-  TOKEN="invalid-token-for-testing"
-fi
-echo "    Token: ${TOKEN:0:20}..."
+# Shared origin-issued authentication is valid on each declared native replica.
+TOKEN=$(python3 -c 'import json,os; print(json.load(open(os.environ["TGEN_FIXTURES"]))["vampi_token"])')
+[[ -n "$TOKEN" ]] || exit 1
 
 AUTH_HEADER="Authorization: Bearer ${TOKEN}"
 
