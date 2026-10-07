@@ -29,6 +29,7 @@ let failure = 'none';
 let cancel;
 const sensorPath = '/__imp_apg__/js/fixture-only.js';
 const sensor = `/* Synthetic fixture adapter, not F5 vendor JavaScript. */
+fetch('${PAYMENT_PATH}', {method:'HEAD', cache:'no-store', redirect:'error'}).catch(() => {});
 fetch('https://${collector.host}${collector.path}', {method:'POST', body:'fixture-only', mode:'cors', credentials:'omit'}).catch(() => {});
 fetch('/fixture-asset', {cache:'no-store'}).catch(() => {});
 fetch('${PAYMENT_PATH}?fixture=excluded', {method:'HEAD',cache:'no-store'}).catch(() => {});
@@ -41,7 +42,7 @@ const server = createServer(
     // Never retain/print headers, payloads, arbitrary URLs or request identifiers.
     const payment = req.url === PAYMENT_PATH && req.headers.host === host;
     const dip = req.url === collector.path && req.headers.host === collector.host;
-    const sensorRequest = req.url === sensorPath && req.headers.host === host;
+    const sensorRequest = req.url === sensorPath && req.headers.host === collector.host;
     requests.push({
       kind: payment ? 'payment' : dip ? 'collector' : sensorRequest ? 'sensor' : 'excluded',
       method: req.method,
@@ -71,7 +72,7 @@ const server = createServer(
         return;
       }
       res.end(
-        `<!doctype html><title>Synthetic transport fixture</title><form>${fields.map((name) => `<input name="${name}" value="">`).join('')}</form><div data-csd-sensitive>Synthetic masked display</div><script src="${sensorPath}"></script>`,
+        `<!doctype html><title>Synthetic transport fixture</title><form>${fields.map((name) => `<input name="${name}" value="">`).join('')}</form><div data-csd-sensitive>Synthetic masked display</div><script src="https://${collector.host}${sensorPath}"></script>`,
       );
       return;
     }
@@ -135,7 +136,11 @@ try {
     observers.set(page, session);
   };
   const capture = async (page, mode, action) => {
-    if (action === 'setup') await observeHead(page);
+    if (action === 'setup') {
+      await observeHead(page);
+      await page.bringToFront();
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    }
     if (action === 'cleanup') {
       await observers.get(page)?.detach();
       observers.delete(page);
@@ -181,13 +186,12 @@ try {
     const pair = await runHeaderPair({ browser, target, selector, capture, operationTimeoutMs: 40_000 });
     await writeFile(join(root, `${scenario}.json`), JSON.stringify(pair), { mode: 0o600 });
     cleanupPassed(pair);
-    if (pair.result !== 'passed') {
-      proof.pairs.push({ ...projectHeaderPair(pair, scenario), diagnostic: 'canonical-runner-rejected-real-HEAD' });
-      continue;
-    }
+    assert.equal(pair.result, 'passed', JSON.stringify(pair));
     for (const phase of [pair.control, pair.mutation]) {
       assert.equal(phase.document.observed, true);
       assert.equal(phase.head.observed, true);
+      assert.equal(phase.selectorRequests.observed, 3);
+      assert.equal(phase.selectorRequests[phase.mode === 'control' ? 'stripped' : 'injected'], 3);
       assert.ok(phase.telemetry.finished > 0 && phase.telemetry.http2xx > 0);
       assert.equal(phase.sensor.finishedHttp2xx, 1);
       assert.equal(phase.screenshots.length, 6);
@@ -198,7 +202,8 @@ try {
         }
     }
     const wire = requests.slice(offset);
-    assert.equal(wire.filter((request) => request.selected === selector).length, 2);
+    assert.equal(wire.filter((request) => request.selected === selector).length, 3);
+    assert.equal(wire.filter((request) => request.kind === 'payment' && request.method === 'HEAD').length, 4);
     assert.ok(wire.some((request) => request.kind === 'excluded'));
     assert.ok(wire.some((request) => request.kind === 'collector' && request.method === 'POST'));
     assert.ok(wire.every((request) => request.retained));
@@ -219,8 +224,11 @@ try {
   cleanupPassed(documentPair);
   await writeFile(join(root, 'document-scope.json'), JSON.stringify(documentPair), { mode: 0o600 });
   proof.documentScope = documentPair.result;
-  if (documentPair.result === 'passed')
-    assert.equal(documentPair.mutation.head.headers['x-frame-options'].present, true);
+  assert.equal(documentPair.result, 'passed');
+  for (const phase of [documentPair.control, documentPair.mutation]) {
+    assert.equal(phase.selectorRequests.observed, 1);
+    assert.equal(phase.head.headers['x-frame-options'].present, true);
+  }
   for (const mode of ['post503', 'disconnect', 'cancel']) {
     failure = mode;
     const controller = new AbortController();
