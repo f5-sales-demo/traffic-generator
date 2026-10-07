@@ -256,3 +256,49 @@ def test_native_captcha_error_requires_exact_route_method_status_and_body():
     assert not native_identity(
         "/juice-shop/api/Feedbacks/", "POST", 401, "text/html", body + "unexpected"
     )
+
+
+def test_origin_landing_and_csd_health_require_declared_content():
+    landing = '<title>Origin Server</title><a href="/health">Health Check</a><a href="/juice-shop/"></a><a href="/crapi/"></a>'
+    assert native_identity("/", "GET", 200, "text/html", landing)
+    assert not native_identity("/", "GET", 200, "text/html", "Origin Server")
+    health = json.dumps(
+        {
+            "status": "healthy",
+            "component": "csd-demo",
+            "attacks": [
+                "skimmer",
+                "formjacker",
+                "keylogger",
+                "cryptominer",
+                "dom-hijack",
+            ],
+        }
+    )
+    assert native_identity("/csd-demo/health", "GET", 200, "application/json", health)
+    assert not native_identity(
+        "/csd-demo/health", "GET", 200, "application/json", '{"status":"healthy"}'
+    )
+
+
+def test_csd_exfil_and_native_markdown_require_exact_route_content():
+    assert native_identity(
+        "/csd-demo/exfil", "POST", 200, "application/json", '{"status":"received"}'
+    )
+    assert not native_identity(
+        "/csd-demo/exfil", "GET", 200, "application/json", '{"status":"received"}'
+    )
+    assert native_identity("/csd-demo/exfil/log", "GET", 200, "application/json", "[]")
+    assert not native_identity(
+        "/csd-demo/exfil/log", "GET", 200, "application/json", "[{}]"
+    )
+    assert native_identity(
+        "/juice-shop/ftp/acquisitions.md",
+        "GET",
+        200,
+        "text/markdown",
+        "# Planned Acquisitions\nSynthetic text",
+    )
+    assert not native_identity(
+        "/juice-shop/ftp/acquisitions.md", "GET", 200, "text/markdown", "Generic text"
+    )

@@ -817,3 +817,23 @@ def test_composed_status_specific_content_cannot_pass_with_native_page_only(tmp_
     assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
     event["response_assertions"]["read"] = False
     assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+
+
+def test_every_composed_native_request_declares_protocol_statuses():
+    root = Path(__file__).parents[1]
+    catalog = json.loads((root / "suites/catalog.json").read_text())
+    for scenario in catalog["scenarios"]:
+        if scenario["functional_contract"]["verifier"] != "composed-native":
+            continue
+        for requirement in scenario.get("dispatch_contract", {}).get(
+            "requirements", []
+        ):
+            assert requirement.get("expected_statuses"), (
+                scenario["id"],
+                requirement["id"],
+            )
+            server_errors = {500, 502, 503, 504} & set(requirement["expected_statuses"])
+            assert all(
+                str(code) in requirement.get("response_contract_by_status", {})
+                for code in server_errors
+            )

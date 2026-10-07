@@ -197,6 +197,65 @@ def auxiliary_identity(
     return False
 
 
+def declared_support_identity(
+    path: str, method: str, status: int, media: str, body: str, document: object
+) -> bool | None:
+    """Recognize exact declared support pages; None delegates to app classifiers."""
+    if path == "/" and method == "GET" and status == HTTP_SUCCESS:
+        return media == "text/html" and all(
+            value in body
+            for value in (
+                "<title>Origin Server</title>",
+                '<a href="/health">Health Check</a>',
+                '<a href="/juice-shop/">',
+                '<a href="/crapi/">',
+            )
+        )
+    if path == "/csd-demo/health":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and media == "application/json"
+            and document
+            == {
+                "status": "healthy",
+                "component": "csd-demo",
+                "attacks": [
+                    "skimmer",
+                    "formjacker",
+                    "keylogger",
+                    "cryptominer",
+                    "dom-hijack",
+                ],
+            }
+        )
+    if path == "/csd-demo/exfil":
+        return (
+            method == "POST"
+            and status == HTTP_SUCCESS
+            and document == {"status": "received"}
+        )
+    if path == "/csd-demo/exfil/log":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and isinstance(document, list)
+            and all(
+                isinstance(row, dict)
+                and {"fixture_id", "timestamp", "attack_type", "payload"} <= set(row)
+                for row in document
+            )
+        )
+    if path == "/juice-shop/ftp/acquisitions.md":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and media == "text/markdown"
+            and body.startswith("# Planned Acquisitions\n")
+        )
+    return None
+
+
 def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-statements,too-many-branches
     path: str, method: str, status: int | None, content_type: str, body: str
 ) -> bool:
@@ -228,6 +287,9 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             document = json.loads(body)
         except ValueError:
             return crapi_known_error(path, method, status, media, body)
+    support = declared_support_identity(path, method, status, media, body, document)
+    if support is not None:
+        return support
     if path in {"/health", "/httpbin/headers", "/csd-demo/"} or (
         path == "/juice-shop/api/Feedbacks/" and status == HTTP_UNAUTHORIZED
     ):
