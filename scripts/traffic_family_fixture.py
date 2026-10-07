@@ -22,6 +22,7 @@ def operation(directory: Path, action: str, family: str) -> None:
         "dvwa",
         "restaurant",
         "juice-shop",
+        "dvga",
     ):
         message = "invalid declared family action"
         raise ValueError(message)

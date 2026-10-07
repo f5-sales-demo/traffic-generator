@@ -130,7 +130,10 @@ class Budget:
 
     def family_marker(self, flow: http.HTTPFlow, current: dict) -> None:
         """Bind native recovery headers to the host-captured scenario baseline."""
-        if current.get("fixture_contract", {}).get("family_restore") == "juice-shop":
+        if current.get("fixture_contract", {}).get("family_restore") in (
+            "juice-shop",
+            "dvga",
+        ):
             baseline = Path(current["dispatch_path"]).parent / "family-baseline.json"
             family = json.loads(baseline.read_text())
             if not re.fullmatch(r"tgen-[a-f0-9]{32}", family.get("marker", "")):

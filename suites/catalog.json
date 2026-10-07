@@ -6596,8 +6596,13 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Native GraphQL payloads require declared result fields or exact protection attribution; marker-owned audits, imported pastes and exact uploaded bytes require native cleanup",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvga"
       }
     },
     {
@@ -6772,8 +6777,13 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Native GraphQL payloads require declared result fields or exact protection attribution; marker-owned audits, imported pastes and exact uploaded bytes require native cleanup",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvga"
       }
     },
     {
@@ -6958,7 +6968,17 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvga"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Native GraphQL payloads require declared result fields or exact protection attribution; marker-owned audits, imported pastes and exact uploaded bytes require native cleanup",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "dvga-exploits/07-jwt-forgery-me",
@@ -7025,7 +7045,17 @@
         "reject_unmatched_errors": true
       },
       "prerequisites": ["seeded-dvga-pastes"],
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvga"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Native GraphQL payloads require declared result fields or exact protection attribution; marker-owned audits, imported pastes and exact uploaded bytes require native cleanup",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "dvwa-exploits/01-brute-force",
