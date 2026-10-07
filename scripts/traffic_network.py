@@ -14,6 +14,7 @@ import time
 import urllib.parse
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from http.cookies import SimpleCookie
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Self
@@ -329,18 +330,28 @@ class NetworkBoundary:
             path = BENIGN_PATHS[index % len(BENIGN_PATHS)]
             self.state.benign["benign_per_domain"][domain] += 1
             self.state.benign["benign_per_application"][path] += 1
+        if not hasattr(self.state.local, "dvwa_sessions"):
+            self.state.local.dvwa_sessions = {}
+        headers = {
+            "X-TGen-Class": "benign",
+            "X-MUD-User": "waap-benign-" + domain,
+        }
+        if path.startswith("/dvwa/") and domain in self.state.local.dvwa_sessions:
+            headers["Cookie"] = "PHPSESSID=" + self.state.local.dvwa_sessions[domain]
         started_request = time.monotonic()
         try:
             connection.request(
                 "GET",
                 path,
-                headers={
-                    "X-TGen-Class": "benign",
-                    "X-MUD-User": "waap-benign-" + domain,
-                },
+                headers=headers,
             )
             response = connection.getresponse()
             body = response.read()
+            if path.startswith("/dvwa/"):
+                cookies = SimpleCookie()
+                cookies.load(response.getheader("Set-Cookie", ""))
+                if "PHPSESSID" in cookies:
+                    self.state.local.dvwa_sessions[domain] = cookies["PHPSESSID"].value
             success = SUCCESS_MIN <= response.status < SUCCESS_MAX and content_identity(
                 path, response.getheader("Content-Type", ""), body
             )

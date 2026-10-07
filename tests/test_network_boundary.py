@@ -176,6 +176,44 @@ class BoundaryTests(unittest.TestCase):
         ):
             boundary.__exit__(None, None, None)
 
+    def test_benign_dvwa_cookie_is_reused_only_on_its_domain_and_path(self):
+        boundary = NetworkBoundary(
+            ROOT, {"domains": ["www.example.test", "api.example.test"]}, ROOT
+        )
+        with patch("traffic_network.http.client.HTTPSConnection") as connection:
+            response = connection.return_value.getresponse.return_value
+            response.status = 200
+            response.read.return_value = b"DVWA"
+            response.getheader.side_effect = lambda name, _default="": (
+                "PHPSESSID=synthetic-session; Path=/dvwa/"
+                if name == "Set-Cookie"
+                else "text/html"
+            )
+            boundary.state.benign["benign_per_domain"]["www.example.test"] = 1
+            boundary.request("www.example.test")
+            first = connection.return_value.request.call_args.kwargs["headers"].copy()
+            boundary.state.benign["benign_per_domain"]["www.example.test"] = 1
+            boundary.request("www.example.test")
+            second = connection.return_value.request.call_args.kwargs["headers"].copy()
+            boundary.request("www.example.test")
+            other_path = connection.return_value.request.call_args.kwargs[
+                "headers"
+            ].copy()
+            boundary.state.benign["benign_per_domain"]["api.example.test"] = 1
+            boundary.request("api.example.test")
+            other_domain = connection.return_value.request.call_args.kwargs[
+                "headers"
+            ].copy()
+        assert "Cookie" not in first
+        assert second["Cookie"] == "PHPSESSID=synthetic-session"
+        assert "Cookie" not in other_path
+        assert "Cookie" not in other_domain
+        with (
+            patch("traffic_network.subprocess.run"),
+            patch("traffic_network.shutil.rmtree"),
+        ):
+            boundary.__exit__(None, None, None)
+
     def test_stalled_gateway_fails_supervisor_health(self):
         with tempfile.TemporaryDirectory() as tmp:
             runtime = pathlib.Path(tmp)
