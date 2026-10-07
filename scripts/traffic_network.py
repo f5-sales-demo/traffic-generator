@@ -756,7 +756,10 @@ class NetworkBoundary:
     def order_fixture(self, directory: Path, action: str) -> bool:
         """Prepare/recover only the named dedicated actor outside HTTP egress."""
         environment = dict(
-            os.environ, TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json")
+            os.environ,
+            TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json"),
+            SOURCE_COMMIT=self.config["source_commit"],
+            TGEN_ARTIFACT_SHA256=self.config["artifact_sha256"],
         )
         result = subprocess.run(  # noqa: S603 - fixed native recovery helper and private paths
             [
