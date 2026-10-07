@@ -2411,7 +2411,14 @@
             },
             "payload_class": "malformed-json",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [400],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "status": "fail",
+                "message": "Request body is not valid JSON"
+              }
+            }
           },
           {
             "id": "wrong-content-type",
@@ -2423,7 +2430,14 @@
             },
             "payload_class": "wrong-content-type",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [415],
+            "response_contract": {
+              "content_type": "application/problem+json",
+              "json_equals": {
+                "status": 415,
+                "title": "Unsupported Media Type"
+              }
+            }
           },
           {
             "id": "invalid-id",
@@ -2440,7 +2454,14 @@
             "body_exact": "{}",
             "payload_class": "missing-required-fields",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [400],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_equals": {
+                "message": "Validation failed"
+              },
+              "json_keys": ["details"]
+            }
           },
           {
             "id": "unexpected-query",
@@ -2459,8 +2480,8 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Malformed registration and empty signup bodies are rejected by native validation; unsupported login media and invalid book IDs have exact protocol outcomes, with request-bound protection attribution when blocked",
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -5598,7 +5619,11 @@
             "payload_class": "nosql-operators",
             "path": "/crapi/community/api/v2/coupon/validate-coupon",
             "body_regex": "\\$(?:ne|gt|regex)",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200],
+            "response_contract": {
+              "content_type": "application/json",
+              "json_keys": ["coupon_code", "amount", "CreatedAt"]
+            }
           },
           {
             "method": "POST",
@@ -5614,6 +5639,10 @@
                 "content_type": "application/json",
                 "json_document_equals": {}
               }
+            },
+            "response_contract": {
+              "content_type": "application/json",
+              "json_document_equals": {}
             }
           },
           {
@@ -5641,8 +5670,8 @@
       "fixture_refresh": ["crapi"],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Native coupon lookup returns concrete coupon code and amount for each operator and seeded positive control; missing-code HTTP 500 is accepted only with its exact empty JSON body and cannot satisfy the positive control",
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -6860,8 +6889,8 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "The native me query returns a concrete GraphQL data or error envelope for every forged and malformed token; request-bound WAF evidence is required for protection responses",
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -8181,8 +8210,8 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Every include probe returns authenticated native DVWA CSP content or attributed WAF protection; the shell submits URL strings and does not execute remote scripts",
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -21433,8 +21462,8 @@
       "fixture_refresh": ["restaurant"],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "OpenAPI, documentation, unknown routes and root method discovery return native RESTaurant protocol identities; no item mutation endpoint or body is submitted",
+        "mutation_policy": "read-only"
       }
     },
     {

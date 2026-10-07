@@ -38,6 +38,11 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
     if status in (301, 302, 307, 308):
         return media == "text/html" and ("Redirect" in body or "redirect" in body)
     document = None
+    media = (
+        "application/json"
+        if path.startswith("/crapi/") and media == "application/problem+json"
+        else media
+    )
     if media in ("application/json", "text/json"):
         try:
             document = json.loads(body)
@@ -118,6 +123,7 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
                                 "email",
                                 "content",
                                 "count",
+                                "title",
                                 "order",
                                 "payment",
                             }
@@ -127,6 +133,13 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             )
             or (media == "text/html" and ("crAPI" in body or "MailHog" in body))
             or missing_order_identity(path, method, status, media, body)
+            or (
+                path == "/crapi/community/api/v2/coupon/validate-coupon"
+                and method == "POST"
+                and status == NATIVE_MISSING_ORDER_STATUS
+                and media == "application/json"
+                and document == {}
+            )
         )
     if path.startswith("/dvwa/"):
         return (

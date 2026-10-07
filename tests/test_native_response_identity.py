@@ -92,3 +92,30 @@ def test_order_missing_object_error_is_exact_and_endpoint_scoped():
         "application/json",
         '{"order":{"id":1}}',
     )
+
+
+def test_native_validation_media_and_empty_coupon_error_are_route_scoped():
+    assert native_identity(
+        "/crapi/identity/api/auth/login",
+        "POST",
+        415,
+        "application/problem+json",
+        '{"title":"Unsupported Media Type","status":415}',
+    )
+    assert native_identity(
+        "/crapi/community/api/v2/coupon/validate-coupon",
+        "POST",
+        500,
+        "application/json",
+        "{}",
+    )
+    assert not native_identity(
+        "/crapi/identity/api/auth/login", "POST", 500, "application/json", "{}"
+    )
+    assert not native_identity(
+        "/crapi/community/api/v2/coupon/validate-coupon",
+        "POST",
+        200,
+        "application/json",
+        "{}",
+    )
