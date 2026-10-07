@@ -13563,8 +13563,8 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "All identity-tagged wrong-password login attempts return native authentication protocol responses or attributed protection; the submitted credentials cannot create records or change passwords",
+        "mutation_policy": "read-only"
       }
     },
     {
@@ -29113,8 +29113,8 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "All ten preserved XML payloads are echoed by HTTPBin or rejected by native VAmPI/DVWA protocol handlers, with exact attribution for protection; no executable valid registration JSON or item mutation is submitted",
+        "mutation_policy": "read-only"
       }
     },
     {
