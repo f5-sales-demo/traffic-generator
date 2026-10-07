@@ -343,7 +343,10 @@ class Budget:
             if status in (301, 302, 307, 308) and not body and location:
                 redirect = urlsplit(location)
                 event["native_response_identity"] = (
-                    not redirect.hostname or redirect.hostname == event["domain"]
+                    redirect.scheme in ("", "http", "https")
+                    and not (redirect.username or redirect.password)
+                    and (not redirect.hostname or redirect.hostname == event["domain"])
+                    and (bool(redirect.path) or bool(redirect.query))
                 )
             event["response_assertions"] = {}
             for requirement in current.get("dispatch_contract", {}).get(
