@@ -75,6 +75,7 @@ def main() -> int:
                 check=False,
                 env={
                     **os.environ,
+                    "TGEN_FAMILY_KIND": family,
                     "TGEN_FAMILY_MARKER": json.loads(
                         (directory / "family-baseline.json").read_text()
                     )["marker"],

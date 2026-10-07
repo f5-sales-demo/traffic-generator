@@ -28,6 +28,7 @@ def operation(
         "restaurant",
         "juice-shop",
         "dvga",
+        "crapi",
     ):
         message = "invalid declared family action"
         raise ValueError(message)

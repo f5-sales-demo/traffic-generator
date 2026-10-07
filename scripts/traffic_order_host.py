@@ -53,6 +53,7 @@ def host_jobs(root: Path, runtime: Path, config: dict, stop: threading.Event) ->
                 "juice-shop",
                 "dvga",
                 "mixed",
+                "crapi",
             ):
                 atomic_json(response, {"passed": False, "request": request})
                 continue
