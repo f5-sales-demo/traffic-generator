@@ -400,6 +400,13 @@ def verify_composed_native(
                         )
                         is True
                     )
+                    and (
+                        r.get("control_attributed") is True
+                        or str(r.get("status"))
+                        not in requirement.get("response_contract_by_status", {})
+                        or r.get("response_assertions", {}).get(requirement["id"])
+                        is True
+                    )
                     and not r.get("transport_error")
                     for r in rows
                 ),

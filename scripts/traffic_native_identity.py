@@ -3,6 +3,8 @@
 import json
 import re
 
+HTTP_SUCCESS = 200
+HTTP_NOT_FOUND = 404
 HTTP_ERROR_START = 400
 NATIVE_MISSING_ORDER_STATUS = 500
 
@@ -22,6 +24,33 @@ def missing_order_identity(
                 "<title>Server Error (500)</title>",
                 "<h1>Server Error (500)</h1>",
             )
+        )
+    )
+
+
+def dvwa_identity(path: str, method: str, status: int, media: str, body: str) -> bool:
+    """Recognize owned upload execution or authenticated DVWA pages."""
+    if re.fullmatch(r"/dvwa/hackable/uploads/tgen-[a-f0-9]{32}-shell\.php", path):
+        return (
+            method == "GET"
+            and media == "text/html"
+            and (
+                (status == HTTP_SUCCESS and "UPLOAD_SUCCESS" in body and "uid=" in body)
+                or (
+                    status == HTTP_NOT_FOUND
+                    and "Not Found" in body
+                    and "The requested URL was not found" in body
+                )
+            )
+        )
+    return (
+        media == "text/html"
+        and "DVWA" in body
+        and (
+            "login.php" not in body
+            or "Logout" in body
+            or path.endswith("login.php")
+            or status >= HTTP_ERROR_START
         )
     )
 
@@ -142,16 +171,7 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             )
         )
     if path.startswith("/dvwa/"):
-        return (
-            media == "text/html"
-            and "DVWA" in body
-            and (
-                "login.php" not in body
-                or "Logout" in body
-                or path.endswith("login.php")
-                or status >= HTTP_ERROR_START
-            )
-        )
+        return dvwa_identity(path, method, status, media, body)
     if path.startswith("/dvga/"):
         return (
             isinstance(document, (dict, list))

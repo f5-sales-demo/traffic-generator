@@ -46,7 +46,7 @@ def host_jobs(root: Path, runtime: Path, config: dict, stop: threading.Event) ->
                 TGEN_ARTIFACT_SHA256=config["artifact_sha256"],
             )
             family = file.name.startswith("family-")
-            if family and request.get("family") != "vampi":
+            if family and request.get("family") not in ("vampi", "dvwa"):
                 atomic_json(response, {"passed": False, "request": request})
                 continue
             command = (

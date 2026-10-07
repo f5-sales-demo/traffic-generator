@@ -14,6 +14,8 @@ def family_restored(result: dict, directory: Path) -> bool:
         return (
             after.get("restored") is True
             and before.get("identity") == after.get("identity")
+            and before.get("family") == after.get("family")
+            and before.get("marker") == after.get("marker")
             and after.get("after") == before.get("replicas")
             and len(after.get("after", {})) == REPLICA_COUNT
             and all(

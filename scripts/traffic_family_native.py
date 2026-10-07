@@ -61,6 +61,12 @@ def main() -> int:
             result = subprocess.run(  # noqa: S603 - checked catalog native entrypoint and target
                 ["/usr/bin/bash", str(root / scenario["entrypoint"]), domain],
                 check=False,
+                env={
+                    **os.environ,
+                    "TGEN_FAMILY_MARKER": json.loads(
+                        (directory / "family-baseline.json").read_text()
+                    )["marker"],
+                },
             )
             return result.returncode
         finally:

@@ -772,3 +772,16 @@ def test_corpus_setup_response_cannot_invalidate_or_satisfy_payload_coverage(tmp
     }
     assert verify_functional(scenario, result, [setup, payload], tmp_path)["passed"]
     assert not verify_functional(scenario, result, [setup], tmp_path)["passed"]
+
+
+def test_composed_status_specific_content_cannot_pass_with_native_page_only(tmp_path):
+    scenario, result, event = composed_fixture()
+    requirement = scenario["dispatch_contract"]["requirements"][0]
+    requirement["response_contract_by_status"] = {
+        "200": {"content_type": "text/html", "text_contains": ["owned payload"]}
+    }
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    event["response_assertions"] = {"read": True}
+    assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    event["response_assertions"]["read"] = False
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]

