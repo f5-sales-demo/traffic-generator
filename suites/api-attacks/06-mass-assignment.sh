@@ -60,17 +60,8 @@ echo ""
 
 # --- Get token for authenticated tests ---
 echo "[+] Authenticating for PUT/PATCH tests..."
-curl -sk -X POST "${BASE}/users/v1/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"massput","password":"Test1234","email":"massput@example.com"}' \
-  --max-time 10 >/dev/null 2>&1 || true
-
-LOGIN_RESP=$(curl -sk -X POST "${BASE}/users/v1/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"massput","password":"Test1234"}' \
-  --max-time 10) || true
-
-TOKEN=$(echo "$LOGIN_RESP" | jq -r '.auth_token // empty' 2>/dev/null || true)
+# Use the declared origin-issued token across independent VAmPI replicas.
+TOKEN=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py" vampi_token) || exit 1
 if [[ -z "$TOKEN" ]]; then
   echo "[FAIL] Native authentication prerequisite failed" >&2
   exit 1
