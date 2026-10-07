@@ -20002,7 +20002,7 @@
             "path": "/restaurant/register",
             "payload_class": "account-registration",
             "minimum_dispatches": 1,
-            "body_regex": "\"username\":\"testuser_[0-9]+\",\"password\":\"TestPass123\"",
+            "body_regex": "\"username\":\"tgen-[a-f0-9]{32}-register\",\"password\":\"TestPass123\"",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -20011,7 +20011,7 @@
             "path": "/restaurant/token",
             "payload_class": "account-authentication",
             "minimum_dispatches": 1,
-            "body_regex": "username=testuser_[0-9]+&password=TestPass123",
+            "body_regex": "username=tgen-[a-f0-9]{32}-register&password=TestPass123",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },
           {
@@ -20028,7 +20028,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "restaurant"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Native RESTaurant requests require declared protocol content or exact control attribution; host-captured chef and menu rows are restored and only marker-owned temporary actors without unrelated references are removed",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "restaurant-exploits/02-bola-profile",
@@ -20678,7 +20688,7 @@
             "path": "/restaurant/users/update_role",
             "payload_class": "customer-role-escalation",
             "minimum_dispatches": 2,
-            "body_regex": "\"username\":\"customer_[0-9]+\",\"role\":\"Chef\"",
+            "body_regex": "\"username\":\"tgen-[a-f0-9]{32}-customer\",\"role\":\"Chef\"",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
@@ -20798,7 +20808,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "restaurant"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Native RESTaurant requests require declared protocol content or exact control attribution; host-captured chef and menu rows are restored and only marker-owned temporary actors without unrelated references are removed",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "restaurant-exploits/06-ssrf-menu-image",
@@ -20973,7 +20993,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "restaurant"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Native RESTaurant requests require declared protocol content or exact control attribution; host-captured chef and menu rows are restored and only marker-owned temporary actors without unrelated references are removed",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "restaurant-exploits/07-command-injection",
@@ -21196,7 +21226,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["restaurant"]
+      "fixture_refresh": ["restaurant"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "restaurant"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Native RESTaurant requests require declared protocol content or exact control attribution; host-captured chef and menu rows are restored and only marker-owned temporary actors without unrelated references are removed",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "restaurant-exploits/09-jwt-secret-crack",
