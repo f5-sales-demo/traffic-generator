@@ -2715,6 +2715,7 @@
         ]
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-scraper",
         "behavior": "Every declared scraped native page has matched content, response digest and screenshot evidence with complete browser cleanup"
       }
@@ -3353,6 +3354,7 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-browser-routes",
         "behavior": "All declared native rendered navigation outcomes have source-bound screenshot evidence and complete browser cleanup; unattributed denials do not qualify rendering"
       }
@@ -3490,6 +3492,7 @@
         "lua_script": "suites/cdn-load-testing/_baseline.lua"
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -4336,6 +4339,7 @@
         "resource_profile": false
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -4886,6 +4890,7 @@
         "lua_script": "suites/cdn-load-testing/_baseline.lua"
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -4960,6 +4965,7 @@
         "lua_script": "suites/cdn-load-testing/_baseline.lua"
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -6928,6 +6934,7 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-dvwa-command",
         "behavior": "Every preserved command payload reaches authenticated native DVWA and returns declared command output or an explicit negative backtick command outcome"
       }
@@ -15085,6 +15092,7 @@
       "fixture_refresh": [],
       "adapter": "native-scanner",
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-scanner",
         "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
       }
@@ -17063,6 +17071,7 @@
         "resource_profile": false
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -17301,6 +17310,7 @@
         "resource_profile": false
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -17354,6 +17364,7 @@
         "resource_profile": false
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -17635,6 +17646,7 @@
         "resource_profile": true
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -17754,6 +17766,7 @@
         "resource_profile": false
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-load",
         "behavior": "All declared native tool/concurrency/path/connection phases complete with real reports, application content and process cleanup; no cross-host hardware performance claim"
       }
@@ -18114,6 +18127,7 @@
       "fixture_refresh": [],
       "adapter": "native-scanner",
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-scanner",
         "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
       }
@@ -18133,6 +18147,7 @@
       "fixture_refresh": [],
       "adapter": "native-masscan",
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-masscan",
         "behavior": "Native Masscan sends paced SYN probes to authorized application ports 80 and 443 and observes real SYN-ACK replies"
       }
@@ -18778,6 +18793,7 @@
         "native_discovery": true
       },
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-subfinder",
         "behavior": "Native passive discovery rows remain within the authorized root and bind report bytes, binary provenance, installed source and observed process cleanup"
       }
@@ -21281,6 +21297,7 @@
       "fixture_refresh": [],
       "adapter": "native-scanner",
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-scanner",
         "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
       }
@@ -21300,6 +21317,7 @@
       "fixture_refresh": [],
       "adapter": "native-scanner",
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-scanner",
         "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
       }
@@ -21319,6 +21337,7 @@
       "fixture_refresh": [],
       "adapter": "native-scanner",
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-scanner",
         "behavior": "The named native scanner completes its structured report with actual scoped and measured connection attempts"
       }
@@ -21422,6 +21441,7 @@
       "timeout_seconds": 900,
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "native-slow-headers",
         "behavior": "Native TLS sockets send incomplete HTTP headers, repeat three paced header rounds, observe peer closure, and close all sockets"
       },
@@ -29296,6 +29316,7 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "current-pass-report",
         "behavior": "Recompute every declared dependency from current-pass native functional receipts bound to the installed source and immutable artifact"
       }
@@ -29337,6 +29358,7 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "read-only",
         "verifier": "current-pass-report",
         "behavior": "Recompute every declared dependency from current-pass native functional receipts bound to the installed source and immutable artifact"
       }
