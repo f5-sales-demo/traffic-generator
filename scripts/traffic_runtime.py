@@ -334,6 +334,7 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
                 PATH=str(tools) + os.pathsep + os.environ["PATH"],
                 TGEN_RESULTS_DIR=str(directory),
                 RESULTS_DIR=str(directory),
+                TGEN_REQUEST_TIMEOUT="600" if scenario["suite"] == "dvga-exploits" else "15",
             )
             result = execute(
                 command,
