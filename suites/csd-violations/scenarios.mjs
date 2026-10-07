@@ -307,10 +307,48 @@ const scenarios = [
   }),
 ];
 
+export const PAYMENT_PATH = '/csd-page-tamper/payment';
+export const SELECTOR_HEADER = 'X-CSD-Page-Tamper';
+export const HEADER_VALUES = Object.freeze({
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+  'cache-control': 'no-store, max-age=0',
+});
+export const HEADER_SCENARIO_SELECTORS = Object.freeze(
+  Object.fromEntries(Object.keys(HEADER_VALUES).map((selector) => [`header-omit-${selector}`, selector])),
+);
+export const APPROVED_CSD_COLLECTORS = Object.freeze([
+  Object.freeze({ host: 'us.gimp.zeronaught.com', path: '/__imp_apg__/api/dip/v1/dip' }),
+  Object.freeze({ host: 'csd.zeronaught.com', path: '/dip' }),
+]);
+
+for (const [name, selector] of Object.entries(HEADER_SCENARIO_SELECTORS)) {
+  scenarios.push(
+    scenario({
+      name,
+      displayName: `Bounded ${selector} omission pair`,
+      kind: 'header-pair',
+      immediateEvidence:
+        'Matched fresh control/mutation Document and page-initiated HEAD wire facts with completed CSD HTTP transport.',
+      cleanup: 'Drain owned Fetch pauses, disable Fetch, detach CDP and destroy each fresh context.',
+      steps: Object.freeze([
+        Object.freeze({
+          name: 'matched-header-pair',
+          op: 'header-pair',
+          selector,
+          scope: 'same-origin',
+          route: PAYMENT_PATH,
+          assertions: Object.freeze([Object.freeze(assertion('result', 'eq', 'passed'))]),
+        }),
+      ]),
+    }),
+  );
+}
+
 export const SCENARIO_NAMES = Object.freeze(scenarios.map(({ name }) => name));
 export const SCENARIOS = Object.freeze(scenarios);
 export const SUITE_MANIFEST = Object.freeze({
-  schemaVersion: '1.0.0',
+  schemaVersion: '1.1.0',
   name: 'csd-violations',
   displayName: 'Client-Side Defense Synthetic Violation Scenarios',
   category: manifestDefaults.category,

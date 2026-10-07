@@ -1,18 +1,28 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import {
+  aggregateDipOutcomes,
   boundedOperation,
   buildReceipt,
+  createHeaderPairTracker,
+  headerFacts,
   pageHelpers,
+  projectHeaderPair,
+  runHeaderPair,
   runSuite,
   sanitizeUrl,
+  selectorRequestAllowed,
   validateAwsRuntime,
   validateTarget,
 } from '../suites/csd-violations/run.mjs';
 import {
+  HEADER_SCENARIO_SELECTORS,
+  HEADER_VALUES,
+  PAYMENT_PATH,
   REVIEWED_DESTINATIONS,
   SCENARIO_NAMES,
   SCENARIOS,
@@ -53,12 +63,13 @@ const highVolumeOutcomeNames = [
 const terminalOutcomes = ['finished', 'blocked', 'failed', 'timed-out'];
 
 test('manifest contains the exact stable eleven patterns and assertion contracts', () => {
-  assert.deepEqual(SCENARIO_NAMES, expectedNames);
-  assert.equal(new Set(SCENARIO_NAMES).size, 11);
+  assert.deepEqual(SCENARIO_NAMES.slice(0, 11), expectedNames);
+  assert.deepEqual(SCENARIO_NAMES.slice(11), Object.keys(HEADER_SCENARIO_SELECTORS));
+  assert.equal(new Set(SCENARIO_NAMES).size, 14);
   assert.ok(SCENARIOS.every((scenario) => scenario.steps.every((step) => step.assertions?.length > 0)));
-  assert.ok(SCENARIOS.every((scenario) => scenario.steps.at(-1)?.op === 'cleanup'));
+  assert.ok(SCENARIOS.slice(0, 11).every((scenario) => scenario.steps.at(-1)?.op === 'cleanup'));
   assert.ok(
-    SCENARIOS.every((scenario) => {
+    SCENARIOS.slice(0, 11).every((scenario) => {
       const fields = scenario.steps.at(-1).assertions.map(({ field }) => field);
       return [
         'artifactCount',
@@ -70,7 +81,9 @@ test('manifest contains the exact stable eleven patterns and assertion contracts
     }),
   );
   assert.deepEqual(
-    Object.fromEntries(SCENARIOS.map(({ name, steps }) => [name, steps.find(({ op }) => op === 'navigate')?.route])),
+    Object.fromEntries(
+      SCENARIOS.slice(0, 11).map(({ name, steps }) => [name, steps.find(({ op }) => op === 'navigate')?.route]),
+    ),
     {
       'login-credential-skimmer': '/#/login',
       'registration-harvester': '/#/register',
@@ -224,7 +237,7 @@ test('receipt counts final screenshot and assertion failures', () => {
     screenshotFailures: 2,
     assertionFailures: 1,
   });
-  assert.equal(receipt.schemaVersion, 2);
+  assert.equal(receipt.schemaVersion, 3);
   assert.equal(receipt.manifest.schemaVersion, SUITE_MANIFEST.schemaVersion);
   assert.equal(receipt.discarded, false);
   assert.match(receipt.caveat, /not prove/);
@@ -575,14 +588,14 @@ test('AWS runtime gate fails closed when deployment prerequisites are missing', 
 });
 
 test('screenshot contract includes every explicit cleanup step and final state', () => {
-  const stepCount = SCENARIOS.reduce((count, scenario) => count + scenario.steps.length, 0);
-  const cleanupCount = SCENARIOS.reduce(
+  const stepCount = SCENARIOS.slice(0, 11).reduce((count, scenario) => count + scenario.steps.length, 0);
+  const cleanupCount = SCENARIOS.slice(0, 11).reduce(
     (count, scenario) => count + scenario.steps.filter(({ op }) => op === 'cleanup').length,
     0,
   );
-  assert.equal(cleanupCount, SCENARIOS.length);
+  assert.equal(cleanupCount, 11);
   assert.equal(stepCount, 45);
-  assert.equal(stepCount + SCENARIOS.length, 56);
+  assert.equal(stepCount + 11, 56);
 });
 
 test('AWS headed Chrome captures every step and final screenshot', {
@@ -786,4 +799,586 @@ test('real Chrome reverses owned native controls after asynchronous rehydration'
   } finally {
     await browser.close();
   }
+});
+
+const paymentUrl = `https://client-side-defense.f5-sales-demo.com${PAYMENT_PATH}`;
+const targetOrigin = new URL('https://client-side-defense.f5-sales-demo.com');
+
+test('fourteen frozen scenarios append only the exact three header omissions', () => {
+  assert.equal(SUITE_MANIFEST.schemaVersion, '1.1.0');
+  assert.equal(SCENARIOS.length, 14);
+  for (const scenario of SCENARIOS.slice(11)) {
+    assert.ok(Object.isFrozen(scenario));
+    assert.ok(Object.isFrozen(scenario.steps));
+    assert.ok(Object.isFrozen(scenario.steps[0]));
+    assert.equal(scenario.kind, 'header-pair');
+    assert.equal(scenario.steps[0].scope, 'same-origin');
+    assert.equal(scenario.steps[0].route, PAYMENT_PATH);
+    assert.equal(scenario.steps[0].selector, HEADER_SCENARIO_SELECTORS[scenario.name]);
+  }
+});
+
+test('selector guards exact raw URL and excludes redirects, collectors, preflight and non-read verbs', () => {
+  const allowed = { url: paymentUrl, method: 'GET', resourceType: 'Document' };
+  assert.equal(selectorRequestAllowed(allowed, targetOrigin), true);
+  assert.equal(selectorRequestAllowed({ ...allowed, method: 'HEAD', resourceType: 'Fetch' }, targetOrigin), true);
+  assert.equal(selectorRequestAllowed({ ...allowed, method: 'HEAD' }, targetOrigin, 'document'), false);
+  assert.equal(selectorRequestAllowed({ ...allowed, resourceType: 'Script' }, targetOrigin, 'document'), false);
+  assert.equal(selectorRequestAllowed({ ...allowed, redirectedRequestId: 'private-id' }, targetOrigin), false);
+  for (const method of ['POST', 'OPTIONS', 'PUT', 'get', 'DELETE'])
+    assert.equal(selectorRequestAllowed({ ...allowed, method }, targetOrigin), false);
+  for (const url of [
+    paymentUrl + '?',
+    paymentUrl + '#',
+    paymentUrl + '?email=private',
+    paymentUrl + '/',
+    paymentUrl.replace('/payment', '/%70ayment'),
+    paymentUrl.replace('/payment', '/x/../payment'),
+    paymentUrl.replace('/payment', '//payment'),
+    paymentUrl.replace('https://', 'http://'),
+    paymentUrl.replace('https://', 'https://user:secret@'),
+    paymentUrl.replace('.com/', '.com:443/'),
+    paymentUrl.replace('client-side-defense', 'CLIENT-SIDE-DEFENSE'),
+    paymentUrl.replace('/csd-page-tamper/payment', '/__imp_apg__/api/dip/v1/dip'),
+    'https://us.gimp.zeronaught.com/__imp_apg__/api/dip/v1/dip',
+    paymentUrl.replace('.com/', '.com.evil.invalid/'),
+  ])
+    assert.equal(selectorRequestAllowed({ ...allowed, url }, targetOrigin), false, url);
+  assert.equal(selectorRequestAllowed({ ...allowed, resourceType: 'Preflight' }, targetOrigin), false);
+  assert.equal(selectorRequestAllowed(allowed, targetOrigin, 'all-assets'), false);
+  assert.equal(
+    selectorRequestAllowed(
+      { url: () => paymentUrl, method: () => 'GET', resourceType: () => 'document', redirectedFrom: () => null },
+      targetOrigin,
+    ),
+    true,
+  );
+});
+
+test('case-insensitive frozen header facts reject duplicate and ambiguous wire values', () => {
+  assert.deepEqual(
+    headerFacts({
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Cache-Control': 'no-store, max-age=0',
+    }),
+    headerFacts(HEADER_VALUES),
+  );
+  assert.equal(headerFacts({ ...HEADER_VALUES, 'X-Frame-Options': 'DENY' }), null);
+  assert.equal(headerFacts({ ...HEADER_VALUES, 'x-frame-options': 'DENY\nDENY' }), null);
+  assert.equal(headerFacts({ ...HEADER_VALUES, 'cache-control': ['no-store'] }), null);
+  assert.equal(headerFacts([]), null);
+  assert.equal(
+    headerFacts({ ...HEADER_VALUES, 'x-frame-options': 'DENY, DENY' })['x-frame-options'].matchesCanonical,
+    false,
+  );
+});
+
+function wireEvent(
+  tracker,
+  {
+    id = 'private-document',
+    method = 'GET',
+    type = 'Document',
+    url = paymentUrl,
+    selector = null,
+    headers = HEADER_VALUES,
+    status = 200,
+    initiator = 'script',
+    finished = true,
+    extra = true,
+    duplicate = false,
+  } = {},
+) {
+  const request = { url, method, headers: selector ? { 'X-CSD-Page-Tamper': selector } : {} };
+  tracker.event('Network.requestWillBeSentExtraInfo', { requestId: id, headers: request.headers });
+  tracker.event('Network.responseReceivedExtraInfo', { requestId: id, statusCode: status, headers });
+  tracker.event('Network.requestWillBeSent', {
+    requestId: id,
+    request,
+    type,
+    frameId: 'private-top-frame',
+    initiator: { type: initiator },
+  });
+  tracker.event('Network.responseReceived', { requestId: id, hasExtraInfo: extra, response: { url, status, headers } });
+  if (duplicate) tracker.event('Network.responseReceivedExtraInfo', { requestId: id, statusCode: status, headers });
+  if (finished) tracker.event('Network.loadingFinished', { requestId: id });
+}
+
+test('wire ExtraInfo ambiguity, unknown status and fake HEAD provenance never establish observations', () => {
+  const value = (tracker) =>
+    tracker.value({
+      mode: 'control',
+      scope: 'same-origin',
+      topFrameId: 'private-top-frame',
+      naturalHeadObserved: true,
+      documentStatus: 200,
+      headStatus: 200,
+    });
+  const tracker = createHeaderPairTracker(targetOrigin, 'x-content-type-options');
+  wireEvent(tracker);
+  wireEvent(tracker, { id: 'private-head', method: 'HEAD', type: 'Fetch' });
+  assert.equal(value(tracker).document.observed, true);
+  assert.equal(value(tracker).head.observed, true);
+  assert.equal(
+    tracker.value({
+      mode: 'control',
+      scope: 'same-origin',
+      topFrameId: 'private-top-frame',
+      naturalHeadObserved: false,
+      documentStatus: 200,
+      headStatus: 200,
+    }).head.observed,
+    false,
+  );
+  for (const args of [{ extra: false }, { duplicate: true }, { status: null }, { finished: false }]) {
+    const candidate = createHeaderPairTracker(targetOrigin, 'x-content-type-options');
+    wireEvent(candidate, args);
+    if (args.duplicate) assert.equal(value(candidate).invalid, true);
+    assert.equal(value(candidate).document.observed, false);
+  }
+  const fabricated = createHeaderPairTracker(targetOrigin, 'x-content-type-options');
+  wireEvent(fabricated, { id: 'head', method: 'HEAD', type: 'Fetch', initiator: 'other' });
+  assert.equal(value(fabricated).head.observed, false);
+  const serialized = JSON.stringify(value(tracker));
+  assert.doesNotMatch(serialized, /private-document|private-head|private-top-frame|nosniff|no-store|DENY/);
+});
+
+test('HEAD wire observation accepts only exact canceled-after-response ERR_ABORTED evidence', () => {
+  const observe = (failure, setup = {}) => {
+    const tracker = createHeaderPairTracker(targetOrigin, 'x-content-type-options');
+    wireEvent(tracker, { id: 'head', method: 'HEAD', type: 'Fetch', finished: false, ...setup });
+    tracker.event('Network.loadingFailed', { requestId: 'head', ...failure });
+    return tracker.value({
+      mode: 'control',
+      scope: 'same-origin',
+      topFrameId: 'private-top-frame',
+      naturalHeadObserved: true,
+      documentStatus: 200,
+      headStatus: 200,
+    });
+  };
+  const accepted = observe({ canceled: true, errorText: 'net::ERR_ABORTED' });
+  assert.equal(accepted.head.observed, true);
+  assert.deepEqual(accepted.head.terminal, {
+    state: 'failed',
+    canceled: true,
+    errorCode: 'ERR_ABORTED',
+    responseReceivedBeforeTerminal: true,
+  });
+  for (const failure of [
+    { canceled: false, errorText: 'net::ERR_ABORTED' },
+    { canceled: true, errorText: 'net::ERR_CONNECTION_RESET private@example.com' },
+    { canceled: true },
+  ])
+    assert.equal(observe(failure).head.observed, false);
+  for (const setup of [{ extra: false }, { duplicate: true }, { status: 503 }, { initiator: 'other' }])
+    assert.equal(observe({ canceled: true, errorText: 'net::ERR_ABORTED' }, setup).head.observed, false);
+  const tracker = createHeaderPairTracker(targetOrigin, 'x-content-type-options');
+  tracker.event('Network.loadingFailed', { requestId: 'head', canceled: true, errorText: 'net::ERR_ABORTED' });
+  wireEvent(tracker, { id: 'head', method: 'HEAD', type: 'Fetch', finished: false });
+  assert.equal(
+    tracker.value({
+      mode: 'control',
+      scope: 'same-origin',
+      topFrameId: 'private-top-frame',
+      naturalHeadObserved: true,
+      headStatus: 200,
+    }).head.observed,
+    false,
+  );
+  for (const fault of ['no-response', 'no-wire', 'wrong-wire-id', 'redirect', 'get-aborted', 'duplicate-terminal']) {
+    const candidate = createHeaderPairTracker(targetOrigin, 'x-content-type-options');
+    const send = candidate.event;
+    candidate.event = (event, params) => {
+      if (fault === 'no-response' && event === 'Network.responseReceived') return;
+      if (fault === 'no-wire' && event === 'Network.responseReceivedExtraInfo') return;
+      if (fault === 'wrong-wire-id' && event === 'Network.responseReceivedExtraInfo')
+        params = { ...params, requestId: 'unrelated' };
+      if (fault === 'redirect' && event === 'Network.requestWillBeSent') params = { ...params, redirectResponse: {} };
+      send(event, params);
+    };
+    wireEvent(candidate, {
+      id: 'head',
+      method: fault === 'get-aborted' ? 'GET' : 'HEAD',
+      type: fault === 'get-aborted' ? 'Document' : 'Fetch',
+      finished: false,
+    });
+    candidate.event('Network.loadingFailed', { requestId: 'head', canceled: true, errorText: 'net::ERR_ABORTED' });
+    if (fault === 'duplicate-terminal') candidate.event('Network.loadingFinished', { requestId: 'head' });
+    const facts = candidate.value({
+      mode: 'control',
+      scope: 'same-origin',
+      topFrameId: 'private-top-frame',
+      naturalHeadObserved: true,
+      documentStatus: 200,
+      headStatus: 200,
+    });
+    assert.equal((fault === 'get-aborted' ? facts.document : facts.head).observed, false, fault);
+  }
+  assert.doesNotMatch(
+    JSON.stringify(observe({ canceled: true, errorText: 'private@example.com secret' })),
+    /private@|secret/,
+  );
+});
+
+test('DIP aggregates distinguish completion from HTTP transport success and unknown status', () => {
+  assert.deepEqual(
+    aggregateDipOutcomes([
+      { approvedDip: true, method: 'POST', terminal: 'finished', status: 204 },
+      { approvedDip: true, method: 'POST', terminal: 'finished', status: 503 },
+      { approvedDip: true, method: 'POST', terminal: 'finished', status: null },
+      { approvedDip: true, method: 'POST', terminal: 'failed', status: 200 },
+      { approvedDip: false, method: 'POST', terminal: 'finished', status: 200 },
+      { approvedDip: true, method: 'OPTIONS', terminal: 'finished', status: 200 },
+    ]),
+    { observed: 4, finished: 3, failed: 1, http2xx: 2, httpNon2xx: 1, statusUnknown: 1 },
+  );
+});
+
+function pairAdapter({
+  dipStatus = 204,
+  dipFinished = true,
+  duplicateWire = false,
+  failMethod,
+  abortController,
+  captureFailure = false,
+  cancelOnHead = false,
+  headProvenance = true,
+  headFailure = null,
+} = {}) {
+  const calls = [],
+    contexts = [];
+  let active = null;
+  const browser = {
+    async newContext() {
+      const contextNumber = contexts.length;
+      const session = new EventEmitter();
+      let sequence = 0;
+      session.send = async (method, args) => {
+        calls.push({ contextNumber, method, args });
+        if (method === failMethod) throw new Error('private@example.com token=secret');
+        if (method === 'Page.getFrameTree') return { frameTree: { frame: { id: 'private-top-frame' } } };
+        if (method === 'Fetch.failRequest') active.get(args.requestId)?.done();
+        if (method === 'Fetch.continueRequest') {
+          const request = active.get(args.requestId);
+          const selector = args.headers.find(({ name }) => name.toLowerCase() === 'x-csd-page-tamper')?.value;
+          const headers = { ...HEADER_VALUES };
+          if (selector) delete headers[selector];
+          const status = request.dip ? dipStatus : 200;
+          const emit = (name, params) => session.emit(name, params);
+          emit('Network.requestWillBeSentExtraInfo', {
+            requestId: args.requestId,
+            headers: Object.fromEntries(args.headers.map(({ name, value }) => [name, value])),
+          });
+          emit('Network.responseReceivedExtraInfo', { requestId: args.requestId, statusCode: status, headers });
+          emit('Network.responseReceived', {
+            requestId: args.requestId,
+            hasExtraInfo: true,
+            response: { url: request.url, status, headers },
+          });
+          if (duplicateWire && request.type === 'Document')
+            emit('Network.responseReceivedExtraInfo', { requestId: args.requestId, statusCode: status, headers });
+          if (request.method === 'HEAD' && headFailure)
+            emit('Network.loadingFailed', { requestId: args.requestId, ...headFailure });
+          else if (!request.dip || dipFinished) emit('Network.loadingFinished', { requestId: args.requestId });
+          request.done();
+        }
+        return {};
+      };
+      session.detach = async () => {
+        calls.push({ contextNumber, method: 'detach' });
+        if (failMethod === 'detach') throw new Error('secret');
+      };
+      const page = new EventEmitter();
+      page.mainFrame = () => page;
+      page.url = () => paymentUrl;
+      active = new Map();
+      const request = async (url, method, type, dip = false) => {
+        const id = `private-${contextNumber}-${sequence++}`;
+        await new Promise((done) => {
+          active.set(id, { url, method, type, dip, done });
+          session.emit('Network.requestWillBeSent', {
+            requestId: id,
+            request: { url, method },
+            type,
+            frameId: 'private-top-frame',
+            initiator: { type: headProvenance ? 'script' : 'other' },
+          });
+          if (headProvenance || method !== 'HEAD')
+            page.emit('request', { url: () => url, method: () => method, frame: () => page });
+          session.emit('Fetch.requestPaused', {
+            requestId: id,
+            resourceType: type,
+            request: { url, method, headers: { 'x-CsD-Page-Tamper': 'untrusted', Accept: 'text/html' } },
+          });
+        });
+      };
+      page.goto = async () => {
+        await request(paymentUrl, 'GET', 'Document');
+        await request(`${targetOrigin.origin}/__imp_apg__/js/test`, 'GET', 'Script');
+        await request('https://us.gimp.zeronaught.com/__imp_apg__/api/dip/v1/dip', 'POST', 'Fetch', true);
+        return { status: () => 200, request: () => ({ redirectedFrom: () => null }) };
+      };
+      page.evaluate = async (fn) => {
+        if (String(fn).includes("method: 'HEAD'")) {
+          await request(paymentUrl, 'HEAD', 'Fetch');
+          if (cancelOnHead) abortController.abort();
+          return { status: 200, exactUrl: true };
+        }
+        return { paymentFieldsEmpty: true, instrumentationPresent: true };
+      };
+      const context = {
+        newPage: async () => page,
+        newCDPSession: async () => session,
+        close: async () => {
+          calls.push({ contextNumber, method: 'close' });
+          if (failMethod === 'close') throw new Error('secret');
+        },
+      };
+      contexts.push(context);
+      return context;
+    },
+  };
+  return { browser, contexts, calls, capture: async () => ({ status: captureFailure ? 'failed' : 'captured' }) };
+}
+
+test('matched mock pairs observe each frozen omission, natural HEAD, fresh contexts and stripped collectors', async () => {
+  for (const [scenario, selector] of Object.entries(HEADER_SCENARIO_SELECTORS)) {
+    const adapter = pairAdapter();
+    const pair = await runHeaderPair({ ...adapter, target: targetOrigin, selector, operationTimeoutMs: 500 });
+    assert.equal(pair.result, 'passed', JSON.stringify(pair));
+    assert.equal(adapter.contexts.length, 2);
+    assert.deepEqual(Object.keys(projectHeaderPair(pair, scenario)), [
+      'selector',
+      'scope',
+      'pairStartedAt',
+      'pairCompletedAt',
+      'result',
+    ]);
+    assert.equal(projectHeaderPair(pair, scenario).pairStartedAt, Date.parse(pair.pairStartedAt));
+    for (const phase of [pair.control, pair.mutation]) {
+      assert.equal(phase.screenshots.length, 6);
+      assert.equal(phase.telemetry.http2xx, 1);
+      assert.equal(phase.excludedCollectorOverrideCount, 0);
+      assert.equal(phase.document.headers[selector].present, phase.mode === 'control');
+      assert.equal(phase.head.headers[selector].present, phase.mode === 'control');
+      assert.equal(phase.cleanup.contextClosed, true);
+    }
+    const resumes = adapter.calls.filter(({ method }) => method === 'Fetch.continueRequest');
+    assert.equal(resumes.length, 8);
+    assert.equal(resumes.filter(({ args }) => args.headers.some(({ name }) => name === 'X-CSD-Page-Tamper')).length, 2);
+    for (const call of resumes) assert.ok(call.args.headers.some(({ name }) => name === 'Accept'));
+    assert.doesNotMatch(JSON.stringify(pair), /private-|untrusted|nosniff|no-store|DENY|secret|@/);
+    assert.throws(() => projectHeaderPair({ ...pair, rawHeaders: {} }, scenario), /HEADER_PAIR_INVALID/);
+    const corrupt = structuredClone(pair);
+    corrupt.control.telemetry.statusUnknown = 1;
+    assert.throws(() => projectHeaderPair(corrupt, scenario), /HEADER_PAIR_INVALID/);
+  }
+});
+
+test('paired canceled HEADs retain terminal provenance and canonical receipt validation', async () => {
+  const adapter = pairAdapter({ headFailure: { canceled: true, errorText: 'net::ERR_ABORTED' } });
+  const pair = await runHeaderPair({
+    ...adapter,
+    target: targetOrigin,
+    selector: 'cache-control',
+    operationTimeoutMs: 500,
+  });
+  assert.equal(pair.result, 'passed');
+  assert.equal(projectHeaderPair(pair, 'header-omit-cache-control').result, 'passed');
+  for (const phase of [pair.control, pair.mutation]) {
+    assert.equal(phase.head.terminal.state, 'failed');
+    assert.equal(phase.head.terminal.errorCode, 'ERR_ABORTED');
+  }
+  for (const mutate of [
+    (p) => {
+      p.control.head.terminal.canceled = false;
+    },
+    (p) => {
+      p.control.head.terminal.errorCode = 'OTHER';
+    },
+    (p) => {
+      p.control.head.terminal.responseReceivedBeforeTerminal = false;
+    },
+    (p) => {
+      p.control.head.terminal.rawError = 'private';
+    },
+    (p) => {
+      delete p.control.head.terminal;
+    },
+  ]) {
+    const corrupt = structuredClone(pair);
+    mutate(corrupt);
+    assert.throws(() => projectHeaderPair(corrupt, 'header-omit-cache-control'), /HEADER_PAIR_INVALID/);
+  }
+});
+
+test('document-only pair leaves natural HEAD canonical without widening request scope', async () => {
+  const adapter = pairAdapter();
+  const pair = await runHeaderPair({
+    ...adapter,
+    target: targetOrigin,
+    selector: 'x-frame-options',
+    scope: 'document',
+    operationTimeoutMs: 500,
+  });
+  assert.equal(pair.result, 'passed');
+  assert.equal(pair.mutation.document.headers['x-frame-options'].present, false);
+  assert.equal(pair.mutation.head.headers['x-frame-options'].present, true);
+});
+
+test('unknown/non2xx/pending DIP, ambiguous wire, missing HEAD provenance and failed screenshot fail closed', async () => {
+  for (const options of [
+    { dipStatus: null },
+    { dipStatus: 503 },
+    { dipFinished: false },
+    { duplicateWire: true },
+    { headProvenance: false },
+    { captureFailure: true },
+  ]) {
+    const adapter = pairAdapter(options);
+    const pair = await runHeaderPair({
+      ...adapter,
+      target: targetOrigin,
+      selector: 'cache-control',
+      operationTimeoutMs: 35,
+    });
+    assert.equal(pair.result, 'failed', JSON.stringify(options));
+    assert.equal(adapter.contexts.length, 1);
+    assert.equal(pair.control.cleanup.contextClosed, true);
+    assert.equal(pair.control.cleanup.sessionDetached, true);
+    assert.equal(pair.control.cleanup.fetchDisabled, true);
+  }
+});
+
+test('failed setup/disable/detach/context cleanup and cancellation remain observable without raw diagnostics', async () => {
+  for (const failMethod of [
+    'Network.enable',
+    'Fetch.enable',
+    'Fetch.continueRequest',
+    'Fetch.disable',
+    'detach',
+    'close',
+  ]) {
+    const adapter = pairAdapter({ failMethod });
+    const pair = await runHeaderPair({
+      ...adapter,
+      target: targetOrigin,
+      selector: 'cache-control',
+      operationTimeoutMs: 100,
+    });
+    assert.equal(pair.result, 'failed', failMethod);
+    assert.equal(adapter.contexts.length, 1);
+    assert.ok(adapter.calls.some(({ method }) => method === 'detach'));
+    assert.ok(adapter.calls.some(({ method }) => method === 'close'));
+    assert.doesNotMatch(JSON.stringify(pair), /secret|private@example/);
+  }
+  const controller = new AbortController();
+  const adapter = pairAdapter({ abortController: controller, cancelOnHead: true });
+  const pair = await runHeaderPair({
+    ...adapter,
+    target: targetOrigin,
+    selector: 'cache-control',
+    signal: controller.signal,
+    operationTimeoutMs: 100,
+  });
+  assert.equal(pair.result, 'failed');
+  assert.equal(pair.pairCompletedAt, null);
+  assert.equal(pair.control.cleanup.contextClosed, true);
+  assert.equal(pair.control.cleanup.fetchDisabled, true);
+  assert.equal(projectHeaderPair(pair, 'header-omit-cache-control').pairCompletedAt, null);
+  assert.equal(projectHeaderPair(null, expectedNames[0]), null);
+  assert.throws(() => projectHeaderPair(pair, expectedNames[0]), /HEADER_PAIR_INVALID/);
+  assert.throws(() => projectHeaderPair(pair, 'header-omit-x-frame-options'), /HEADER_PAIR_INVALID/);
+});
+
+test('pre-cancelled pair acquires no browser resources and projects only actual start facts', async () => {
+  const controller = new AbortController();
+  controller.abort();
+  const adapter = pairAdapter();
+  const pair = await runHeaderPair({
+    ...adapter,
+    target: targetOrigin,
+    selector: 'cache-control',
+    signal: controller.signal,
+  });
+  assert.equal(adapter.contexts.length, 0);
+  assert.equal(pair.result, 'failed');
+  assert.equal(pair.control, null);
+  assert.equal(pair.mutation, null);
+  assert.equal(projectHeaderPair(pair, 'header-omit-cache-control').pairCompletedAt, null);
+});
+
+test('pair API rejects arbitrary selectors, URLs and scopes before browser acquisition', async () => {
+  for (const override of [
+    { selector: 'content-security-policy' },
+    { scope: 'all-assets' },
+    { target: new URL('https://unapproved.example.com') },
+    { target: new URL(paymentUrl) },
+    { target: new URL(`${targetOrigin.origin}/?query=private`) },
+  ]) {
+    const adapter = pairAdapter();
+    await assert.rejects(
+      runHeaderPair({ ...adapter, target: targetOrigin, selector: 'cache-control', ...override }),
+      /HEADER_PAIR_INVALID/,
+    );
+    assert.equal(adapter.contexts.length, 0);
+  }
+});
+
+test('projection rejects backwards timestamps, fabricated counters and raw nested fields', async () => {
+  const adapter = pairAdapter();
+  const pair = await runHeaderPair({
+    ...adapter,
+    target: targetOrigin,
+    selector: 'cache-control',
+    operationTimeoutMs: 500,
+  });
+  assert.equal(pair.result, 'passed');
+  for (const corrupt of [
+    { ...pair, pairCompletedAt: '1970-01-01T00:00:00.000Z' },
+    { ...pair, pairStartedAt: '2026-02-30T00:00:00.000Z' },
+    { ...pair, scope: 'all-assets' },
+  ])
+    assert.throws(() => projectHeaderPair(corrupt, 'header-omit-cache-control'), /HEADER_PAIR_INVALID/);
+  for (const mutate of [
+    (p) => {
+      p.control.telemetry.rawBody = 'private';
+    },
+    (p) => {
+      p.control.telemetry.observed = 2;
+    },
+    (p) => {
+      p.control.document.headers['cache-control'].rawValue = 'private';
+    },
+    (p) => {
+      p.control.selectorRequests.stripped = 0;
+    },
+    (p) => {
+      p.control.cleanup.errors = ['private error'];
+    },
+    (p) => {
+      p.mutation.startedAt = '1970-01-01T00:00:00.000Z';
+    },
+  ]) {
+    const corrupt = structuredClone(pair);
+    mutate(corrupt);
+    assert.throws(() => projectHeaderPair(corrupt, 'header-omit-cache-control'), /HEADER_PAIR_INVALID/);
+  }
+});
+
+test('bounded operation cancelled before dispatch never starts an adapter side effect', async () => {
+  const controller = new AbortController();
+  let sideEffects = 0;
+  const pending = boundedOperation(
+    () => {
+      sideEffects++;
+    },
+    100,
+    controller.signal,
+  );
+  controller.abort();
+  await assert.rejects(pending, /RUN_INTERRUPTED/);
+  assert.equal(sideEffects, 0);
 });

@@ -4,7 +4,32 @@ import { constants } from 'node:fs';
 import { lstat, mkdir, open, readdir, readFile, rename, rm, statfs } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SCENARIO_NAMES } from './scenarios.mjs';
+import { HEADER_SCENARIO_SELECTORS, SCENARIO_NAMES, SUITE_MANIFEST } from './scenarios.mjs';
+
+const FROZEN_SCENARIOS = Object.freeze([
+  'login-credential-skimmer',
+  'registration-harvester',
+  'payment-overlay-card-skimmer',
+  'obfuscated-loader',
+  'multi-cdn-injection',
+  'tag-manager-hijack',
+  'multi-channel-exfiltration',
+  'high-volume-domain-exfiltration',
+  'form-overlay',
+  'keylogger-simulation',
+  'maximum-detection',
+  'header-omit-x-content-type-options',
+  'header-omit-x-frame-options',
+  'header-omit-cache-control',
+]);
+const HEADER_SCENARIOS = Object.keys(HEADER_SCENARIO_SELECTORS);
+const epoch = (value) => Number.isSafeInteger(value) && value >= 0 && value <= 8640000000000000;
+const exactKeys = (value, keys) =>
+  value &&
+  typeof value === 'object' &&
+  !Array.isArray(value) &&
+  Object.keys(value).length === keys.length &&
+  keys.every((key) => Object.hasOwn(value, key));
 
 const SOURCE = '/opt/traffic-generator/source';
 const ENV_FILE = '/etc/traffic-generator/runtime.env';
@@ -76,6 +101,7 @@ const STATE_FIELDS = [
   'heartbeatAt',
   'lastOutcome',
   'pendingUploads',
+  'headerCadence',
 ];
 const RUNTIME_KEYS = new Set([
   'TARGET_URL',
@@ -142,7 +168,7 @@ export function validateConfig(input) {
     CONTINUOUS_ENABLED: /^[01]$/,
     SOURCE_COMMIT: /^[a-f0-9]{40}$/,
     DEPLOYMENT_MANIFEST_SHA256: /^[a-f0-9]{64}$/,
-    DEPLOYMENT_MANIFEST_VERSION: /^1\.0\.0$/,
+    DEPLOYMENT_MANIFEST_VERSION: /^1\.1\.0$/,
     SOURCE_REPOSITORY_URL: /^https:\/\/github\.com\/f5-sales-demo\/traffic-generator\.git$/,
     CSD_AWS_RUNTIME: /^1$/,
     AWS_REGION: /^[a-z]{2}(?:-[a-z]+)+-\d$/,
@@ -155,12 +181,19 @@ export function validateConfig(input) {
     DISPLAY: /^:99$/,
   };
   for (const [key, regex] of Object.entries(rules)) if (!regex.test(config[key] ?? '')) throw failure('fatal_config');
-  if (SCENARIO_NAMES.length !== 11 || new Set(SCENARIO_NAMES).size !== 11) throw failure('fatal_provenance');
+  if (
+    SUITE_MANIFEST.schemaVersion !== '1.1.0' ||
+    SCENARIO_NAMES.length !== FROZEN_SCENARIOS.length ||
+    SCENARIO_NAMES.some((name, index) => name !== FROZEN_SCENARIOS[index]) ||
+    SUITE_MANIFEST.scenarios.some(({ name }, index) => name !== FROZEN_SCENARIOS[index]) ||
+    SUITE_MANIFEST.scenarios.length !== FROZEN_SCENARIOS.length
+  )
+    throw failure('fatal_provenance');
   return Object.freeze(config);
 }
 function freshState(config, now) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceCommit: config?.SOURCE_COMMIT ?? null,
     manifestDigest: config?.DEPLOYMENT_MANIFEST_SHA256 ?? null,
     status: 'idle',
@@ -182,10 +215,35 @@ function freshState(config, now) {
     heartbeatAt: now,
     lastOutcome: null,
     pendingUploads: [],
+    headerCadence: Object.fromEntries(
+      HEADER_SCENARIOS.map((name) => [
+        name,
+        {
+          lastPairStartedAt: null,
+          lastPairCompletedAt: null,
+          lastPairOutcome: null,
+        },
+      ]),
+    ),
   };
 }
 function checkedState(input) {
-  if (input?.schemaVersion !== 1 || !STATES.has(input.status)) throw failure('fatal_integrity');
+  if (!exactKeys(input, STATE_FIELDS) || input.schemaVersion !== 2 || !STATES.has(input.status))
+    throw failure('fatal_integrity');
+  if (!exactKeys(input.headerCadence, HEADER_SCENARIOS)) throw failure('fatal_integrity');
+  for (const entry of Object.values(input.headerCadence)) {
+    if (
+      !exactKeys(entry, ['lastPairStartedAt', 'lastPairCompletedAt', 'lastPairOutcome']) ||
+      (entry.lastPairStartedAt === null
+        ? entry.lastPairCompletedAt !== null || entry.lastPairOutcome !== null
+        : !epoch(entry.lastPairStartedAt) ||
+          !['passed', 'failed'].includes(entry.lastPairOutcome) ||
+          (entry.lastPairCompletedAt === null
+            ? entry.lastPairOutcome !== 'failed'
+            : !epoch(entry.lastPairCompletedAt) || entry.lastPairCompletedAt < entry.lastPairStartedAt))
+    )
+      throw failure('fatal_integrity');
+  }
   for (const key of COUNTERS) if (!Number.isSafeInteger(input[key]) || input[key] < 0) throw failure('fatal_integrity');
   if (input.cursor >= SCENARIO_NAMES.length || input.retryAttempt > DEFAULT_POLICY.maxAttempts)
     throw failure('fatal_integrity');
@@ -217,17 +275,45 @@ function checkedState(input) {
     )
       throw failure('fatal_integrity');
     ids.add(entry.runId);
+    const headerPair = HEADER_SCENARIO_SELECTORS[entry.scenario]
+      ? checkedHeaderPair(entry.headerPair, entry.scenario)
+      : null;
     return {
       runId: entry.runId,
       scenario: entry.scenario,
       attempts: entry.attempts,
       nextAttemptAt: entry.nextAttemptAt,
       exhausted: entry.exhausted,
+      ...(headerPair ? { headerPair } : {}),
     };
   });
   const state = Object.fromEntries(STATE_FIELDS.map((key) => [key, input[key]]));
   state.pendingUploads = pendingUploads;
   return state;
+}
+function checkedHeaderPair(pair, scenario) {
+  const selector = HEADER_SCENARIO_SELECTORS[scenario];
+  if (!selector) {
+    if (pair !== null) throw failure('fatal_integrity');
+    return null;
+  }
+  if (
+    !exactKeys(pair, ['selector', 'scope', 'pairStartedAt', 'pairCompletedAt', 'result']) ||
+    pair.selector !== selector ||
+    !['document', 'same-origin'].includes(pair.scope) ||
+    !epoch(pair.pairStartedAt) ||
+    !['passed', 'failed'].includes(pair.result) ||
+    (pair.pairCompletedAt === null
+      ? pair.result !== 'failed'
+      : !epoch(pair.pairCompletedAt) || pair.pairCompletedAt < pair.pairStartedAt)
+  )
+    throw failure('fatal_integrity');
+  return { ...pair };
+}
+function browserPassed(result) {
+  return (
+    result.browserExit === 0 && (!HEADER_SCENARIO_SELECTORS[result.scenario] || result.headerPair?.result === 'passed')
+  );
 }
 function categoryOf(result) {
   const category = result?.failureCategory || result?.outcome;
@@ -247,6 +333,17 @@ export function advanceState(input, result, nowMs) {
   const category = categoryOf(result);
   state.heartbeatAt = nowMs;
   state.lastOutcome = category;
+  if (!result.uploadRetry && result.headerPair != null) {
+    const pair = checkedHeaderPair(result.headerPair, result.scenario);
+    const previous = state.headerCadence[result.scenario];
+    if (!pair || (previous.lastPairStartedAt !== null && pair.pairStartedAt < previous.lastPairStartedAt))
+      throw failure('fatal_integrity');
+    state.headerCadence[result.scenario] = {
+      lastPairStartedAt: pair.pairStartedAt,
+      lastPairCompletedAt: pair.pairCompletedAt,
+      lastPairOutcome: pair.result,
+    };
+  }
   if (fatal(category)) {
     state.status = 'blocked';
     return state;
@@ -294,7 +391,7 @@ export function advanceState(input, result, nowMs) {
     state.retryAttempt++;
   }
   state.lastCompletedAt = nowMs;
-  if (category === 'ok' && result.browserExit === 0 && result.uploadExit === 0 && result.uploadCommitted === true) {
+  if (category === 'ok' && browserPassed(result) && result.uploadExit === 0 && result.uploadCommitted === true) {
     state.browserPassedRuns++;
     state.committedRuns++;
     state.status = 'idle';
@@ -325,8 +422,13 @@ export function advanceState(input, result, nowMs) {
       attempts: 0,
       nextAttemptAt: nowMs + DEFAULT_POLICY.backoffMs[0],
       exhausted: false,
+      ...(HEADER_SCENARIO_SELECTORS[result.scenario]
+        ? {
+            headerPair: checkedHeaderPair(result.headerPair, result.scenario),
+          }
+        : {}),
     });
-    if (result.browserExit === 0) state.browserPassedRuns++;
+    if (browserPassed(result)) state.browserPassedRuns++;
     else state.failedRuns++;
     if (category === 'timeout') state.timeoutRuns++;
     if (category === 'interrupted') state.interruptedRuns++;
@@ -616,6 +718,14 @@ function validExecution(response, request) {
     ![result.browserExit, result.uploadExit].every((n) => n === null || (Number.isInteger(n) && n >= 0 && n <= 255))
   )
     throw failure('fatal_integrity');
+  const headerPair = checkedHeaderPair(result.headerPair, request.scenario);
+  if (headerPair && result.browserExit === 0 && headerPair.result !== 'passed') throw failure('fatal_integrity');
+  if (
+    request.uploadRetry &&
+    HEADER_SCENARIO_SELECTORS[request.scenario] &&
+    Object.keys(headerPair).some((key) => headerPair[key] !== request.headerPair?.[key])
+  )
+    throw failure('fatal_integrity');
   const category = categoryOf(result);
   if (
     (category === 'ok') !== (response.exitCode === 0) ||
@@ -625,7 +735,20 @@ function validExecution(response, request) {
     (result.uploadCommitted && result.uploadExit !== 0)
   )
     throw failure('fatal_integrity');
-  return result;
+  const fields = [
+    'schemaVersion',
+    'scenario',
+    'runId',
+    'outcome',
+    'browserExit',
+    'uploadExit',
+    'uploadCommitted',
+    'failureCategory',
+    'signal',
+    'headerPair',
+  ];
+  if (!exactKeys(result, fields)) throw failure('fatal_integrity');
+  return { ...result, headerPair };
 }
 export function executionArgs(request) {
   const allowed = new Set([
@@ -737,8 +860,13 @@ export async function dispatchOnce(options = {}) {
   try {
     await prepareState(directory, live);
     writable = true;
-    state = await smallJson(join(directory, 'state.json'), true);
-    if (state) state = checkedState(state);
+    const saved = await smallJson(join(directory, 'state.json'), true);
+    // Replacement boot initializes state2; never rewrite or migrate an old worker's state.
+    if (saved?.schemaVersion !== undefined && saved.schemaVersion !== 2) {
+      writable = false;
+      throw failure('fatal_provenance');
+    }
+    if (saved) state = checkedState(saved);
     if (state?.status === 'blocked') return state;
     if (live) {
       const info = await safePath(ENV_FILE, { rootOnly: true });
@@ -766,6 +894,15 @@ export async function dispatchOnce(options = {}) {
       // its browser or credit an upload whose completion was not recorded.
       const uploadRetry = state.pendingUploads.some((p) => p.runId === state.currentRunId);
       const frozen = !uploadRetry && (await frozenEvidence(root, state.currentRunId, state.currentScenario));
+      const runDirectory =
+        !uploadRetry && (await safePath(join(root, state.currentRunId), { directory: true, absent: true }));
+      const recorded = runDirectory && (await smallJson(join(root, state.currentRunId, 'execution-result.json'), true));
+      const headerPair = recorded
+        ? validExecution(
+            { result: recorded, exitCode: categoryOf(recorded) === 'ok' ? 0 : 1 },
+            { runId: state.currentRunId, scenario: state.currentScenario },
+          ).headerPair
+        : null;
       const recovery = {
         schemaVersion: 1,
         runId: state.currentRunId,
@@ -778,6 +915,7 @@ export async function dispatchOnce(options = {}) {
         signal: 'TERM',
         uploadRetry,
         frozenEvidence: frozen,
+        headerPair,
       };
       state = advanceState(state, recovery, now());
       if (uploadRetry) {
@@ -819,6 +957,8 @@ export async function dispatchOnce(options = {}) {
       env,
       runId,
       scenario,
+      uploadRetry: Boolean(pending),
+      headerPair: pending?.headerPair ?? null,
       timeoutMs: pending ? DEFAULT_POLICY.uploadMs : DEFAULT_POLICY.scenarioMs + DEFAULT_POLICY.finalizationMs,
     };
     state.status = 'running';

@@ -247,7 +247,7 @@ ssh -t azureuser@${TGEN_IP} 'tmux attach-session -t traffic'
 Developer workstations run only the unit, fake-CDP, and runner-contract portions of
 `node --test tests/csd-violations.test.mjs`. The headed-Chrome case is reported as skipped unless the
 deployed worker explicitly sets `CSD_AWS_RUNTIME=1`; no local fixture certificate, local Chrome path,
-or developer screenshot directory is supported.
+or developer screenshot directory is supported in the production runner. The separate explicit host fixture below uses disposable certificate trust and synthetic sensor/collector transport; it is not a runtime bypass.
 
 On AWS, scenario execution is fail-closed. It requires Linux, `/opt/traffic-generator/status.json` with
 `status: ready`, `runtime: aws`, and the exact `SOURCE_COMMIT`, executable `/opt/chrome/chrome`,
@@ -287,9 +287,9 @@ A user-data change retains worker replacement behavior; use the reviewed saved-p
 termination-protection procedure in the [AWS stack guide](https://github.com/f5-sales-demo/traffic-generator/blob/main/terraform/aws/README.md).
 
 Each root-managed service firing invokes `continuous.mjs tick` through pinned Node and executes at
-most one of the existing eleven scenarios, or one due frozen-upload retry without Chrome. Names and
+most one of the fourteen scenarios, or one due frozen-upload retry without Chrome. Names and
 order come directly from `SCENARIO_NAMES` in `scenarios.mjs`; terminal decisions advance the cursor
-and wrap into another cycle. `completedCycles` does not mean eleven detections or successful uploads.
+and wrap into another cycle. `completedCycles` does not mean fourteen detections or successful uploads.
 The generic catalog scheduler excludes CSD and is not a second CSD execution owner.
 
 The enabled timer persists across reboot without rerunning cloud-init. It fires after 30 seconds at
@@ -297,9 +297,41 @@ boot and 15 seconds after the prior oneshot becomes inactive, with 1-second accu
 of missed firings. Dispatch requires network-online and healthy Xvfb/headed Chrome. Cleanup,
 backoff, lock contention, and reboot introduce gaps: recurring traffic is not literally zero downtime.
 
+### DevTools Header-Pair Circulation
+
+Manifest `1.1.0` retains the original eleven definitions and order, then appends
+`header-omit-x-content-type-options`, `header-omit-x-frame-options`, and
+`header-omit-cache-control`. Each slot uses two fresh browser contexts: unchanged control,
+then one selected omission on `/csd-page-tamper/payment`. This uses Chrome DevTools Protocol
+(CDP) Fetch request interception, not clicks in the DevTools UI, DOM rewriting, or synthetic
+response fulfillment. The selector request header asks the authorized origin to omit the selected
+response header. Default `same-origin` scope targets only the exact payment Document and the
+page-initiated HEAD; `document` scope leaves HEAD unchanged. Other paths and collectors never
+receive the selector. Existing request headers are retained except the bounded selector.
+
+Each phase requires real Document and unique page-initiated HEAD response-header wire evidence,
+a completed HTTP 2xx sensor GET, and completed HTTP 2xx approved DIP transport. A HEAD may end
+with canceled `net::ERR_ABORTED` only after its complete unique HTTP 200 ExtraInfo header evidence
+is observed; the receipt records that terminal state explicitly, never labels it loadingFinished.
+Unknown, missing, non-2xx, disconnected, or canceled DIP transport fails the pair. Cleanup drains
+owned Fetch pauses, disables Fetch, detaches CDP, and closes each context. Six screenshots per
+phase cover navigation, payment, injected selection, wire evidence, telemetry, and cleanup.
+
+Receipt schema 3 carries sanitized structured pair evidence, not raw headers, request IDs, URLs,
+or payloads. Scheduler state schema 2 exposes `headerCadence` per selector: last pair start,
+completion, and outcome from the validated execution summary, not upload or timer timestamps.
+A failed partial pair may have null completion; an upload retry never advances pair cadence.
+An old worker state is rejected, not migrated. Cut over through reviewed fresh-worker hydration.
+
+Every cycle revisits each header once, subject to the fourteen slots, execution deadlines, uploads,
+retries, contention, and pauses. There is no hourly guarantee or alert polling in the worker.
+Baseline age/eligibility and tenant processing remain separate unknowns until measured: fast
+circulation or successful transport does not prove an alert, Modified/Compromised classification,
+or a completed header matrix. Preserve quiet UAT windows with explicit pause and drain.
+
 ### Unit and Host Integration Proof
 
-All nine canonical `tests/test-*.sh` scripts remain required unit checks. Dispatcher tests run
+All canonical socketless shell unit checks remain required. The explicit headed fixture script is a separate mandatory host verification command, not privileged unit CI. Dispatcher tests run
 real Git content verification and the production `executionArgs` environment tail in a real
 unprivileged subprocess, including credential rejection. Bootstrap tests render enabled and
 disabled Terraform configurations and assert the complete scheduling, containment, permission,
@@ -311,12 +343,20 @@ against the exact final PR head, after formatting and pushing:
 
 ```bash
 node --test tests/csd-host.integration.mjs
+CSD_TEST_CHROME_PATH=/usr/bin/google-chrome \
+CSD_TEST_PLAYWRIGHT_MODULE=/path/to/existing/playwright-core/index.mjs \
+CSD_HEADER_KEEP_FIXTURE=1 bash tests/csd-header-circulation.integration.sh
 ```
 
 It requires real noninteractive sudo to `nobody`, validates reset versus allowlisted per-run
 assignments through the production argv builder, and runs actual `systemd-analyze verify` and
 `logrotate --debug` on canonical template content. Missing tools or privilege denial fail the
-command; there is no skip/pass fallback. It neither starts services nor generates traffic.
+command; there is no skip/pass fallback.
+The host parser test neither starts services nor generates traffic.
+The separate non-root Linux headed HTTPS fixture runs all three pairs, document scope, and 503/disconnect/cancellation cleanup and recovery using an existing Chrome/Playwright installation and disposable trusted certificate database.
+It does not disable TLS verification, Chrome sandboxing, or host security policy; missing prerequisites fail closed.
+Retain its private proof and verify no owned-child leaks.
+This fixture is not live CSD acceptance.
 On the later approved AWS deployment, real `tgen` execution, timer/reboot behavior, and evidence
 acceptance remain mandatory; verification-host parser and privilege proof is not live-worker proof.
 
@@ -362,7 +402,7 @@ sudo systemctl enable --now csd-continuous.timer
 
 Do not invoke internal `tick` as an operator start command. **Dedicated Page Tamper UAT must inhibit
 and drain recurrence for its entire quiet/baseline/canary/recovery window.** No automatic CSD-controller
-reservation integration is provided, and no Page Tamper baseline, canary, or header matrix is scheduled.
+reservation integration is provided. Header-pair circulation is not a dedicated Page Tamper baseline, canary, or completed header-matrix UAT.
 
 ### Bounded Retries, Cleanup, and Retention
 
@@ -378,7 +418,7 @@ At most 32 pending uploads are recorded; each frozen upload has at most three to
 each bounded to 120 seconds. Retry-only ticks never rerun Chrome. Exhausted pending evidence stays
 visible/frozen; queue or disk limits block new work instead of deleting it. The run-root
 `execution-result.json` (schema version 1), outside the frozen scenario directory, distinguishes browser
-exit, upload exit/commit, outcome, failure category, and signal. Missing/inconsistent results are failures.
+exit, upload exit/commit, outcome, failure category, signal, and `headerPair`. Ordinary scenarios carry null; header pairs carry only selector, scope, observed start/completion epoch milliseconds, and passed/failed result. Upload-only retries preserve this summary verbatim. Missing/inconsistent results are failures.
 
 Only completed committed directories are eligible for oldest-first pruning after seven days or above
 5 GiB of local detail. New work is rejected below 1 GiB free space; pending evidence has a 2 GiB cap.
@@ -387,7 +427,7 @@ with seven rotations, compression/delayed compression, and copytruncate. Diagnos
 preserve evidence before authorized cleanup; never remove active or pending runs to bypass bounds.
 
 Acceptance on each approved fresh deployment requires committed hash-validated evidence for all
-eleven names over two cycles, monotonic counters, bounded disk, no owned-child leaks, and controlled
+fourteen names over two cycles, monotonic counters, bounded disk, no owned-child leaks, and controlled
 reboot recurrence. Ready health, active units, browser success, and committed uploads do not guarantee
 CSD detection. The dated proof below records one deployment's measured execution and evidence results;
 it does not replace acceptance checks on another deployment.
@@ -445,7 +485,7 @@ that quiet window nor substitutes for its separate detection and recovery eviden
 ## AWS Systems Manager Run Flow
 
 Use the non-sensitive `ssm_document_name` and `instance_id` outputs from `terraform/aws`. The
-document accepts one case-sensitive `Scenario` string from the 11-name allowlist and uses the
+document accepts one case-sensitive `Scenario` string from the 14-name allowlist and uses the
 configured authorized target. It does not accept shell fragments, credentials, synthetic values,
 or arbitrary URLs.
 
@@ -464,7 +504,7 @@ COMMAND_ID=$(aws ssm send-command \
   --output text)
 ```
 
-For a deliberate manual pass after pausing/draining recurrence, submit the 11 scenarios serially
+For a deliberate manual pass after pausing/draining recurrence, submit the 14 scenarios serially
 because all entrypoints share the same lock. Retain each command ID and poll for at most 1,860
 seconds per command. This covers the document's 1,800-second command timeout plus a bounded
 status-propagation margin; actual execution remains bounded by the wrapper. The default
@@ -483,7 +523,10 @@ for scenario in \
   high-volume-domain-exfiltration \
   form-overlay \
   keylogger-simulation \
-  maximum-detection
+  maximum-detection \
+  header-omit-x-content-type-options \
+  header-omit-x-frame-options \
+  header-omit-cache-control
 do
   command_id=$(aws ssm send-command \
     --profile 280469140135_Users \
@@ -535,10 +578,10 @@ Each invocation writes evidence under
 the allowlisted scenario exactly once, and rejects unsafe run identifiers; therefore local relative
 paths and receipt object keys map one-to-one without scenario double nesting. Every setup, action,
 assertion, and explicit cleanup manifest step has an ordinal, scenario, and step-name PNG; each scenario
-also has an ordinal `final` PNG. The full suite produces 45 step PNGs plus 11 final PNGs, for 56 total.
+also has an ordinal `final` PNG. The unchanged first eleven scenarios produce 45 step PNGs plus 11 final PNGs. Each appended header pair adds twelve phase PNGs and one final PNG; a complete fourteen-scenario cycle produces 95 PNGs.
 Missing step, cleanup, or final screenshots make the scenario fail.
 
-Each scenario's last manifest operation is `cleanup`. It removes run-scoped scripts, links, images,
+Each of the first eleven scenarios' last manifest operations is `cleanup`. It removes run-scoped scripts, links, images,
 overlays, listeners, timers, and synthetic controls as applicable, then asserts zero remaining artifacts,
 populated controls, sensitive display values, and tracked timers, plus no attached key listener. The runner
 screenshots that asserted cleanup state. Its `finally` cleanup is a safety net and runs before the separate
@@ -596,7 +639,7 @@ completion; the successful upload and `upload-commit.json` contract do not prove
 Source, replica, and access-log versions remain private and lifecycle-managed, and each may independently block
 guarded teardown until its retention decision and purge approval are complete.
 
-Receipts omit form and key values, cookies, authorization material, storage values, headers,
+Receipts omit form and key values, cookies, authorization material, storage values, raw header values,
 request/response bodies, and sensitive URL components. Screenshots must not be treated as safe
 merely because receipts are sanitized; inspect them before customer use.
 
