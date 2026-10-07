@@ -8790,8 +8790,13 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "juice-shop"
       }
     },
     {
@@ -9257,8 +9262,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "stored-xss-feedback",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"<script>alert(\\\"stored-xss\\\")</script>\",\"rating\":3}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:<script>alert\\(\\\\\"stored\\-xss\\\\\"\\)</script>\",\"rating\":3\\}"
           },
           {
             "id": "review-0",
@@ -9266,8 +9271,8 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<script>alert(\\\"stored-xss\\\")</script>\",\"author\":\"test@example.com\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:<script>alert\\(\\\\\"stored\\-xss\\\\\"\\)</script>\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "feedback-1",
@@ -9275,8 +9280,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "stored-xss-feedback",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"<img src=x onerror=alert(\\\"stored\\\")>\",\"rating\":3}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:<img\\ src=x\\ onerror=alert\\(\\\\\"stored\\\\\"\\)>\",\"rating\":3\\}"
           },
           {
             "id": "review-1",
@@ -9284,8 +9289,8 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<img src=x onerror=alert(\\\"stored\\\")>\",\"author\":\"test@example.com\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:<img\\ src=x\\ onerror=alert\\(\\\\\"stored\\\\\"\\)>\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "feedback-2",
@@ -9293,8 +9298,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "stored-xss-feedback",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"<svg onload=alert(\\\"stored\\\")>\",\"rating\":3}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:<svg\\ onload=alert\\(\\\\\"stored\\\\\"\\)>\",\"rating\":3\\}"
           },
           {
             "id": "review-2",
@@ -9302,8 +9307,8 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<svg onload=alert(\\\"stored\\\")>\",\"author\":\"test@example.com\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:<svg\\ onload=alert\\(\\\\\"stored\\\\\"\\)>\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "feedback-3",
@@ -9311,8 +9316,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "stored-xss-feedback",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"<iframe src=\\\"javascript:alert(1)\\\">\",\"rating\":3}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:<iframe\\ src=\\\\\"javascript:alert\\(1\\)\\\\\">\",\"rating\":3\\}"
           },
           {
             "id": "review-3",
@@ -9320,8 +9325,8 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<iframe src=\\\"javascript:alert(1)\\\">\",\"author\":\"test@example.com\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:<iframe\\ src=\\\\\"javascript:alert\\(1\\)\\\\\">\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "feedback-4",
@@ -9329,8 +9334,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "stored-xss-feedback",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"<b onmouseover=alert(1)>hover me</b>\",\"rating\":3}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:<b\\ onmouseover=alert\\(1\\)>hover\\ me</b>\",\"rating\":3\\}"
           },
           {
             "id": "review-4",
@@ -9338,8 +9343,8 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<b onmouseover=alert(1)>hover me</b>\",\"author\":\"test@example.com\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:<b\\ onmouseover=alert\\(1\\)>hover\\ me</b>\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "feedback-5",
@@ -9347,8 +9352,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "stored-xss-feedback",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"<<SCRIPT>alert(\\\"XSS\\\");//<</SCRIPT>\",\"rating\":3}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:<<SCRIPT>alert\\(\\\\\"XSS\\\\\"\\);//<</SCRIPT>\",\"rating\":3\\}"
           },
           {
             "id": "review-5",
@@ -9356,8 +9361,8 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "stored-xss-review",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"<<SCRIPT>alert(\\\"XSS\\\");//<</SCRIPT>\",\"author\":\"test@example.com\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:<<SCRIPT>alert\\(\\\\\"XSS\\\\\"\\);//<</SCRIPT>\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "rating-0",
@@ -9365,8 +9370,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "invalid-rating",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"rating test\",\"rating\":0}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":0\\}"
           },
           {
             "id": "rating--1",
@@ -9374,8 +9379,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "invalid-rating",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"rating test\",\"rating\":-1}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":\\-1\\}"
           },
           {
             "id": "rating-6",
@@ -9383,8 +9388,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "invalid-rating",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"rating test\",\"rating\":6}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":6\\}"
           },
           {
             "id": "rating-999",
@@ -9392,8 +9397,8 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "invalid-rating",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"rating test\",\"rating\":999}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":999\\}"
           },
           {
             "id": "readback",
@@ -9406,7 +9411,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["juice"]
+      "fixture_refresh": ["juice"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "juice-shop"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "juice-shop-exploits/05-idor-basket-access",
@@ -9535,11 +9550,11 @@
             "path": "/juice-shop/api/Feedbacks/1",
             "payload_class": "feedback-idor",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"Modified by IDOR test\",\"rating\":1}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:Modified\\ by\\ IDOR\\ test\",\"rating\":1\\}"
           },
           {
             "id": "feedback-2",
@@ -9547,11 +9562,11 @@
             "path": "/juice-shop/api/Feedbacks/2",
             "payload_class": "feedback-idor",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"Modified by IDOR test\",\"rating\":1}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:Modified\\ by\\ IDOR\\ test\",\"rating\":1\\}"
           },
           {
             "id": "feedback-3",
@@ -9559,11 +9574,11 @@
             "path": "/juice-shop/api/Feedbacks/3",
             "payload_class": "feedback-idor",
             "minimum_dispatches": 1,
-            "body_exact": "{\"comment\":\"Modified by IDOR test\",\"rating\":1}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:Modified\\ by\\ IDOR\\ test\",\"rating\":1\\}"
           },
           {
             "id": "object-0",
@@ -9623,7 +9638,17 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": ["juice"]
+      "fixture_refresh": ["juice"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "juice-shop"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "juice-shop-exploits/06-admin-access",
@@ -10008,11 +10033,11 @@
             "path": "/juice-shop/rest/products/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":{\"$ne\":-1},\"message\":\"NoSQL injected review\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":\\{\"\\$ne\":\\-1\\},\"message\":\"tgen-[a-f0-9]{32}:NoSQL\\ injected\\ review\"\\}"
           },
           {
             "id": "patch-1",
@@ -10020,11 +10045,11 @@
             "path": "/juice-shop/rest/products/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":{\"$gt\":0},\"message\":\"mass update via $gt\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":\\{\"\\$gt\":0\\},\"message\":\"tgen-[a-f0-9]{32}:mass\\ update\\ via\\ \\$gt\"\\}"
           },
           {
             "id": "patch-2",
@@ -10032,11 +10057,11 @@
             "path": "/juice-shop/rest/products/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":{\"$regex\":\".*\"},\"message\":\"regex injection\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":\\{\"\\$regex\":\"\\.\\*\"\\},\"message\":\"tgen-[a-f0-9]{32}:regex\\ injection\"\\}"
           },
           {
             "id": "patch-3",
@@ -10044,11 +10069,11 @@
             "path": "/juice-shop/rest/products/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":{\"$exists\":true},\"message\":\"exists injection\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":\\{\"\\$exists\":true\\},\"message\":\"tgen-[a-f0-9]{32}:exists\\ injection\"\\}"
           },
           {
             "id": "patch-4",
@@ -10056,11 +10081,11 @@
             "path": "/juice-shop/rest/products/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":{\"$where\":\"1==1\"},\"message\":\"where injection\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":\\{\"\\$where\":\"1==1\"\\},\"message\":\"tgen-[a-f0-9]{32}:where\\ injection\"\\}"
           },
           {
             "id": "patch-5",
@@ -10068,11 +10093,11 @@
             "path": "/juice-shop/rest/products/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":{\"$nin\":[]},\"message\":\"nin empty array\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":\\{\"\\$nin\":\\[\\]\\},\"message\":\"tgen-[a-f0-9]{32}:nin\\ empty\\ array\"\\}"
           },
           {
             "id": "patch-6",
@@ -10080,11 +10105,11 @@
             "path": "/juice-shop/rest/products/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":{\"$or\":[{\"$gt\":0},{\"$lt\":999}]},\"message\":\"or operator\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":\\{\"\\$or\":\\[\\{\"\\$gt\":0\\},\\{\"\\$lt\":999\\}\\]\\},\"message\":\"tgen-[a-f0-9]{32}:or\\ operator\"\\}"
           },
           {
             "id": "review-1-0",
@@ -10092,11 +10117,11 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":{\"$gt\":\"\"}}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:test\",\"author\":\\{\"\\$gt\":\"\"\\}\\}"
           },
           {
             "id": "review-1-1",
@@ -10104,11 +10129,11 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@example.com\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\\{\"\\$ne\":\"\"\\},\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "review-1-2",
@@ -10116,11 +10141,11 @@
             "path": "/juice-shop/rest/products/1/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":\"test@example.com\",\"$where\":\"1==1\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:test\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\",\"\\$where\":\"1==1\"\\}"
           },
           {
             "id": "review-2-0",
@@ -10128,11 +10153,11 @@
             "path": "/juice-shop/rest/products/2/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":{\"$gt\":\"\"}}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:test\",\"author\":\\{\"\\$gt\":\"\"\\}\\}"
           },
           {
             "id": "review-2-1",
@@ -10140,11 +10165,11 @@
             "path": "/juice-shop/rest/products/2/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@example.com\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\\{\"\\$ne\":\"\"\\},\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "review-2-2",
@@ -10152,11 +10177,11 @@
             "path": "/juice-shop/rest/products/2/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":\"test@example.com\",\"$where\":\"1==1\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:test\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\",\"\\$where\":\"1==1\"\\}"
           },
           {
             "id": "review-3-0",
@@ -10164,11 +10189,11 @@
             "path": "/juice-shop/rest/products/3/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":{\"$gt\":\"\"}}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:test\",\"author\":\\{\"\\$gt\":\"\"\\}\\}"
           },
           {
             "id": "review-3-1",
@@ -10176,11 +10201,11 @@
             "path": "/juice-shop/rest/products/3/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":{\"$ne\":\"\"},\"author\":\"test@example.com\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\\{\"\\$ne\":\"\"\\},\"author\":\"tgen-[a-f0-9]{32}@example\\.com\"\\}"
           },
           {
             "id": "review-3-2",
@@ -10188,11 +10213,11 @@
             "path": "/juice-shop/rest/products/3/reviews",
             "payload_class": "nosql-operator",
             "minimum_dispatches": 1,
-            "body_exact": "{\"message\":\"test\",\"author\":\"test@example.com\",\"$where\":\"1==1\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"message\":\"tgen-[a-f0-9]{32}:test\",\"author\":\"tgen-[a-f0-9]{32}@example\\.com\",\"\\$where\":\"1==1\"\\}"
           },
           {
             "id": "login-0",
@@ -10236,11 +10261,11 @@
             "path": "/juice-shop/rest/products/reviews",
             "payload_class": "nosql-delay",
             "minimum_dispatches": 1,
-            "body_exact": "{\"id\":{\"$where\":\"sleep(2000)\"},\"message\":\"timing test\"}",
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "body_regex": "\\{\"id\":\\{\"\\$where\":\"sleep\\(2000\\)\"\\},\"message\":\"tgen-[a-f0-9]{32}:timing\\ test\"\\}"
           }
         ],
         "reject_unmatched_errors": true
@@ -10248,8 +10273,13 @@
       "fixture_refresh": ["juice"],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "juice-shop"
       }
     },
     {
@@ -10463,7 +10493,17 @@
         "reject_unmatched_errors": true
       },
       "intentional_negative_paths": ["/etc/passwd"],
-      "fixture_refresh": ["juice"]
+      "fixture_refresh": ["juice"],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "juice-shop"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "juice-shop-exploits/10-jwt-attacks",
@@ -12111,8 +12151,13 @@
       "fixture_refresh": ["juice"],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "juice-shop"
       }
     },
     {
@@ -12212,8 +12257,13 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "juice-shop"
       }
     },
     {

@@ -128,6 +128,16 @@ class Budget:
         except (OSError, KeyError, ValueError):
             return "catalog"
 
+    def family_marker(self, flow: http.HTTPFlow, current: dict) -> None:
+        """Bind native recovery headers to the host-captured scenario baseline."""
+        if current.get("fixture_contract", {}).get("family_restore") == "juice-shop":
+            baseline = Path(current["dispatch_path"]).parent / "family-baseline.json"
+            family = json.loads(baseline.read_text())
+            if not re.fullmatch(r"tgen-[a-f0-9]{32}", family.get("marker", "")):
+                message = "invalid native family request marker"
+                raise ValueError(message)
+            flow.request.headers["X-TGen-Family"] = family["marker"]
+
     async def request(self, flow: http.HTTPFlow) -> None:
         """All tool/browser descendants queue here immediately before upstream forwarding."""
         host = (
@@ -177,6 +187,7 @@ class Budget:
             message = "invalid native worker attribution"
             raise ValueError(message)
         flow.metadata["tgen_worker"] = worker_marker
+        self.family_marker(flow, current)
         flow.metadata["tgen_scenario"] = current
         event = asyncio.get_running_loop().create_future()
         flow.metadata["tgen_pending_slot"] = event

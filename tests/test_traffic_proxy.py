@@ -370,3 +370,50 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_juice_journal_marker_is_injected_from_owned_baseline(tmp_path, monkeypatch):
+    monkeypatch.setenv("TGEN_DOMAINS", '["www.example.test"]')
+    monkeypatch.setenv("TGEN_PROXY_METRICS", str(tmp_path / "metrics.json"))
+    spec = importlib.util.spec_from_file_location(
+        "juice_proxy", ROOT / "scripts/traffic_proxy.py"
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    budget = module.Budget()
+    marker = "tgen-" + "a" * 32
+    (tmp_path / "family-baseline.json").write_text(json.dumps({"marker": marker}))
+    budget.scenario_file.write_text(
+        json.dumps(
+            {
+                "id": "synthetic/juice",
+                "phase": "execution",
+                "dispatch_path": str(tmp_path / "events.jsonl"),
+                "fixture_contract": {"family_restore": "juice-shop"},
+            }
+        )
+    )
+    flow = SimpleNamespace(
+        metadata={},
+        request=SimpleNamespace(
+            content=b"{}",
+            headers={"Host": "www.example.test", "X-TGen-Family": "foreign"},
+            host="www.example.test",
+            port=443,
+            method="GET",
+            path="/juice-shop/api/Products",
+            get_text=lambda **_options: "{}",
+        ),
+    )
+
+    async def exercise():
+        pending = asyncio.create_task(budget.request(flow))
+        await asyncio.sleep(0)
+        budget.running()
+        await pending
+        budget.done()
+
+    asyncio.run(exercise())
+    assert flow.request.headers["X-TGen-Family"] == marker
