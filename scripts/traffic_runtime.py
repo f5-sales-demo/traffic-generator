@@ -36,7 +36,7 @@ from traffic_functional import verify_functional
 from traffic_network import NetworkBoundary
 from traffic_pass import current_pass_receipt
 from traffic_report import build_report
-from traffic_security import attributed_responses
+from traffic_security import attributed_responses, await_control_evidence
 from traffic_tool import native_binary
 
 sys.dont_write_bytecode = True
@@ -784,6 +784,7 @@ def _scenario(
             "dispatch_contract_verified": False,
         }
     )
+    await_control_evidence(scenario, result, directory, stop)
     scenario_action_verification(directory, scenario, result)
     response_path = directory / "response-events.jsonl"
     responses = (

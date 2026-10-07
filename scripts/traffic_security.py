@@ -1,8 +1,12 @@
 """Validate supplied private control evidence against each actual native request."""
 
 import json
+import time
 from datetime import datetime
 from pathlib import Path
+from threading import Event
+
+from traffic_common import atomic_json
 
 FORBIDDEN = 403
 PAIR_LENGTH = 2
@@ -186,3 +190,49 @@ def attributed_responses(scenario: dict, result: dict, directory: Path) -> list[
         if waf_attribution(row, result, directory, signatures):
             row["control_attributed"] = True
     return rows
+
+
+CONTROL_WAIT_SECONDS = 180
+
+
+def await_control_evidence(
+    scenario: dict, result: dict, directory: Path, stop: Event
+) -> None:
+    """Publish actual blocked request identities for a credential-free operator handshake."""
+    response_path = directory / "response-events.jsonl"
+    rows = (
+        [json.loads(line) for line in response_path.read_text().splitlines()]
+        if response_path.is_file()
+        else []
+    )
+    signatures = scenario.get("functional_contract", {}).get("waf_signatures", [])
+    required = [
+        row
+        for row in rows
+        if row.get("scenario") == scenario["id"]
+        and row.get("kind") == "scenario"
+        and row.get("status") == FORBIDDEN
+        and row.get("upstream_dispatched") is True
+        and row.get("outcome") != "expected_application_rejection"
+    ]
+    if not required or not signatures:
+        return
+    path = directory / "control-evidence-request.json"
+    atomic_json(
+        path,
+        {
+            "schema_version": 1,
+            "scenario": scenario["id"],
+            "source_commit": result.get("source_commit"),
+            "artifact_sha256": result.get("artifact_sha256"),
+            "requests": required,
+            "waf_signatures": signatures,
+        },
+    )
+    deadline = time.monotonic() + CONTROL_WAIT_SECONDS
+    while not stop.is_set():
+        if all(waf_attribution(row, result, directory, signatures) for row in required):
+            return
+        if time.monotonic() >= deadline:
+            return
+        stop.wait(min(1, max(0, deadline - time.monotonic())))
