@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import fcntl
 import json
 import os
@@ -50,16 +51,27 @@ def main() -> int:
     )
     family = scenario["fixture_contract"]["family_restore"]
     directory = Path(os.environ["TGEN_RESULTS_DIR"])
-    lock_path = Path(os.environ["TGEN_FIXTURES"]).parent / (
-        family + "-catalog-mutation.lock"
+    families = (
+        ["dvga", "dvwa", "juice-shop", "restaurant", "vampi"]
+        if family == "mixed"
+        else [family]
     )
-    with lock_path.open("a") as lock:
-        lock_path.chmod(0o600)
-        fcntl.flock(lock, fcntl.LOCK_EX)
+    with contextlib.ExitStack() as stack:
+        for selected in families:
+            lock_path = Path(os.environ["TGEN_FIXTURES"]).parent / (
+                selected + "-catalog-mutation.lock"
+            )
+            lock = stack.enter_context(lock_path.open("a"))
+            lock_path.chmod(0o600)
+            fcntl.flock(lock, fcntl.LOCK_EX)
         host_action(directory, "prepare", family)
         try:
             result = subprocess.run(  # noqa: S603 - checked catalog native entrypoint and target
-                ["/usr/bin/bash", str(root / scenario["entrypoint"]), domain],
+                [
+                    ("node" if scenario["kind"] == "javascript" else "/usr/bin/bash"),
+                    str(root / scenario["entrypoint"]),
+                    domain,
+                ],
                 check=False,
                 env={
                     **os.environ,

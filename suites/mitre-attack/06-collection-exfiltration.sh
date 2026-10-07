@@ -7,6 +7,7 @@ set -uo pipefail
 
 TARGET="${1:?Usage: 06-collection-exfiltration.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
+MARKER="${TGEN_FAMILY_MARKER:?Run through the declared family journal adapter}"
 
 echo "[*] MITRE ATT&CK TA0009/TA0010: Collection & Exfiltration against ${TARGET}"
 echo ""
@@ -65,8 +66,8 @@ echo ""
 
 echo "=== T1567: Exfiltration Over Web Service ==="
 echo "    Technique: CSD Demo exfiltration simulation"
-curl -sf -X POST "${BASE}/csd-demo/exfil/clear" --max-time 5 >/dev/null 2>&1
-curl -sf -X POST "${BASE}/csd-demo/exfil?type=collection" \
+curl -sf -X POST "${BASE}/csd-demo/exfil/clear" -H "X-Demo-Fixture: ${MARKER}" --max-time 5 >/dev/null 2>&1
+curl -sf -X POST "${BASE}/csd-demo/exfil?type=collection" -H "X-Demo-Fixture: ${MARKER}" \
   -H "Content-Type: application/json" \
   -d '{"technique":"T1567","data":"collected_credentials","source":"mitre-attack-suite","timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' \
   --max-time 5 >/dev/null 2>&1
@@ -75,3 +76,5 @@ echo "  Exfiltration beacons in CSD log: ${log_count:-0}"
 echo ""
 
 echo "[*] TA0009/TA0010 Collection & Exfiltration complete"
+
+curl -sf -X POST "${BASE}/csd-demo/exfil/clear" -H "X-Demo-Fixture: ${MARKER}" --max-time 5 >/dev/null

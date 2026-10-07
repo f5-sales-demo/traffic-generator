@@ -13,8 +13,13 @@ from pathlib import Path
 from traffic_common import atomic_json
 
 
-def operation(directory: Path, action: str, family: str) -> None:
+def operation(
+    directory: Path, action: str, family: str, identity: str | None = None
+) -> None:
     """Retain ownership before mutation and restore only the host-captured baseline."""
+    if family == "mixed":
+        bundle_operation(directory, action)
+        return
     fixtures = json.loads(Path(os.environ["TGEN_FIXTURES"]).read_text())
     settings = fixtures["family_recovery"]
     if action not in ("prepare", "restore") or family not in (
@@ -29,7 +34,7 @@ def operation(directory: Path, action: str, family: str) -> None:
     journal = directory / "family-journal.json"
     if action == "prepare":
         value = {
-            "identity": uuid.uuid4().hex,
+            "identity": identity or uuid.uuid4().hex,
             "family": family,
             "source_commit": os.environ["SOURCE_COMMIT"],
             "artifact_sha256": os.environ["TGEN_ARTIFACT_SHA256"],
@@ -87,6 +92,58 @@ def operation(directory: Path, action: str, family: str) -> None:
             "source_commit": value["source_commit"],
             "artifact_sha256": value["artifact_sha256"],
         },
+    )
+
+
+def bundle_operation(directory: Path, action: str) -> None:
+    """Journal all five families with one common marker and exact per-family receipts."""
+    identity_file = directory / "family-bundle-identity.json"
+    if action == "prepare":
+        atomic_json(identity_file, {"identity": uuid.uuid4().hex})
+    identity = json.loads(identity_file.read_text())["identity"]
+    replicas = {}
+    after = {}
+    prepared = []
+    try:
+        for family in ["vampi", "dvwa", "restaurant", "juice-shop", "dvga"]:
+            child = directory / "family-bundle" / family
+            child.mkdir(mode=0o700, parents=True, exist_ok=True)
+            operation(child, action, family, identity)
+            prepared.append((child, family))
+            receipt = json.loads(
+                (
+                    child
+                    / (
+                        "family-baseline.json"
+                        if action == "prepare"
+                        else "family-restoration.json"
+                    )
+                ).read_text()
+            )
+            replicas.update(receipt["replicas"])
+            if action == "restore":
+                after.update(receipt["after"])
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError):
+        if action == "prepare":
+            for child, family in reversed(prepared):
+                operation(child, "restore", family, identity)
+        raise
+    receipt = {
+        "identity": identity,
+        "family": "mixed",
+        "marker": "tgen-" + identity,
+        "replicas": replicas,
+        "source_commit": os.environ["SOURCE_COMMIT"],
+        "artifact_sha256": os.environ["TGEN_ARTIFACT_SHA256"],
+    }
+    if action == "restore":
+        receipt.update(restored=True, after=after)
+    atomic_json(
+        directory
+        / (
+            "family-baseline.json" if action == "prepare" else "family-restoration.json"
+        ),
+        receipt,
     )
 
 

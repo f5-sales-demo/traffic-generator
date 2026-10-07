@@ -2800,7 +2800,8 @@
             "path": "/juice-shop/api/Users/",
             "body_regex": "\"passwordRepeat\"",
             "minimum_dispatches": 2,
-            "payload_class": "browser-registration"
+            "payload_class": "browser-registration",
+            "expected_statuses": [200, 201]
           },
           {
             "id": "contact",
@@ -2808,12 +2809,23 @@
             "path": "/juice-shop/api/Feedbacks/",
             "body_regex": "\"comment\"",
             "minimum_dispatches": 2,
-            "payload_class": "browser-contact"
+            "payload_class": "browser-contact",
+            "expected_statuses": [200, 201]
           }
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "juice-shop"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "Every native form submission must create its marker-owned user or feedback with application-specific response content; all owned records require exact native family restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "bot-simulation/04-rapid-browsing",
@@ -4286,8 +4298,13 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "All preserved application/tool actions require native protocol content or exact protection attribution; five native journals restore marker-owned persistent effects across twenty replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
       }
     },
     {
@@ -14358,7 +14375,17 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved application/tool actions require native protocol content or exact protection attribution; five native journals restore marker-owned persistent effects across twenty replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "mitre-attack/03-execution",
@@ -14758,7 +14785,17 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved application/tool actions require native protocol content or exact protection attribution; five native journals restore marker-owned persistent effects across twenty replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "mitre-attack/05-discovery",
@@ -15188,7 +15225,17 @@
           }
         ]
       },
-      "fixture_refresh": []
+      "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
+      },
+      "functional_contract": {
+        "verifier": "composed-native",
+        "behavior": "All preserved application/tool actions require native protocol content or exact protection attribution; five native journals restore marker-owned persistent effects across twenty replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      }
     },
     {
       "id": "mitre-attack/07-impact",
@@ -23593,8 +23640,13 @@
       "fixture_refresh": [],
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All preserved native payload requests return declared application protocol identity or protection candidate; tool phases and transport cleanup independently verified",
-        "mutation_policy": "requires-no-change-or-restoration-proof"
+        "behavior": "All preserved application/tool actions require native protocol content or exact protection attribution; five native journals restore marker-owned persistent effects across twenty replicas",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
+      },
+      "adapter": "native-family-journal",
+      "fixture_contract": {
+        "family_restore": "mixed"
       }
     },
     {

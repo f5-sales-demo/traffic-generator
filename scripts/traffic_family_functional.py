@@ -17,7 +17,8 @@ def family_restored(result: dict, directory: Path) -> bool:
             and before.get("family") == after.get("family")
             and before.get("marker") == after.get("marker")
             and after.get("after") == before.get("replicas")
-            and len(after.get("after", {})) == REPLICA_COUNT
+            and len(after.get("after", {}))
+            == (REPLICA_COUNT * 5 if before.get("family") == "mixed" else REPLICA_COUNT)
             and all(
                 after.get(key) == before.get(key) == result.get(key)
                 for key in ["source_commit", "artifact_sha256"]

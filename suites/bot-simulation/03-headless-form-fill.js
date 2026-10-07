@@ -71,6 +71,13 @@ const IDENTITIES = [
   },
 ];
 
+const familyMarker = process.env.TGEN_FAMILY_MARKER;
+if (!/^tgen-[a-f0-9]{32}$/.test(familyMarker || '')) throw new Error('native family marker required');
+for (let i = 0; i < IDENTITIES.length; i++) {
+  IDENTITIES[i].email = familyMarker + '-bot' + i + '@example.com';
+  IDENTITIES[i].comment = familyMarker + ':' + IDENTITIES[i].comment;
+}
+
 (async () => {
   console.log(`[*] Automated form filling against ${TARGET_FQDN}`);
   console.log(`[*] Using ${IDENTITIES.length} bot identities`);
@@ -133,6 +140,7 @@ const IDENTITIES = [
       console.log(`    Registration HTTP ${registration.status()} (native form submission)`);
       await page.waitForTimeout(1000);
       console.log(`    Registration submitted`);
+      if (![200, 201].includes(registration.status())) throw new Error('native registration not created');
       registrations++;
     } catch (err) {
       console.log(`    Registration error: ${err.message}`);
@@ -174,6 +182,7 @@ const IDENTITIES = [
       console.log(`    Contact HTTP ${contact.status()} (native form submission)`);
       await page.waitForTimeout(500);
       console.log(`    Contact form submitted`);
+      if (![200, 201].includes(contact.status())) throw new Error('native feedback not created');
       contacts++;
     } catch (err) {
       console.log(`    Contact form error: ${err.message}`);
