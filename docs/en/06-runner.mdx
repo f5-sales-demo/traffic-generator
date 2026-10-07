@@ -345,7 +345,7 @@ against the exact final PR head, after formatting and pushing:
 node --test tests/csd-host.integration.mjs
 CSD_TEST_CHROME_PATH=/usr/bin/google-chrome \
 CSD_TEST_PLAYWRIGHT_MODULE=/path/to/existing/playwright-core/index.mjs \
-CSD_HEADER_KEEP_FIXTURE=1 bash tests/test-csd-header-circulation.sh
+CSD_HEADER_KEEP_FIXTURE=1 bash tests/csd-header-circulation.integration.sh
 ```
 
 It requires real noninteractive sudo to `nobody`, validates reset versus allowlisted per-run
