@@ -556,3 +556,49 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
     evidence["firewall"]["spec"] = {"monitoring": {}}
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not waf_attribution(response, result, tmp_path, ["200003915"])
+
+
+def test_direct_native_api_requires_nested_content_and_observed_response(tmp_path):
+    scenario = {
+        "id": "synthetic/community",
+        "kind": "shell",
+        "functional_contract": {
+            "verifier": "direct-native-api",
+            "behavior": "synthetic author exposure",
+            "mutation_policy": "read-only",
+            "native_response_requirements": ["posts"],
+        },
+        "dispatch_contract": {
+            "requirements": [
+                {
+                    "id": "posts",
+                    "method": "GET",
+                    "expected_statuses": [200],
+                    "response_contract": {
+                        "content_type": "application/json",
+                        "json_nested_list_matches": {
+                            "posts": {"author.email": "example"}
+                        },
+                    },
+                }
+            ],
+        },
+    }
+    result = {
+        "outcome": "launched",
+        "dispatch_contract_verified": True,
+        "transport_failures": 0,
+        "tool_cancellations": 0,
+    }
+    row: dict = {
+        "scenario": scenario["id"],
+        "kind": "scenario",
+        "matched_requirements": ["posts"],
+        "status": 200,
+        "upstream_dispatched": True,
+        "response_assertions": {"posts": True},
+    }
+    assert verify_functional(scenario, result, [row], tmp_path)["passed"]
+    row["response_assertions"]["posts"] = False
+    assert not verify_functional(scenario, result, [row], tmp_path)["passed"]
+    assert not verify_functional(scenario, result, [], tmp_path)["passed"]

@@ -806,6 +806,7 @@ def verify_functional(  # noqa: PLR0911  # pylint: disable=too-many-return-state
                 "json_document_equals",
                 "graphql_data_field",
                 "graphql_response_fields",
+                "json_nested_list_matches",
             )
         )
         checks.append(
