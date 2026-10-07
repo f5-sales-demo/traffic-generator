@@ -22,7 +22,7 @@ pinned Node 22 archive URL and SHA-256, pinned Chrome for Testing archive URL an
 `operator_ssh_cidr`, and `ssh_public_key_path`. Never guess an image or artifact digest and never
 commit credentials, key material, or local variable files.
 
-The currently observed jumpbox public address is `142.127.218.190/32`; revalidate it immediately before every plan or apply because it is not permanent. On `robin@192.168.2.240`, the untracked public key path may be `/home/robin/.ssh/id_ed25519.pub`. Terraform reads that public key, while its private counterpart remains outside configuration and state.
+Revalidate the operator SSH CIDR before every plan or apply. Use a private local SSH public-key path such as `~/.ssh/id_ed25519.pub`; its private counterpart remains outside configuration and state.
 
 The worker clones the exact source commit and verifies runtime archives before installation. Client-Side Defense browser scenarios run with headed Chrome under Xvfb.
 
@@ -263,9 +263,9 @@ ls /opt/traffic-generator/suites/*/
 | Output                | Description                                   | Example                                                                     |
 | --------------------- | --------------------------------------------- | --------------------------------------------------------------------------- |
 | `deployer`            | Resolved deployer identifier                  | `jsmith`                                                                    |
-| `public_ip`           | Public IP address of the traffic generator VM | `20.12.78.200`                                                              |
+| `public_ip`           | Public IP address of the traffic generator VM | `192.0.2.20`                                                                |
 | `private_ip`          | Private IP address of the VM                  | `10.201.0.4`                                                                |
-| `ssh_command`         | SSH command to connect to the VM              | `ssh azureuser@20.12.78.200`                                                |
+| `ssh_command`         | SSH command to connect to the VM              | `ssh azureuser@192.0.2.20`                                                  |
 | `resource_group_name` | Resource group name                           | `rg-traffic-generator-dev-jsmith`                                           |
 | `resource_group_id`   | Resource group Azure resource ID              | `/subscriptions/.../resourceGroups/rg-traffic-generator-dev-jsmith`         |
 | `vm_name`             | Virtual machine name                          | `vm-traffic-generator-dev-jsmith`                                           |
@@ -278,7 +278,7 @@ ls /opt/traffic-generator/suites/*/
 | `environment`         | Deployment environment                        | `dev`                                                                       |
 | `location`            | Azure region                                  | `eastus2`                                                                   |
 | `target_fqdn`         | Configured target FQDN for traffic suites     | `demo.example.com`                                                          |
-| `status_check`        | Command to check provisioning status          | `ssh azureuser@20.12.78.200 cat /opt/traffic-generator/status.json`         |
+| `status_check`        | Command to check provisioning status          | `ssh azureuser@192.0.2.20 cat /opt/traffic-generator/status.json`           |
 
 Retrieve any output:
 
@@ -291,14 +291,18 @@ terraform output -raw ssh_command
 
 The traffic generator targets an F5 XC HTTP load balancer that fronts the origin server. Deploy the origin server first, configure F5 XC, then set `target_fqdn` to the load balancer's FQDN:
 
+<div data-xcsh-context="shell" data-xcsh-fields="XCSH_AZURE_SUBSCRIPTION_ID">
+
 ```bash
 # After deploying origin-server and creating an F5 XC HTTP load balancer:
 cat > terraform.tfvars <<EOF
-subscription_id  = "SUBSCRIPTION_ID"
+subscription_id  = "<XCSH_AZURE_SUBSCRIPTION_ID>"
 target_fqdn      = "your-xc-load-balancer.example.com"
 target_origin_ip = "$(cd ../../origin-server/terraform && terraform output -raw public_ip)"
 EOF
 ```
+
+</div>
 
 | Required Variable  | Source                           | Description                                                 |
 | ------------------ | -------------------------------- | ----------------------------------------------------------- |
