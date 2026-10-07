@@ -205,3 +205,44 @@ def test_scenario_mitigation_count_excludes_filler_and_prerequisites(tmp_path):
             threading.Event(),
         )
     assert result["mitigated_requests"] == 1
+
+
+def test_final_functional_receipt_uses_only_validated_control_responses(tmp_path):
+    active = tmp_path / "pass-test"
+    active.mkdir()
+    snapshots = iter([{"scenario_requests": 0}, {"scenario_requests": 1}])
+    boundary = SimpleNamespace(
+        config={
+            "results_dir": str(tmp_path),
+            "scenario_timeout_seconds": 10,
+            "source_commit": "a" * 40,
+            "artifact_sha256": "b" * 64,
+        },
+        refresh_fixtures=lambda *_: None,
+        environment=lambda *_: {},
+        metrics=lambda: next(snapshots),
+        wrap=lambda command, **_options: command,
+    )
+    attributed = [{"scenario": "synthetic/action", "control_attributed": True}]
+    with (
+        patch.object(runtime, "execute", return_value={"outcome": "launched"}),
+        patch.object(runtime, "scenario_action_verification"),
+        patch.object(
+            runtime, "attributed_responses", return_value=attributed
+        ) as validated,
+        patch.object(
+            runtime, "verify_functional", return_value={"passed": True}
+        ) as functional,
+    ):
+        result = runtime._scenario(  # pylint: disable=protected-access
+            ROOT,
+            scenario(),
+            "www.example.test",
+            active,
+            cast("runtime.NetworkBoundary", boundary),
+            {"failures": []},
+            threading.Event(),
+        )
+    validated.assert_called_once()
+    assert functional.call_args.args[2] is attributed
+    assert result["functional_verified"] is True

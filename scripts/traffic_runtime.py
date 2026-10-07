@@ -844,7 +844,7 @@ def _scenario(
         if not result["paste_restoration"]:
             result["outcome"] = "fixture_failure"
     result["functional_acceptance"] = verify_functional(
-        scenario, result, responses, directory
+        scenario, result, attributed_responses(scenario, result, directory), directory
     )
     result["functional_verified"] = result["functional_acceptance"]["passed"]
     if result["outcome"] != "launched":
