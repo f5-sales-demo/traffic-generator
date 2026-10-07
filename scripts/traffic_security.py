@@ -342,7 +342,9 @@ def attributed_responses(scenario: dict, result: dict, directory: Path) -> list[
     return rows
 
 
-CONTROL_WAIT_SECONDS = 180
+# Large request sets need complete paginated XC joins before installation.
+# The observed 594-request Hydra bundle took 278 seconds; keep a bounded wait.
+CONTROL_WAIT_SECONDS = 900
 
 
 def await_control_evidence(

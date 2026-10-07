@@ -74,3 +74,45 @@ def test_composed_control_request_needs_no_preselected_signature(tmp_path):
     receipt = json.loads((tmp_path / "control-evidence-request.json").read_text())
     assert receipt["waf_signatures"] == []
     assert receipt["requests"] == [row]
+
+
+def test_large_handshake_accepts_complete_evidence_after_three_minutes(tmp_path):
+    row = {
+        "scenario": "synthetic/action",
+        "kind": "scenario",
+        "status": 403,
+        "upstream_dispatched": True,
+        "outcome": "mitigation_candidate",
+    }
+    (tmp_path / "response-events.jsonl").write_text(json.dumps(row) + "\n")
+    stop = threading.Event()
+    with (
+        patch("traffic_security.time.monotonic", side_effect=[0, 181, 181]),
+        patch("traffic_security.control_attribution", side_effect=[False, True]),
+        patch.object(stop, "wait", return_value=False) as wait,
+    ):
+        await_control_evidence(
+            {"id": "synthetic/action", "functional_contract": {}},
+            {},
+            tmp_path,
+            stop,
+        )
+    wait.assert_called_once()
+
+
+def test_handshake_timeout_remains_bounded(tmp_path):
+    row = {
+        "scenario": "synthetic/action",
+        "kind": "scenario",
+        "status": 403,
+        "upstream_dispatched": True,
+    }
+    (tmp_path / "response-events.jsonl").write_text(json.dumps(row) + "\n")
+    stop = threading.Event()
+    with (
+        patch("traffic_security.time.monotonic", side_effect=[0, 901]),
+        patch("traffic_security.control_attribution", return_value=False),
+        patch.object(stop, "wait") as wait,
+    ):
+        await_control_evidence({"id": "synthetic/action"}, {}, tmp_path, stop)
+    wait.assert_not_called()
