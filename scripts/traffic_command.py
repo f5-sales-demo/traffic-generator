@@ -21,6 +21,7 @@ def scenario_command(root: Path, scenario: dict, domain: str) -> list[str]:
         "native-subfinder": "native_subfinder.py",
         "native-slow-headers": "native_slow_headers.py",
         "native-family-journal": "traffic_family_native.py",
+        "native-origin-torture": "traffic_origin_torture.py",
     }
     if scenario.get("adapter") in adapters:
         return [

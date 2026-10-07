@@ -12,7 +12,7 @@ from pathlib import Path
 
 from traffic_dispatch import validate_dispatch_contract
 
-MAX_SCENARIO_SECONDS = 900
+MAX_SCENARIO_SECONDS = 7200
 APPLICATION_COUNT = 9
 
 

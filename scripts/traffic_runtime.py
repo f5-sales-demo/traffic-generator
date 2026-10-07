@@ -100,7 +100,7 @@ def validate_config(config: dict) -> None:
     for key, limit in (
         ("connection_rps", 20),
         ("slow_connections", 20),
-        ("scenario_timeout_seconds", 900),
+        ("scenario_timeout_seconds", 7200),
         ("retention_days", 7),
         ("retention_bytes", 10 * 1024**3),
     ):

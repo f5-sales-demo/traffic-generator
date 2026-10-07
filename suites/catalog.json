@@ -4747,7 +4747,7 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 900,
+      "timeout_seconds": 7200,
       "dispatch_contract": {
         "requirements": [
           {
@@ -4993,7 +4993,11 @@
         "verifier": "native-nested-suites",
         "behavior": "All nineteen native wrk and four hey workers complete with reports; every preserved child suite independently verifies actual native behavior and mutation recovery; no child failure or cancelled request can qualify",
         "mutation_policy": "journaled-restoration",
-        "restoration_fields": ["nested_actions"]
+        "restoration_fields": ["family_restoration", "nested_actions"]
+      },
+      "adapter": "native-origin-torture",
+      "fixture_contract": {
+        "family_restore": "mixed"
       }
     },
     {

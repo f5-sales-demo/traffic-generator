@@ -794,7 +794,8 @@ def verify_nested(scenario: dict, result: dict, directory: Path) -> dict:
         for suite, identifiers in scenario["nested_contract"].items()
     ]
     return {
-        "passed": bool(reports)
+        "passed": family_restored(result, directory)
+        and bool(reports)
         and all(report["passed"] for report in reports)
         and (
             not scenario.get("tool_contract")

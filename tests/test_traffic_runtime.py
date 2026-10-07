@@ -45,7 +45,7 @@ class RuntimeTests(unittest.TestCase):
             ("slow_connections", 21),
             ("csd_enabled", True),
             ("protections_enabled", False),
-            ("scenario_timeout_seconds", 901),
+            ("scenario_timeout_seconds", 7201),
             ("protocol", "http"),
             ("domains", ["www.example.test"]),
             ("http_rps", 400),

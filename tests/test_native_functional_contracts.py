@@ -726,6 +726,23 @@ def test_nested_functional_requires_each_source_bound_child_and_cleanup(tmp_path
         },
         "nested_contract": {"synthetic": ["synthetic/child"]},
     }
+    replicas: dict = {
+        family + "-" + str(i): {}
+        for family in ["vampi", "dvwa", "restaurant", "juice-shop", "dvga"]
+        for i in range(1, 5)
+    }
+    family = {
+        "family": "mixed",
+        "identity": "e" * 32,
+        "marker": "tgen-" + "e" * 32,
+        "source_commit": "a" * 40,
+        "artifact_sha256": "b" * 64,
+        "replicas": replicas,
+    }
+    (tmp_path / "family-baseline.json").write_text(json.dumps(family))
+    (tmp_path / "family-restoration.json").write_text(
+        json.dumps({**family, "restored": True, "after": replicas})
+    )
     result = {
         "source_commit": "a" * 40,
         "artifact_sha256": "b" * 64,

@@ -36,7 +36,7 @@ local requests_list = {
   { method = "GET", path = "/" },
   { method = "GET", path = "/identity/api/auth/signup" },
   -- Registration attempts
-  { method = "POST", path = "/identity/api/auth/signup", body = '{"name":"wrk-user","email":"wrk' .. os.time() .. '@test.com","number":"5551234567","password":"Torture123"}' },
+  { method = "POST", path = "/identity/api/auth/signup", body = '{"name":"wrk-user","email":"tgen-order@example.com","number":"5551234567","password":"Torture123"}' },
 }
 
 request = function()

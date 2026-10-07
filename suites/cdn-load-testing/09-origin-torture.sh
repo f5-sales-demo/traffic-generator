@@ -176,8 +176,8 @@ echo ""
 # ================================================================
 echo "=== LAYER 6: ALL EXPLOIT SUITES ==="
 SUITE_PIDS=""
-for suite in dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack; do
-  if [ -d "$SUITE_DIR/$suite" ]; then
+for suite in ${TGEN_CHILD_SUITES:-dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack}; do
+  if [[ "${TGEN_LOAD_JOURNAL_ONLY:-}" != "1" ]] && [ -d "$SUITE_DIR/$suite" ]; then
     (
       if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
         TGEN_RESULTS_DIR="$RESULTS_DIR/nested-$suite" bash "$SUITE_DIR/runner.sh" "$suite"
@@ -293,7 +293,7 @@ done
 echo ""
 
 echo "=== EXPLOIT SUITE RESULTS ==="
-for suite in dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack; do
+for suite in ${TGEN_CHILD_SUITES:-dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack}; do
   LOG="$RESULTS_DIR/suite-${suite}.log"
   if [ -f "$LOG" ]; then
     P=$(grep -c '\[PASS\]' "$LOG" 2>/dev/null || echo 0)
