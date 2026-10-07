@@ -743,3 +743,32 @@ def test_nested_functional_requires_each_source_bound_child_and_cleanup(tmp_path
         receipt["source_commit"] = "c" * 40
         path.write_text(json.dumps(receipt))
         assert not verify_functional(scenario, result, [], tmp_path)["passed"]
+
+
+def test_corpus_setup_response_cannot_invalidate_or_satisfy_payload_coverage(tmp_path):
+    scenario = {
+        "id": "synthetic/corpus",
+        "dispatch_contract": {"payloads": ["payload"]},
+        "functional_contract": {
+            "verifier": "native-dvwa-corpus",
+            "behavior": "payload",
+            "waf_signatures": [],
+        },
+    }
+    result = {"outcome": "launched", "dispatch_contract_verified": True}
+    setup = {
+        "scenario": scenario["id"],
+        "kind": "scenario",
+        "status": 302,
+        "upstream_dispatched": True,
+    }
+    payload = {
+        "scenario": scenario["id"],
+        "kind": "scenario",
+        "status": 200,
+        "upstream_dispatched": True,
+        "native_body_verified": True,
+        "corpus_payload_sha256": hashlib.sha256(b"payload").hexdigest(),
+    }
+    assert verify_functional(scenario, result, [setup, payload], tmp_path)["passed"]
+    assert not verify_functional(scenario, result, [setup], tmp_path)["passed"]

@@ -736,7 +736,9 @@ def verify_dvwa_corpus(
     rows = [
         row
         for row in responses
-        if row.get("scenario") == scenario["id"] and row.get("kind") == "scenario"
+        if row.get("scenario") == scenario["id"]
+        and row.get("kind") == "scenario"
+        and row.get("corpus_payload_sha256") in required
     ]
     observed = {row.get("corpus_payload_sha256") for row in rows}
     passed = required <= observed and all(
