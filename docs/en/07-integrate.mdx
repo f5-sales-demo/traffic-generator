@@ -27,7 +27,7 @@ GitHub jumpbox -> restricted SSH /32 -> Elastic IP -> public AWS worker
                                       +-> encrypted CloudWatch logs
 ```
 
-The AWS worker targets the exact authorized URL `https://client-side-defense.f5-sales-demo.com`. It runs headed Chrome under Xvfb without exposing Chrome DevTools. Terraform assigns an explicit Elastic IP while keeping `associate_public_ip_address = false`, and permits TCP/22 only from the revalidated `operator_ssh_cidr`. The private SSH key remains outside Terraform state.
+The AWS worker targets the exact authorized URL `https://app.example.com`. It runs headed Chrome under Xvfb without exposing Chrome DevTools. Terraform assigns an explicit Elastic IP while keeping `associate_public_ip_address = false`, and permits TCP/22 only from the revalidated `operator_ssh_cidr`. The private SSH key remains outside Terraform state.
 
 After applying the independently reviewed AWS saved plan, use these exact non-sensitive Terraform outputs:
 
@@ -191,10 +191,14 @@ Azure Traffic Generator -> F5 XC HTTP LB -> Azure Origin Server
 
 The [origin server](https://f5-sales-demo.github.io/origin-server/) supplies the application paths used by the existing Azure suites, including Juice Shop, DVWA, VAmPI, crAPI, DVGA, Restaurant API, and the CSD demo. Configure the Azure runner in `/opt/traffic-generator/config.env`:
 
+<div data-xcsh-context="shell" data-xcsh-fields="XCSH_DOMAINNAME XCSH_ORIGIN_IP">
+
 ```bash
-TARGET_FQDN=demo.example.com
-TARGET_ORIGIN_IP=20.10.5.100
+TARGET_FQDN='<XCSH_DOMAINNAME>'
+TARGET_ORIGIN_IP='<XCSH_ORIGIN_IP>'
 ```
+
+</div>
 
 Run the existing Azure suites over SSH as documented in [Runner](./06-runner/). Direct-origin comparison is optional and valid only when the origin owner has authorized it. A script exit count is execution evidence, not proof that an attack succeeded or a security control detected it; verify application and F5 Distributed Cloud telemetry independently.
 
