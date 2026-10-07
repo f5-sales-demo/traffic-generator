@@ -514,6 +514,7 @@ def fixture_action_verification(directory: Path, scenario: dict, result: dict) -
             evidence.exists()
             and json.loads(evidence.read_text()).get("restored") is True
         )
+        result["csrf_restoration"] = restored
         result["dispatch_contract_verified"] &= restored
         if not restored:
             result["outcome"] = "fixture_failure"

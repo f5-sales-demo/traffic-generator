@@ -5112,6 +5112,8 @@
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "fixture_refresh": ["crapi"],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["signup_restoration"],
         "verifier": "native-crapi-signup",
         "behavior": "Origin issues a fresh synthetic signup JWT, welcome VIN/pincode and reset OTP; the journaled actor, vehicle and mail are removed through an enrolled forced-command recovery route"
       },
@@ -5244,6 +5246,8 @@
       "prerequisites": ["origin-issued-synthetic-crapi-accounts", "seeded-crapi-objects"],
       "expected_http_statuses": [200, 201, 400, 401, 403, 404, 405, 422, 429],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["otp_restoration"],
         "verifier": "native-crapi-otp",
         "behavior": "Native reset mail establishes the isolated actor prerequisite; both sampled guess batches return declared native OTP outcomes and password/mail state is restored"
       },
@@ -5400,6 +5404,8 @@
         "remove_disposable_videos": true
       },
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["disposable_video_cleanup"],
         "verifier": "native-video-deletion",
         "behavior": "Four synthetic owned videos are natively uploaded and deleted by the regular actor, then exact absence is read back for each object"
       }
@@ -5702,6 +5708,8 @@
       },
       "fixture_refresh": ["crapi"],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["video_restoration"],
         "verifier": "native-video-conversion",
         "waf_signatures": ["200010176", "200003909", "200003915"],
         "behavior": "All native video parameter updates and conversion triggers have exact protocol evidence and original media/name/parameter restoration; command execution is not inferred"
@@ -6589,6 +6597,8 @@
         "restore_pastes": true
       },
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["paste_restoration"],
         "verifier": "native-dvga-pastes",
         "behavior": "seven native stored-paste outcomes and exact owned removal",
         "waf_signatures": [
@@ -7003,6 +7013,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["csrf_restoration"],
         "verifier": "native-dvwa-csrf",
         "behavior": "Isolated synthetic password changes and fresh login are observed, then original credentials authenticate after exact recovery"
       }
@@ -20217,6 +20229,8 @@
       },
       "fixture_refresh": ["restaurant"],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["fixture_restoration"],
         "verifier": "native-role-mutation",
         "behavior": "Every role payload has an actual native profile readback and exact original synthetic actor restoration"
       }
