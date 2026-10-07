@@ -50,13 +50,17 @@ runner.sh <suite-name> [--dry-run]
 
 The runner reads configuration from `/opt/traffic-generator/config.env`:
 
+<div data-xcsh-context="shell" data-xcsh-fields="XCSH_DOMAINNAME">
+
 ```bash
 # Required: target FQDN (F5 XC load balancer domain)
-TARGET_FQDN=demo.example.com
+TARGET_FQDN='<XCSH_DOMAINNAME>'
 
 # Optional: direct origin IP for baseline testing (bypasses F5 XC)
 TARGET_ORIGIN_IP=
 ```
+
+</div>
 
 This file is written automatically during Terraform provisioning from the `target_fqdn` and `target_origin_ip` variables. To change the target after deployment, edit this file directly on the VM.
 
@@ -64,14 +68,18 @@ This file is written automatically during Terraform provisioning from the `targe
 
 Any variable in `config.env` can be overridden by exporting it before running the suite:
 
+<div data-xcsh-context="shell" data-xcsh-fields="XCSH_DOMAINNAME">
+
 ```bash
 # Override target FQDN for a single run
-TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh web-app-attacks
+TARGET_FQDN='<XCSH_DOMAINNAME>' /opt/traffic-generator/suites/runner.sh web-app-attacks
 
 # Override via export
-export TARGET_FQDN=staging.example.com
+export TARGET_FQDN='<XCSH_DOMAINNAME>'
 /opt/traffic-generator/suites/runner.sh web-app-attacks
 ```
+
+</div>
 
 The config file path itself can also be overridden:
 
@@ -200,6 +208,8 @@ This runs the selected Azure shell suites back-to-back. Duration and security te
 
 Run suites from your local machine without maintaining an SSH session:
 
+<div data-xcsh-context="shell" data-xcsh-fields="XCSH_DOMAINNAME">
+
 ```bash
 TGEN_IP=$(terraform output -raw public_ip)
 
@@ -207,7 +217,7 @@ TGEN_IP=$(terraform output -raw public_ip)
 ssh azureuser@${TGEN_IP} '/opt/traffic-generator/suites/runner.sh web-app-attacks'
 
 # Run a suite with target override
-ssh azureuser@${TGEN_IP} 'TARGET_FQDN=staging.example.com /opt/traffic-generator/suites/runner.sh api-attacks'
+ssh azureuser@${TGEN_IP} 'TARGET_FQDN="<XCSH_DOMAINNAME>" /opt/traffic-generator/suites/runner.sh api-attacks'
 
 # Run in background (disconnection-safe)
 ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-attacks > /tmp/web-app-attacks.log 2>&1 &'
@@ -216,6 +226,8 @@ ssh azureuser@${TGEN_IP} 'nohup /opt/traffic-generator/suites/runner.sh web-app-
 ssh azureuser@${TGEN_IP} 'ls -la /opt/traffic-generator/results/ | tail -5'
 ssh azureuser@${TGEN_IP} 'cat /opt/traffic-generator/results/$(ls -t /opt/traffic-generator/results/ | head -1)/meta.json'
 ```
+
+</div>
 
 For long-running suites, use `nohup` or `tmux` to prevent SSH disconnection from killing the process:
 

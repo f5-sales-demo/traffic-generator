@@ -73,7 +73,7 @@ addressing relationship is explicit before first boot. The worker security group
 `operator_ssh_cidr`, which must be one canonical IPv4 `/32`; the VPC default security group is managed with
 no ingress or egress. Systems Manager remains the recovery and constrained scenario-execution path.
 
-Terraform creates an EC2 key pair by reading an existing public key from `ssh_public_key_path` with `file(pathexpand(...))`. Public key bytes are not committed and the private key never enters Terraform configuration or state. The current observed jumpbox address `142.127.218.190/32` is an example only and must be revalidated immediately before every plan or apply.
+Terraform creates an EC2 key pair by reading an existing public key from `ssh_public_key_path` with `file(pathexpand(...))`. Public key bytes are not committed and the private key never enters Terraform configuration or state. Use an authorized operator SSH CIDR, such as the documentation placeholder `192.0.2.10/32`, and revalidate the real value immediately before every plan or apply.
 
 AWS provisioning checks out an exact 40-character source commit and verifies pinned Node 22 and Chrome for Testing archives before installation. Browser scenarios run under Xvfb with a headed Chrome process.
 

@@ -1,12 +1,10 @@
 {
-  "fields": [
-    { "name": "TARGET_FQDN", "label": "Target FQDN", "placeholder": "demo.example.com", "required": true },
-    { "name": "TARGET_ORIGIN_IP", "label": "Origin IP (direct)", "placeholder": "10.200.1.4" },
-    { "name": "TGEN_IP", "label": "Traffic Generator IP", "placeholder": "20.12.78.200" },
+  "version": 2,
+  "fields": ["XCSH_DOMAINNAME", "XCSH_ORIGIN_IP", "XCSH_TGEN_IP", "XCSH_AZURE_SUBSCRIPTION_ID"],
+  "groups": [
     {
-      "name": "SUBSCRIPTION_ID",
-      "label": "Azure Subscription ID",
-      "placeholder": "00000000-0000-0000-0000-000000000000"
+      "label": "Settings",
+      "keys": ["XCSH_DOMAINNAME", "XCSH_ORIGIN_IP", "XCSH_TGEN_IP", "XCSH_AZURE_SUBSCRIPTION_ID"]
     }
   ]
 }
