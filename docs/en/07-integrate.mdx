@@ -27,7 +27,7 @@ GitHub jumpbox -> restricted SSH /32 -> Elastic IP -> public AWS worker
                                       +-> encrypted CloudWatch logs
 ```
 
-The AWS worker targets the exact authorized URL `https://client-side-defense.f5-sales-demo.com`. It runs headed Chrome under Xvfb without exposing Chrome DevTools. Terraform assigns an explicit Elastic IP while keeping `associate_public_ip_address = false`, and permits TCP/22 only from the revalidated `operator_ssh_cidr`. The private SSH key remains outside Terraform state.
+The AWS worker targets the exact authorized URL `https://app.example.com`. It runs headed Chrome under Xvfb without exposing Chrome DevTools. Terraform assigns an explicit Elastic IP while keeping `associate_public_ip_address = false`, and permits TCP/22 only from the revalidated `operator_ssh_cidr`. The private SSH key remains outside Terraform state.
 
 After applying the independently reviewed AWS saved plan, use these exact non-sensitive Terraform outputs:
 
