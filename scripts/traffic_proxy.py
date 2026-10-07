@@ -164,12 +164,7 @@ class Budget:
         flow.request.scheme = "https" if flow.request.port == HTTPS_PORT else "http"
         if "X-MUD-User" not in flow.request.headers:
             flow.request.headers["X-MUD-User"] = (
-                "showcase-"
-                + self.counts["run_identity"]
-                + "-scenario-"
-                + self.current_scenario()
-                + "-"
-                + host.replace(".", "-")
+                "showcase-" + uuid.uuid4().hex + "-request"
             )
         try:
             current = json.loads(self.scenario_file.read_text())

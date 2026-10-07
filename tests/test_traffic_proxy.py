@@ -42,6 +42,7 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             spec.loader.exec_module(module)
             budget = module.Budget()
             dispatched = []
+            identities = []
 
             async def request(_index):
                 flow = SimpleNamespace(
@@ -60,6 +61,7 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                     r"showcase-[0-9a-f]{32}-[a-z0-9-]+",
                     flow.request.headers["X-MUD-User"],
                 )
+                identities.append(flow.request.headers["X-MUD-User"])
                 dispatched.append(time.monotonic())
 
             pending = [asyncio.create_task(request(i)) for i in range(21)]
@@ -67,6 +69,7 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             budget.running()
             await asyncio.gather(*pending)
             budget.done()
+            assert len(set(identities)) == 21
             assert dispatched[-1] - dispatched[0] >= 0.99
             assert budget.counts["scenario_requests"] == 21
             assert budget.counts["filler_requests"] == 0
