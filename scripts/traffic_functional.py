@@ -81,6 +81,7 @@ def verify_credentials(scenario: dict, result: dict, directory: Path) -> dict:
         "passed": passed,
         "behavior": scenario["functional_contract"]["behavior"],
         "native_attempts": len(attempts),
+        "credential_restoration": passed,
         "screenshots": {
             name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
             for name in evidence.get("screenshots", [])
