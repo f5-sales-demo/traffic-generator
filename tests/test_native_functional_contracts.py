@@ -546,6 +546,7 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
     result = {"source_commit": "c" * 40, "artifact_sha256": "d" * 64}
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert waf_attribution(response, result, tmp_path, ["200003915"])
+    assert waf_attribution(response, result, tmp_path, [])
     event["req_id"] = "foreign-request"
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not waf_attribution(response, result, tmp_path, ["200003915"])

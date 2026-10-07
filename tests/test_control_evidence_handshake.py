@@ -53,3 +53,24 @@ def test_handshake_skips_native_rejection_and_unconfigured_signature(tmp_path):
         threading.Event(),
     )
     assert not (tmp_path / "control-evidence-request.json").exists()
+
+
+def test_composed_control_request_needs_no_preselected_signature(tmp_path):
+    row = {
+        "scenario": "synthetic/action",
+        "kind": "scenario",
+        "status": 403,
+        "upstream_dispatched": True,
+        "outcome": "mitigation_candidate",
+    }
+    (tmp_path / "response-events.jsonl").write_text(json.dumps(row) + "\n")
+    with patch("traffic_security.waf_attribution", return_value=True):
+        await_control_evidence(
+            {"id": "synthetic/action", "functional_contract": {}},
+            {},
+            tmp_path,
+            threading.Event(),
+        )
+    receipt = json.loads((tmp_path / "control-evidence-request.json").read_text())
+    assert receipt["waf_signatures"] == []
+    assert receipt["requests"] == [row]

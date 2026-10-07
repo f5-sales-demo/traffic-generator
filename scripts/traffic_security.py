@@ -168,7 +168,8 @@ def waf_attribution(
             and event.get("waf_mode") == "block"
             and event.get("recommended_action") == "block"
             and any(
-                str(sig.get("id")) in signatures and sig.get("state") == "Enabled"
+                (not signatures or str(sig.get("id")) in signatures)
+                and sig.get("state") == "Enabled"
                 for sig in event.get("signatures", [])
             )
             for event in checks[0]["events"]
@@ -215,7 +216,7 @@ def await_control_evidence(
         and row.get("upstream_dispatched") is True
         and row.get("outcome") != "expected_application_rejection"
     ]
-    if not required or not signatures:
+    if not required:
         return
     path = directory / "control-evidence-request.json"
     atomic_json(

@@ -21,6 +21,7 @@ from crapi_otp_fixture import verify_restoration
 from scanner_phase_contract import verify_scanner_phases
 from stress_reports import native_report_verification
 from traffic_catalog import load_catalog, readiness
+from traffic_child_metadata import child_dispatch
 from traffic_command import scenario_command
 from traffic_common import atomic_json, terminate
 from traffic_dispatch import (
@@ -285,15 +286,7 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         runtime_directory = Path(os.environ["TGEN_RUNTIME_DIR"])
         marker = "child-" + uuid.uuid4().hex
-        metadata = {
-            "id": scenario["id"],
-            "phase": "execution",
-            "dispatch_path": str(directory / "dispatch-events.jsonl"),
-            "dispatch_contract": scenario.get("dispatch_contract", {}),
-            "functional_contract": scenario.get("functional_contract", {}),
-            "fixture_contract": scenario.get("fixture_contract", {}),
-            "expected_statuses": scenario.get("expected_http_statuses", []),
-        }
+        metadata = child_dispatch(scenario, directory)
         (runtime_directory / "children").mkdir(mode=0o700, exist_ok=True)
         atomic_json(runtime_directory / "children" / (marker + ".json"), metadata)
         tools = directory / "child-tools"
@@ -376,6 +369,7 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
             result["paste_restoration"] = recovery["outcome"] == "launched"
         if scenario.get("fixture_contract", {}).get("order_restore"):
             result["order_restoration"] = restore_receipt(directory)
+        await_control_evidence(scenario, result, directory, threading.Event())
         result["dispatch_contract_verified"] = False
         scenario_action_verification(directory, scenario, result)
         response_path = directory / "response-events.jsonl"
@@ -393,7 +387,10 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
         )
         result["tool_cancellations"] = result.get("tool_cancellations", 0)
         result["functional_acceptance"] = verify_functional(
-            scenario, result, responses, directory
+            scenario,
+            result,
+            attributed_responses(scenario, result, directory),
+            directory,
         )
         result["functional_verified"] = result["functional_acceptance"]["passed"]
         atomic_json(directory / "receipt.json", result)
