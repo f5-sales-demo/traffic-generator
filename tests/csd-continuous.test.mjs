@@ -16,7 +16,7 @@ import {
   validateConfig,
   verifySourceTree,
 } from '../suites/csd-violations/continuous.mjs';
-import { SCENARIO_NAMES } from '../suites/csd-violations/scenarios.mjs';
+import { HEADER_SCENARIO_SELECTORS, SCENARIO_NAMES } from '../suites/csd-violations/scenarios.mjs';
 
 const config = {
   TARGET_URL: 'https://client-side-defense.f5-sales-demo.com',
@@ -24,7 +24,7 @@ const config = {
   SOURCE_COMMIT: 'a'.repeat(40),
   DEPLOYMENT_MANIFEST_SHA256: 'b'.repeat(64),
   SOURCE_REPOSITORY_URL: 'https://github.com/f5-sales-demo/traffic-generator.git',
-  DEPLOYMENT_MANIFEST_VERSION: '1.0.0',
+  DEPLOYMENT_MANIFEST_VERSION: '1.1.0',
   CSD_AWS_RUNTIME: '1',
   AWS_REGION: 'us-east-1',
   AMI_ID: 'ami-0123456789abcdef0',
@@ -36,7 +36,7 @@ const config = {
   DISPLAY: ':99',
 };
 const initial = () => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   sourceCommit: config.SOURCE_COMMIT,
   manifestDigest: config.DEPLOYMENT_MANIFEST_SHA256,
   status: 'idle',
@@ -58,6 +58,16 @@ const initial = () => ({
   heartbeatAt: 0,
   lastOutcome: null,
   pendingUploads: [],
+  headerCadence: Object.fromEntries(
+    Object.keys(HEADER_SCENARIO_SELECTORS).map((name) => [
+      name,
+      {
+        lastPairStartedAt: null,
+        lastPairCompletedAt: null,
+        lastPairOutcome: null,
+      },
+    ]),
+  ),
 });
 const result = (category = 'ok', runId = 'csd-test', scenario = SCENARIO_NAMES[0]) => ({
   schemaVersion: 1,
@@ -69,6 +79,15 @@ const result = (category = 'ok', runId = 'csd-test', scenario = SCENARIO_NAMES[0
   uploadCommitted: category === 'ok',
   failureCategory: category === 'ok' ? null : category,
   signal: '',
+  headerPair: HEADER_SCENARIO_SELECTORS[scenario]
+    ? {
+        selector: HEADER_SCENARIO_SELECTORS[scenario],
+        scope: 'same-origin',
+        pairStartedAt: 1000,
+        pairCompletedAt: 2000,
+        result: ['ok', 'upload_transient'].includes(category) ? 'passed' : 'failed',
+      }
+    : null,
 });
 async function fixture(t, overrides = {}) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'csd-continuous-test-')));
@@ -152,17 +171,36 @@ test('runtime values reject every ASCII control character in object and raw env 
     );
   }
 });
-test('eleven manifest order and wrap separate browser/upload success', () => {
-  assert.equal(SCENARIO_NAMES.length, 11);
+test('frozen fourteen-slot order wraps fourteen full cycles with all original eleven and three headers', () => {
+  const original = [
+    'login-credential-skimmer',
+    'registration-harvester',
+    'payment-overlay-card-skimmer',
+    'obfuscated-loader',
+    'multi-cdn-injection',
+    'tag-manager-hijack',
+    'multi-channel-exfiltration',
+    'high-volume-domain-exfiltration',
+    'form-overlay',
+    'keylogger-simulation',
+    'maximum-detection',
+  ];
+  assert.deepEqual(SCENARIO_NAMES.slice(0, 11), original);
+  assert.deepEqual(SCENARIO_NAMES.slice(11), Object.keys(HEADER_SCENARIO_SELECTORS));
   let state = initial();
-  for (let i = 0; i < 11; i++) {
-    assert.equal(state.cursor, i);
-    state = advanceState(state, result('ok', `csd-${i}`, SCENARIO_NAMES[i]), i + 1);
+  const visits = new Map();
+  for (let i = 0; i < 14 * 14; i++) {
+    const scenario = SCENARIO_NAMES[i % 14];
+    assert.equal(state.cursor, i % 14);
+    visits.set(scenario, (visits.get(scenario) ?? 0) + 1);
+    state = advanceState(state, result('ok', `csd-${i}`, scenario), i + 1);
   }
+  assert.equal(state.schemaVersion, 2);
   assert.equal(state.cursor, 0);
-  assert.equal(state.completedCycles, 1);
-  assert.equal(state.committedRuns, 11);
-  assert.equal(state.browserPassedRuns, 11);
+  assert.equal(state.completedCycles, 14);
+  assert.equal(state.committedRuns, 196);
+  assert.equal(state.browserPassedRuns, 196);
+  assert.deepEqual([...visits.values()], Array(14).fill(14));
 });
 test('busy is not an attempted run or retry', () => {
   const state = advanceState(
@@ -452,6 +490,14 @@ async function freeze(f, runId, scenario, browserExit = 0) {
   const directory = join(f.resultsRoot, runId, scenario);
   await mkdir(directory, { recursive: true });
   await writeFile(join(directory, 'payload.json'), '{}');
+  await writeFile(
+    join(directory, 'receipt.json'),
+    JSON.stringify({
+      schemaVersion: 3,
+      runId,
+      scenarios: [{ name: scenario, status: 'passed', steps: [] }],
+    }),
+  );
   // Real shell freeze/checksum generation: no AWS/browser/deployed paths are touched.
   command('/bin/bash', [
     fileURLToPath(new URL('../suites/csd-violations/run.sh', import.meta.url)),
@@ -697,4 +743,225 @@ test('active atomic-read tolerance never permits hardlinks or symlinked ancestor
   await rm(directory, { recursive: true });
   await symlink('/tmp', directory);
   await assert.rejects(inventory(f.resultsRoot, 'csd-hardlink'), /fatal_integrity/);
+});
+
+test('all fourteen slots dispatch and persist browser-derived header epochs across reboot', async (t) => {
+  const f = await fixture(t);
+  for (let i = 0; i < 14; i++) {
+    f.setTime(100000 + i * 10000);
+    const state = await dispatchOnce(f.options);
+    assert.equal(state.cursor, (i + 1) % 14);
+    assert.equal(state.lastOutcome, 'ok');
+  }
+  const saved = JSON.parse(await readFile(join(f.stateDirectory, 'state.json')));
+  assert.equal(saved.schemaVersion, 2);
+  assert.equal(saved.completedCycles, 1);
+  assert.deepEqual(
+    f.calls.map(({ scenario }) => scenario),
+    SCENARIO_NAMES,
+  );
+  for (const entry of Object.values(saved.headerCadence)) {
+    assert.deepEqual(entry, { lastPairStartedAt: 1000, lastPairCompletedAt: 2000, lastPairOutcome: 'passed' });
+  }
+  await dispatchOnce(f.options);
+  assert.deepEqual(JSON.parse(await readFile(join(f.stateDirectory, 'state.json'))).headerCadence, saved.headerCadence);
+});
+
+test('header upload retries preserve frozen epochs and never rerun browser', async (t) => {
+  const scenario = SCENARIO_NAMES[11];
+  const f = await fixture(t, {
+    execute: async (r) => ({
+      exitCode: 1,
+      result: result('upload_transient', r.runId, r.scenario),
+    }),
+  });
+  await persist(f, { ...initial(), cursor: 11 });
+  let state = await dispatchOnce(f.options);
+  assert.equal(state.browserPassedRuns, 1);
+  assert.equal(state.committedRuns, 0);
+  const cadence = structuredClone(state.headerCadence);
+  const pending = state.pendingUploads[0];
+  assert.equal(pending.scenario, scenario);
+  await mkdir(join(f.resultsRoot, pending.runId, scenario), { recursive: true });
+  f.setTime(pending.nextAttemptAt);
+  f.options.adapters.execute = async (r) => {
+    assert.equal(r.args[1], '--retry-upload');
+    f.calls.push(r);
+    return { exitCode: 0, result: result('ok', r.runId, r.scenario) };
+  };
+  state = await dispatchOnce(f.options);
+  assert.equal(f.calls.length, 1);
+  assert.equal(state.cursor, 12);
+  assert.equal(state.browserPassedRuns, 1);
+  assert.equal(state.committedRuns, 1);
+  assert.deepEqual(state.headerCadence, cadence);
+});
+
+test('invalid header execution summaries fail closed without inferred epochs or success', async (t) => {
+  const scenario = SCENARIO_NAMES[11];
+  const good = result('ok', 'csd-test', scenario).headerPair;
+  for (const pair of [
+    undefined,
+    null,
+    { ...good, selector: 'cache-control' },
+    { ...good, scope: 'session' },
+    { ...good, pairStartedAt: NaN },
+    { ...good, pairCompletedAt: 999 },
+    { ...good, pairCompletedAt: null },
+    { ...good, result: 'failed' },
+    { ...good, rawHeaders: 'forbidden' },
+    { ...good, pairStartedAt: '1000' },
+    { ...good, pairCompletedAt: Infinity },
+  ]) {
+    const f = await fixture(t, {
+      execute: async (r) => ({ exitCode: 0, result: { ...result('ok', r.runId, r.scenario), headerPair: pair } }),
+    });
+    await persist(f, { ...initial(), cursor: 11 });
+    const state = await dispatchOnce(f.options);
+    assert.equal(state.lastOutcome, 'fatal_integrity');
+    assert.equal(state.browserPassedRuns, 0);
+    assert.equal(state.committedRuns, 0);
+    assert.equal(state.headerCadence[scenario].lastPairStartedAt, null);
+  }
+});
+
+test('failed partial pair timestamps survive interruption without fabricated completion', async (t) => {
+  const scenario = SCENARIO_NAMES[12];
+  const f = await fixture(t, {
+    execute: async (r) => ({
+      exitCode: 143,
+      result: {
+        ...result('interrupted', r.runId, r.scenario),
+        signal: 'TERM',
+        headerPair: { ...result('interrupted', r.runId, r.scenario).headerPair, pairCompletedAt: null },
+      },
+    }),
+  });
+  await persist(f, { ...initial(), cursor: 12 });
+  const state = await dispatchOnce(f.options);
+  assert.equal(state.interruptedRuns, 1);
+  assert.equal(state.browserPassedRuns, 0);
+  assert.deepEqual(state.headerCadence[scenario], {
+    lastPairStartedAt: 1000,
+    lastPairCompletedAt: null,
+    lastPairOutcome: 'failed',
+  });
+});
+
+test('header retry cannot replace frozen pair facts', async (t) => {
+  const scenario = SCENARIO_NAMES[13];
+  const queued = advanceState({ ...initial(), cursor: 13 }, result('upload_transient', 'csd-frozen', scenario), 1);
+  const f = await fixture(t, {
+    execute: async (r) => ({
+      exitCode: 0,
+      result: {
+        ...result('ok', r.runId, r.scenario),
+        headerPair: {
+          ...result('ok', r.runId, r.scenario).headerPair,
+          pairStartedAt: 3000,
+          pairCompletedAt: 4000,
+        },
+      },
+    }),
+  });
+  await persist(f, queued);
+  await mkdir(join(f.resultsRoot, 'csd-frozen', scenario), { recursive: true });
+  f.setTime(queued.pendingUploads[0].nextAttemptAt);
+  const state = await dispatchOnce(f.options);
+  assert.equal(state.lastOutcome, 'fatal_integrity');
+  assert.deepEqual(state.headerCadence, queued.headerCadence);
+  assert.equal(state.committedRuns, 0);
+});
+
+test('state1 cutover requires replacement and leaves old worker state untouched', async (t) => {
+  const f = await fixture(t);
+  const legacy = { ...initial(), schemaVersion: 1 };
+  delete legacy.headerCadence;
+  await persist(f, legacy);
+  const before = await readFile(join(f.stateDirectory, 'state.json'), 'utf8');
+  const state = await dispatchOnce(f.options);
+  assert.equal(state.schemaVersion, 2);
+  assert.equal(state.lastOutcome, 'fatal_provenance');
+  assert.equal(f.calls.length, 0);
+  assert.equal(await readFile(join(f.stateDirectory, 'state.json'), 'utf8'), before);
+});
+
+test('exact manifest version and source digest mismatch block browser dispatch', async (t) => {
+  for (const version of ['1.0.0', '1.2.0', '1.1.1']) {
+    assert.throws(() => validateConfig({ ...config, DEPLOYMENT_MANIFEST_VERSION: version }), /fatal_config/);
+  }
+  for (const change of [{ sourceCommit: 'c'.repeat(40) }, { manifestDigest: 'd'.repeat(64) }]) {
+    const f = await fixture(t);
+    await persist(f, { ...initial(), ...change });
+    const state = await dispatchOnce(f.options);
+    assert.equal(state.lastOutcome, 'fatal_provenance');
+    assert.equal(f.calls.length, 0);
+  }
+});
+
+test('crashed header reservation retains only actual recorded partial pair facts', async (t) => {
+  const scenario = SCENARIO_NAMES[11];
+  const f = await fixture(t);
+  await persist(f, {
+    ...initial(),
+    status: 'running',
+    cursor: 11,
+    retryAttempt: 1,
+    attemptedRuns: 1,
+    currentScenario: scenario,
+    currentRunId: 'csd-crash-header',
+  });
+  await mkdir(join(f.resultsRoot, 'csd-crash-header'));
+  await writeFile(
+    join(f.resultsRoot, 'csd-crash-header', 'execution-result.json'),
+    JSON.stringify({
+      ...result('interrupted', 'csd-crash-header', scenario),
+      headerPair: { ...result('interrupted', 'csd-crash-header', scenario).headerPair, pairCompletedAt: null },
+    }),
+  );
+  const state = await dispatchOnce(f.options);
+  assert.equal(state.browserPassedRuns, 0);
+  assert.equal(state.committedRuns, 0);
+  assert.equal(f.calls.length, 0);
+  assert.equal(state.headerCadence[scenario].lastPairStartedAt, 1000);
+  assert.equal(state.headerCadence[scenario].lastPairCompletedAt, null);
+});
+
+test('state2 rejects malformed or raw cadence and preserves failed header retry epochs', async (t) => {
+  const scenario = SCENARIO_NAMES[11];
+  for (const entry of [
+    undefined,
+    { lastPairStartedAt: null, lastPairCompletedAt: 2000, lastPairOutcome: 'passed' },
+    { lastPairStartedAt: 3000, lastPairCompletedAt: 2000, lastPairOutcome: 'failed' },
+    { lastPairStartedAt: 1000, lastPairCompletedAt: null, lastPairOutcome: 'passed' },
+    { lastPairStartedAt: 1000, lastPairCompletedAt: 2000, lastPairOutcome: 'passed', raw: 'forbidden' },
+  ]) {
+    const f = await fixture(t);
+    const state = initial();
+    state.headerCadence[scenario] = entry;
+    await persist(f, state);
+    assert.equal((await dispatchOnce(f.options)).lastOutcome, 'fatal_integrity');
+    assert.equal(f.calls.length, 0);
+  }
+  let state = advanceState(
+    { ...initial(), cursor: 11 },
+    {
+      ...result('upload_transient', 'csd-failed-header', scenario),
+      browserExit: 1,
+      headerPair: { ...result('scenario_failure', 'csd-failed-header', scenario).headerPair, pairCompletedAt: null },
+    },
+    10000,
+  );
+  const cadence = structuredClone(state.headerCadence);
+  for (let i = 0; i < 3; i++) {
+    state = advanceState(
+      state,
+      { ...result('upload_transient', 'csd-failed-header', scenario), uploadRetry: true, browserExit: 1 },
+      20000 + i,
+    );
+    assert.deepEqual(state.headerCadence, cadence);
+    assert.equal(state.browserPassedRuns, 0);
+  }
+  assert.equal(state.pendingUploads[0].exhausted, true);
+  assert.equal(state.failedRuns, 1);
 });

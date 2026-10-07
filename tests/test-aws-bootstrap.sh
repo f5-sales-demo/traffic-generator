@@ -51,8 +51,8 @@ locals {
     chrome_archive_url = "https://example.invalid/chrome.zip"
     chrome_archive_sha256 = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
     playwright_core_version = "1.55.0"
-    deployment_manifest_version = "1.0.0"
-    deployment_manifest_sha256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    deployment_manifest_version = "1.1.0"
+    deployment_manifest_sha256 = "$(sha256sum "$REPO_ROOT/suites/csd-violations/scenarios.mjs" | cut -d' ' -f1)"
     target_url = "https://client-side-defense.f5-sales-demo.com"
   })
 }
@@ -439,13 +439,13 @@ for setting in daily 'size 10M' 'rotate 7' compress delaycompress copytruncate; 
 done
 grep -Fq 'test -f "$1/suites/csd-violations/continuous.mjs"' "$TMP/csd-bootstrap"
 grep -Fq '/opt/node/bin/node --check "$dst/suites/csd-violations/continuous.mjs"' "$TMP/csd-bootstrap"
-awk '/^valid\(\) \{$/ { body=1 } body { print } body && /^\}$/ { exit }' "$TMP/csd-bootstrap" >"$TMP/source-valid-function"
+sed "s#/opt/node/bin/node#$(command -v node)#g" "$TMP/csd-bootstrap" | awk '/^valid\(\) \{$/ { body=1 } body { print } body && /^\}$/ { exit }' >"$TMP/source-valid-function"
 (
   source "$TMP/source-valid-function"
   fixture="$TMP/source-fixture"
   manifest=suites/csd-violations/scenarios.mjs
   mkdir -p "$fixture/suites/csd-violations"
-  printf 'export const fixture = true;\n' >"$fixture/$manifest"
+  cp "$REPO_ROOT/$manifest" "$fixture/$manifest"
   touch "$fixture/suites/csd-violations/run.sh" "$fixture/suites/csd-violations/run.mjs"
   git init -q "$fixture"
   git -C "$fixture" add suites
@@ -457,9 +457,33 @@ awk '/^valid\(\) \{$/ { body=1 } body { print } body && /^\}$/ { exit }' "$TMP/c
   valid "$fixture"
   digest=invalid
   if valid "$fixture"; then exit 1; fi
+  # Exact source bytes alone cannot authorize an old or incomplete manifest.
+  for invalid in old-version missing-slot; do
+    case "$invalid" in
+    old-version) printf 'export const SCENARIO_NAMES = Array.from({length:14}, (_, i) => String(i)); export const SUITE_MANIFEST = {schemaVersion:"1.0.0", scenarios:SCENARIO_NAMES.map(name => ({name}))};\n' >"$fixture/$manifest" ;;
+    missing-slot) printf 'export const SCENARIO_NAMES = Array.from({length:13}, (_, i) => String(i)); export const SUITE_MANIFEST = {schemaVersion:"1.1.0", scenarios:SCENARIO_NAMES.map(name => ({name}))};\n' >"$fixture/$manifest" ;;
+    esac
+    digest=$(sha256sum "$fixture/$manifest" | cut -d' ' -f1)
+    if valid "$fixture"; then exit 1; fi
+  done
 )
+node --input-type=module - "$REPO_ROOT" "$TMP/csd-run" <<'NODE'
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+const root = process.argv[2];
+const { SCENARIO_NAMES, SUITE_MANIFEST } = await import(pathToFileURL(`${root}/suites/csd-violations/scenarios.mjs`));
+assert.equal(SUITE_MANIFEST.schemaVersion, '1.1.0');
+assert.equal(SCENARIO_NAMES.length, 14);
+assert.equal(new Set(SCENARIO_NAMES).size, 14);
+const allowlist = readFileSync(process.argv[3], 'utf8').match(/^  ([a-z0-9|\-]+)\) ;;$/m)?.[1].split('|');
+assert.deepEqual(allowlist, SCENARIO_NAMES);
+assert.deepEqual(SCENARIO_NAMES.slice(11), ['header-omit-x-content-type-options', 'header-omit-x-frame-options', 'header-omit-cache-control']);
+assert.match(readFileSync(`${root}/suites/csd-violations/run.mjs`, 'utf8'), /schemaVersion: 3/);
+NODE
 stop_line=$(grep -nFx 'systemctl disable --now csd-continuous.timer csd-continuous.service' "$TMP/csd-bootstrap" | head -n1 | cut -d: -f1)
 source_line=$(grep -nFx 'stage=source' "$TMP/csd-bootstrap" | cut -d: -f1)
+grep -Fq 'validateConfig(readFileSync("/etc/traffic-generator/runtime.env", "utf8"))' "$TMP/csd-worker-health-check"
 test "$stop_line" -lt "$source_line"
 grep -Fq 'test "$TARGET_URL" = https://client-side-defense.f5-sales-demo.com' "$TMP/csd-worker-health-check"
 grep -Fq 'test "$(sha256sum /opt/traffic-generator/source/suites/csd-violations/scenarios.mjs' "$TMP/csd-worker-health-check"

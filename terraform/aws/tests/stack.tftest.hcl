@@ -110,8 +110,8 @@ variables {
   chrome_archive_url              = "https://storage.googleapis.com/chrome-for-testing-public/140.0.7339.207/linux64/chrome-linux64.zip"
   chrome_archive_sha256           = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   playwright_core_version         = "1.55.0"
-  deployment_manifest_version     = "1.0.0"
-  deployment_manifest_sha256      = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  deployment_manifest_version     = "1.1.0"
+  deployment_manifest_sha256      = filesha256("../../suites/csd-violations/scenarios.mjs")
 }
 
 run "reject_wrong_account" {
@@ -610,6 +610,24 @@ run "verify_continuous_default_and_boot_persistence" {
   assert {
     condition     = var.continuous_enabled && output.continuous_enabled && length(regexall("(?m)^      CONTINUOUS_ENABLED=1$", local.worker_cloud_init)) == 1
     error_message = "Unattended CSD dispatch must default to enabled and render exactly one numeric runtime setting."
+  }
+
+  assert {
+    condition = (
+      length(local.scenario_names) == 14 &&
+      var.deployment_manifest_version == "1.1.0" &&
+      strcontains(local.worker_cloud_init, "DEPLOYMENT_MANIFEST_VERSION=1.1.0") &&
+      strcontains(local.worker_cloud_init, "SCENARIO_NAMES.length !== 14") &&
+      strcontains(local.worker_cloud_init, "SUITE_MANIFEST.schemaVersion !== process.argv[3]") &&
+      strcontains(local.worker_cloud_init, "validateConfig(readFileSync") &&
+      alltrue([for name in local.scenario_names : strcontains(local.worker_cloud_init, name)]) &&
+      jsonencode(slice(local.scenario_names, 11, 14)) == jsonencode([
+        "header-omit-x-content-type-options",
+        "header-omit-x-frame-options",
+        "header-omit-cache-control",
+      ])
+    )
+    error_message = "Boot must verify the exact 1.1.0 source manifest and runtime contract, with all 14 canonical slots including the three appended header pairs."
   }
 
   assert {

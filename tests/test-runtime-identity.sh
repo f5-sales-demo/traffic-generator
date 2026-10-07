@@ -155,7 +155,7 @@ mkdir -p "${FINALIZATION_FIXTURE}/screenshots"
 printf 'ordinary log\n' >"${FINALIZATION_FIXTURE}/browser.log"
 printf 'png evidence\n' >"${FINALIZATION_FIXTURE}/screenshots/step.png"
 cat >"${FINALIZATION_FIXTURE}/receipt.json" <<'JSON'
-{"scenarios":[{"finalScreenshot":{"captureStatus":"captured","uploadStatus":"pending"}}]}
+{"schemaVersion":3,"runId":"fixture-run","scenarios":[{"name":"login-credential-skimmer","steps":[],"finalScreenshot":{"captureStatus":"captured","uploadStatus":"pending"}}]}
 JSON
 bash "${CSD_ROOT}/run.sh" --finalize-test "$FINALIZATION_FIXTURE" fixture-run login-credential-skimmer
 if (
@@ -414,7 +414,7 @@ if [[ "$timeout_exit" -eq 124 && "$before_digest" == "$after_digest" ]] &&
 else fail 'bounded upload timeout and immutable evidence'; fi
 RUNTIME_ENV="${MOCK_ROOT}/runtime.env" HANG_HEAD=1 bash "$ISOLATED_RUNNER" --retry-upload "$STAGED_DENIED_FIXTURE" >/dev/null &
 cancel_pid=$!
-sleep 0.3
+sleep 1
 kill -TERM "$cancel_pid"
 cancel_exit=0
 wait "$cancel_pid" || cancel_exit=$?
@@ -426,8 +426,109 @@ ln -s "$STAGED_DENIED_FIXTURE" "$(dirname "$STAGED_DENIED_FIXTURE")/scenario-lin
 link_exit=0
 RUNTIME_ENV="${MOCK_ROOT}/runtime.env" bash "$ISOLATED_RUNNER" --retry-upload "$(dirname "$STAGED_DENIED_FIXTURE")/scenario-link" >/dev/null || link_exit=$?
 if [[ "$link_exit" -eq 66 ]]; then pass 'retry rejects symlink path'; else fail 'symlink retry rejection'; fi
+# Focused shell receipt/projection lifecycle tests: no browser or live AWS calls.
+node --input-type=module - "${CSD_ROOT}/run.sh" "${CSD_ROOT}/scenarios.mjs" <<'NODE' || FAIL=1
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, existsSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const [runner, definitions] = process.argv.slice(2);
+const { HEADER_VALUES, HEADER_SCENARIO_SELECTORS } = await import(pathToFileURL(definitions));
+const source = readFileSync(runner, 'utf8');
+const functions = source.slice(source.indexOf('read_runtime_env() {'), source.indexOf('# The metadata fixture'));
+const root = mkdtempSync(join(tmpdir(), 'csd-shell-private-'));
+const iso = (offset) => new Date(1700000000000 + offset).toISOString();
+function pair(selector) {
+  const phase = (mode, start, end) => ({mode, startedAt:iso(start), completedAt:iso(end), result:'passed',
+    document: observation(mode), head: {...observation(mode), terminal:{state:'finished',canceled:false,errorCode:null,responseReceivedBeforeTerminal:true}}, selectorRequests:{observed:2,injected:mode==='mutation'?2:0,stripped:mode==='control'?2:0},
+    excludedCollectorOverrideCount:0, collectorSelectorsKnown:true,
+    telemetry:{observed:1,finished:1,failed:0,http2xx:1,httpNon2xx:0,statusUnknown:0}, sensor:{observed:1,finishedHttp2xx:1},
+    instrumentationPresent:true, paymentFieldsEmpty:true, invalid:false, errors:[],
+    screenshots:Array.from({length:6},()=>({status:'captured'})), cleanup:{fetchDisabled:true,sessionDetached:true,contextClosed:true,errors:[]}});
+  const observation = (mode) => ({status:200,observed:true,headers:Object.fromEntries(Object.keys(HEADER_VALUES).map(name=>[name,
+    {present:mode!=='mutation'||name!==selector,matchesCanonical:mode!=='mutation'||name!==selector}]))});
+  return {selector,scope:'same-origin',pairStartedAt:iso(0),pairCompletedAt:iso(4000),control:phase('control',0,1000),mutation:phase('mutation',2000,4000),result:'passed'};
+}
+function receipt(name, value) {
+  return {schemaVersion:3,runId:'shell-fixture',scenarios:[{name,status:value?.result??'passed',steps:value===undefined?[]:
+    [{operation:'header-pair',status:value?.result??'passed',evidence:{headerPair:value}}]}]};
+}
+function execute(dir, scenario, {mode='normal', primary=0, cancelled=0, uploadExit=0}={}) {
+  const script = `set -uo pipefail\n${functions}\nSCRIPT_DIR="$MODULE_DIR"\nNODE_BIN="$NODE_EXEC"\nSCENARIO_DIR="$FIXTURE_DIR/$CSD_SCENARIO"\nRESULTS_DIR="$FIXTURE_DIR"\nPRIMARY_EXIT=$PRIMARY\nHEADER_PAIR=null\nSIGNAL=""\n[[ "$CANCELLED" == 0 ]] || SIGNAL=TERM\nOUTCOME=ok\nUPLOAD_EXIT=0\nUPLOAD_COMMITTED=false\nNODE_PID=""\nXVFB_PID=""\nFINALIZING=0\nFINALIZATION_SECONDS=20\nCLEANUP_SECONDS=1\nLOG_BLOCKS=64\nCOMMIT_FILE=upload-commit.json\nFAILURE_FILE=.finalization-failed.json\nSOURCE_COMMIT=fixture\nDEPLOYMENT_MANIFEST_SHA256=fixture\nupload_manifest_objects() { return "$FIXTURE_UPLOAD_EXIT"; }\nupload_final_metadata() { return 0; }\ncommit_upload() { write_upload_commit; }\nexport FIXTURE_UPLOAD_EXIT\nfinalize`;
+  return spawnSync('bash',['-c',script],{encoding:'utf8',env:{...process.env,MODULE_DIR:dirname(runner),NODE_EXEC:process.execPath,
+    FIXTURE_DIR:dir,CSD_SCENARIO:scenario,RUN_ID:'shell-fixture',MODE:mode,PRIMARY:String(primary),CANCELLED:String(cancelled),FIXTURE_UPLOAD_EXIT:String(uploadExit)}});
+}
+function setup(name, value) {
+  const dir=join(root, `case-${index++}`);mkdirSync(join(dir,name),{recursive:true});
+  writeFileSync(join(dir,name,'receipt.json'),JSON.stringify(value));return dir;
+}
+let index=0;
+try {
+  const ordinary='login-credential-skimmer';
+  const dir=setup(ordinary,receipt(ordinary));
+  const ordinaryResult=execute(dir,ordinary); assert.equal(ordinaryResult.status,0,ordinaryResult.stderr);
+  assert.equal(JSON.parse(readFileSync(join(dir,'execution-result.json'))).headerPair,null);
+  for (const [name,selector] of Object.entries(HEADER_SCENARIO_SELECTORS)) {
+    const value=pair(selector), dir=setup(name,receipt(name,value));
+    assert.equal(execute(dir,name,{uploadExit:55}).status,55);
+    const expected={selector,scope:'same-origin',pairStartedAt:1700000000000,pairCompletedAt:1700000004000,result:'passed'};
+    assert.deepEqual(JSON.parse(readFileSync(join(dir,'execution-result.json'))).headerPair,expected);
+    const files=['receipt.json','run-status.json','upload-manifest.json','SHA256SUMS'];
+    const before=files.map(file=>readFileSync(join(dir,name,file),'utf8'));
+    assert.equal(execute(dir,name,{mode:'retry'}).status,0);
+    assert.deepEqual(files.map(file=>readFileSync(join(dir,name,file),'utf8')),before);
+    const result=JSON.parse(readFileSync(join(dir,'execution-result.json')));
+    assert.deepEqual(result.headerPair,expected);
+    assert.deepEqual(Object.keys(result).sort(),['schemaVersion','scenario','runId','outcome','browserExit','uploadExit','uploadCommitted','failureCategory','signal','headerPair'].sort());
+    assert.equal(result.uploadCommitted,true);
+    assert.equal(execute(dir,name,{mode:'retry',primary:143,cancelled:1}).status,143);
+    assert.deepEqual(JSON.parse(readFileSync(join(dir,'execution-result.json'))).headerPair,expected);
+  }
+  const [name,selector]=Object.entries(HEADER_SCENARIO_SELECTORS)[0];
+  const invalid=[];
+  invalid.push(receipt(name));
+  const badTime=pair(selector);badTime.pairCompletedAt='private raw invalid';invalid.push(receipt(name,badTime));
+  const mismatch=pair(Object.values(HEADER_SCENARIO_SELECTORS)[1]);invalid.push(receipt(name,mismatch));
+  const legacy=receipt(ordinary);legacy.schemaVersion=2;invalid.push(legacy);
+  const oldVersion=receipt(ordinary);oldVersion.schemaVersion=1;invalid.push(oldVersion);
+  const wrongRun=receipt(name,pair(selector));wrongRun.runId='other';invalid.push(wrongRun);
+  const contamination=receipt(ordinary,pair(selector));invalid.push(contamination);
+  const unknown=pair(selector);unknown.control.telemetry={observed:1,finished:1,failed:0,http2xx:0,httpNon2xx:0,statusUnknown:1};invalid.push(receipt(name,unknown));
+  for (const value of invalid) {
+    const scenario=value.scenarios[0].name, dir=setup(scenario,value), result=execute(dir,scenario);
+    assert.equal(result.status,66);
+    assert.equal(result.stderr.trim(),'HEADER_PAIR_INVALID');
+    assert.ok(!result.stderr.includes(dir));
+    assert.ok(!existsSync(join(dir,scenario,'SHA256SUMS')));
+    assert.equal(JSON.parse(readFileSync(join(dir,'execution-result.json'))).outcome,'fatal_integrity');
+    assert.equal(JSON.parse(readFileSync(join(dir,'execution-result.json'))).headerPair,null);
+  }
+  // Checksum mismatch cannot be reported as successful upload or browser rerun.
+  const corruptDir=setup(name,receipt(name,pair(selector)));
+  assert.equal(execute(corruptDir,name,{uploadExit:55}).status,55);
+  writeFileSync(join(corruptDir,name,'run-status.json'),'corrupt frozen status');
+  assert.equal(execute(corruptDir,name,{mode:'retry'}).status,66);
+  assert.equal(JSON.parse(readFileSync(join(corruptDir,'execution-result.json'))).uploadCommitted,false);
+  // Receipt version cutover applies to retry as well as normal dispatch.
+  const legacyRetry=receipt(ordinary);legacyRetry.schemaVersion=2;
+  const legacyDir=setup(ordinary,legacyRetry);
+  assert.equal(execute(legacyDir,ordinary,{mode:'retry'}).status,66);
+  const failed={selector,scope:'same-origin',pairStartedAt:iso(0),pairCompletedAt:null,control:null,mutation:null,result:'failed'};
+  const failedDir=setup(name,receipt(name,failed));
+  assert.equal(execute(failedDir,name).status,1);
+  assert.equal(JSON.parse(readFileSync(join(failedDir,'execution-result.json'))).headerPair.pairCompletedAt,null);
+  const cancelDir=setup(name,receipt(name));
+  assert.equal(execute(cancelDir,name,{primary:143,cancelled:1}).status,143);
+  assert.equal(JSON.parse(readFileSync(join(cancelDir,'execution-result.json'))).outcome,'interrupted');
+  console.log('[OK] receipt v3 cutover, strict projection, ordinary null, failure/cancel privacy and immutable header upload retry');
+} finally { rmSync(root,{recursive:true,force:true}); }
+NODE
+
 if [ -f "${CSD_ROOT}/scenarios.mjs" ] && [ -f "${CSD_ROOT}/run.mjs" ]; then
   node --input-type=module - "${CSD_ROOT}/scenarios.mjs" "${CSD_ROOT}/run.mjs" <<'NODE' || FAIL=1
+import assert from 'node:assert/strict';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -449,7 +550,8 @@ const expected = [
   'keylogger-simulation',
   'maximum-detection',
 ];
-const names = SCENARIOS.map(({ name }) => name);
+const names = SCENARIOS.slice(0, 11).map(({ name }) => name);
+assert.equal(SCENARIOS.length, 14);
 if (JSON.stringify(names) !== JSON.stringify(expected)) {
   console.error(`[FAIL] exact CSD scenario order/names (got ${JSON.stringify(names)})`);
   process.exit(1);
@@ -503,12 +605,18 @@ const playwright = {
 };
 
 const outputDirectory = await mkdtemp(join(tmpdir(), 'csd-runtime-identity-'));
-const { receipt, exitCode } = await runSuite({
+const runs = [];
+for (const scenario of SCENARIOS.slice(0, 11)) runs.push(await runSuite({
   playwright,
   outputDirectory,
+  runId: 'ordinary-fixture',
+  scenario: scenario.name,
   targetUrl: 'https://client-side-defense.f5-sales-demo.com/',
-});
-const expectedScreenshotCount = SCENARIOS.reduce((total, scenario) => total + scenario.steps.length + 1, 0);
+}));
+const receipt = {runId: 'ordinary-fixture', scenarios: runs.flatMap(({receipt}) => receipt.scenarios)};
+const exitCode = runs.some(({exitCode}) => exitCode !== 0) ? 1 : 0;
+assert.ok(runs.every(({receipt}) => receipt.schemaVersion === 3));
+const expectedScreenshotCount = SCENARIOS.slice(0, 11).reduce((total, scenario) => total + scenario.steps.length + 1, 0);
 const screenshots = receipt.scenarios.flatMap((scenario) => [
   ...scenario.steps.map(({ screenshot }) => screenshot),
   scenario.finalScreenshot,

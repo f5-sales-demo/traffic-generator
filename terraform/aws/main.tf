@@ -133,6 +133,9 @@ locals {
     "form-overlay",
     "keylogger-simulation",
     "maximum-detection",
+    "header-omit-x-content-type-options",
+    "header-omit-x-frame-options",
+    "header-omit-cache-control",
   ]
 }
 
