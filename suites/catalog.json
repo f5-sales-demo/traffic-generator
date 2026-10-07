@@ -4943,9 +4943,10 @@
       },
       "fixture_refresh": ["vampi", "crapi", "juice", "restaurant"],
       "functional_contract": {
-        "verifier": "composed-native",
-        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
-        "mutation_policy": "read-only"
+        "verifier": "native-nested-suites",
+        "behavior": "All nineteen native wrk and four hey workers complete with reports; every preserved child suite independently verifies actual native behavior and mutation recovery; no child failure or cancelled request can qualify",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["nested_actions"]
       }
     },
     {

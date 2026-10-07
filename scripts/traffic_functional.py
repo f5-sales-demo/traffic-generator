@@ -782,6 +782,14 @@ def verify_nested(scenario: dict, result: dict, directory: Path) -> dict:
     return {
         "passed": bool(reports)
         and all(report["passed"] for report in reports)
+        and (
+            not scenario.get("tool_contract")
+            or result.get("tool_actions", {}).get("passed") is True
+        )
+        and (
+            not scenario.get("native_report_contract")
+            or result.get("native_reports", {}).get("passed") is True
+        )
         and result.get("outcome") == "launched"
         and result.get("dispatch_contract_verified") is True
         and result.get("transport_failures") == 0
