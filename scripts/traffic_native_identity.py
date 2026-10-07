@@ -4,6 +4,7 @@ import json
 import re
 
 HTTP_SUCCESS = 200
+HTTP_UNAUTHORIZED = 401
 HTTP_NOT_FOUND = 404
 HTTP_ERROR_START = 400
 NATIVE_MISSING_ORDER_STATUS = 500
@@ -62,6 +63,7 @@ def vampi_problem_identity(status: int, body: str) -> bool:
     except ValueError:
         return False
     expected = {
+        401: ("Unauthorized", "No authorization token provided"),
         404: (
             "Not Found",
             "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
@@ -109,6 +111,33 @@ def vampi_identity(status: int, media: str, body: str, document: object) -> bool
     )
 
 
+def crapi_known_error(
+    path: str, method: str, status: int, media: str, body: str
+) -> bool:
+    """Accept exact observed protocol errors on the two declared discovery routes."""
+    if path == "/crapi/identity/api/v2/admin/users/debug":
+        return (
+            method == "GET"
+            and status == HTTP_UNAUTHORIZED
+            and media == "application/json"
+            and body.strip() == "CRAPIResponse(message=Invalid Token, status=401)"
+        )
+    return (
+        path == "/crapi/workshop/api/internal/metrics"
+        and method == "GET"
+        and status == HTTP_NOT_FOUND
+        and media == "text/html"
+        and all(
+            value in body
+            for value in (
+                "<title>Not Found</title>",
+                "<h1>Not Found</h1>",
+                "The requested resource was not found on this server.",
+            )
+        )
+    )
+
+
 def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-statements
     path: str, method: str, status: int | None, content_type: str, body: str
 ) -> bool:
@@ -130,7 +159,7 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
         try:
             document = json.loads(body)
         except ValueError:
-            return False
+            return crapi_known_error(path, method, status, media, body)
     if path.startswith("/httpbin/"):
         return (
             isinstance(document, dict)
@@ -189,6 +218,7 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
                 )
             )
             or (media == "text/html" and ("crAPI" in body or "MailHog" in body))
+            or crapi_known_error(path, method, status, media, body)
             or missing_order_identity(path, method, status, media, body)
             or (
                 path == "/crapi/community/api/v2/coupon/validate-coupon"

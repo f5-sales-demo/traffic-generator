@@ -146,3 +146,38 @@ def test_vampi_proxy_problem_response_requires_exact_protocol_shape():
     assert not native_identity(
         "/vampi/users/v1/_debug", "POST", 405, "application/problem+json", "{}"
     )
+
+
+def test_observed_protocol_errors_are_route_and_content_scoped():
+    body = json.dumps(
+        {
+            "type": "about:blank",
+            "status": 401,
+            "title": "Unauthorized",
+            "detail": "No authorization token provided",
+        }
+    )
+    assert native_identity(
+        "/vampi/books/v1/not-an-integer", "GET", 401, "application/problem+json", body
+    )
+    assert not native_identity(
+        "/vampi/books/v1/not-an-integer", "GET", 200, "application/problem+json", body
+    )
+    body = "CRAPIResponse(message=Invalid Token, status=401)\n"
+    assert native_identity(
+        "/crapi/identity/api/v2/admin/users/debug",
+        "GET",
+        401,
+        "application/json;charset=ISO-8859-1",
+        body,
+    )
+    assert not native_identity(
+        "/crapi/identity/api/auth/login", "POST", 401, "application/json", body
+    )
+    body = "<title>Not Found</title><h1>Not Found</h1><p>The requested resource was not found on this server.</p>"
+    assert native_identity(
+        "/crapi/workshop/api/internal/metrics", "GET", 404, "text/html", body
+    )
+    assert not native_identity(
+        "/crapi/workshop/api/internal/metrics", "GET", 200, "text/html", body
+    )

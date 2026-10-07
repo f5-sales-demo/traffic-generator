@@ -178,6 +178,69 @@ def waf_attribution(
         return False
 
 
+def endpoint_attribution(response: dict, result: dict, directory: Path) -> bool:
+    """Accept only the declared exact admin rule with joined access/security identity."""
+    if (
+        response.get("scenario") != "api-protection-verify/03-protection-deny"
+        or response.get("path") != "/httpbin/anything/admin"
+        or response.get("method") not in {"POST", "DELETE"}
+    ):
+        return False
+    try:
+        evidence = json.loads((directory / "control-attribution.json").read_text())
+        scope, bounds = evidence["scope"], evidence["clock_bounds"]
+        checks = [
+            check
+            for check in evidence["checks"]
+            if request_identity(check["response"]) == request_identity(response)
+        ]
+        if not (
+            response.get("status") == FORBIDDEN
+            and response.get("upstream_dispatched") is True
+            and all(key in response for key in RESPONSE_IDENTITY_FIELDS)
+            and all(
+                evidence.get(key) == result.get(key)
+                for key in ("source_commit", "artifact_sha256")
+            )
+            and len(bounds) == PAIR_LENGTH
+            and -MAX_CLOCK_OFFSET <= bounds[0] <= bounds[1] <= MAX_CLOCK_OFFSET
+            and len(checks) == 1
+        ):
+            return False
+        check = checks[0]
+        access = check["access"]
+        if not access.get("req_id") or not joined(access, response, scope, bounds):
+            return False
+        policy = "ves-io-http-loadbalancer-api-protection-" + scope["loadbalancer"]
+        rule = "ves-io-service-policy-" + policy + "-api-protection-0"
+        return any(
+            event.get("req_id") == access["req_id"]
+            and joined(event, response, scope, bounds)
+            and event.get("action") == "block"
+            and event.get("sec_event_type") == "api_sec_event"
+            and event.get("sec_event_name") == "API Protection Rule"
+            and any(
+                hit.get("result") == "deny"
+                and hit.get("policy") == policy
+                and hit.get("policy_rule") == rule
+                and hit.get("policy_namespace") == scope["namespace"]
+                for hit in event.get("policy_hits", {}).get("policy_hits", [])
+            )
+            for event in check["events"]
+        )
+    except (OSError, ValueError, KeyError, TypeError, IndexError):
+        return False
+
+
+def control_attribution(
+    response: dict, result: dict, directory: Path, signatures: list[str]
+) -> bool:
+    """Validate each control through its exact configured signature or policy identity."""
+    return waf_attribution(
+        response, result, directory, signatures
+    ) or endpoint_attribution(response, result, directory)
+
+
 def attributed_responses(scenario: dict, result: dict, directory: Path) -> list[dict]:
     """Read actual response receipts and mark only fully validated WAF evidence."""
     path = directory / "response-events.jsonl"
@@ -188,7 +251,7 @@ def attributed_responses(scenario: dict, result: dict, directory: Path) -> list[
     )
     signatures = scenario.get("functional_contract", {}).get("waf_signatures", [])
     for row in rows:
-        if waf_attribution(row, result, directory, signatures):
+        if control_attribution(row, result, directory, signatures):
             row["control_attributed"] = True
     return rows
 
@@ -232,7 +295,9 @@ def await_control_evidence(
     )
     deadline = time.monotonic() + CONTROL_WAIT_SECONDS
     while not stop.is_set():
-        if all(waf_attribution(row, result, directory, signatures) for row in required):
+        if all(
+            control_attribution(row, result, directory, signatures) for row in required
+        ):
             return
         if time.monotonic() >= deadline:
             return
