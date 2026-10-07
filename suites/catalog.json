@@ -6207,7 +6207,7 @@
         "verifier": "native-dvwa-corpus",
         "behavior": "Every preserved payload returns authenticated native content or an exactly attributed WAF block",
         "mutation_policy": "read-only",
-        "waf_signatures": ["200002883","200002835","200000098","200001475","200015119"]
+        "waf_signatures": ["200002883", "200002835", "200000098", "200001475", "200015119"]
       },
       "fixture_refresh": []
     },
@@ -6256,7 +6256,7 @@
         "verifier": "native-dvwa-corpus",
         "behavior": "Every preserved payload returns authenticated native content or an exactly attributed WAF block",
         "mutation_policy": "read-only",
-        "waf_signatures": ["200002883","200002835","200000098","200001475","200015119"]
+        "waf_signatures": ["200002883", "200002835", "200000098", "200001475", "200015119"]
       },
       "fixture_refresh": []
     },
