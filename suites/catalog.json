@@ -5817,6 +5817,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-browser-display",
         "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
       }
@@ -5846,6 +5848,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-browser-display",
         "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
       }
@@ -5875,6 +5879,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-browser-display",
         "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
       }
@@ -5898,6 +5904,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-csd-libraries",
         "behavior": "Pinned native browser libraries execute and all injected nodes, controls, listeners and timers are cleaned up",
         "native_library_steps": {
@@ -5924,6 +5932,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-csd-libraries",
         "behavior": "Pinned native browser libraries execute and all injected nodes, controls, listeners and timers are cleaned up",
         "native_library_steps": {
@@ -5950,6 +5960,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-csd-libraries",
         "behavior": "Pinned native browser libraries execute and all injected nodes, controls, listeners and timers are cleaned up",
         "native_library_steps": {
@@ -5982,6 +5994,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-browser-display",
         "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
       }
@@ -6005,6 +6019,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-browser-display",
         "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
       }
@@ -6028,6 +6044,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-browser-display",
         "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
       }
@@ -6051,6 +6069,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-browser-display",
         "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
       }
@@ -6082,6 +6102,8 @@
       },
       "fixture_refresh": [],
       "functional_contract": {
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["browser_restoration"],
         "verifier": "native-browser-display",
         "behavior": "The browser performs every declared synthetic DOM/request step and restores injected state with screenshot and closed-browser evidence; CSD enforcement disabled"
       }

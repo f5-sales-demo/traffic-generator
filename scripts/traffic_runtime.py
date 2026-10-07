@@ -649,6 +649,7 @@ def scenario_action_verification(directory: Path, scenario: dict, result: dict) 
         result["browser_actions"] = browser_action_receipt(
             directory, scenario["browser_contract"]
         )
+        result["browser_restoration"] = result["browser_actions"]["passed"]
         result["dispatch_contract_verified"] = result["browser_actions"]["passed"] and (
             "dispatch_contract" not in scenario
             or (
