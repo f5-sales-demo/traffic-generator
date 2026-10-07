@@ -878,6 +878,10 @@ export async function runSuite(options = {}) {
                   }),
                 );
             } else if (step.op === 'evaluate' || step.op === 'cleanup') {
+              if (step.op === 'cleanup' && options.drainRequests) {
+                stepResult.preCleanupDrain = await execute(() => waitForRequestsTerminal(requests));
+                if (!stepResult.preCleanupDrain.passed) throw new Error('Application requests remain before cleanup');
+              }
               const evidence = await execute(() => page.evaluate(step.run));
               if (!evidence || typeof evidence !== 'object') throw new Error(`${step.op} step returned no evidence`);
               stepResult.evidence = evidence;
@@ -908,6 +912,10 @@ export async function runSuite(options = {}) {
         }
       } finally {
         try {
+          if (options.drainRequests) {
+            scenarioResult.preFinalCleanupDrain = await cleanupOperation(() => waitForRequestsTerminal(requests));
+            if (!scenarioResult.preFinalCleanupDrain.passed) scenarioResult.status = 'failed';
+          }
           await cleanupOperation(() => page.evaluate(() => window.__csdSim?.cleanupPage()));
         } catch (error) {
           reportLocalError(`page cleanup ${scenario.name} failed`, error);
