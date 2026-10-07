@@ -53,6 +53,34 @@ def joined(record: dict, response: dict, scope: dict, bounds: list) -> bool:
         return False
 
 
+def security_request_id(
+    check: dict, response: dict, scope: dict, bounds: list
+) -> str | None:
+    """Bind an actual security record; sampled-out access stays absent."""
+    request_id = check.get("security_request_id")
+    access = check.get("access")
+    if access is not None:
+        if (
+            not isinstance(access, dict)
+            or not access.get("req_id")
+            or not joined(access, response, scope, bounds)
+        ):
+            return None
+        if request_id is not None and request_id != access["req_id"]:
+            return None
+        return access["req_id"]
+    if not request_id or not str(response.get("synthetic_identity", "")).endswith(
+        "-request"
+    ):
+        return None
+    candidates = {
+        event.get("req_id")
+        for event in check.get("events", [])
+        if joined(event, response, scope, bounds)
+    }
+    return request_id if candidates == {request_id} else None
+
+
 def bot_attribution(
     action: dict, response: dict, result: dict, directory: Path
 ) -> bool:
@@ -94,11 +122,11 @@ def bot_attribution(
         ]
         if len(checks) != 1:
             return False
-        access = checks[0]["access"]
-        if not access.get("req_id") or not joined(access, response, scope, bounds):
+        request_id = security_request_id(checks[0], response, scope, bounds)
+        if request_id is None:
             return False
         return any(
-            event.get("req_id") == access["req_id"]
+            event.get("req_id") == request_id
             and joined(event, response, scope, bounds)
             and event.get("action") == "block"
             and event.get("sec_event_type") == "waf_sec_event"
@@ -154,11 +182,11 @@ def waf_attribution(
         ]
         if len(checks) != 1:
             return False
-        access = checks[0]["access"]
-        if not access.get("req_id") or not joined(access, response, scope, bounds):
+        request_id = security_request_id(checks[0], response, scope, bounds)
+        if request_id is None:
             return False
         return any(
-            event.get("req_id") == access["req_id"]
+            event.get("req_id") == request_id
             and joined(event, response, scope, bounds)
             and event.get("action") == "block"
             and event.get("sec_event_type") == "waf_sec_event"
@@ -219,13 +247,13 @@ def endpoint_attribution(response: dict, result: dict, directory: Path) -> bool:
         ):
             return False
         check = checks[0]
-        access = check["access"]
-        if not access.get("req_id") or not joined(access, response, scope, bounds):
+        request_id = security_request_id(check, response, scope, bounds)
+        if request_id is None:
             return False
         policy = "ves-io-http-loadbalancer-api-protection-" + scope["loadbalancer"]
         rule = "ves-io-service-policy-" + policy + "-api-protection-0"
         return any(
-            event.get("req_id") == access["req_id"]
+            event.get("req_id") == request_id
             and joined(event, response, scope, bounds)
             and event.get("action") == "block"
             and event.get("sec_event_type") == "api_sec_event"

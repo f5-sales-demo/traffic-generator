@@ -49,7 +49,7 @@ def test_exact_endpoint_rule_and_request_are_required(tmp_path):
         },
     }
     result = {"source_commit": "c" * 40, "artifact_sha256": "d" * 64}
-    evidence = {
+    evidence: dict = {
         **result,
         "scope": scope,
         "clock_bounds": [-1, 1],
@@ -58,6 +58,15 @@ def test_exact_endpoint_rule_and_request_are_required(tmp_path):
     file = tmp_path / "control-attribution.json"
     file.write_text(json.dumps(evidence))
     assert endpoint_attribution(response, result, tmp_path)
+    evidence["checks"][0]["security_request_id"] = event["req_id"]
+    evidence["checks"][0]["access"] = None
+    file.write_text(json.dumps(evidence))
+    assert endpoint_attribution(response, result, tmp_path)
+    evidence["checks"][0]["security_request_id"] = "foreign"
+    file.write_text(json.dumps(evidence))
+    assert not endpoint_attribution(response, result, tmp_path)
+    evidence["checks"][0]["security_request_id"] = event["req_id"]
+    evidence["checks"][0]["access"] = dict(event)
     event["req_id"] = "foreign"
     file.write_text(json.dumps(evidence))
     assert not endpoint_attribution(response, result, tmp_path)
