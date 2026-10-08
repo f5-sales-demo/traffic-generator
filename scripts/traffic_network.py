@@ -687,6 +687,7 @@ class NetworkBoundary:
             TGEN_SCANNER_SECONDS="30",
             TGEN_REQUEST_TIMEOUT="600"
             if scenario["suite"] == "dvga-exploits"
+            or scenario["id"] == "cdn-load-testing/09-origin-torture"
             else "15",
             TGEN_REPEAT_COUNT="5",
             TGEN_GRAPHQL_BATCH_MAX="10",

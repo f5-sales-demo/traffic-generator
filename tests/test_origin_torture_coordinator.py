@@ -35,3 +35,11 @@ def test_parent_load_restores_before_children_and_keeps_failed_child_visible(
     ):
         assert traffic_origin_torture.main() == 1
     assert len(order) == 9
+
+
+def test_costly_native_graphql_worker_uses_declared_full_batch_timeout():
+    root = Path(__file__).resolve().parents[1]
+    script = (root / "suites/cdn-load-testing/09-origin-torture.sh").read_text()
+    assert '--timeout "${TGEN_REQUEST_TIMEOUT:-600}s"' in script
+    source = (root / "scripts/traffic_network.py").read_text()
+    assert 'or scenario["id"] == "cdn-load-testing/09-origin-torture"' in source

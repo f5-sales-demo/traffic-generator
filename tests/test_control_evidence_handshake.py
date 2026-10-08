@@ -7,7 +7,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
-from traffic_security import await_control_evidence
+import pytest
+from traffic_security import await_control_evidence, control_evidence
 
 
 def test_handshake_persists_actual_request_and_never_credentials(tmp_path):
@@ -133,3 +134,18 @@ def test_exact_native_directory_denial_never_requests_waf_evidence(tmp_path):
     (tmp_path / "response-events.jsonl").write_text(json.dumps(row) + "\n")
     await_control_evidence({"id": "synthetic/action"}, {}, tmp_path, threading.Event())
     assert not (tmp_path / "control-evidence-request.json").exists()
+
+
+def test_current_evidence_snapshot_rejects_replacement_and_invalid_json(tmp_path):
+    path = tmp_path / "control-attribution.json"
+    path.write_text('{"checks": []}')
+    assert control_evidence(path) == {"checks": []}
+    path.write_text('{"checks": [{"req_id": "new"}]}')
+    assert control_evidence(path) == {"checks": [{"req_id": "new"}]}
+    path.write_text("invalid")
+    with pytest.raises(json.JSONDecodeError):
+        control_evidence(path)
+    link = tmp_path / "link.json"
+    link.symlink_to(path)
+    with pytest.raises(ValueError, match="symbolic link"):
+        control_evidence(link)

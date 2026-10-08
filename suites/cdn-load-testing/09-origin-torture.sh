@@ -129,7 +129,7 @@ echo ""
 echo "=== LAYER 3: GRAPHQL TORTURE (wrk Lua, keepalive) ==="
 GQL_LUA="$(dirname "$0")/_graphql-torture.lua"
 if [ -f "$GQL_LUA" ]; then
-  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 30s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout "${TGEN_REQUEST_TIMEOUT:-600}s" \
     -s "$GQL_LUA" "${BASE}/" >"$RESULTS_DIR/wrk-gql-torture.log" 2>&1 &
   GQL_PID=$!
   echo "[+] wrk GraphQL torture: batch DoS + recursion + SQLi + XSS (PID $GQL_PID, ${WRK_T}t/128c keepalive)"

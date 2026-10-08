@@ -27,6 +27,14 @@ RESPONSE_IDENTITY_FIELDS = (
 )
 
 
+def control_evidence(path: Path) -> dict:
+    """Read the current evidence snapshot; never reuse a stale file revision."""
+    if path.is_symlink():
+        message = "control evidence cannot be a symbolic link"
+        raise ValueError(message)
+    return json.loads(path.read_text())
+
+
 def request_identity(row: dict) -> tuple:
     """Use complete response receipt identity rather than path or status alone."""
     return tuple(row.get(key) for key in RESPONSE_IDENTITY_FIELDS)
@@ -93,14 +101,18 @@ def security_request_id(
 
 
 def bot_attribution(
-    action: dict, response: dict, result: dict, directory: Path
+    action: dict,
+    response: dict,
+    result: dict,
+    directory: Path,
+    evidence: dict | None = None,
 ) -> bool:
     """Accept search-engine impersonation only with actual WAF bot block attribution."""
     path = directory / "control-attribution.json"
     if not path.is_file() or path.is_symlink():
         return False
     try:
-        evidence = json.loads(path.read_text())
+        evidence = evidence if evidence is not None else control_evidence(path)
         scope = evidence["scope"]
         bounds = evidence["clock_bounds"]
         firewall = evidence["firewall"]
@@ -170,14 +182,18 @@ def bot_attribution(
 
 
 def waf_attribution(
-    response: dict, result: dict, directory: Path, signatures: list[str]
+    response: dict,
+    result: dict,
+    directory: Path,
+    signatures: list[str],
+    evidence: dict | None = None,
 ) -> bool:
     """Require actual request-bound enabled WAF signature and effective blocking configuration."""
     path = directory / "control-attribution.json"
     if not path.is_file() or path.is_symlink():
         return False
     try:
-        evidence = json.loads(path.read_text())
+        evidence = evidence if evidence is not None else control_evidence(path)
         scope = evidence["scope"]
         bounds = evidence["clock_bounds"]
         firewall = evidence["firewall"]
@@ -252,7 +268,9 @@ def waf_attribution(
         return False
 
 
-def endpoint_attribution(response: dict, result: dict, directory: Path) -> bool:
+def endpoint_attribution(
+    response: dict, result: dict, directory: Path, evidence: dict | None = None
+) -> bool:
     """Accept only the declared exact admin rule with joined access/security identity."""
     if (
         response.get("scenario") != "api-protection-verify/03-protection-deny"
@@ -261,7 +279,11 @@ def endpoint_attribution(response: dict, result: dict, directory: Path) -> bool:
     ):
         return False
     try:
-        evidence = json.loads((directory / "control-attribution.json").read_text())
+        evidence = (
+            evidence
+            if evidence is not None
+            else control_evidence(directory / "control-attribution.json")
+        )
         scope, bounds = evidence["scope"], evidence["clock_bounds"]
         checks = [
             check
@@ -319,12 +341,16 @@ def endpoint_attribution(response: dict, result: dict, directory: Path) -> bool:
 
 
 def control_attribution(
-    response: dict, result: dict, directory: Path, signatures: list[str]
+    response: dict,
+    result: dict,
+    directory: Path,
+    signatures: list[str],
+    evidence: dict | None = None,
 ) -> bool:
     """Validate each control through its exact configured signature or policy identity."""
     return waf_attribution(
-        response, result, directory, signatures
-    ) or endpoint_attribution(response, result, directory)
+        response, result, directory, signatures, evidence
+    ) or endpoint_attribution(response, result, directory, evidence)
 
 
 def attributed_responses(scenario: dict, result: dict, directory: Path) -> list[dict]:
@@ -336,8 +362,12 @@ def attributed_responses(scenario: dict, result: dict, directory: Path) -> list[
         else []
     )
     signatures = scenario.get("functional_contract", {}).get("waf_signatures", [])
+    path = directory / "control-attribution.json"
+    evidence = (
+        control_evidence(path) if path.is_file() and not path.is_symlink() else {}
+    )
     for row in rows:
-        if control_attribution(row, result, directory, signatures):
+        if control_attribution(row, result, directory, signatures, evidence):
             row["control_attributed"] = True
     return rows
 
@@ -383,8 +413,13 @@ def await_control_evidence(
     )
     deadline = time.monotonic() + CONTROL_WAIT_SECONDS
     while not stop.is_set():
+        path = directory / "control-attribution.json"
+        evidence = (
+            control_evidence(path) if path.is_file() and not path.is_symlink() else {}
+        )
         if all(
-            control_attribution(row, result, directory, signatures) for row in required
+            control_attribution(row, result, directory, signatures, evidence)
+            for row in required
         ):
             return
         if time.monotonic() >= deadline:
