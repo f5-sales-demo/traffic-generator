@@ -148,8 +148,114 @@ def bundle_operation(directory: Path, action: str) -> None:
     )
 
 
+def recover_pass(root: Path, active: Path | None, config: dict) -> list[dict]:
+    """Recover one bounded pass with source ownership and bundle semantics."""
+    recovered: list[dict] = []
+    bundles = sorted(active.rglob("family-bundle-identity.json")) if active else []
+    for identity_file in bundles:
+        directory = identity_file.parent
+        if (directory / "family-restoration.json").exists():
+            continue
+        children = sorted((directory / "family-bundle").glob("*/family-journal.json"))
+        if not children:
+            message = "interrupted family bundle has no owned journals"
+            raise ValueError(message)
+        for child in children:
+            value = json.loads(child.read_text())
+            if (
+                value.get("source_commit") != config["source_commit"]
+                or value.get("artifact_sha256") != config["artifact_sha256"]
+            ):
+                message = "interrupted family bundle provenance mismatch"
+                raise ValueError(message)
+        bundle_operation(directory, "restore")
+        recovered.append(
+            {
+                "family": "mixed",
+                "identity": json.loads(identity_file.read_text())["identity"],
+                "restored": True,
+            }
+        )
+    for journal in sorted(active.rglob("family-journal.json")) if active else []:
+        if any(bundle.parent in journal.parents for bundle in bundles):
+            continue
+        directory = journal.parent
+        if journal.is_symlink() or not journal.resolve().is_relative_to(root.resolve()):
+            message = "interrupted family journal escaped owned runtime"
+            raise ValueError(message)
+        value = json.loads(journal.read_text())
+        if (
+            value.get("source_commit") != config["source_commit"]
+            or value.get("artifact_sha256") != config["artifact_sha256"]
+        ):
+            continue
+        if (directory / "family-restoration.json").exists():
+            continue
+        receipt_path = directory / "receipt.json"
+        if (
+            receipt_path.exists()
+            and json.loads(receipt_path.read_text()).get("outcome") == "fixture_failure"
+            and not (directory / "family-baseline.json").exists()
+        ):
+            continue
+        operation(directory, "restore", value["family"])
+        recovered.append(
+            {
+                "family": value["family"],
+                "identity": value["identity"],
+                "restored": True,
+            }
+        )
+    return recovered
+
+
+def recover_active(config: dict) -> dict:
+    """Restore unfinished journals from the latest source-bound pass before startup."""
+    root = Path(config["results_dir"])
+    root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if root.is_symlink() or any(parent.is_symlink() for parent in root.parents):
+        message = "unsafe interrupted recovery runtime"
+        raise ValueError(message)
+    passes = sorted(
+        (path for path in root.glob("pass-*") if path.is_dir()),
+        key=lambda path: path.stat().st_mtime,
+    )
+    if any(path.is_symlink() for path in passes):
+        message = "unsafe interrupted recovery pass"
+        raise ValueError(message)
+    recovered = []
+    environment = {
+        "SOURCE_COMMIT": config["source_commit"],
+        "TGEN_ARTIFACT_SHA256": config["artifact_sha256"],
+    }
+    previous = {key: os.environ.get(key) for key in environment}
+    os.environ.update(environment)
+    try:
+        recovered = recover_pass(root, passes[-1] if passes else None, config)
+    finally:
+        for key, value in previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+    receipt = {
+        "source_commit": config["source_commit"],
+        "artifact_sha256": config["artifact_sha256"],
+        "recovered": recovered,
+    }
+    atomic_json(root / "interrupted-family-recovery.json", receipt)
+    return receipt
+
+
 def main() -> None:
     """Called only by the host worker outside the catalog egress namespace."""
+    if sys.argv[1] == "recover-active":
+        config = json.loads(Path(sys.argv[2]).read_text())
+        os.environ["TGEN_FIXTURES"] = str(
+            Path(config["results_dir"]).parent / "fixtures.json"
+        )
+        recover_active(config)
+        return
     action, family, destination = sys.argv[1:4]
     operation(Path(destination), action, family)
 
