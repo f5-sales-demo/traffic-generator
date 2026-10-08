@@ -68,7 +68,11 @@ def worker_arguments(tool: str, arguments: list[str], marker: str) -> list[str]:
     if not arguments or not arguments[-1].startswith(("http://", "https://")):
         message = "native worker target must be final argument"
         raise ValueError(message)
-    return [*arguments[:-1], "-H", "X-TGen-Worker: " + marker, arguments[-1]]
+    headers = ["-H", "X-TGen-Worker: " + marker]
+    if tool == "ab" and not any("user-agent:" in value.lower() for value in arguments):
+        # XC rejects ApacheBench's default UA before request telemetry is emitted.
+        headers += ["-H", "User-Agent: tgen-native-load/1.0"]
+    return [*arguments[:-1], *headers, arguments[-1]]
 
 
 def nikto_configuration(source: Path, directory: Path, marker: str) -> Path:

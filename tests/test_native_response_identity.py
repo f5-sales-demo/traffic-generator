@@ -302,3 +302,15 @@ def test_csd_exfil_and_native_markdown_require_exact_route_content():
     assert not native_identity(
         "/juice-shop/ftp/acquisitions.md", "GET", 200, "text/markdown", "Generic text"
     )
+
+
+def test_native_dvwa_directory_denial_is_exact_and_route_scoped():
+    body = "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+    assert native_identity("/dvwa/vulnerabilities/", "GET", 403, "text/html", body)
+    assert not native_identity(
+        "/dvwa/vulnerabilities/sqli/", "GET", 403, "text/html", body
+    )
+    assert not native_identity("/dvwa/vulnerabilities/", "POST", 403, "text/html", body)
+    assert not native_identity(
+        "/dvwa/vulnerabilities/", "GET", 403, "text/html", "Request Rejected"
+    )

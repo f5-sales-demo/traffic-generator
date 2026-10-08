@@ -107,7 +107,11 @@ def test_timed_native_workers_keep_original_arguments_and_add_opaque_attribution
     for tool in ("wrk", "hey", "ab"):
         result = worker_arguments(tool, args, tool + "-123")
         assert result[: len(args) - 1] == args[:-1]
-        assert result[-3:-1] == ["-H", "X-TGen-Worker: " + tool + "-123"]
+        assert ["-H", "X-TGen-Worker: " + tool + "-123"] == result[
+            len(args) - 1 : len(args) + 1
+        ]
+        if tool == "ab":
+            assert result[-3:-1] == ["-H", "User-Agent: tgen-native-load/1.0"]
         assert result[-1] == args[-1]
     assert worker_arguments("vegeta", args, "vegeta-123") == args
 
@@ -147,3 +151,10 @@ def test_native_apachebench_accepts_worker_header_before_final_target():
         server.shutdown()
         server.server_close()
         thread.join()
+
+
+def test_apachebench_preserves_explicit_user_agent():
+    args = ["-H", "User-Agent: declared-synthetic", "https://example.test/httpbin/get"]
+    result = worker_arguments("ab", args, "ab-123")
+    assert result.count("User-Agent: declared-synthetic") == 1
+    assert "User-Agent: tgen-native-load/1.0" not in result

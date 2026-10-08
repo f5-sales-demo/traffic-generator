@@ -6,6 +6,7 @@ import re
 HTTP_SUCCESS = 200
 HTTP_BAD_REQUEST = 400
 HTTP_UNAUTHORIZED = 401
+HTTP_FORBIDDEN = 403
 HTTP_NOT_FOUND = 404
 HTTP_ERROR_START = 400
 NATIVE_MISSING_ORDER_STATUS = 500
@@ -32,6 +33,17 @@ def missing_order_identity(
 
 def dvwa_identity(path: str, method: str, status: int, media: str, body: str) -> bool:
     """Recognize owned upload execution or authenticated DVWA pages."""
+    if path == "/dvwa/vulnerabilities/" and status == HTTP_FORBIDDEN:
+        return (
+            method == "GET"
+            and media == "text/html"
+            and body
+            == (
+                "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n"
+                "<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n"
+                "</body>\r\n</html>\r\n"
+            )
+        )
     if re.fullmatch(r"/dvwa/hackable/uploads/tgen-[a-f0-9]{32}-shell\.php", path):
         return (
             method == "GET"

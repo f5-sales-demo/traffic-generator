@@ -4677,7 +4677,13 @@
             },
             "payload_class": "native-lua-client-diversity",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 302, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 302, 400, 401, 403, 404, 405, 422],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": ["<title>403 Forbidden</title>", "<h1>403 Forbidden</h1>", "<center>nginx</center>"]
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
