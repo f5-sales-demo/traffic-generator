@@ -21698,7 +21698,7 @@
       },
       "fixture_refresh": ["restaurant"],
       "launch": "scripts/traffic_family_native.py",
-      "fixture_contract": {"family_restore": "restaurant"},
+      "fixture_contract": { "family_restore": "restaurant" },
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
@@ -21819,7 +21819,7 @@
       },
       "fixture_refresh": ["restaurant"],
       "launch": "scripts/traffic_family_native.py",
-      "fixture_contract": {"family_restore": "restaurant"},
+      "fixture_contract": { "family_restore": "restaurant" },
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
