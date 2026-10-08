@@ -1,6 +1,7 @@
 """Schema blocks require exact fixture, enforcement, request ID and native field evidence."""
 
 import copy
+import hashlib
 import json
 
 from traffic_security import schema_attribution
@@ -134,4 +135,20 @@ def test_exact_schema_request_and_enforcement_are_required():
             changed["source_commit"] = "e" * 40
         assert not schema_attribution(response, result, changed)
     response["path"] = "/unrelated"
+    assert not schema_attribution(response, result, bundle)
+
+
+def test_content_addressed_fixture_requires_matching_digest_and_exact_path():
+    response, result, bundle = evidence()
+    fixture = bundle["schema"]["fixture"]
+    name = (
+        "showcase-form-"
+        + hashlib.sha256(fixture["string_value"].encode()).hexdigest()[:32]
+    )
+    fixture["metadata"]["name"] = name
+    bundle["schema"]["definition"]["spec"]["swagger_specs"] = [
+        "/api/object_store/namespaces/demo/stored_objects/swagger/" + name + "/v1"
+    ]
+    assert schema_attribution(response, result, bundle)
+    fixture["string_value"] += " "
     assert not schema_attribution(response, result, bundle)

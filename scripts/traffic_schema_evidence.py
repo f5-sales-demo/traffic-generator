@@ -1,6 +1,8 @@
 """Only exact request-bound violations of the effective immutable schema qualify."""
 
+import hashlib
 import json
+import re
 
 
 def configured_schema(evidence: dict, scope: dict) -> bool:
@@ -36,17 +38,36 @@ def configured_schema(evidence: dict, scope: dict) -> bool:
             return False
         paths = definition["spec"]["swagger_specs"]
         meta = fixture["metadata"]
+        name = meta["name"]
+        content = fixture["string_value"]
         exact = (
             "/api/object_store/namespaces/"
             + namespace
-            + "/stored_objects/swagger/showcase-form-native/"
+            + "/stored_objects/swagger/"
+            + name
+            + "/"
             + meta["version"]
         )
+        expected_names = (
+            {
+                "showcase-form-native",
+                "showcase-form-" + hashlib.sha256(content.encode()).hexdigest()[:32],
+            }
+            if isinstance(content, str)
+            else set()
+        )
+        name_valid = (
+            name in expected_names
+            and re.fullmatch(
+                r"(?:showcase-form-native|showcase-form-[a-f0-9]{32})", name
+            )
+            is not None
+        )
         if (
-            paths != [exact]
+            not name_valid
+            or paths != [exact]
             or meta["version"].lower() == "latest"
             or meta["namespace"] != namespace
-            or meta["name"] != "showcase-form-native"
         ):
             return False
         schema = json.loads(fixture["string_value"])["paths"]["/httpbin/post"]["post"][
