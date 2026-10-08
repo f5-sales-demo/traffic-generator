@@ -75,7 +75,7 @@ const familyMarker = process.env.TGEN_FAMILY_MARKER;
 if (!/^tgen-[a-f0-9]{32}$/.test(familyMarker || '')) throw new Error('native family marker required');
 for (let i = 0; i < IDENTITIES.length; i++) {
   IDENTITIES[i].email = `${familyMarker}-bot${i}@example.com`;
-  IDENTITIES[i].comment = familyMarker + ':' + IDENTITIES[i].comment;
+  IDENTITIES[i].comment = `${familyMarker}:${IDENTITIES[i].comment}`;
 }
 
 (async () => {
