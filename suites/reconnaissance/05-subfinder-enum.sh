@@ -15,18 +15,8 @@ ROOT_DOMAIN=$(echo "$TARGET" | awk -F. '{if (NF>=2) print $(NF-1)"."$NF; else pr
 echo "[+] Root domain: ${ROOT_DOMAIN}"
 echo ""
 
-if [[ -n "${TGEN_AUTHORIZED_DOMAINS:-}" ]]; then
-  echo "[CATALOG] Bounded authorized-name discovery equivalent; passive external providers excluded"
-  while IFS= read -r domain; do
-    getent ahostsv4 "$domain"
-    curl -sk --max-time 10 -o /dev/null -w "${domain} HTTP %{http_code}\n" "https://${domain}/health"
-  done < <(python3 -c 'import json,os; print("\n".join(json.loads(os.environ["TGEN_AUTHORIZED_DOMAINS"])))')
-  exit 0
-fi
-
 echo "[+] Running subfinder..."
-subfinder -d "$ROOT_DOMAIN" -silent ||
-  echo "WARN: subfinder exited with non-zero status"
+subfinder -d "$ROOT_DOMAIN" -silent -rl 5 -timeout 15 -max-time 1
 
 echo ""
 echo "[*] Subfinder enumeration complete"

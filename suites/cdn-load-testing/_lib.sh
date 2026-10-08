@@ -235,4 +235,5 @@ vuln() {
 summary() {
   echo ""
   echo "[*] Results: $PASS_COUNT pass, $FAIL_COUNT fail, $VULN_COUNT vulns"
+  ((FAIL_COUNT == 0))
 }

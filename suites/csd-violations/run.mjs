@@ -4,6 +4,7 @@ import { constants } from 'node:fs';
 import { access, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import browserRequests from '../../scripts/browser_requests.cjs';
 import { DEFAULT_POLICY } from './continuous.mjs';
 import {
   APPROVED_CSD_COLLECTORS,
@@ -982,6 +983,21 @@ function networkOutcome(request) {
   };
 }
 
+export async function waitForRequestsTerminal(requests, timeoutMs = 20000) {
+  const deadline = Date.now() + timeoutMs;
+  const pending = () =>
+    [...requests.values()].filter((request) => request.terminal === 'pending' && !request.path.includes('/socket.io/'));
+  let settled = Date.now();
+  let observed = requests.size;
+  while (Date.now() < deadline) {
+    if (pending().length || requests.size !== observed) settled = Date.now();
+    observed = requests.size;
+    if (!pending().length && Date.now() - settled >= Math.min(500, timeoutMs / 2)) break;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  return { passed: pending().length === 0, pending: pending().length };
+}
+
 function safeFilename(value) {
   return value
     .replace(/[^a-z0-9-]+/gi, '-')
@@ -1102,12 +1118,32 @@ function assertEvidence(step, stepResult) {
   };
 }
 
-export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioName = null } = {}) {
+export function pageHelpers({
+  terminalTimeoutMs = 8_000,
+  runId = null,
+  scenarioName = null,
+  nativeOrigin = false,
+} = {}) {
   const SCRIPT_URLS = {
     jsdelivr: 'https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js',
     esm: 'https://esm.sh/moment@2.30.1',
     unpkg: 'https://unpkg.com/underscore@1.13.7/underscore-min.js',
     jspm: 'https://ga.jspm.io/npm:dayjs@1.11.13/dayjs.min.js',
+  };
+  const nativeAssets = {
+    'https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js': '/csd-demo/static/vendor/lodash.min.js',
+    'https://esm.sh/moment@2.30.1': '/csd-demo/static/vendor/moment.js',
+    'https://unpkg.com/underscore@1.13.7/underscore-min.js': '/csd-demo/static/vendor/underscore-min.js',
+    'https://ga.jspm.io/npm:dayjs@1.11.13/dayjs.min.js': '/csd-demo/static/vendor/dayjs.min.js',
+    'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': '/csd-demo/static/vendor/chart.umd.min.js',
+    'https://jsonplaceholder.typicode.com/favicon.ico': '/juice-shop/favicon.ico',
+  };
+  const nativeUrl = (url, post = false) => {
+    if (!nativeOrigin) return url;
+    const receiver = ['https://www.httpbin.org/post', 'https://jsonplaceholder.typicode.com/posts'].includes(url);
+    const destination = nativeAssets[url] ?? (post && receiver ? '/httpbin/post' : null);
+    if (!destination) throw new Error('Native endpoint mapping missing');
+    return new URL(destination, location.origin).href;
   };
   const tracked = { nodes: new Set(), timers: new Set() };
   const managedContext = { runId, scenarioName };
@@ -1128,7 +1164,7 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
   const terminalFetch = async (url, body) => {
     const controller = new AbortController();
     let timer;
-    const request = fetch(url, {
+    const request = fetch(nativeUrl(url, true), {
       method: 'POST',
       mode: 'no-cors',
       keepalive: false,
@@ -1156,7 +1192,7 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
   const injectScript = (src, attributes = {}) =>
     new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = src;
+      script.src = nativeUrl(src);
       script.async = true;
       for (const [key, value] of Object.entries(attributes)) script.dataset[key] = value;
       tracked.nodes.add(script);
@@ -1165,7 +1201,29 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
         tracked.timers.delete(timer);
         resolve(terminal);
       };
-      script.onload = () => done('finished');
+      script.onload = () => {
+        const expectedGlobals = {
+          [SCRIPT_URLS.jsdelivr]: '_',
+          [SCRIPT_URLS.esm]: 'moment',
+          [SCRIPT_URLS.unpkg]: '_',
+          [SCRIPT_URLS.jspm]: 'dayjs',
+          'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': 'Chart',
+        };
+        const expected = expectedGlobals[src];
+        const versions = {
+          [SCRIPT_URLS.jsdelivr]: '4.17.21',
+          [SCRIPT_URLS.esm]: '2.30.1',
+          [SCRIPT_URLS.unpkg]: '1.13.7',
+          'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js': '4.4.4',
+        };
+        const library = expected && window[expected];
+        const nativeIdentity = versions[src]
+          ? (library?.VERSION ?? library?.version) === versions[src]
+          : expected === 'dayjs' &&
+            typeof library === 'function' &&
+            library('2026-01-02').format('YYYY-MM-DD') === '2026-01-02';
+        done(typeof library === 'function' && nativeIdentity ? 'finished' : 'failed');
+      };
       script.onerror = () => done('failed');
       const timer = setTimeout(() => done('timed-out'), 8_000);
       tracked.timers.add(timer);
@@ -1252,12 +1310,12 @@ export function pageHelpers({ terminalTimeoutMs = 8_000, runId = null, scenarioN
     });
     const image = new Image();
     image.alt = 'synthetic evidence';
-    image.src = 'https://jsonplaceholder.typicode.com/favicon.ico';
+    image.src = nativeUrl('https://jsonplaceholder.typicode.com/favicon.ico');
     tracked.nodes.add(image);
     document.body.appendChild(image);
     const link = document.createElement('link');
     link.rel = 'prefetch';
-    link.href = SCRIPT_URLS.jsdelivr;
+    link.href = nativeUrl(SCRIPT_URLS.jsdelivr);
     tracked.nodes.add(link);
     document.head.appendChild(link);
     return {
@@ -1615,11 +1673,16 @@ export async function runSuite(options = {}) {
       const context = await execute(() =>
         browser.newContext({
           ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? false,
+          extraHTTPHeaders: browserRequests.childHeaders(),
         }),
       );
       cleanup.contexts += 1;
       if (options.routeSetup) await options.routeSetup(context, target);
-      await context.addInitScript(pageHelpers, { runId, scenarioName: scenario.name });
+      await context.addInitScript(pageHelpers, {
+        runId,
+        scenarioName: scenario.name,
+        nativeOrigin: options.runtime?.platform === 'azure',
+      });
       const page = await execute(() => context.newPage());
       const requests = new Map();
       const instrumentation = { sensorRequests: 0, dipRequests: 0 };
@@ -1692,6 +1755,10 @@ export async function runSuite(options = {}) {
                   }),
                 );
             } else if (step.op === 'evaluate' || step.op === 'cleanup') {
+              if (step.op === 'cleanup' && options.drainRequests) {
+                stepResult.preCleanupDrain = await execute(() => waitForRequestsTerminal(requests));
+                if (!stepResult.preCleanupDrain.passed) throw new Error('Application requests remain before cleanup');
+              }
               const evidence = await execute(() => page.evaluate(step.run));
               if (!evidence || typeof evidence !== 'object') throw new Error(`${step.op} step returned no evidence`);
               stepResult.evidence = evidence;
@@ -1722,6 +1789,10 @@ export async function runSuite(options = {}) {
         }
       } finally {
         try {
+          if (options.drainRequests) {
+            scenarioResult.preFinalCleanupDrain = await cleanupOperation(() => waitForRequestsTerminal(requests));
+            if (!scenarioResult.preFinalCleanupDrain.passed) scenarioResult.status = 'failed';
+          }
           await cleanupOperation(() => page.evaluate(() => window.__csdSim?.cleanupPage()));
         } catch (error) {
           reportLocalError(`page cleanup ${scenario.name} failed`, error);
@@ -1730,6 +1801,10 @@ export async function runSuite(options = {}) {
             ...persistedError('pageCleanup'),
           });
           scenarioResult.status = 'failed';
+        }
+        if (options.drainRequests) {
+          scenarioResult.networkDrain = await cleanupOperation(() => waitForRequestsTerminal(requests));
+          if (!scenarioResult.networkDrain.passed) scenarioResult.status = 'failed';
         }
         scenarioResult.finalScreenshot = await captureWithinDeadline(() =>
           captureScreenshot(
@@ -1749,6 +1824,10 @@ export async function runSuite(options = {}) {
         scenarioResult.completedAt = new Date().toISOString();
         try {
           if (options.routeCleanup) await cleanupOperation(() => options.routeCleanup(context));
+          if (options.drainRequests) {
+            scenarioResult.finalNetworkDrain = await cleanupOperation(() => waitForRequestsTerminal(requests));
+            if (!scenarioResult.finalNetworkDrain.passed) scenarioResult.status = 'failed';
+          }
           await cleanupOperation(() => context.close());
         } catch (error) {
           reportLocalError(`context cleanup ${scenario.name} failed`, error);

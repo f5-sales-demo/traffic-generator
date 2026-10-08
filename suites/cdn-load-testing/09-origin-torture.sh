@@ -4,6 +4,12 @@
 # Targets: Origin server directly — DVGA, RESTaurant, crAPI, Juice Shop, DVWA, VAmPI, httpbin
 # Estimated duration: 10 minutes
 set -uo pipefail
+for native_tool in wrk hey vegeta ab; do
+  command -v "$native_tool" >/dev/null || {
+    echo "[FAIL] Required native $native_tool missing" >&2
+    exit 1
+  }
+done
 
 TARGET="${1:-${TARGET_FQDN:?TARGET_FQDN required}}"
 PROTOCOL="${TARGET_PROTOCOL:-http}"
@@ -51,9 +57,10 @@ echo ""
 # LAYER 1: Sustained wrk load against ALL app endpoints (keepalive)
 # ================================================================
 echo "=== LAYER 1: SUSTAINED WRK LOAD (all apps, keepalive) ==="
-WRK_T=$((NCPU / 2))
+WRK_T="${TGEN_THREADS:-$((NCPU / 2))}"
 [ "$WRK_T" -lt 2 ] && WRK_T=2
 WRK_C="${TGEN_CONCURRENCY:-256}"
+[ "$WRK_T" -gt "$WRK_C" ] && WRK_T="$WRK_C"
 
 ORIGIN_ENDPOINTS=(
   "/juice-shop/"
@@ -70,11 +77,13 @@ ORIGIN_ENDPOINTS=(
   "/restaurant/menu"
 )
 
+LOAD_PIDS=""
 for ep in "${ORIGIN_ENDPOINTS[@]}"; do
-  wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 60s \
     -H "Connection: keep-alive" \
     -H "X-Forwarded-For: 198.51.100.$((RANDOM % 256))" \
     "${BASE}${ep}" >"$RESULTS_DIR/wrk-$(echo "$ep" | tr '/' '_' | tr '?' '_').log" 2>&1 &
+  LOAD_PIDS="$LOAD_PIDS $!"
   echo "[+] wrk: $ep (PID $!, ${WRK_T}t/${WRK_C}c)"
 done
 
@@ -86,9 +95,10 @@ CRAPI_ENDPOINTS=(
   "/community/api/v2/community/posts"
 )
 for ep in "${CRAPI_ENDPOINTS[@]}"; do
-  wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"$WRK_C" -d"${DURATION}s" --timeout 60s \
     -H "Connection: keep-alive" \
     "${CRAPI_BASE}${ep}" >"$RESULTS_DIR/wrk-crapi-$(echo "$ep" | tr '/' '_').log" 2>&1 &
+  LOAD_PIDS="$LOAD_PIDS $!"
   echo "[+] wrk crAPI: $ep (PID $!, ${WRK_T}t/${WRK_C}c)"
 done
 echo ""
@@ -100,12 +110,16 @@ echo "=== LAYER 2: HEY SUSTAINED (API throughput) ==="
 HEY_C="${TGEN_CONCURRENCY:-200}"
 
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/juice-shop/rest/products/search?q=test" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
+LOAD_PIDS="$LOAD_PIDS $!"
 echo "[+] hey: /juice-shop/rest/products/search (PID $!, ${HEY_C}c)"
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/vampi/users/v1" >"$RESULTS_DIR/hey-vampi.log" 2>&1 &
+LOAD_PIDS="$LOAD_PIDS $!"
 echo "[+] hey: /vampi/users/v1 (PID $!, ${HEY_C}c)"
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/httpbin/get" >"$RESULTS_DIR/hey-httpbin.log" 2>&1 &
+LOAD_PIDS="$LOAD_PIDS $!"
 echo "[+] hey: /httpbin/get (PID $!, ${HEY_C}c)"
 hey -z "${DURATION}s" -c "$HEY_C" -H "Connection: keep-alive" "${BASE}/restaurant/menu" >"$RESULTS_DIR/hey-restaurant.log" 2>&1 &
+LOAD_PIDS="$LOAD_PIDS $!"
 echo "[+] hey: /restaurant/menu (PID $!, ${HEY_C}c)"
 echo ""
 
@@ -115,13 +129,13 @@ echo ""
 echo "=== LAYER 3: GRAPHQL TORTURE (wrk Lua, keepalive) ==="
 GQL_LUA="$(dirname "$0")/_graphql-torture.lua"
 if [ -f "$GQL_LUA" ]; then
-  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 30s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout "${TGEN_REQUEST_TIMEOUT:-600}s" \
     -s "$GQL_LUA" "${BASE}/" >"$RESULTS_DIR/wrk-gql-torture.log" 2>&1 &
   GQL_PID=$!
   echo "[+] wrk GraphQL torture: batch DoS + recursion + SQLi + XSS (PID $GQL_PID, ${WRK_T}t/128c keepalive)"
 else
-  echo "[WARN] GraphQL Lua script not found"
-  GQL_PID=""
+  echo "[FAIL] Required GraphQL Lua phase missing" >&2
+  exit 1
 fi
 echo ""
 
@@ -131,13 +145,13 @@ echo ""
 echo "=== LAYER 4: RESTAURANT ATTACKS (wrk Lua, keepalive) ==="
 REST_LUA="$(dirname "$0")/_restaurant-torture.lua"
 if [ -f "$REST_LUA" ]; then
-  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 60s \
     -s "$REST_LUA" "${BASE}/" >"$RESULTS_DIR/wrk-restaurant-torture.log" 2>&1 &
   REST_PID=$!
   echo "[+] wrk Restaurant torture: BOLA + BOPLA + SSRF + injection (PID $REST_PID, ${WRK_T}t/128c keepalive)"
 else
-  echo "[WARN] Restaurant Lua script not found"
-  REST_PID=""
+  echo "[FAIL] Required Restaurant Lua phase missing" >&2
+  exit 1
 fi
 echo ""
 
@@ -147,13 +161,13 @@ echo ""
 echo "=== LAYER 5: CRAPI CHALLENGES (wrk Lua, keepalive) ==="
 CRAPI_LUA="$(dirname "$0")/_crapi-torture.lua"
 if [ -f "$CRAPI_LUA" ]; then
-  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 10s \
+  wrk -t"$WRK_T" -c"${TGEN_CONCURRENCY:-128}" -d"${DURATION}s" --timeout 60s \
     -s "$CRAPI_LUA" "${CRAPI_BASE}/" >"$RESULTS_DIR/wrk-crapi-torture.log" 2>&1 &
   CRAPI_PID=$!
   echo "[+] wrk crAPI torture: BOLA + NoSQL + OTP + orders (PID $CRAPI_PID, ${WRK_T}t/128c keepalive)"
 else
-  echo "[WARN] crAPI Lua script not found"
-  CRAPI_PID=""
+  echo "[FAIL] Required crAPI Lua phase missing" >&2
+  exit 1
 fi
 echo ""
 
@@ -162,8 +176,8 @@ echo ""
 # ================================================================
 echo "=== LAYER 6: ALL EXPLOIT SUITES ==="
 SUITE_PIDS=""
-for suite in dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack; do
-  if [ -d "$SUITE_DIR/$suite" ]; then
+for suite in ${TGEN_CHILD_SUITES:-dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack}; do
+  if [[ "${TGEN_LOAD_JOURNAL_ONLY:-}" != "1" ]] && [ -d "$SUITE_DIR/$suite" ]; then
     (
       if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
         TGEN_RESULTS_DIR="$RESULTS_DIR/nested-$suite" bash "$SUITE_DIR/runner.sh" "$suite"
@@ -207,7 +221,8 @@ while true; do
 
   # Origin health probe
   ORIGIN_START=$(date +%s%N)
-  ORIGIN_HTTP=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 5 "${BASE}/health" 2>/dev/null || echo "000")
+  ORIGIN_HTTP=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 \
+    -H "X-MUD-User: waap-origin-health-benign" "${BASE}/health" 2>/dev/null) || ORIGIN_HTTP="000"
   ORIGIN_END=$(date +%s%N)
   ORIGIN_MS=$(((ORIGIN_END - ORIGIN_START) / 1000000))
 
@@ -219,12 +234,16 @@ done
 
 echo ""
 
-# Kill background loops
-[ -n "${GQL_PID:-}" ] && kill "$GQL_PID" 2>/dev/null
-[ -n "${REST_PID:-}" ] && kill "$REST_PID" 2>/dev/null
-[ -n "${CRAPI_PID:-}" ] && kill "$CRAPI_PID" 2>/dev/null
-for pid in $SUITE_PIDS; do kill "$pid" 2>/dev/null; done
-sleep 3
+# Wait for native reports and every declared nested suite. The supervisor's 900s
+# deadline remains the hard ceiling; incomplete children fail rather than becoming coverage.
+WORKER_FAILED=0
+for pid in $LOAD_PIDS ${GQL_PID:-} ${REST_PID:-} ${CRAPI_PID:-} $SUITE_PIDS; do
+  wait "$pid" || WORKER_FAILED=1
+done
+if [[ "$WORKER_FAILED" -ne 0 ]]; then
+  echo "[FAIL] Native load worker or nested suite failed"
+  exit 1
+fi
 
 # ================================================================
 # RESULTS
@@ -274,7 +293,7 @@ done
 echo ""
 
 echo "=== EXPLOIT SUITE RESULTS ==="
-for suite in dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack; do
+for suite in ${TGEN_CHILD_SUITES:-dvga-exploits restaurant-exploits crapi-exploits web-app-attacks api-attacks juice-shop-exploits dvwa-exploits mitre-attack}; do
   LOG="$RESULTS_DIR/suite-${suite}.log"
   if [ -f "$LOG" ]; then
     P=$(grep -c '\[PASS\]' "$LOG" 2>/dev/null || echo 0)

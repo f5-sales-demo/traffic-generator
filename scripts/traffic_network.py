@@ -7,22 +7,32 @@ import shutil
 import socket
 import ssl
 import subprocess
+import sys
 import tempfile
 import threading
 import time
 import urllib.parse
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from http.cookies import SimpleCookie
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Self
 
 from traffic_common import Pacer, atomic_json, terminate
+from traffic_order_host import host_jobs
+from traffic_tool import native_binary
+from traffic_workload import content_identity
 
 SUCCESS_MIN, SUCCESS_MAX = 200, 300
 CRAPI_ACCOUNT_COUNT = 2
 BENIGN_CONNECTION_MAX_AGE = 10
 PROXY_HEARTBEAT_MAX_AGE = 30
+APPLICATION_MANIFEST = Path(__file__).resolve().parents[1] / "suites/applications.json"
+BENIGN_PATHS = tuple(
+    app["prefix"] + app["benign_path"]
+    for app in json.loads(APPLICATION_MANIFEST.read_text())["applications"]
+)
 
 
 def _proxy_failed(message: str) -> None:
@@ -39,7 +49,8 @@ class NetworkBoundary:
         self.state = SimpleNamespace()
         self.browser_temp = Path(tempfile.mkdtemp(prefix="tgen-"))
         suffix = uuid.uuid4().hex[:7]
-        self.state.namespace = "tgen-" + suffix
+        namespace_prefix = "tgen-"
+        self.state.namespace = namespace_prefix + suffix
         self.state.host_link, self.state.guest_link = "tgh" + suffix, "tgg" + suffix
         self.state.chain = "TGEN" + suffix.upper()
         self.state.gateway, self.state.guest = "169.254.240.1", "169.254.240.2"
@@ -54,6 +65,8 @@ class NetworkBoundary:
             "benign_success": 0,
             "benign_transport_failures": 0,
             "benign_per_domain": dict.fromkeys(config["domains"], 0),
+            "benign_per_application": dict.fromkeys(BENIGN_PATHS, 0),
+            "benign_status_by_application": {},
         }
         self.state.pacers = {domain: Pacer(90) for domain in config["domains"]}
         self.state.capacity = {
@@ -235,6 +248,7 @@ class NetworkBoundary:
                 os.environ,
                 TGEN_DOMAINS=json.dumps(self.config["domains"]),
                 TGEN_PROXY_METRICS=str(self.state.proxy_metrics),
+                PYTHONPATH=str(self.root / "scripts"),
             )
             proxy_log = (self.runtime / "proxy.log").open("ab")
             self.state.proxy = subprocess.Popen(  # noqa: S603 - fixed verified proxy invocation
@@ -262,6 +276,18 @@ class NetworkBoundary:
                 start_new_session=True,
             )
             proxy_log.close()
+            owner_path = self.runtime / "network-owner.json"
+            owner = json.loads(owner_path.read_text())
+            owner.update(
+                proxy_pid=self.state.proxy.pid,
+                proxy_start_ticks=Path("/proc")
+                .joinpath(str(self.state.proxy.pid), "stat")
+                .read_text()
+                .rsplit(")", 1)[1]
+                .split()[19],
+                proxy_script=str(self.root / "scripts/traffic_proxy.py"),
+            )
+            atomic_json(owner_path, owner)
             time.sleep(2)
             if self.state.proxy.poll() is not None:
                 msg = "transparent pacing proxy failed to start"
@@ -275,6 +301,13 @@ class NetworkBoundary:
         except BaseException:
             self.__exit__(None, None, None)
             raise
+        order_worker = threading.Thread(
+            target=host_jobs,
+            args=(self.root, self.runtime, self.config, self.state.stop),
+            daemon=True,
+        )
+        order_worker.start()
+        self.state.threads.append(order_worker)
         return self
 
     def request(self, domain: str) -> None:
@@ -301,25 +334,62 @@ class NetworkBoundary:
         self.state.pacers[domain].acquire()
         with self.state.lock:
             self.state.benign["benign_requests"] += 1
+            index = self.state.benign["benign_per_domain"][domain]
+            path = BENIGN_PATHS[index % len(BENIGN_PATHS)]
             self.state.benign["benign_per_domain"][domain] += 1
+            self.state.benign["benign_per_application"][path] += 1
+        if not hasattr(self.state.local, "dvwa_sessions"):
+            self.state.local.dvwa_sessions = {}
+        headers = {
+            "X-TGen-Class": "benign",
+            "X-MUD-User": "waap-benign-" + domain,
+        }
+        if path.startswith("/dvwa/") and domain in self.state.local.dvwa_sessions:
+            headers["Cookie"] = "PHPSESSID=" + self.state.local.dvwa_sessions[domain]
+        started_request = time.monotonic()
         try:
             connection.request(
                 "GET",
-                "/httpbin/get",
-                headers={
-                    "X-TGen-Class": "benign",
-                    "X-MUD-User": "waap-benign-" + domain,
-                },
+                path,
+                headers=headers,
             )
             response = connection.getresponse()
-            success = SUCCESS_MIN <= response.status < SUCCESS_MAX
-            response.read()
+            body = response.read()
+            if path.startswith("/dvwa/"):
+                cookies = SimpleCookie()
+                cookies.load(response.getheader("Set-Cookie", ""))
+                if "PHPSESSID" in cookies:
+                    self.state.local.dvwa_sessions[domain] = cookies["PHPSESSID"].value
+            success = SUCCESS_MIN <= response.status < SUCCESS_MAX and content_identity(
+                path, response.getheader("Content-Type", ""), body
+            )
+            with self.state.lock:
+                statuses = self.state.benign["benign_status_by_application"].setdefault(
+                    path, {}
+                )
+                code = str(response.status)
+                statuses[code] = statuses.get(code, 0) + 1
         except (OSError, http.client.HTTPException) as error:
             failed = True
             with self.state.lock:
                 category = type(error).__name__
                 errors = self.state.benign["benign_error_categories"]
                 errors[category] = errors.get(category, 0) + 1
+                receipt = self.runtime / "benign-error-events.jsonl"
+                with receipt.open("a") as stream:
+                    receipt.chmod(0o600)
+                    stream.write(
+                        json.dumps(
+                            {
+                                "domain": domain,
+                                "path": path,
+                                "error_type": category,
+                                "elapsed_seconds": time.monotonic() - started_request,
+                                "observed_at": time.time(),
+                            }
+                        )
+                        + "\n"
+                    )
             connection.close()
             self.state.local.connections.pop(domain, None)
         with self.state.lock:
@@ -364,7 +434,9 @@ class NetworkBoundary:
                 "curl",
                 "-sk",
                 "--max-time",
-                "10",
+                "30",
+                "-w",
+                "\n%{http_code}",
                 "-X",
                 "POST",
                 "https://" + domain + path,
@@ -381,64 +453,202 @@ class NetworkBoundary:
             ]
         )
         result = subprocess.run(command, capture_output=True, text=True, check=False)  # noqa: S603 - fixed allowlisted paced fixture login
+        content, _, code = result.stdout.rpartition("\n")
         try:
-            return json.loads(result.stdout)
+            status = int(code)
         except ValueError:
-            return {}
+            status = 0
+        try:
+            document = json.loads(content)
+        except ValueError:
+            document = {}
+        if status == SUCCESS_MIN and not document:
+            message = "synthetic authentication response identity missing"
+            raise ValueError(message)
+        outcome = (
+            "transport_failure"
+            if result.returncode or status == 0
+            else "mitigation"
+            if status in (403, 429)
+            else "application_response"
+            if status == SUCCESS_MIN
+            else "application_rejection"
+        )
+        receipt = self.runtime / "fixture-authentication.jsonl"
+        with receipt.open("a") as stream:
+            receipt.chmod(0o600)
+            stream.write(
+                json.dumps({"path": path, "status": status, "outcome": outcome}) + "\n"
+            )
+        if outcome != "application_response":
+            message = "synthetic authentication prerequisite failed: " + outcome
+            raise ValueError(message)
+        if not isinstance(document, dict):
+            message = "synthetic authentication response is not an object"
+            raise ValueError(message)  # noqa: TRY004 - prerequisite failure uses runtime ValueError classification
+        token = (
+            document.get("auth_token")
+            if path.startswith("/vampi/")
+            else document.get("token")
+            if path.startswith("/crapi/")
+            else document.get("authentication", {}).get("token")
+            if path.startswith("/juice-shop/")
+            else document.get("access_token")
+        )
+        if not isinstance(token, str) or not token.strip():
+            message = "synthetic authentication token missing"
+            raise ValueError(message)
+        return document
 
-    def refresh_fixtures(self, domain: str) -> None:
+    def refresh_otp_fixture(self, domain: str, fixtures: dict) -> None:
+        """Renew only the isolated OTP actor without changing other fixture identities."""
+        if not fixtures.get("crapi_otp_email"):
+            return
+        otp = self.fixture_login(
+            domain,
+            "/crapi/identity/api/auth/login",
+            {
+                "email": fixtures["crapi_otp_email"],
+                "password": fixtures["crapi_otp_password"],
+            },
+        ).get("token")
+        if not otp:
+            message = "isolated OTP fixture authentication failed"
+            raise ValueError(message)
+        fixtures["crapi_otp_actor_token"] = otp
+
+    def refresh_fixtures(self, domain: str, families: list[str] | None = None) -> None:
         """Generate/renew real tokens for public seeded lab accounts without disabling WAAP."""
         fixture_path = self.runtime.parent / "fixtures.json"
         fixtures = json.loads(fixture_path.read_text()) if fixture_path.exists() else {}
-        vampi = self.fixture_login(
-            domain, "/vampi/users/v1/login", {"username": "name1", "password": "pass1"}
-        ).get("auth_token")
-        if vampi:
-            fixtures["vampi_token"] = vampi
-        crapi = []
-        for email, password in (
-            ("adam007@example.com", "adam007!123"),
-            ("pogba006@example.com", "pogba006!123"),
-        ):
-            token = self.fixture_login(
+        required = (
+            set(families)
+            if families is not None
+            else {"vampi", "crapi", "juice", "restaurant"}
+        )
+        if "vampi" in required:
+            vampi = self.fixture_login(
+                domain,
+                "/vampi/users/v1/login",
+                {"username": "name1", "password": "pass1"},
+            ).get("auth_token")
+            if vampi:
+                fixtures["vampi_token"] = vampi
+        if "crapi" in required:
+            self.refresh_otp_fixture(domain, fixtures)
+            disposable = self.fixture_login(
                 domain,
                 "/crapi/identity/api/auth/login",
-                {"email": email, "password": password},
+                {"email": "tgen-video@example.com", "password": "SyntheticVideo!123"},
             ).get("token")
-            if token:
-                crapi.append(token)
-        if len(crapi) == CRAPI_ACCOUNT_COUNT:
-            fixtures["crapi_tokens"] = crapi
-        juice = (
-            self.fixture_login(
-                domain,
-                "/juice-shop/rest/user/login",
-                {"email": "admin@juice-sh.op", "password": "admin123"},
+            if disposable:
+                fixtures["crapi_video_actor_token"] = disposable
+            crapi = []
+            for email, password in (
+                ("adam007@example.com", "adam007!123"),
+                ("pogba006@example.com", "pogba006!123"),
+            ):
+                token = self.fixture_login(
+                    domain,
+                    "/crapi/identity/api/auth/login",
+                    {"email": email, "password": password},
+                ).get("token")
+                if token:
+                    crapi.append(token)
+            if len(crapi) == CRAPI_ACCOUNT_COUNT:
+                fixtures["crapi_tokens"] = crapi
+        if "juice" in required:
+            if not fixtures.get("juice_email") or not fixtures.get("juice_password"):
+                message = "real synthetic Juice Shop fixture credentials missing"
+                raise ValueError(message)
+            juice = (
+                self.fixture_login(
+                    domain,
+                    "/juice-shop/rest/user/login",
+                    {
+                        "email": fixtures["juice_email"],
+                        "password": fixtures["juice_password"],
+                    },
+                )
+                .get("authentication", {})
+                .get("token")
             )
-            .get("authentication", {})
-            .get("token")
-        )
-        if juice:
-            fixtures["juice_token"] = juice
-        for role in ("customer", "chef"):
-            token = self.fixture_login(
-                domain,
-                "/restaurant/token",
-                {"username": "tgen_" + role, "password": "password"},
-            ).get("access_token")
-            if token:
-                fixtures["restaurant_" + role + "_token"] = token
+            if juice:
+                fixtures["juice_token"] = juice
+        if "restaurant" in required:
+            for role in ("customer", "chef"):
+                token = self.fixture_login(
+                    domain,
+                    "/restaurant/token",
+                    {"username": "tgen_" + role, "password": "password"},
+                ).get("access_token")
+                if token:
+                    fixtures["restaurant_" + role + "_token"] = token
+            for actor in (
+                "attacker",
+                "victim",
+                "admin",
+                "bola_chef",
+                "manager",
+                "root",
+            ):
+                username = "tgen_bola_" + actor.removeprefix("bola_")
+                token = self.fixture_login(
+                    domain,
+                    "/restaurant/token",
+                    {"username": username, "password": "password"},
+                ).get("access_token")
+                if token:
+                    fixtures["restaurant_" + actor] = {
+                        "username": username,
+                        "token": token,
+                    }
+                    fixtures["restaurant_" + actor + "_token"] = token
         atomic_json(fixture_path, fixtures)
 
     def environment(self, scenario: dict, domain: str, directory: Path) -> dict:
         """Provide structured inputs and private per-scenario output paths."""
         fixtures = json.loads((self.runtime.parent / "fixtures.json").read_text())
+        tool_path = directory / "tool-bin"
+        tool_path.mkdir(mode=0o700)
+        for tool in {
+            requirement["tool"]
+            for requirement in scenario.get("tool_contract", {}).get("requirements", [])
+        }:
+            binary = native_binary(
+                tool,
+                "/opt/traffic-generator/bin" + os.pathsep + os.environ["PATH"],
+                self.runtime,
+            )
+            if not binary:
+                message = "required native scanner missing"
+                raise ValueError(message)
+            wrapper = tool_path / tool
+            wrapper.write_text(
+                "#!/usr/bin/env python3\nimport os,sys\nos.execv(sys.executable,[sys.executable,"
+                + repr(str(self.root / "scripts/traffic_tool.py"))
+                + ","
+                + repr(binary)
+                + ","
+                + repr(tool)
+                + ",*sys.argv[1:]])\n"
+            )
+            wrapper.chmod(0o700)
         return dict(
             os.environ,
+            PATH=str(tool_path)
+            + os.pathsep
+            + "/opt/traffic-generator/bin"
+            + os.pathsep
+            + os.environ["PATH"],
+            TGEN_TOOL_CONTRACT=json.dumps(
+                scenario.get("tool_contract", {"requirements": []})
+            ),
             SSL_CERT_FILE=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             REQUESTS_CA_BUNDLE=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             NODE_EXTRA_CA_CERTS=str(self.runtime / "mitm-ca/mitmproxy-ca-cert.pem"),
             TGEN_INHERITED_BOUNDARY="1",
+            TGEN_RUNTIME_DIR=str(self.runtime),
             TGEN_NUCLEI_CONFIG=str(self.root / "suites/nuclei-config.yaml"),
             TGEN_NUCLEI_TEMPLATES=",".join(
                 "/opt/nuclei-templates/http/" + name
@@ -465,15 +675,20 @@ class NetworkBoundary:
             TMPDIR=str(self.browser_temp),
             TGEN_CONNECTION_RATE=str(self.config["connection_rps"]),
             TGEN_SLOW_CONNECTIONS=str(self.config["slow_connections"]),
-            TGEN_DURATION="15",
+            TGEN_DURATION=str(scenario.get("duration_seconds", 15)),
             TGEN_DVWA_PASSWORD="password",  # noqa: S106 - public seeded DVWA lab credential
             TGEN_THREADS="2",
-            TGEN_ATTACK_RATE="20",
+            TGEN_ATTACK_RATE="1"
+            if scenario["id"] == "cdn-load-testing/08-kraken-cdn-max"
+            else "20",
             TGEN_CONNECTION_PORTS="80,443",
             TGEN_SQLMAP_LEVEL="1",
             TGEN_SQLMAP_RISK="1",
             TGEN_SCANNER_SECONDS="30",
-            TGEN_REQUEST_TIMEOUT="15",
+            TGEN_REQUEST_TIMEOUT="600"
+            if scenario["suite"] == "dvga-exploits"
+            or scenario["id"] == "cdn-load-testing/09-origin-torture"
+            else "15",
             TGEN_REPEAT_COUNT="5",
             TGEN_GRAPHQL_BATCH_MAX="10",
             TGEN_GRAPHQL_FIELDS_MAX="50",
@@ -523,6 +738,102 @@ class NetworkBoundary:
                 **attack,
                 "elapsed": time.time() - self.state.started,
             }
+
+    def recover_pastes(self, directory: Path, domain: str, environment: dict) -> bool:
+        """Recover interrupted owned pastes through the same scoped HTTP namespace."""
+        if not (directory / "paste-journal.json").is_file():
+            return False
+        try:
+            completed = subprocess.run(  # noqa: S603 - fixed helper inside owned boundary
+                self.wrap(
+                    [
+                        sys.executable,
+                        str(self.root / "scripts/dvga_paste_fixture.py"),
+                        "restore",
+                        "https://" + domain + "/dvga",
+                    ]
+                ),
+                env=environment,
+                capture_output=True,
+                check=False,
+                timeout=180,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        return completed.returncode == 0
+
+    def order_fixture(self, directory: Path, action: str) -> bool:
+        """Prepare/recover only the named dedicated actor outside HTTP egress."""
+        environment = dict(
+            os.environ,
+            TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json"),
+            SOURCE_COMMIT=self.config["source_commit"],
+            TGEN_ARTIFACT_SHA256=self.config["artifact_sha256"],
+        )
+        result = subprocess.run(  # noqa: S603 - fixed native recovery helper and private paths
+            [
+                sys.executable,
+                "-B",
+                str(self.root / "scripts/crapi_order_fixture.py"),
+                action,
+                str(directory),
+            ],
+            env=environment,
+            capture_output=True,
+            check=False,
+            timeout=90,
+        )
+        return result.returncode == 0
+
+    def recover_family(self, directory: Path, family: str) -> bool:
+        """Restore interrupted family journals from the owning host outside HTTP egress."""
+        if (
+            not (directory / "family-journal.json").is_file()
+            and not (directory / "family-bundle-identity.json").is_file()
+        ):
+            return False
+        result = subprocess.run(  # noqa: S603 - fixed forced-command journal helper
+            [
+                sys.executable,
+                "-B",
+                str(self.root / "scripts/traffic_family_fixture.py"),
+                "restore",
+                family,
+                str(directory),
+            ],
+            env={
+                **os.environ,
+                "TGEN_FIXTURES": str(self.runtime.parent / "fixtures.json"),
+                "SOURCE_COMMIT": self.config["source_commit"],
+                "TGEN_ARTIFACT_SHA256": self.config["artifact_sha256"],
+            },
+            capture_output=True,
+            check=False,
+            timeout=180,
+        )
+        return result.returncode == 0
+
+    def recover_signup(self, directory: Path) -> bool:
+        """Run only exact forced-command recovery outside the HTTP egress namespace."""
+        journal = directory / "fixture-journal.json"
+        if not journal.exists():
+            return False
+        environment = dict(
+            os.environ, TGEN_FIXTURES=str(self.runtime.parent / "fixtures.json")
+        )
+        completed = subprocess.run(  # noqa: S603 - fixed helper and owned private directory
+            [
+                sys.executable,
+                str(self.root / "scripts/crapi_signup_fixture.py"),
+                "recover",
+                str(directory),
+            ],
+            env=environment,
+            capture_output=True,
+            check=False,
+            timeout=90,
+        )
+        return completed.returncode == 0
 
     def __exit__(self, *_: object) -> None:
         """Remove only this boundary's namespaces/rules and close every worker."""

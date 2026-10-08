@@ -32,7 +32,7 @@ LOGS=()
 start_ns=$(date +%s%N)
 
 for suite in "${PARALLEL_SUITES[@]}"; do
-  log="/tmp/parallel-stress-${suite}-$$.log"
+  log="${TGEN_RESULTS_DIR:-/tmp}/parallel-stress-${suite}-$$.log"
   LOGS+=("$log")
   echo "[+] Launching: ${suite}"
   if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
@@ -88,7 +88,7 @@ for i in "${!PARALLEL_SUITES[@]}"; do
 
   summary=$(grep -E '(Passed|Failed|Skipped|Suite Complete)' "$log" 2>/dev/null | tail -2)
   printf "  %-25s exit=%d %s\n" "$suite" "$exit_code" "$summary"
-  rm -f "$log"
+  echo "  Private suite log: $log"
 done
 
 echo ""
