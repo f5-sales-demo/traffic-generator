@@ -857,3 +857,29 @@ def test_native_duplicate_vampi_registration_may_return_http_200():
         if row["id"] == "method-55"
     )
     assert requirement["expected_statuses"] == [200, 400]
+
+
+def test_native_restaurant_role_denial_requires_exact_body_and_declared_requirement(
+    tmp_path,
+):
+    scenario, result, event = composed_fixture()
+    requirement = scenario["dispatch_contract"]["requirements"][0]
+    requirement["expected_statuses"] = [403]
+    requirement["response_contract_by_status"] = {
+        "403": {
+            "content_type": "application/json",
+            "json_equals": {"detail": "Unauthorized"},
+        }
+    }
+    event.update(
+        status=403,
+        native_response_identity=True,
+        status_specific_assertions={"probe": True},
+        response_assertions={"probe": True},
+    )
+    identifier = requirement["id"]
+    event["status_specific_assertions"] = {identifier: True}
+    event["response_assertions"] = {identifier: True}
+    assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+    event["response_assertions"][identifier] = False
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
