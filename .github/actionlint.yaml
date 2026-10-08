@@ -13,6 +13,7 @@ self-hosted-runner:
     - canada
     - cdn
     - cdn-simulator
+    - certificate-management
     - console
     - container-build
     - csd
