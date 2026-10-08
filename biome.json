@@ -34,7 +34,9 @@
         "docs/snapshots/**",
         ".github/config/managed-files-manifest.json",
         ".github/config/backlog-inventory-*.json",
-        "**/*.svg"
+        "**/*.svg",
+        "shared/assets/**",
+        "shared/v*/releases/**"
       ],
       "formatter": {
         "enabled": false
