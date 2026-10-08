@@ -199,7 +199,10 @@ while true; do
   STALE=0
   OTHER=0
   for ep in "/juice-shop/" "/httpbin/get" "/whoami/" "/health" "/dvwa/login.php"; do
-    S=$(check_cache_status "${BASE}${ep}") || { echo "[FAIL] Cache monitor request failed: $ep" >&2; exit 1; }
+    S=$(check_cache_status "${BASE}${ep}") || {
+      echo "[FAIL] Cache monitor request failed: $ep" >&2
+      exit 1
+    }
     case "$S" in
     HIT) HIT=$((HIT + 1)) ;;
     MISS) MISS=$((MISS + 1)) ;;

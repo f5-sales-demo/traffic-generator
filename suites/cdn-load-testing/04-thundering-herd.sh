@@ -51,7 +51,10 @@ for ep in "${STAMPEDE_ENDPOINTS[@]}"; do
 
   # Verify post-stampede: URL should now be cached
   sleep 0.5
-  POST_STATUS=$(check_cache_status "$URL") || { fail "${ep} post-stampede request failed"; exit 1; }
+  POST_STATUS=$(check_cache_status "$URL") || {
+    fail "${ep} post-stampede request failed"
+    exit 1
+  }
   echo "    Post-stampede cache: $POST_STATUS"
 
   if [ "${STATUS_502:-0}" = "0" ] && [ "${STATUS_503:-0}" = "0" ] && [ "${ERRORS:-0}" = "0" ] && [ "${STATUS_200:-0}" = "$REQUESTS" ]; then
