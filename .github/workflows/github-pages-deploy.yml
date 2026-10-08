@@ -19,9 +19,10 @@ concurrency:
 
 jobs:
   docs:
-    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@5fc2efb7a2d76dfb7709a7927da6cb48a635158a
+    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@276b522810ed9fb3d91c9762d874a600fa637bbe
     with:
-      builder-image: ${{ github.repository == 'f5-sales-demo/marketplace' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:f69753a7642590802223cc102e2a0920f62656334a2f266416737081fd6409ae' || github.repository == 'f5-sales-demo/certificate-management' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:028e44347401ab5d4ae3ce782f5da11907e04b3f90ad22723e8fd04f56968d28' || github.repository == 'f5-sales-demo/statistics' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:028e44347401ab5d4ae3ce782f5da11907e04b3f90ad22723e8fd04f56968d28' || github.repository == 'f5-sales-demo/csd' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:028e44347401ab5d4ae3ce782f5da11907e04b3f90ad22723e8fd04f56968d28' || github.repository == 'f5-sales-demo/dns' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:028e44347401ab5d4ae3ce782f5da11907e04b3f90ad22723e8fd04f56968d28' || github.repository == 'f5-sales-demo/ddos' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:028e44347401ab5d4ae3ce782f5da11907e04b3f90ad22723e8fd04f56968d28' || github.repository == 'f5-sales-demo/webapp-api-protection' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:028e44347401ab5d4ae3ce782f5da11907e04b3f90ad22723e8fd04f56968d28' || github.repository == 'f5-sales-demo/traffic-generator' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:028e44347401ab5d4ae3ce782f5da11907e04b3f90ad22723e8fd04f56968d28' || github.repository == 'f5-sales-demo/demo-resource-template' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:028e44347401ab5d4ae3ce782f5da11907e04b3f90ad22723e8fd04f56968d28' || github.repository == 'f5-sales-demo/canada' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:988e1fbf4e5acdbb15eb0c9aa6430f7968603d4fc96e713a28ca09846eedadd4' || github.repository == 'f5-sales-demo/custom-responses' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:988e1fbf4e5acdbb15eb0c9aa6430f7968603d4fc96e713a28ca09846eedadd4' || 'ghcr.io/f5-sales-demo/docs-builder:latest' }}
+      builder-image: ghcr.io/f5-sales-demo/docs-builder@sha256:049219671eb53fb884af5a529ab638ba01894492ac6918da76bc17a069607e72
+      shared-mode: auto
       content-ref: ${{ github.sha }}
       content-path: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' && 'documentation' || 'docs' }}
       socketless_runner_label: managed-socketless

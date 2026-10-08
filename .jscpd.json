@@ -18,6 +18,8 @@
     "**/*_pairs.py",
     "**/templates/**",
     "**/docs/**",
-    "**/documentation/**"
+    "**/documentation/**",
+    "**/shared/assets/**",
+    "**/shared/v*/releases/**"
   ]
 }
