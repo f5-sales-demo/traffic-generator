@@ -21697,10 +21697,13 @@
         "reject_unmatched_errors": true
       },
       "fixture_refresh": ["restaurant"],
+      "launch": "scripts/traffic_family_native.py",
+      "fixture_contract": {"family_restore": "restaurant"},
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
-        "mutation_policy": "read-only"
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
       }
     },
     {
@@ -21815,10 +21818,13 @@
         "reject_unmatched_errors": true
       },
       "fixture_refresh": ["restaurant"],
+      "launch": "scripts/traffic_family_native.py",
+      "fixture_contract": {"family_restore": "restaurant"},
       "functional_contract": {
         "verifier": "composed-native",
         "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
-        "mutation_policy": "read-only"
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
       }
     },
     {
