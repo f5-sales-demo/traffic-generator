@@ -116,3 +116,20 @@ def test_handshake_timeout_remains_bounded(tmp_path):
     ):
         await_control_evidence({"id": "synthetic/action"}, {}, tmp_path, stop)
     wait.assert_not_called()
+
+
+def test_exact_native_directory_denial_never_requests_waf_evidence(tmp_path):
+    row = {
+        "scenario": "synthetic/action",
+        "kind": "scenario",
+        "status": 403,
+        "method": "GET",
+        "path": "/dvwa/vulnerabilities/",
+        "upstream_dispatched": True,
+        "native_response_identity": True,
+        "status_specific_assertions": {"native-dvwa-directory": True},
+        "outcome": "expected_application_rejection",
+    }
+    (tmp_path / "response-events.jsonl").write_text(json.dumps(row) + "\n")
+    await_control_evidence({"id": "synthetic/action"}, {}, tmp_path, threading.Event())
+    assert not (tmp_path / "control-evidence-request.json").exists()

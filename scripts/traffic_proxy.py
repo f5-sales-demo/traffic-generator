@@ -25,7 +25,7 @@ from traffic_dispatch import (
     match_requirements,
     response_content_matches,
 )
-from traffic_native_identity import native_identity
+from traffic_native_identity import HTTP_FORBIDDEN, native_identity
 
 HTTPS_PORT = 443
 
@@ -393,6 +393,14 @@ class Budget:
             if requirement["id"] in event["matched_requirements"]
             and str(status) in requirement.get("response_contract_by_status", {})
         }
+        if (
+            event["path"] == "/dvwa/vulnerabilities/"
+            and event["method"] == "GET"
+            and status == HTTP_FORBIDDEN
+            and event.get("native_response_identity") is True
+        ):
+            # Exact native directory denial may be an incidental Lua request.
+            event["status_specific_assertions"]["native-dvwa-directory"] = True
         event["outcome"] = classify_outcome(event)
         with destination.open("a", encoding="utf-8") as stream:
             destination.chmod(0o600)
