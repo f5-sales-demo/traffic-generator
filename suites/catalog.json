@@ -6818,7 +6818,7 @@
         "requirements": [
           {
             "id": "injected-filter",
-            "graphql_operation": "pastes\\(filter:.*(?:OR |UNION |AND |DROP |sqlite_master)",
+            "graphql_operation": "pastes\\(filter:.*(?:OR |UNION |AND |DROP |ORDER BY |sqlite_master)",
             "minimum_dispatches": 10,
             "payload_class": "graphql-sqli",
             "method": "POST",

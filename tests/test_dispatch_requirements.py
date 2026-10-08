@@ -1,6 +1,7 @@
 """Precise scenario contracts reject setup, wrong payloads and missing actions."""
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -330,3 +331,15 @@ def test_graphql_batch_requires_exact_size_and_declared_operations():
     assert not match_requirements({"requirements": [requirement]}, request)
     request["body"] = '[{"query":"{systemUpdate}"}]'
     assert not match_requirements({"requirements": [requirement]}, request)
+
+
+def test_dvga_filter_corpus_includes_order_by_payload():
+    root = Path(__file__).resolve().parents[1]
+    catalog = json.loads((root / "suites/catalog.json").read_text())
+    requirement = next(
+        s for s in catalog["scenarios"] if s["id"] == "dvga-exploits/04-sqli-filter"
+    )["dispatch_contract"]["requirements"][0]
+    assert re.search(
+        requirement["graphql_operation"],
+        '{pastes(filter:"aaa\' ORDER BY 1--"){id title}}',
+    )
