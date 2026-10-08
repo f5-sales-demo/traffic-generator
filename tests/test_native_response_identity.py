@@ -324,3 +324,24 @@ def test_native_dvwa_directory_denial_is_exact_and_route_scoped():
     assert not native_identity(
         "/dvwa/vulnerabilities/", "GET", 403, "text/html", "Request Rejected"
     )
+
+
+def test_native_coupon_requires_exact_route_code_and_amount():
+    body = '{"coupon_code":"TRAC075","amount":75,"CreatedAt":"synthetic"}'
+    assert native_identity(
+        "/crapi/community/api/v2/coupon/validate-coupon",
+        "POST",
+        200,
+        "application/json",
+        body,
+    )
+    assert not native_identity(
+        "/crapi/identity/api/auth/login", "POST", 200, "application/json", body
+    )
+    assert not native_identity(
+        "/crapi/community/api/v2/coupon/validate-coupon",
+        "POST",
+        200,
+        "application/json",
+        '{"coupon_code":"TRAC075"}',
+    )

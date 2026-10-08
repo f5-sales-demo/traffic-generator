@@ -330,6 +330,18 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
         )
     if path.startswith("/vampi/"):
         return vampi_identity(status, media, body, document)
+    if (
+        path == "/crapi/community/api/v2/coupon/validate-coupon"
+        and method == "POST"
+        and status == HTTP_SUCCESS
+    ):
+        return (
+            media == "application/json"
+            and isinstance(document, dict)
+            and isinstance(document.get("coupon_code"), str)
+            and isinstance(document.get("amount"), (int, float))
+            and not isinstance(document.get("amount"), bool)
+        )
     if path.startswith("/crapi/"):
         return (
             (

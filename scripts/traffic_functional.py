@@ -380,7 +380,9 @@ def verify_composed_native(
                 and all(
                     r.get("upstream_dispatched") is True
                     and (
-                        r.get("control_attributed") is True
+                        r.get("native_response_identity") is True
+                        if requirement.get("require_application_response")
+                        else r.get("control_attributed") is True
                         or r.get("native_response_identity") is True
                     )
                     and (

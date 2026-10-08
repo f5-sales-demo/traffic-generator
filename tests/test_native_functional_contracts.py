@@ -883,3 +883,11 @@ def test_native_restaurant_role_denial_requires_exact_body_and_declared_requirem
     assert verify_composed_native(scenario, result, [event], tmp_path)["passed"]
     event["response_assertions"][identifier] = False
     assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
+
+
+def test_explicit_native_positive_control_cannot_be_replaced_by_mitigation(tmp_path):
+    scenario, result, event = composed_fixture()
+    requirement = scenario["dispatch_contract"]["requirements"][0]
+    requirement["require_application_response"] = True
+    event.update(status=403, native_response_identity=False, control_attributed=True)
+    assert not verify_composed_native(scenario, result, [event], tmp_path)["passed"]
