@@ -101,4 +101,4 @@ def test_completed_and_failed_setup_journals_are_not_replayed(tmp_path):
     with patch("traffic_family_fixture.operation") as restore:
         result = recover_active(config)
     restore.assert_not_called()
-    assert result["recovered"] == []
+    assert not result["recovered"]
