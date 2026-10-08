@@ -1,5 +1,6 @@
 """Browser scenario actions require their own successful step assertions and cleanup."""
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -87,3 +88,36 @@ def test_corrupt_browser_receipt_fails_closed(tmp_path):
     assert not browser_action_receipt(
         tmp_path, {"scenario": "fixture", "steps": ["action"]}
     )["passed"]
+
+
+def test_current_browser_receipt_version_is_accepted_and_old_version_rejected(tmp_path):
+    receipt = {
+        "schemaVersion": 3,
+        "scenarios": [
+            {
+                "name": "fixture",
+                "status": "passed",
+                "steps": [
+                    {
+                        "name": "action",
+                        "status": "passed",
+                        "assertions": {"status": "passed"},
+                        "screenshot": {
+                            "captureStatus": "captured",
+                            "assertionStatus": "passed",
+                        },
+                    }
+                ],
+            }
+        ],
+        "cleanup": {"browser": "closed", "errors": []},
+    }
+    directory = tmp_path / "fixture"
+    directory.mkdir()
+    file = directory / "receipt.json"
+    file.write_text(json.dumps(receipt))
+    contract = {"scenario": "fixture", "steps": ["action"]}
+    assert browser_action_receipt(tmp_path, contract)["passed"]
+    receipt["schemaVersion"] = 2
+    file.write_text(json.dumps(receipt))
+    assert not browser_action_receipt(tmp_path, contract)["passed"]

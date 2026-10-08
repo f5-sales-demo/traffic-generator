@@ -45,7 +45,7 @@ from traffic_tool import native_binary
 
 sys.dont_write_bytecode = True
 DOMAIN_COUNT = 2
-BROWSER_RECEIPT_VERSION = 2
+BROWSER_RECEIPT_VERSION = 3
 
 
 def validate_config(config: dict) -> None:
