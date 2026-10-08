@@ -38,11 +38,16 @@ def dvwa_identity(path: str, method: str, status: int, media: str, body: str) ->
             method == "GET"
             and media == "text/html"
             and body
-            == (
+            in {
+                "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n"
+                "<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n"
+                "</body>\r\n</html>\r\n",
                 "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n"
                 "<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n"
                 "</body>\r\n</html>\r\n"
-            )
+                + "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n"
+                * 6,
+            }
         )
     if re.fullmatch(r"/dvwa/hackable/uploads/tgen-[a-f0-9]{32}-shell\.php", path):
         return (

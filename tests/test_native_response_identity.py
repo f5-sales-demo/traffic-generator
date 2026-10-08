@@ -307,6 +307,16 @@ def test_csd_exfil_and_native_markdown_require_exact_route_content():
 def test_native_dvwa_directory_denial_is_exact_and_route_scoped():
     body = "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
     assert native_identity("/dvwa/vulnerabilities/", "GET", 403, "text/html", body)
+    padding = "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n"
+    assert native_identity(
+        "/dvwa/vulnerabilities/", "GET", 403, "text/html", body + padding * 6
+    )
+    assert not native_identity(
+        "/dvwa/vulnerabilities/", "GET", 403, "text/html", body + padding * 5
+    )
+    assert not native_identity(
+        "/dvwa/vulnerabilities/", "GET", 403, "text/html", body + padding * 7
+    )
     assert not native_identity(
         "/dvwa/vulnerabilities/sqli/", "GET", 403, "text/html", body
     )
