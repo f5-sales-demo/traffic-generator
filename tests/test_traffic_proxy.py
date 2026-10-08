@@ -90,6 +90,66 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                 == 21
             )
 
+    async def test_declared_monitor_uses_next_slot_without_extra_dispatch(self):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.dict(
+                os.environ,
+                {
+                    "TGEN_DOMAINS": '["www.example.test"]',
+                    "TGEN_PROXY_METRICS": tmp + "/metrics.json",
+                },
+            ),
+        ):
+            spec = importlib.util.spec_from_file_location(
+                "monitor_proxy", ROOT / "scripts/traffic_proxy.py"
+            )
+            assert spec is not None
+            assert spec.loader is not None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            budget = module.Budget()
+            dispatched = []
+            times = []
+
+            async def request(index, monitor=False):
+                headers = {"Host": "www.example.test"}
+                if monitor:
+                    headers["X-TGen-Monitor"] = "cache-status"
+                flow = SimpleNamespace(
+                    metadata={},
+                    request=SimpleNamespace(
+                        content=b"",
+                        headers=headers,
+                        host="www.example.test",
+                        port=443,
+                        method="GET",
+                        path="/httpbin/get",
+                    ),
+                )
+                await budget.request(flow)
+                assert "X-TGen-Monitor" not in flow.request.headers
+                dispatched.append(index)
+                times.append(time.monotonic())
+
+            ordinary = [asyncio.create_task(request(index)) for index in range(20)]
+            await asyncio.sleep(0)
+            cancelled = asyncio.create_task(request(99, True))
+            await asyncio.sleep(0)
+            cancelled.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await cancelled
+            monitor = asyncio.create_task(request(100, True))
+            await asyncio.sleep(0)
+            budget.maximum_pending_fillers = 0
+            budget.running()
+            await asyncio.gather(*ordinary, monitor)
+            budget.done()
+            assert dispatched == [100, *range(20)]
+            assert times[-1] - times[0] >= 0.99
+            assert budget.counts["scenario_requests"] == 21
+            assert budget.pending.empty()
+
     async def test_dispatch_keeps_phase_and_contract_from_enqueue(self):
         """Changing active phases cannot reattribute an already queued request."""
         with (

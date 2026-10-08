@@ -35,7 +35,7 @@ class Budget:
 
     def __init__(self) -> None:
         """Initialize the shared queue and private counters."""
-        self.pending: asyncio.Queue = asyncio.Queue()
+        self.pending: asyncio.PriorityQueue = asyncio.PriorityQueue()
         self.domains = json.loads(os.environ["TGEN_DOMAINS"])
         self.metrics_path = Path(os.environ["TGEN_PROXY_METRICS"])
         self.counts: dict[str, Any] = {
@@ -85,7 +85,7 @@ class Budget:
             next_slot = time.monotonic() + 0.05
             event = None
             while not self.pending.empty():
-                candidate, host = self.pending.get_nowait()
+                _priority, _sequence, candidate, host = self.pending.get_nowait()
                 if not candidate.done():
                     event = candidate
                     break
@@ -199,7 +199,10 @@ class Budget:
         flow.metadata["tgen_scenario"] = current
         event = asyncio.get_running_loop().create_future()
         flow.metadata["tgen_pending_slot"] = event
-        await self.pending.put((event, host))
+        priority = (
+            0 if flow.request.headers.pop("X-TGen-Monitor", "") == "cache-status" else 1
+        )
+        await self.pending.put((priority, time.monotonic_ns(), event, host))
         await event
         flow.metadata.pop("tgen_pending_slot", None)
         flow.metadata["tgen_upstream_dispatched"] = True
