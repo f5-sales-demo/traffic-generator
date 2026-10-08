@@ -49,3 +49,4 @@ def test_cache_monitor_requires_successful_http_request(tmp_path):
             assert result.returncode == 0
             assert result.stdout.strip() == expected
         assert "X-TGen-Monitor: cache-status" in args.read_text()
+        assert "--max-time\n60\n" in args.read_text()

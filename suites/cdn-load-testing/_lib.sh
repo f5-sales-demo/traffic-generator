@@ -192,7 +192,9 @@ cdn_headers_for_curl() {
 check_cache_status() {
   local url="$1"
   local status headers
-  headers=$(curl -sf -o /dev/null -D - --max-time 5 -H "X-TGen-Monitor: cache-status" "$url" 2>/dev/null) || return 1
+  # Match native load workers bounded 60-second deadline: shared pacing and
+  # observed connection setup can exceed five seconds while origin latency stays low.
+  headers=$(curl -sf -o /dev/null -D - --max-time 60 -H "X-TGen-Monitor: cache-status" "$url" 2>/dev/null) || return 1
   status=$(printf '%s\n' "$headers" | awk 'tolower($1)=="x-cache-status:" {gsub(/\r/, "", $2); print $2; exit}')
   echo "${status:-NONE}"
 }
