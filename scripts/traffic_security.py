@@ -7,6 +7,7 @@ from pathlib import Path
 from threading import Event
 
 from traffic_common import atomic_json
+from traffic_schema_evidence import configured_schema, schema_violation
 
 FORBIDDEN = 403
 PAIR_LENGTH = 2
@@ -340,6 +341,62 @@ def endpoint_attribution(
         return False
 
 
+def schema_attribution(response: dict, result: dict, evidence: dict) -> bool:
+    """Bind enforced demo_id schema to the exact observed POST response and security ID."""
+    try:
+        scope, bounds = evidence["scope"], evidence["clock_bounds"]
+        if (
+            response.get("path") != "/httpbin/post"
+            or response.get("method") != "POST"
+            or response.get("status") != FORBIDDEN
+            or response.get("upstream_dispatched") is not True
+        ):
+            return False
+        if (
+            not all(key in response for key in RESPONSE_IDENTITY_FIELDS)
+            or any(
+                evidence.get(key) != result.get(key)
+                for key in ("source_commit", "artifact_sha256")
+            )
+            or not configured_schema(evidence, scope)
+        ):
+            return False
+        if (
+            len(bounds) != PAIR_LENGTH
+            or not -MAX_CLOCK_OFFSET <= bounds[0] <= bounds[1] <= MAX_CLOCK_OFFSET
+        ):
+            return False
+        checks = [
+            c
+            for c in evidence["checks"]
+            if request_identity(c["response"]) == request_identity(response)
+        ]
+        if len(checks) != 1:
+            return False
+        check = checks[0]
+        request_id = security_request_id(
+            check,
+            response,
+            scope,
+            bounds,
+            evidence.get("event_recording_delay_seconds", 0),
+        )
+        return bool(request_id) and any(
+            e.get("req_id") == request_id
+            and joined(
+                e,
+                response,
+                scope,
+                bounds,
+                evidence.get("event_recording_delay_seconds", 0),
+            )
+            and schema_violation(e)
+            for e in check["events"]
+        )
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 def control_attribution(
     response: dict,
     result: dict,
@@ -348,9 +405,11 @@ def control_attribution(
     evidence: dict | None = None,
 ) -> bool:
     """Validate each control through its exact configured signature or policy identity."""
-    return waf_attribution(
-        response, result, directory, signatures, evidence
-    ) or endpoint_attribution(response, result, directory, evidence)
+    return (
+        waf_attribution(response, result, directory, signatures, evidence)
+        or endpoint_attribution(response, result, directory, evidence)
+        or schema_attribution(response, result, evidence or {})
+    )
 
 
 def attributed_responses(scenario: dict, result: dict, directory: Path) -> list[dict]:

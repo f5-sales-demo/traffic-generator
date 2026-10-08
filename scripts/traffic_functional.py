@@ -388,7 +388,8 @@ def verify_composed_native(
                         or r.get("status") in requirement.get("expected_statuses", [])
                     )
                     and (
-                        "response_contract" not in requirement
+                        r.get("control_attributed") is True
+                        or "response_contract" not in requirement
                         or r.get("response_assertions", {}).get(requirement["id"])
                         is True
                     )
