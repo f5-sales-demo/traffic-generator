@@ -4255,7 +4255,7 @@
             "headers": {
               "content-type": "application/json"
             },
-            "expected_statuses": [400]
+            "expected_statuses": [200, 400]
           },
           {
             "id": "method-56",

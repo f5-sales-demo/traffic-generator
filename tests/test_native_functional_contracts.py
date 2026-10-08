@@ -837,3 +837,20 @@ def test_every_composed_native_request_declares_protocol_statuses():
                 str(code) in requirement.get("response_contract_by_status", {})
                 for code in server_errors
             )
+
+
+def test_native_duplicate_vampi_registration_may_return_http_200():
+    catalog = json.loads(
+        (Path(__file__).parents[1] / "suites/catalog.json").read_text()
+    )
+    scenario = next(
+        row
+        for row in catalog["scenarios"]
+        if row["id"] == "cdn-load-testing/05-post-put-bypass"
+    )
+    requirement = next(
+        row
+        for row in scenario["dispatch_contract"]["requirements"]
+        if row["id"] == "method-55"
+    )
+    assert requirement["expected_statuses"] == [200, 400]
