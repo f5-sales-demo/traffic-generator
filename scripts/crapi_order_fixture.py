@@ -101,6 +101,11 @@ def native_update(base: str, order: int, payload: dict, token: str) -> tuple[int
             "60",
             "-X",
             "PUT",
+            *(
+                ["-H", "X-TGen-Child: " + os.environ["TGEN_CHILD_MARKER"]]
+                if os.environ.get("TGEN_CHILD_MARKER")
+                else []
+            ),
             base + "/workshop/api/shop/orders/" + str(order),
             "-H",
             "Content-Type: application/json",

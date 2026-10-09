@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from crapi_order_fixture import native_update
 from crapi_otp_fixture import request
 from traffic_inherited import InheritedBoundary
 
@@ -82,3 +83,15 @@ def test_absolute_native_curl_preserves_child_attribution(monkeypatch):
     assert arguments[0] == "/usr/bin/curl"
     assert "X-TGen-Child: child-" + "a" * 32 in arguments
     assert "X-MUD-User: waap-fixture-benign" in arguments
+
+
+def test_native_order_mutation_preserves_child_marker(monkeypatch):
+    monkeypatch.setenv("TGEN_CHILD_MARKER", "child-" + "b" * 32)
+    with patch(
+        "crapi_order_fixture.subprocess.run",
+        return_value=SimpleNamespace(stdout="{}\n200"),
+    ) as run:
+        native_update(
+            "https://www.example.test/crapi", 7, {"quantity": 100}, "synthetic"
+        )
+    assert "X-TGen-Child: child-" + "b" * 32 in run.call_args.args[0]
