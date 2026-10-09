@@ -3,8 +3,10 @@
 import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
+from crapi_otp_fixture import request
 from traffic_inherited import InheritedBoundary
 
 
@@ -48,3 +50,35 @@ def test_child_uses_its_declared_duration_and_new_identity(tmp_path, monkeypatch
         "curl",
         "https://www.example.test",
     ]
+
+
+def test_batch_deadline_covers_maximum_preserved_native_work():
+    root = Path(__file__).parents[1]
+    catalog = json.loads((root / "suites/catalog.json").read_text())
+    scenario = next(
+        row
+        for row in catalog["scenarios"]
+        if row["id"] == "dvga-exploits/01-batch-query-dos"
+    )
+    # 1 + 2 + 5 + 10 updates, then three updates in the mixed batch.
+    # Native simulate_load retains up to 501 cooperative sleeps of 0.1 seconds.
+    maximum_native_seconds = (1 + 2 + 5 + 10 + 3) * 501 * 0.1
+    assert maximum_native_seconds < scenario["timeout_seconds"] <= 1800
+    assert scenario["dispatch_contract"]["requirements"][3]["json_array_length"] == 10
+
+
+def test_absolute_native_curl_preserves_child_attribution(monkeypatch):
+    monkeypatch.setenv("TGEN_CHILD_MARKER", "child-" + "a" * 32)
+    with patch(
+        "crapi_otp_fixture.subprocess.run", return_value=SimpleNamespace(stdout=b"{}")
+    ) as run:
+        request(
+            "https://www.example.test/crapi",
+            "/identity/api/auth/login",
+            {"email": "synthetic@example.test"},
+            method="POST",
+        )
+    arguments = run.call_args.args[0]
+    assert arguments[0] == "/usr/bin/curl"
+    assert "X-TGen-Child: child-" + "a" * 32 in arguments
+    assert "X-MUD-User: waap-fixture-benign" in arguments

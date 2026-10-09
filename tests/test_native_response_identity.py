@@ -345,3 +345,24 @@ def test_native_coupon_requires_exact_route_code_and_amount():
         "application/json",
         '{"coupon_code":"TRAC075"}',
     )
+
+
+def test_native_coupon_observed_decimal_string_is_route_scoped():
+    path = "/crapi/community/api/v2/coupon/validate-coupon"
+    assert native_identity(
+        path,
+        "POST",
+        200,
+        "application/json",
+        '{"coupon_code":"TRAC075","amount":"75","CreatedAt":"synthetic"}',
+    )
+    for amount in ["", "unknown", "NaN", "Infinity", True, None]:
+        body = json.dumps({"coupon_code": "TRAC075", "amount": amount})
+        assert not native_identity(path, "POST", 200, "application/json", body)
+    assert not native_identity(
+        "/crapi/unknown",
+        "POST",
+        200,
+        "application/json",
+        '{"coupon_code":"TRAC075","amount":"75"}',
+    )

@@ -31,6 +31,9 @@ def request(
         "-H",
         "X-MUD-User: waap-fixture-benign",
     ]
+    marker = os.environ.get("TGEN_CHILD_MARKER", "")
+    if marker:
+        arguments.extend(["-H", "X-TGen-Child: " + marker])
     if payload is not None:
         arguments.extend(
             ["-H", "Content-Type: application/json", "--data", json.dumps(payload)]

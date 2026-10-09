@@ -339,7 +339,14 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             media == "application/json"
             and isinstance(document, dict)
             and isinstance(document.get("coupon_code"), str)
-            and isinstance(document.get("amount"), (int, float))
+            and (
+                isinstance(document.get("amount"), (int, float))
+                or (
+                    isinstance(document.get("amount"), str)
+                    and re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", document["amount"])
+                    is not None
+                )
+            )
             and not isinstance(document.get("amount"), bool)
         )
     if path.startswith("/crapi/"):

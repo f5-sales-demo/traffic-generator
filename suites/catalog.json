@@ -6553,7 +6553,7 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": false,
-      "timeout_seconds": 900,
+      "timeout_seconds": 1800,
       "dispatch_contract": {
         "requirements": [
           {
