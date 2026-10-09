@@ -214,6 +214,7 @@ MANAGED_ARC_COHORT = frozenset(
         "starlight-mega-menu",
         "statistics",
         "certificate-management",
+        "blindfold-contract",
         "traffic-generator",
         "vscode-xcsh",
         "was",

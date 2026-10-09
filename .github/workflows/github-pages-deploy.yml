@@ -21,7 +21,7 @@ jobs:
   docs:
     uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@276b522810ed9fb3d91c9762d874a600fa637bbe
     with:
-      builder-image: ${{ github.repository == 'f5-sales-demo/custom-responses' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:eaf57b7f92b26ab11e69420564dad4d3ad194ac7203ed7e292a04a230ed83d29' || 'ghcr.io/f5-sales-demo/docs-builder@sha256:8e3cc0f417f2fd658a07a0ee06b440bb49a02398f9d7657daa26f78dec667cbe' }}
+      builder-image: ${{ github.repository == 'f5-sales-demo/statistics' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:4d0e419d58e93b89612c792b4212aa98d9fd63e0b963d0087079cdfa130d0f6a' || github.repository == 'f5-sales-demo/custom-responses' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:eaf57b7f92b26ab11e69420564dad4d3ad194ac7203ed7e292a04a230ed83d29' || 'ghcr.io/f5-sales-demo/docs-builder@sha256:8e3cc0f417f2fd658a07a0ee06b440bb49a02398f9d7657daa26f78dec667cbe' }}
       shared-mode: auto
       content-ref: ${{ github.sha }}
       content-path: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' && 'documentation' || 'docs' }}
