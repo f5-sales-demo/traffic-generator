@@ -754,6 +754,14 @@
         }
       }
     },
+    "f5-sales-demo/blindfold-contract": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
     "f5-sales-demo/certificate-management": {
       ".github/workflows/workflow-security-audit.yml": {
         "workflow-security-audit": {
@@ -1261,6 +1269,20 @@
       }
     },
     "f5-sales-demo/observability": {
+      "runner": {
+        "arc_scale_sets": {
+          "socketless": {
+            "label": "managed-socketless",
+            "profile": "ubuntu-24.04"
+          },
+          "container-build": {
+            "label": "managed-container-build",
+            "profile": "container-build"
+          }
+        }
+      }
+    },
+    "f5-sales-demo/blindfold-contract": {
       "runner": {
         "arc_scale_sets": {
           "socketless": {

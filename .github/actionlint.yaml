@@ -8,6 +8,7 @@ self-hosted-runner:
     - api-specs-enriched-compute
     - apt-repo
     - automation
+    - blindfold-contract
     - bot-advanced
     - bot-standard
     - canada
