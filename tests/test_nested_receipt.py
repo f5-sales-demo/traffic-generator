@@ -191,9 +191,12 @@ def test_nested_refreshes_before_execution_and_recovers_signup(
     }
     calls = []
     inherited_boundary.refresh_fixtures.side_effect = lambda *_: calls.append("refresh")
-    inherited_boundary.recover_signup.side_effect = lambda *_: (
-        calls.append("recover") or True
-    )
+
+    def recover_signup(*_):
+        calls.append("recover")
+        return True
+
+    inherited_boundary.recover_signup.side_effect = recover_signup
 
     def execute(*_):
         calls.append("execute")
