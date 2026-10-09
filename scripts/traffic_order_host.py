@@ -21,11 +21,15 @@ def host_jobs(root: Path, runtime: Path, config: dict, stop: threading.Event) ->
         for file in [
             *runtime.glob("pass-*/**/order-host-request.json"),
             *runtime.glob("pass-*/**/family-host-request.json"),
+            *runtime.glob("pass-*/**/signup-host-request.json"),
         ]:
             if file.is_symlink():
                 continue
+            signup = file.name.startswith("signup-")
             response = file.with_name(
-                "family-host-response.json"
+                "signup-host-response.json"
+                if signup
+                else "family-host-response.json"
                 if file.name.startswith("family-")
                 else "order-host-response.json"
             )
@@ -33,7 +37,8 @@ def host_jobs(root: Path, runtime: Path, config: dict, stop: threading.Event) ->
                 continue
             request = json.loads(file.read_text())
             if (
-                request.get("action") not in ("prepare", "restore")
+                (signup and request.get("action") != "restore")
+                or request.get("action") not in ("prepare", "restore")
                 or request.get("source_commit") != config["source_commit"]
                 or request.get("artifact_sha256") != config["artifact_sha256"]
             ):
@@ -59,6 +64,14 @@ def host_jobs(root: Path, runtime: Path, config: dict, stop: threading.Event) ->
                 continue
             command = (
                 [
+                    sys.executable,
+                    "-B",
+                    str(root / "scripts/crapi_signup_fixture.py"),
+                    "recover",
+                    str(file.parent),
+                ]
+                if signup
+                else [
                     sys.executable,
                     "-B",
                     str(root / "scripts/traffic_family_fixture.py"),

@@ -82,6 +82,8 @@
     "scripts/create_native_video.sh",
     "scripts/fixture_token.py",
     "scripts/traffic_fixtures.py",
+    "scripts/traffic_inherited.py",
+    "scripts/traffic_signup_host.py",
     "suites/applications.json",
     "suites/csd-violations/run.sh",
     "suites/csd-violations/scenarios.mjs",

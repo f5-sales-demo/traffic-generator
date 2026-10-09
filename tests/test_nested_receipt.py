@@ -1,14 +1,28 @@
 """Nested launch success cannot pass without child action verification."""
 
 import json
+import os
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import traffic_runtime as runtime
 from traffic_attribution import child_metadata
 from traffic_report import build_report
+
+
+@pytest.fixture(autouse=True)
+def inherited_boundary(monkeypatch):
+    boundary = Mock()
+    boundary.environment.side_effect = lambda _scenario, _domain, directory: {
+        **os.environ,
+        "TGEN_RESULTS_DIR": str(directory),
+    }
+    monkeypatch.setattr(runtime.InheritedBoundary, "inherited", lambda _root: boundary)
+    return boundary
 
 
 def test_nested_exit_zero_without_dispatch_is_failure(tmp_path, monkeypatch):
@@ -158,3 +172,61 @@ def test_nested_order_command_uses_its_own_directory(tmp_path, monkeypatch):
     ):
         runtime.run_nested(Path(__file__).resolve().parents[1], [scenario])
     assert commands[0][0][-1] == commands[0][1] == str(tmp_path / "synthetic--order")
+
+
+def test_nested_refreshes_before_execution_and_recovers_signup(
+    tmp_path, monkeypatch, inherited_boundary
+):
+    monkeypatch.setenv("TGEN_RESULTS_DIR", str(tmp_path))
+    monkeypatch.setenv("TARGET_FQDN", "www.example.test")
+    monkeypatch.setenv("TGEN_RUNTIME_DIR", str(tmp_path))
+    scenario = {
+        "id": "synthetic/signup",
+        "entrypoint": "scripts/traffic_dispatch.py",
+        "kind": "shell",
+        "budget": "http",
+        "timeout_seconds": 1,
+        "fixture_refresh": ["crapi"],
+        "fixture_contract": {"restore_signup": True},
+    }
+    calls = []
+    inherited_boundary.refresh_fixtures.side_effect = lambda *_: calls.append("refresh")
+    inherited_boundary.recover_signup.side_effect = lambda *_: (
+        calls.append("recover") or True
+    )
+
+    def execute(*_):
+        calls.append("execute")
+        return {"outcome": "launched"}
+
+    with (
+        patch.object(runtime, "execute", side_effect=execute),
+        patch.object(runtime, "scenario_action_verification"),
+        patch.object(runtime, "verify_functional", return_value={"passed": True}),
+    ):
+        assert runtime.run_nested(Path(__file__).parents[1], [scenario]) == 0
+    assert calls == ["refresh", "execute", "recover"]
+    receipt = json.loads((tmp_path / "synthetic--signup/receipt.json").read_text())
+    assert receipt["signup_restoration"] is True
+
+
+def test_missing_native_artifact_retains_failed_child_receipt(tmp_path, monkeypatch):
+    monkeypatch.setenv("TGEN_RESULTS_DIR", str(tmp_path))
+    monkeypatch.setenv("TARGET_FQDN", "www.example.test")
+    monkeypatch.setenv("TGEN_RUNTIME_DIR", str(tmp_path))
+    scenario = {
+        "id": "synthetic/missing",
+        "entrypoint": "scripts/traffic_dispatch.py",
+        "kind": "shell",
+        "budget": "http",
+        "timeout_seconds": 1,
+    }
+    with (
+        patch.object(runtime, "execute", return_value={"outcome": "launched"}),
+        patch.object(runtime, "scenario_action_verification"),
+        patch.object(runtime, "verify_functional", side_effect=FileNotFoundError),
+    ):
+        assert runtime.run_nested(Path(__file__).parents[1], [scenario]) == 1
+    receipt = json.loads((tmp_path / "synthetic--missing/receipt.json").read_text())
+    assert not receipt["functional_verified"]
+    assert receipt["outcome"] == "fixture_failure"

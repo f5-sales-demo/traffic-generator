@@ -33,15 +33,13 @@ from traffic_dispatch import (
     verify_tool_actions,
     verify_workload,
 )
-from traffic_family_native import host_action as family_host_action
 from traffic_fixture_recovery import recover_fixtures
 from traffic_functional import verify_functional
+from traffic_inherited import InheritedBoundary
 from traffic_network import NetworkBoundary
-from traffic_order_host import restore_receipt
 from traffic_pass import current_pass_receipt
 from traffic_report import build_report
 from traffic_security import attributed_responses, await_control_evidence
-from traffic_tool import native_binary
 
 sys.dont_write_bytecode = True
 DOMAIN_COUNT = 2
@@ -289,64 +287,44 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
         metadata = child_dispatch(scenario, directory)
         (runtime_directory / "children").mkdir(mode=0o700, exist_ok=True)
         atomic_json(runtime_directory / "children" / (marker + ".json"), metadata)
-        tools = directory / "child-tools"
-        tools.mkdir(mode=0o700, exist_ok=True)
-        for tool in {
-            "curl",
-            *[
-                requirement["tool"]
-                for requirement in scenario.get("tool_contract", {}).get(
-                    "requirements", []
-                )
-            ],
-        }:
-            binary = native_binary(tool, os.environ["PATH"], runtime_directory)
-            wrapper = tools / tool
-            wrapper.write_text(
-                "#!/usr/bin/env python3\nimport os,sys\nos.execv(sys.executable,[sys.executable,"
-                + repr(str(root / "scripts/traffic_tool.py"))
-                + ","
-                + repr(binary)
-                + ","
-                + repr(tool)
-                + ",*sys.argv[1:]])\n"
-            )
-            wrapper.chmod(0o700)
+        boundary = InheritedBoundary.inherited(root)
         command = scenario_command(root, scenario, os.environ["TARGET_FQDN"], directory)
-        # Native connection tools cannot bypass the isolated HTTP egress from nested runs.
+        # Connection workloads need their separate top-level budget.
         if scenario["budget"] == "connection":
             result = {
                 "id": scenario["id"],
                 "outcome": "fixture_failure",
                 "reason": "connection behavior must run in the sequential top-level catalog",
             }
-        else:
-            environment = dict(
-                os.environ,
-                TGEN_NESTED_EXECUTION="1",
-                TGEN_CHILD_MARKER=marker,
-                TGEN_TOOL_CONTRACT=json.dumps(
-                    scenario.get("tool_contract", {"requirements": []})
-                ),
-                PATH=str(tools) + os.pathsep + os.environ["PATH"],
-                TGEN_RESULTS_DIR=str(directory),
-                RESULTS_DIR=str(directory),
-                TGEN_REQUEST_TIMEOUT="600"
-                if scenario.get("suite") == "dvga-exploits"
-                else "15",
+            atomic_json(directory / "receipt.json", result)
+            failed = True
+            continue
+        try:
+            boundary.refresh_fixtures(
+                os.environ["TARGET_FQDN"], scenario.get("fixture_refresh", [])
             )
+            environment = boundary.environment(
+                scenario, os.environ["TARGET_FQDN"], directory
+            )
+            environment.update(TGEN_NESTED_EXECUTION="1", TGEN_CHILD_MARKER=marker)
+        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+            result = {
+                "id": scenario["id"],
+                "outcome": "fixture_failure",
+                "phase": "prerequisite",
+                "error": type(error).__name__,
+                "functional_verified": False,
+                "dispatch_contract_verified": False,
+            }
+            atomic_json(directory / "receipt.json", result)
+            failed = True
+            continue
+        else:
             result = execute(
                 command,
                 directory / "scenario.log",
                 environment,
                 scenario["timeout_seconds"],
-            )
-        if (
-            scenario.get("fixture_contract", {}).get("family_restore")
-            and not (directory / "family-restoration.json").is_file()
-        ):
-            family_host_action(
-                directory, "restore", scenario["fixture_contract"]["family_restore"]
             )
         result["id"] = scenario["id"]
         result["source_commit"] = os.environ.get("SOURCE_COMMIT")
@@ -354,21 +332,19 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
         result["source_sha256"] = hashlib.sha256(
             (root / scenario["entrypoint"]).read_bytes()
         ).hexdigest()
-        if scenario.get("fixture_contract", {}).get("restore_pastes"):
-            recovery = execute(
-                [
-                    "python3",
-                    str(root / "scripts/dvga_paste_fixture.py"),
-                    "restore",
-                    "https://" + os.environ["TARGET_FQDN"] + "/dvga",
-                ],
-                directory / "paste-recovery.log",
+        try:
+            recover_fixtures(
+                boundary,
+                scenario,
+                result,
+                directory,
+                os.environ["TARGET_FQDN"],
                 environment,
-                180,
             )
-            result["paste_restoration"] = recovery["outcome"] == "launched"
-        if scenario.get("fixture_contract", {}).get("order_restore"):
-            result["order_restoration"] = restore_receipt(directory)
+        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+            result.update(
+                outcome="fixture_failure", recovery_error=type(error).__name__
+            )
         await_control_evidence(scenario, result, directory, threading.Event())
         result["dispatch_contract_verified"] = False
         scenario_action_verification(directory, scenario, result)
@@ -386,12 +362,22 @@ def run_nested(root: Path, scenarios: list[dict]) -> int:
             bool(row.get("transport_error")) for row in responses
         )
         result["tool_cancellations"] = result.get("tool_cancellations", 0)
-        result["functional_acceptance"] = verify_functional(
-            scenario,
-            result,
-            attributed_responses(scenario, result, directory),
-            directory,
-        )
+        try:
+            result["functional_acceptance"] = verify_functional(
+                scenario,
+                result,
+                attributed_responses(scenario, result, directory),
+                directory,
+            )
+        except (OSError, ValueError, KeyError) as error:
+            result.update(
+                outcome="fixture_failure",
+                functional_acceptance={
+                    "passed": False,
+                    "reason": "required functional artifact unavailable",
+                    "error": type(error).__name__,
+                },
+            )
         result["functional_verified"] = result["functional_acceptance"]["passed"]
         atomic_json(directory / "receipt.json", result)
         failed |= result["outcome"] != "launched" or not result["functional_verified"]

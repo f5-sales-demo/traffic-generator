@@ -612,8 +612,13 @@ class NetworkBoundary:
         tool_path = directory / "tool-bin"
         tool_path.mkdir(mode=0o700)
         for tool in {
-            requirement["tool"]
-            for requirement in scenario.get("tool_contract", {}).get("requirements", [])
+            "curl",
+            *(
+                requirement["tool"]
+                for requirement in scenario.get("tool_contract", {}).get(
+                    "requirements", []
+                )
+            ),
         }:
             binary = native_binary(
                 tool,
