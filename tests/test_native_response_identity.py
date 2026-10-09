@@ -383,7 +383,7 @@ def test_juice_search_sql_error_contract_is_exact_to_preserved_payload():
         if row["id"] == "sleep-based-blind"
     )
     contract = requirement["response_contract_by_status"]["500"]
-    body = "<html><title>Error: SQLITE_ERROR: near test AND 1=1 AND ((1=1: syntax error</title></html>"
+    body = "<html><title>Error: SQLITE_ERROR: near AND 1=1 AND ((1=1: syntax error</title></html>"
     assert response_content_matches(contract, "text/html", body)
     assert not response_content_matches(contract, "text/html", "Internal Server Error")
     assert not response_content_matches(

@@ -9100,7 +9100,7 @@
             "response_contract_by_status": {
               "500": {
                 "content_type": "text/html",
-                "text_contains": ["SQLITE_ERROR", "syntax error", "test", "AND 1=1", "((1=1"]
+                "text_contains": ["SQLITE_ERROR", "syntax error", "near", "AND 1=1", "((1=1"]
               }
             }
           },
