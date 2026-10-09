@@ -801,6 +801,69 @@ test('real Chrome reverses owned native controls after asynchronous rehydration'
   }
 });
 
+test('cleanup drains in-flight native assets before removing injected nodes', async () => {
+  const outputDirectory = await mkdtemp(join(tmpdir(), 'csd-cleanup-drain-'));
+  const handlers = {};
+  let finished = false;
+  let cleanupBeforeFinished = false;
+  const request = {
+    url: () => 'https://client-side-defense.f5-sales-demo.com/csd-demo/static/vendor/lodash.min.js',
+    method: () => 'GET',
+    resourceType: () => 'script',
+  };
+  const page = {
+    on: (event, handler) => {
+      handlers[event] = handler;
+    },
+    goto: async () => ({ status: () => 200 }),
+    waitForSelector: async () => {},
+    evaluate: async (run) => {
+      const text = String(run);
+      if (text.includes('setSyntheticLogin')) return { setCount: 2, markerCount: 2, syntheticOnly: true };
+      if (text.includes('observeFields')) return { observedFieldCount: 2 };
+      if (text.includes('counterPost')) {
+        handlers.request(request);
+        setTimeout(() => {
+          finished = true;
+          handlers.requestfinished(request);
+        }, 25);
+        return { postedCount: 2, terminal: 'finished' };
+      }
+      if (text.includes('cleanupPage')) cleanupBeforeFinished ||= !finished;
+      return {
+        artifactCount: 0,
+        managedControlValueCount: 0,
+        sensitiveValueCount: 0,
+        timerCount: 0,
+        listenerAttached: false,
+      };
+    },
+    screenshot: async ({ path }) => writeFile(path, 'png'),
+  };
+  const playwright = {
+    chromium: {
+      launch: async () => ({
+        newContext: async () => ({ addInitScript: async () => {}, newPage: async () => page, close: async () => {} }),
+        close: async () => {},
+      }),
+    },
+  };
+  try {
+    const result = await runSuite({
+      playwright,
+      outputDirectory,
+      runId: 'cleanup-drain-run',
+      scenario: 'login-credential-skimmer',
+      targetUrl: 'https://client-side-defense.f5-sales-demo.com',
+      drainRequests: true,
+    });
+    assert.equal(result.exitCode, 0);
+    assert.equal(finished, true);
+    assert.equal(cleanupBeforeFinished, false);
+  } finally {
+    await rm(outputDirectory, { recursive: true, force: true });
+  }
+});
 const paymentUrl = `https://client-side-defense.f5-sales-demo.com${PAYMENT_PATH}`;
 const targetOrigin = new URL('https://client-side-defense.f5-sales-demo.com');
 
@@ -830,7 +893,7 @@ test('selector guards exact raw URL and excludes redirects, collectors, prefligh
   for (const url of [
     paymentUrl + '?',
     paymentUrl + '#',
-    paymentUrl + '?email=private',
+    paymentUrl + '?q=fixture',
     paymentUrl + '/',
     paymentUrl.replace('/payment', '/%70ayment'),
     paymentUrl.replace('/payment', '/x/../payment'),

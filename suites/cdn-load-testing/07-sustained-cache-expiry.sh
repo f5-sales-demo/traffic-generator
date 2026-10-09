@@ -4,6 +4,16 @@
 # Targets: All endpoints — 30-min sustained load monitoring cache status transitions
 # Estimated duration: 30+ minutes
 set -uo pipefail
+
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v wrk >/dev/null || {
+  echo "[FAIL] Required native wrk missing" >&2
+  exit 1
+}
+command -v hey >/dev/null || {
+  echo "[FAIL] Required native hey missing" >&2
+  exit 1
+}
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-1800}}"
@@ -32,19 +42,14 @@ MONITOR_ENDPOINTS=(
 # Start wrk in background
 echo "[+] Starting sustained wrk load..."
 WRK_LOG="/tmp/cdn-sustained-wrk-$$.log"
-if command -v wrk >/dev/null 2>&1 && [ -f "$LUA_SCRIPT" ]; then
-  wrk -t"$THREADS" -c"$CONNS" -d"${DURATION}s" --timeout 10s \
-    -s "$LUA_SCRIPT" "${BASE}/" >"$WRK_LOG" 2>&1 &
-  WRK_PID=$!
-  echo "    wrk PID: $WRK_PID"
-else
-  echo "    [WARN] wrk not available, using hey fallback"
-  hey -z "${DURATION}s" -c "$CONNS" \
-    -H "X-Forwarded-For: $(rand_ip)" \
-    "${BASE}/juice-shop/" >"$WRK_LOG" 2>&1 &
-  WRK_PID=$!
-fi
-echo ""
+[[ -f "$LUA_SCRIPT" ]] || {
+  echo "[FAIL] Required native wrk Lua phase missing" >&2
+  exit 1
+}
+wrk -t"$THREADS" -c"$CONNS" -d"${DURATION}s" --timeout 10s \
+  -s "$LUA_SCRIPT" "${BASE}/" >"$WRK_LOG" 2>&1 &
+WRK_PID=$!
+echo "    wrk PID: $WRK_PID"echo ""
 
 # Monitoring header
 printf " %6s" "Time"
@@ -62,6 +67,7 @@ printf " %6s %6s %6s %6s\n" "------" "------" "------" "------"
 START=$(date +%s)
 PREV_RPS=0
 DIPS=0
+CACHE_POLICY_FAILURES=0
 
 while true; do
   NOW=$(date +%s)
@@ -93,10 +99,20 @@ while true; do
     for s in $(seq 1 "$SAMPLES_PER_CHECK"); do
       STATUS=$(check_cache_status "${BASE}${ep}")
       case "$STATUS" in
-      HIT) HIT=$((HIT + 1)) ;;
+      HIT)
+        HIT=$((HIT + 1))
+        CACHE_POLICY_FAILURES=$((CACHE_POLICY_FAILURES + 1))
+        ;;
       MISS) MISS=$((MISS + 1)) ;;
-      STALE | UPDATING | EXPIRED) STALE=$((STALE + 1)) ;;
-      *) OTHER=$((OTHER + 1)) ;;
+      STALE | UPDATING | EXPIRED)
+        STALE=$((STALE + 1))
+        CACHE_POLICY_FAILURES=$((CACHE_POLICY_FAILURES + 1))
+        ;;
+      NONE | BYPASS) OTHER=$((OTHER + 1)) ;;
+      *)
+        OTHER=$((OTHER + 1))
+        CACHE_POLICY_FAILURES=$((CACHE_POLICY_FAILURES + 1))
+        ;;
       esac
     done
     TOTAL_HIT=$((TOTAL_HIT + HIT))
@@ -139,4 +155,7 @@ else
   fail "$DIPS throughput dips detected during sustained load"
 fi
 
+if ((CACHE_POLICY_FAILURES > 0)); then
+  fail "Unexpected cached dynamic responses: $CACHE_POLICY_FAILURES"
+fi
 summary

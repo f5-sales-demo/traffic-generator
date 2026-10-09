@@ -2,6 +2,7 @@
 -- Cycles through BOLA, BFLA, SSRF, discovery, and injection endpoints
 
 local counter = 0
+local marker = assert(os.getenv("TGEN_FAMILY_MARKER"), "family journal marker required")
 
 local requests_list = {
   { method = "GET",  path = "/restaurant/menu" },
@@ -18,7 +19,7 @@ local requests_list = {
   { method = "GET",  path = "/restaurant/admin/stats/disk?parameters=;whoami" },
   { method = "GET",  path = "/restaurant/users" },
   { method = "GET",  path = "/restaurant/redoc" },
-  { method = "POST", path = "/restaurant/register", body = '{"username":"wrk' .. os.time() .. '","password":"Torture123","first_name":"T","last_name":"T","phone_number":"555' .. math.random(1000000, 9999999) .. '"}' },
+  { method = "POST", path = "/restaurant/register", body = '{"username":"' .. marker .. '-register","password":"Torture123","first_name":"T","last_name":"T","phone_number":"555' .. math.random(1000000, 9999999) .. '"}' },
   { method = "POST", path = "/restaurant/token", body = "username=attacker&password=Attack123", content_type = "application/x-www-form-urlencoded" },
   { method = "PUT",  path = "/restaurant/profile", body = '{"username":"chef","phone_number":"bola-test"}' },
   { method = "PATCH", path = "/restaurant/profile", body = '{"role":"Chef"}' },

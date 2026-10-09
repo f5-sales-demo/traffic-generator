@@ -8,8 +8,8 @@ set -euo pipefail
 TARGET="${1:?Usage: 02-sslyze.sh <TARGET_FQDN>}"
 
 if [[ "${TARGET_PROTOCOL:-http}" == "http" ]]; then
-  echo "SKIP: sslyze requires HTTPS target (TARGET_PROTOCOL=http)"
-  exit 0
+  echo "[FAIL]: sslyze requires HTTPS target (TARGET_PROTOCOL=http)"
+  exit 1
 fi
 
 echo "[*] sslyze against ${TARGET}"
