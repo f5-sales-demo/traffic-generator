@@ -9096,7 +9096,13 @@
             "query_values": {
               "q": "test'))AND 1=1 AND ((1=1"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": ["SQLITE_ERROR", "syntax error", "test", "AND 1=1", "((1=1"]
+              }
+            }
           },
           {
             "id": "order-by-probe",

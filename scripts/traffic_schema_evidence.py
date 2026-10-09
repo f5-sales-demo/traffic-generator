@@ -101,3 +101,27 @@ def schema_violation(event: dict) -> bool:
             for row in event.get("violations", [])
         )
     )
+
+
+def schema_mime_violation(event: dict, response: dict) -> bool:
+    """Attribute only preserved XXE XML bodies rejected by the JSON-only schema."""
+    if response.get("scenario") != "web-app-attacks/07-xxe":
+        return False
+    expected = response.get("request_content_type", "").partition(";")[0]
+    if expected not in {"application/xml", "text/xml", "application/soap+xml"}:
+        return False
+    return (
+        event.get("action") == "block"
+        and event.get("sec_event_type") == "api_sec_event"
+        and event.get("sec_event_name") == "OpenAPI Validation Failure"
+        and event.get("oas_req_status") == "OpenAPIViolation"
+        and event.get("api_endpoint") == "/httpbin/post"
+        and any(
+            isinstance(row, dict)
+            and row.get("context") == "Request"
+            and row.get("property") == "HTTP Body"
+            and row.get("description")
+            == 'header Content-Type has unexpected value "' + expected + '"'
+            for row in event.get("violations", [])
+        )
+    )

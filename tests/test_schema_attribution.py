@@ -152,3 +152,23 @@ def test_content_addressed_fixture_requires_matching_digest_and_exact_path():
     assert schema_attribution(response, result, bundle)
     fixture["string_value"] += " "
     assert not schema_attribution(response, result, bundle)
+
+
+def test_xxe_mime_violation_requires_exact_actual_xml_content_type():
+    response, result, bundle = evidence()
+    response["scenario"] = "web-app-attacks/07-xxe"
+    response["request_content_type"] = "application/xml"
+    event = bundle["checks"][0]["events"][0]
+    event["violations"] = [
+        {
+            "context": "Request",
+            "property": "HTTP Body",
+            "description": 'header Content-Type has unexpected value "application/xml"',
+        }
+    ]
+    assert schema_attribution(response, result, bundle)
+    response["request_content_type"] = "text/xml"
+    assert not schema_attribution(response, result, bundle)
+    response["request_content_type"] = "application/xml"
+    response["scenario"] = "api-protection-verify/01-schema-violation"
+    assert not schema_attribution(response, result, bundle)

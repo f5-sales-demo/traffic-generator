@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
+from traffic_dispatch import response_content_matches
 from traffic_native_identity import native_identity
 
 
@@ -365,4 +366,26 @@ def test_native_coupon_observed_decimal_string_is_route_scoped():
         200,
         "application/json",
         '{"coupon_code":"TRAC075","amount":"75"}',
+    )
+
+
+def test_juice_search_sql_error_contract_is_exact_to_preserved_payload():
+    root = Path(__file__).parents[1]
+    catalog = json.loads((root / "suites/catalog.json").read_text())
+    scenario = next(
+        row
+        for row in catalog["scenarios"]
+        if row["id"] == "juice-shop-exploits/02-sqli-search-union"
+    )
+    requirement = next(
+        row
+        for row in scenario["dispatch_contract"]["requirements"]
+        if row["id"] == "sleep-based-blind"
+    )
+    contract = requirement["response_contract_by_status"]["500"]
+    body = "<html><title>Error: SQLITE_ERROR: near test AND 1=1 AND ((1=1: syntax error</title></html>"
+    assert response_content_matches(contract, "text/html", body)
+    assert not response_content_matches(contract, "text/html", "Internal Server Error")
+    assert not response_content_matches(
+        contract, "text/html", body.replace("AND 1=1", "unrelated")
     )

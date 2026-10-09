@@ -7,7 +7,11 @@ from pathlib import Path
 from threading import Event
 
 from traffic_common import atomic_json
-from traffic_schema_evidence import configured_schema, schema_violation
+from traffic_schema_evidence import (
+    configured_schema,
+    schema_mime_violation,
+    schema_violation,
+)
 
 FORBIDDEN = 403
 PAIR_LENGTH = 2
@@ -390,7 +394,7 @@ def schema_attribution(response: dict, result: dict, evidence: dict) -> bool:
                 bounds,
                 evidence.get("event_recording_delay_seconds", 0),
             )
-            and schema_violation(e)
+            and (schema_violation(e) or schema_mime_violation(e, response))
             for e in check["events"]
         )
     except (KeyError, TypeError, ValueError):

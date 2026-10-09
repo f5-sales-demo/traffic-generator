@@ -328,6 +328,7 @@ class Budget:
             else "prerequisite",
             "method": flow.metadata.get("tgen_dispatched_method", flow.request.method),
             "path": flow.request.path.split("?", 1)[0],
+            "request_content_type": flow.request.headers.get("content-type", ""),
             "status": status,
             "action_id": flow.metadata.get("tgen_action_id") or None,
             "matched_requirements": flow.metadata.get("tgen_matched_requirements", []),
