@@ -32,6 +32,8 @@ self-hosted-runner:
     - docs-theme
     - f5-sales-demo.github.io
     - fixture
+    - gitops
+    - gitops-terraform
     - html-to-markdown
     - i18n-core
     - macos-15-intel

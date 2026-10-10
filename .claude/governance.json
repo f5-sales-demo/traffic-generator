@@ -235,7 +235,8 @@
       "xcsh-action": "developer",
       "xcsh-chrome-extension": "developer",
       "canada": "content",
-      "custom-responses": "content"
+      "custom-responses": "content",
+      "gitops": "content"
     }
   }
 }
