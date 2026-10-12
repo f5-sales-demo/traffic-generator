@@ -43,7 +43,7 @@ def control_evidence(path: Path) -> dict:
 
 def request_identity(row: dict) -> tuple:
     """Use complete response receipt identity rather than path or status alone."""
-    return tuple(row.get(key) for key in RESPONSE_IDENTITY_FIELDS)
+    return (*tuple(row.get(key) for key in RESPONSE_IDENTITY_FIELDS), row.get("query", ""))
 
 
 def joined(
@@ -276,7 +276,14 @@ def waf_attribution(
                                 violation.get("name")
                                 == "VIOL_HTTP_PROTOCOL_NULL_IN_REQUEST"
                                 and response.get("method") == "GET"
-                                and "\x00" in unquote(unquote(response.get("path", "")))
+                                and "\x00"
+                                in unquote(
+                                    unquote(
+                                        response.get("path", "")
+                                        + "?"
+                                        + response.get("query", "")
+                                    )
+                                )
                             )
                             or (
                                 violation.get("name")

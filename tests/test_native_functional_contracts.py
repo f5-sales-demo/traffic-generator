@@ -638,6 +638,17 @@ def verify_null_protocol_control(response, event, access, evidence, result, tmp_
     ]
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert waf_attribution(response, result, tmp_path, [])
+    response["path"] = event["req_path"] = access["req_path"] = (
+        "/dvwa/vulnerabilities/open_redirect/source/low.php"
+    )
+    response["query"] = "redirect=https%3A%2F%2Fevil.example%00"
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert waf_attribution(response, result, tmp_path, [])
+    response["query"] = ""
+    assert not waf_attribution(response, result, tmp_path, [])
+    response["path"] = event["req_path"] = access["req_path"] = (
+        "/juice-shop/ftp/package.json.bak%2500.md"
+    )
     assert not waf_attribution(response, result, tmp_path, ["200003915"])
     event["violations"][0]["state"] = "Disabled"
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))

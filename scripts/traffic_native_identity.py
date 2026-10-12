@@ -57,8 +57,48 @@ def missing_order_identity(
     )
 
 
+def dvwa_api_identity(
+    path: str, method: str, status: int, media: str, body: str
+) -> bool | None:
+    """Recognize native authorization-bypass endpoints without generic API identity."""
+    if path == "/dvwa/vulnerabilities/authbypass/get_user_data.php":
+        if method != "GET" or status != HTTP_SUCCESS:
+            return False
+        if media == "text/html" and body == "":
+            return True
+        try:
+            rows = json.loads(body)
+        except ValueError:
+            return False
+        return (
+            media == "application/json"
+            and isinstance(rows, list)
+            and bool(rows)
+            and all(
+                isinstance(row, dict)
+                and {"user_id", "first_name", "surname"} == set(row)
+                and isinstance(row["user_id"], str)
+                and row["user_id"].isdigit()
+                and isinstance(row["first_name"], str)
+                and isinstance(row["surname"], str)
+                for row in rows
+            )
+        )
+    if path == "/dvwa/vulnerabilities/authbypass/change_user_details.php":
+        return (
+            method == "POST"
+            and status == HTTP_SUCCESS
+            and media == "application/json"
+            and body == '{"result":"ok"}'
+        )
+    return None
+
+
 def dvwa_identity(path: str, method: str, status: int, media: str, body: str) -> bool:
     """Recognize owned upload execution or authenticated DVWA pages."""
+    api = dvwa_api_identity(path, method, status, media, body)
+    if api is not None:
+        return api
     if path == "/dvwa/vulnerabilities/" and status == HTTP_FORBIDDEN:
         return (
             method == "GET"

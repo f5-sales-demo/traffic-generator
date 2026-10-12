@@ -11,7 +11,6 @@ import ssl
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from http.cookies import SimpleCookie
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -20,6 +19,7 @@ from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
 from traffic_attribution import child_metadata
+from traffic_cookie_readback import native_session_cookie
 from traffic_dispatch import (
     classify_outcome,
     declared_socket_cleanup,
@@ -345,6 +345,7 @@ class Budget:
             else "prerequisite",
             "method": flow.metadata.get("tgen_dispatched_method", flow.request.method),
             "path": flow.request.path.split("?", 1)[0],
+            "query": flow.request.path.partition("?")[2],
             "request_content_type": flow.request.headers.get("content-type", ""),
             "status": status,
             "action_id": flow.metadata.get("tgen_action_id") or None,
@@ -371,10 +372,8 @@ class Budget:
                 current.get("functional_contract", {}).get("verifier")
                 == "native-dvwa-weak-session"
             ):
-                cookies = SimpleCookie()
-                cookies.load(flow.response.headers.get("set-cookie", ""))
-                event["native_session_id"] = (
-                    cookies["dvwaSession"].value if "dvwaSession" in cookies else None
+                event["native_session_id"] = native_session_cookie(
+                    flow.response.headers.get_all("set-cookie")
                 )
             corpus = current.get("dispatch_contract", {})
             if (
