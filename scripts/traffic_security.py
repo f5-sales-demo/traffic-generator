@@ -267,6 +267,11 @@ def waf_attribution(
                                 and response.get("method") == "TRACE"
                             )
                             or (
+                                violation.get("name") == "VIOL_EVASION_IIS_BACKSLASHES"
+                                and response.get("method") == "GET"
+                                and "\\" in response.get("path", "")
+                            )
+                            or (
                                 violation.get("name")
                                 == "VIOL_EVASION_DIRECTORY_TRAVERSALS"
                                 and response.get("method") == "GET"

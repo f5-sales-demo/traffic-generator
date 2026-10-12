@@ -586,6 +586,24 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
     event["violations"][0]["state"] = "Disabled"
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not waf_attribution(response, result, tmp_path, [])
+    response["path"] = event["req_path"] = access["req_path"] = (
+        r"/juice-shop/rest/track-order/\x3cscript\x3e"
+    )
+    event["violations"] = [
+        {"name": "VIOL_EVASION_IIS_BACKSLASHES", "context": "url", "state": "Enabled"}
+    ]
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert waf_attribution(response, result, tmp_path, [])
+    assert not waf_attribution(response, result, tmp_path, ["200003915"])
+    event["violations"][0]["state"] = "Disabled"
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, [])
+    event["violations"][0]["state"] = "Enabled"
+    response["path"] = event["req_path"] = access["req_path"] = (
+        "/juice-shop/rest/track-order/plain"
+    )
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, [])
     event.pop("violations")
     response["path"] = event["req_path"] = access["req_path"] = "/juice-shop/"
     response["method"] = event["method"] = access["method"] = "GET"
