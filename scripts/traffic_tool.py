@@ -57,7 +57,10 @@ def attributed_arguments(tool: str, arguments: list[str], marker: str) -> list[s
                 "https-get-form",
                 "https-post-form",
             }:
-                result[index + 1] += ":H=X-TGen-Child\\: " + marker
+                fields = re.split(r"(?<!\\):", result[index + 1])
+                result[index + 1] = ":".join(
+                    [*fields[:-1], "H=X-TGen-Child\\: " + marker, fields[-1]]
+                )
                 break
     elif tool == "medusa":
         result.extend(["-m", "CUSTOM-HEADER:" + value])

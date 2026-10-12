@@ -52,12 +52,16 @@ def test_native_hydra_and_medusa_keep_payloads_and_add_child_headers():
         "443",
         "www.example.test",
         "https-post-form",
-        r'/juice-shop/rest/user/login:{"email"\:"^USER^","password"\:"^PASS^"}:Invalid:H=Content-Type\: application/json',
+        r'/juice-shop/rest/user/login:{"email"\:"^USER^","password"\:"^PASS^"}:H=Content-Type\: application/json:F=Invalid',
     ]
     observed = attributed_arguments("hydra", original, "child-opaque")
     assert observed[:-1] == original[:-1]
-    assert observed[-1] == original[-1] + r":H=X-TGen-Child\: child-opaque"
-    assert original[-1].endswith("application/json")
+    assert (
+        observed[-1]
+        == original[-1].removesuffix(":F=Invalid")
+        + r":H=X-TGen-Child\: child-opaque:F=Invalid"
+    )
+    assert original[-1].endswith("application/json:F=Invalid")
     medusa = ["-M", "http", "-m", "DIR:/dvwa/login.php", "-n", "443", "-s"]
     assert attributed_arguments("medusa", medusa, "child-opaque") == [
         *medusa,
