@@ -16,41 +16,41 @@ echo "    Technique: Scanning IP for open ports and services"
 if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
   echo "[CATALOG] Paced HTTP service assessment; TCP/TLS port scans run in the connection catalog"
   for path in / /health /httpbin/headers; do
-    curl -skI --max-time 15 "${BASE}${path}" | head -12
+    curl -skI --max-time 15 "${BASE}${path}" | sed -n '1,12p'
   done
 else
-  nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "(open|filtered|closed)" | head -20
+  nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "(open|filtered|closed)" | sed -n '1,20p'
 fi
 echo ""
 
 echo "=== T1595.002: Active Scanning — Vulnerability Scan ==="
 echo "    Technique: Scanning for known vulnerabilities"
-nikto -h "$BASE" -maxtime "${TGEN_SCANNER_SECONDS:-60}s" 2>&1 | grep -E "^\+" | head -15
+nikto -h "$BASE" -maxtime "${TGEN_SCANNER_SECONDS:-60}s" 2>&1 | grep -E "^\+" | sed -n '1,15p'
 echo ""
 
 echo "=== T1595.003: Active Scanning — Wordlist Scan ==="
 echo "    Technique: Brute-force directory/file enumeration"
 ffuf -u "${BASE}/FUZZ" -w "${TGEN_DISCOVERY_WORDLIST:-/opt/seclists/Discovery/Web-Content/common.txt}" \
-  -mc 200,301,302,401,403 -t 50 -timeout 10 -s 2>/dev/null | head -20
+  -mc 200,301,302,401,403 -t 50 -timeout 10 -s 2>/dev/null | sed -n '1,20p'
 echo ""
 
 echo "=== T1592: Gather Victim Host Information ==="
 echo "    Technique: Server technology fingerprinting"
 curl -sf -I "$BASE" 2>/dev/null | grep -iE "(server|x-powered|x-aspnet|x-framework|content-type)"
-whatweb --color=never -q "$BASE" 2>/dev/null | head -5
+whatweb --color=never -q "$BASE" 2>/dev/null | sed -n '1,5p'
 echo ""
 
 echo "=== T1589: Gather Victim Identity Information ==="
 echo "    Technique: User enumeration via API"
 echo "  Juice Shop user list:"
-curl -sf "${BASE}/juice-shop/api/Users" 2>/dev/null | jq -r '.data[]?.email' 2>/dev/null | head -10
+curl -sf "${BASE}/juice-shop/api/Users" 2>/dev/null | jq -r '.data[]?.email' 2>/dev/null | sed -n '1,10p'
 echo "  VAmPI user list:"
-curl -sf "${BASE}/vampi/users/v1" 2>/dev/null | jq -r '.users[]?.username' 2>/dev/null | head -10
+curl -sf "${BASE}/vampi/users/v1" 2>/dev/null | jq -r '.users[]?.username' 2>/dev/null | sed -n '1,10p'
 echo ""
 
 echo "=== T1590: Gather Victim Network Information ==="
 echo "    Technique: Discover internal network topology"
-curl -sf "${BASE}/whoami/" 2>/dev/null | head -10
+curl -sf "${BASE}/whoami/" 2>/dev/null | sed -n '1,10p'
 echo ""
 
 echo "[*] TA0043 Reconnaissance complete"

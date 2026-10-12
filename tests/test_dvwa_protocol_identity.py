@@ -10,7 +10,7 @@ def test_auth_bypass_native_json_and_empty_unauthenticated_read():
         "GET",
         200,
         "application/json",
-        '[{"user_id":"1","first_name":"admin","surname":"admin"}]',
+        '[{"user_id":"1","first_name":"Dana R.","surname":"Example"}]',
     )
     assert native_identity(path, "GET", 200, "text/html", "")
     assert not native_identity(

