@@ -21220,11 +21220,12 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
             "response_contract_by_status": {
               "204": {
                 "text_exact": ""
-              }
+              },
+              "404": { "content_type": "application/json", "json_document_equals": { "detail": "Not Found" } }
             }
           },
           {

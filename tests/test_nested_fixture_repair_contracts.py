@@ -162,3 +162,29 @@ def test_oversize_upload_rejection_is_exact_native_response_and_route_bound():
     assert response_content_matches(
         row["response_contract_by_status"]["413"], "text/html", body
     )
+
+
+def test_empty_native_body_is_exact_and_repeat_delete_requires_missing_object_contract():
+    assert response_content_matches({"text_exact": ""}, "", "")
+    assert not response_content_matches({"text_exact": ""}, "", "wrong body")
+    assert native_identity(
+        "/restaurant/admin/stats/disk", "GET", 200, "application/json", '{"output":""}'
+    )
+    assert not native_identity(
+        "/restaurant/admin/stats/disk", "GET", 200, "application/json", "{}"
+    )
+    scenarios = json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    requirement = next(
+        row for row in scenarios if row["id"] == "restaurant-exploits/05-bfla-privilege"
+    )["dispatch_contract"]["requirements"][0]
+    assert 404 in requirement["expected_statuses"]
+    assert response_content_matches(
+        requirement["response_contract_by_status"]["404"],
+        "application/json",
+        '{"detail":"Not Found"}',
+    )
+    assert not response_content_matches(
+        requirement["response_contract_by_status"]["404"],
+        "application/json",
+        '{"detail":"Other"}',
+    )

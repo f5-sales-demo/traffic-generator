@@ -531,8 +531,10 @@ def nested_keys_match(document: dict, specification: dict) -> bool:
 
 def response_content_matches(contract: dict, content_type: str, body: str) -> bool:
     """Evaluate transient response content and retain only assertion booleans."""
-    if content_type.split(";", 1)[0] != contract.get("content_type") or any(
-        term not in body for term in contract.get("text_contains", [])
+    if (
+        ("text_exact" in contract and body != contract["text_exact"])
+        or content_type.split(";", 1)[0] != contract.get("content_type", "")
+        or any(term not in body for term in contract.get("text_contains", []))
     ):
         return False
     for field, matcher in (

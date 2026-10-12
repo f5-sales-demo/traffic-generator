@@ -464,7 +464,9 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             and isinstance(document, dict)
             and set(document) == {"output"}
             and isinstance(document["output"], str)
-            and document["output"].startswith("Filesystem")
+            and (
+                document["output"].startswith("Filesystem") or document["output"] == ""
+            )
         )
     if path == "/restaurant/debug" and method == "GET" and status == HTTP_SUCCESS:
         return (
