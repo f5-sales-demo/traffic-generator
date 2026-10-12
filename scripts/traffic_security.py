@@ -1,6 +1,7 @@
 """Validate supplied private control evidence against each actual native request."""
 
 import json
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -190,6 +191,13 @@ def bot_attribution(
         return False
 
 
+def filetype_matches(path: str, matching: str) -> bool:
+    """Bind the enabled native file-type violation to its exact URL extension."""
+    match = re.fullmatch(r"File extension was ([a-z0-9]+)", matching)
+    filename = unquote(unquote(path)).rsplit("/", 1)[-1]
+    return match is not None and filename.rpartition(".")[2].lower() == match.group(1)
+
+
 def waf_attribution(
     response: dict,
     result: dict,
@@ -269,6 +277,14 @@ def waf_attribution(
                             (
                                 violation.get("name") == "VIOL_METHOD"
                                 and response.get("method") == "TRACE"
+                            )
+                            or (
+                                violation.get("name") == "VIOL_FILETYPE"
+                                and response.get("method") == "GET"
+                                and filetype_matches(
+                                    response.get("path", ""),
+                                    violation.get("matching_info", ""),
+                                )
                             )
                             or (
                                 violation.get("name") == "VIOL_EVASION_IIS_BACKSLASHES"
