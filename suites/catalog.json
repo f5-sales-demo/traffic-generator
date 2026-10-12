@@ -15835,9 +15835,16 @@
       },
       "fixture_refresh": ["juice"],
       "tool_contract": {
-        "requirements": [{"id": "wrk-impact", "tool": "wrk", "argument_regex": "-t2 -c[0-9]+ -d15s --timeout 60s https?://.+/juice-shop/rest/products/search\\?q=test", "minimum": 1}]
+        "requirements": [
+          {
+            "id": "wrk-impact",
+            "tool": "wrk",
+            "argument_regex": "-t2 -c[0-9]+ -d15s --timeout 60s https?://.+/juice-shop/rest/products/search\\?q=test",
+            "minimum": 1
+          }
+        ]
       },
-      "native_report_contract": {"wrk": 1},
+      "native_report_contract": { "wrk": 1 },
       "adapter": "native-family-journal",
       "fixture_contract": {
         "family_restore": "mixed"
