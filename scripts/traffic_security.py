@@ -43,7 +43,10 @@ def control_evidence(path: Path) -> dict:
 
 def request_identity(row: dict) -> tuple:
     """Use complete response receipt identity rather than path or status alone."""
-    return (*tuple(row.get(key) for key in RESPONSE_IDENTITY_FIELDS), row.get("query", ""))
+    return (
+        *tuple(row.get(key) for key in RESPONSE_IDENTITY_FIELDS),
+        row.get("query", ""),
+    )
 
 
 def joined(

