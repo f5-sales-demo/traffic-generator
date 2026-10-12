@@ -8767,7 +8767,7 @@
               "cookie": "PHPSESSID=.+"
             },
             "query_values": {
-              "redirect": "https://trusted-domain.com@example.com.com"
+              "redirect": "https://trusted-domain.com@evil.example.com"
             },
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
           },

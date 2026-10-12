@@ -29,6 +29,7 @@ from traffic_dispatch import (
 from traffic_native_identity import (
     HTTP_FORBIDDEN,
     native_binary_identity,
+    native_dvwa_redirect_identity,
     native_identity,
 )
 
@@ -372,14 +373,24 @@ class Budget:
             event["response_sha256"] = hashlib.sha256(
                 flow.response.content or b""
             ).hexdigest()
-            event["native_response_identity"] = native_identity(
-                event["path"], event["method"], status, content_type, body
-            ) or native_binary_identity(
-                event["path"],
-                event["method"],
-                status,
-                content_type,
-                flow.response.content or b"",
+            event["native_response_identity"] = (
+                native_dvwa_redirect_identity(
+                    flow.request.path,
+                    event["method"],
+                    status,
+                    flow.response.content or b"",
+                    flow.response.headers.get("location", ""),
+                )
+                or native_identity(
+                    event["path"], event["method"], status, content_type, body
+                )
+                or native_binary_identity(
+                    event["path"],
+                    event["method"],
+                    status,
+                    content_type,
+                    flow.response.content or b"",
+                )
             )
             if (
                 current.get("functional_contract", {}).get("verifier")

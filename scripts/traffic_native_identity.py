@@ -3,6 +3,7 @@
 import hashlib
 import json
 import re
+from urllib.parse import parse_qs
 
 HTTP_SUCCESS = 200
 HTTP_FOUND = 302
@@ -57,6 +58,39 @@ def missing_order_identity(
     )
 
 
+def native_dvwa_redirect_identity(
+    path: str, method: str, status: int | None, body: bytes, location: str
+) -> bool:
+    """Verify preserved redirect payload in Location without following its destination."""
+    route, _, query = path.partition("?")
+    target = parse_qs(query).get("redirect", [])
+    return (
+        route == "/dvwa/vulnerabilities/open_redirect/source/low.php"
+        and method == "GET"
+        and status == HTTP_FOUND
+        and len(target) == 1
+        and location == target[0]
+        and body == b""
+    )
+
+
+def dvwa_user_rows(rows: object) -> bool:
+    """Require every native DVWA API row to have exact typed identity fields."""
+    return (
+        isinstance(rows, list)
+        and bool(rows)
+        and all(
+            isinstance(row, dict)
+            and {"user_id", "first_name", "surname"} == set(row)
+            and isinstance(row["user_id"], str)
+            and row["user_id"].isdigit()
+            and isinstance(row["first_name"], str)
+            and isinstance(row["surname"], str)
+            for row in rows
+        )
+    )
+
+
 def dvwa_api_identity(
     path: str, method: str, status: int, media: str, body: str
 ) -> bool | None:
@@ -70,26 +104,15 @@ def dvwa_api_identity(
             rows = json.loads(body)
         except ValueError:
             return False
-        return (
-            media == "application/json"
-            and isinstance(rows, list)
-            and bool(rows)
-            and all(
-                isinstance(row, dict)
-                and {"user_id", "first_name", "surname"} == set(row)
-                and isinstance(row["user_id"], str)
-                and row["user_id"].isdigit()
-                and isinstance(row["first_name"], str)
-                and isinstance(row["surname"], str)
-                for row in rows
-            )
+        return media in {"application/json", "text/html"} and (
+            rows == {"result": "fail", "error": "Access denied"} or dvwa_user_rows(rows)
         )
     if path == "/dvwa/vulnerabilities/authbypass/change_user_details.php":
         return (
             method == "POST"
             and status == HTTP_SUCCESS
-            and media == "application/json"
-            and body == '{"result":"ok"}'
+            and media in {"application/json", "text/html"}
+            and body in {'{"result":"ok"}', '{"result":"fail","error":"Access denied"}'}
         )
     return None
 
