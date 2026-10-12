@@ -10,6 +10,7 @@ import re
 import ssl
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from http.cookies import SimpleCookie
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,8 @@ HTTPS_PORT = 443
 
 class Budget:
     """One nonbursting launch clock for all intercepted HTTP connections."""
+
+    maximum_pending_fillers = 200
 
     def __init__(self) -> None:
         """Initialize the shared queue and private counters."""
@@ -56,7 +59,10 @@ class Budget:
         self.started = time.time()
         self.ticker: asyncio.Task | None = None
         self.tasks: set[asyncio.Task] = set()
-        self.maximum_pending_fillers = 200
+        self.filler_executor = ThreadPoolExecutor(
+            max_workers=self.maximum_pending_fillers,
+            thread_name_prefix="tgen-filler",
+        )
         self.scenario_file = self.metrics_path.parent / "current-scenario.json"
 
     def running(self) -> None:
@@ -69,6 +75,7 @@ class Budget:
             self.ticker.cancel()
         for task in self.tasks:
             task.cancel()
+        self.filler_executor.shutdown(wait=False, cancel_futures=True)
 
     def count(self, host: str, filler: bool) -> None:
         """Count actual request dispatches, not tool process starts."""
@@ -93,13 +100,19 @@ class Budget:
                 if len(self.tasks) >= self.maximum_pending_fillers:
                     continue
                 host = self.domains[self.counts["attack_requests"] % len(self.domains)]
-                task = asyncio.create_task(asyncio.to_thread(self.filler, host))
+                task = asyncio.create_task(self.run_filler(host))
                 self.tasks.add(task)
                 task.add_done_callback(self.tasks.discard)
                 self.count(host, filler=True)
             else:
                 self.count(host, filler=False)
                 event.set_result(None)
+
+    async def run_filler(self, host: str) -> None:
+        """Isolate blocking filler HTTP I/O from the event loop's DNS executor."""
+        await asyncio.get_running_loop().run_in_executor(
+            self.filler_executor, self.filler, host
+        )
 
     def filler(self, host: str) -> None:
         """Use spare attack slots for an explicitly identified harmless SQLi simulation."""
