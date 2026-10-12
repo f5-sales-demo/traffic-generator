@@ -15799,8 +15799,18 @@
             "path": "/juice-shop/api/Feedbacks",
             "payload_class": "synthetic-data-manipulation",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 400, 401, 404, 405, 409, 422],
-            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:\\[MITRE\\ T1565\\]\\ Data\\ manipulation\\ test\\ \\-\\ injected\\ feedback\",\"rating\":1\\}"
+            "expected_statuses": [200, 201, 400, 401, 404, 405, 409, 422, 500],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:\\[MITRE\\ T1565\\]\\ Data\\ manipulation\\ test\\ \\-\\ injected\\ feedback\",\"rating\":1\\}",
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "assignment",
@@ -15823,7 +15833,11 @@
         ],
         "reject_unmatched_errors": true
       },
-      "fixture_refresh": [],
+      "fixture_refresh": ["juice"],
+      "tool_contract": {
+        "requirements": [{"id": "wrk-impact", "tool": "wrk", "argument_regex": "-t2 -c[0-9]+ -d15s --timeout 60s https?://.+/juice-shop/rest/products/search\\?q=test", "minimum": 1}]
+      },
+      "native_report_contract": {"wrk": 1},
       "adapter": "native-family-journal",
       "fixture_contract": {
         "family_restore": "mixed"

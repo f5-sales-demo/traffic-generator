@@ -124,3 +124,28 @@ def test_collection_native_file_denials_reuse_exact_qualified_contract():
             in contract["text_contains"]
         )
         assert not response_content_matches(contract, "text/html", "Forbidden")
+
+
+def test_impact_preserves_load_and_payloads_after_mitigated_login():
+    scenario = CATALOG["mitre-attack/07-impact"]
+    source = (ROOT / scenario["entrypoint"]).read_text()
+    assert "-d15s --timeout 60s" in source
+    assert "wrk-impact.log" in source
+    assert scenario["native_report_contract"] == {"wrk": 1}
+    assert scenario["fixture_refresh"] == ["juice"]
+    assert "fixture_token.py" in source
+    assert "admin" in source
+    assert "--" in source
+    feedback = next(
+        row
+        for row in scenario["dispatch_contract"]["requirements"]
+        if row["id"] == "feedback"
+    )
+    assert 500 in feedback["expected_statuses"]
+    assert (
+        "captchaId"
+        in feedback["response_contract_by_status"]["500"]["text_contains"][0]
+    )
+    assert not response_content_matches(
+        feedback["response_contract_by_status"]["500"], "text/html", "Server Error"
+    )
