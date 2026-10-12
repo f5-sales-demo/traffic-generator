@@ -8,6 +8,7 @@ HTTP_BAD_REQUEST = 400
 HTTP_UNAUTHORIZED = 401
 HTTP_FORBIDDEN = 403
 HTTP_NOT_FOUND = 404
+HTTP_TOO_LARGE = 413
 HTTP_ERROR_START = 400
 NATIVE_MISSING_ORDER_STATUS = 500
 
@@ -396,6 +397,15 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
                 and status == NATIVE_MISSING_ORDER_STATUS
                 and media == "application/json"
                 and document == {}
+            )
+        )
+    if path == "/dvwa/vulnerabilities/upload/" and method == "POST" and status == HTTP_TOO_LARGE:
+        return media == "text/html" and all(
+            value in body
+            for value in (
+                "<title>413 Request Entity Too Large</title>",
+                "<h1>413 Request Entity Too Large</h1>",
+                "nginx",
             )
         )
     if path.startswith("/dvwa/"):

@@ -144,3 +144,21 @@ def test_csrf_actor_body_matches_only_marker_owned_synthetic_identity():
         "application/json",
         '{"unrelated":{}}',
     )
+
+
+def test_oversize_upload_rejection_is_exact_native_response_and_route_bound():
+    body = "<title>413 Request Entity Too Large</title><h1>413 Request Entity Too Large</h1><hr>nginx"
+    assert native_identity(
+        "/dvwa/vulnerabilities/upload/", "POST", 413, "text/html", body
+    )
+    assert not native_identity(
+        "/dvwa/vulnerabilities/upload/", "POST", 413, "text/html", "generic error"
+    )
+    scenarios = json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    row = next(s for s in scenarios if s["id"] == "web-app-attacks/10-file-upload")[
+        "dispatch_contract"
+    ]["requirements"][3]
+    assert 413 in row["expected_statuses"]
+    assert response_content_matches(
+        row["response_contract_by_status"]["413"], "text/html", body
+    )

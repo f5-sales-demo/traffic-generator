@@ -30667,7 +30667,13 @@
             "header_regex": {
               "content-type": "multipart/form-data; boundary=.+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404, 413],
+            "response_contract_by_status": {
+              "413": {
+                "content_type": "text/html",
+                "text_contains": ["<title>413 Request Entity Too Large</title>", "<h1>413 Request Entity Too Large</h1>", "nginx"]
+              }
+            }
           },
           {
             "id": "upload-4",

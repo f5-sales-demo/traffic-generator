@@ -58,6 +58,31 @@ class RuntimeTests(unittest.TestCase):
             ):
                 runtime.validate_config(config)
 
+    def test_nested_deadline_reaps_descendants_without_killing_shared_parent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            pid_file = root / "pid"
+            result = runtime.execute(
+                [
+                    "bash",
+                    "-c",
+                    'sleep 1000 & echo $! > "$1"; wait',
+                    "bash",
+                    str(pid_file),
+                ],
+                root / "nested.log",
+                dict(os.environ, TGEN_NESTED_EXECUTION="1"),
+                0.5,
+            )
+            assert result["outcome"] == "timeout"
+            pid = int(pid_file.read_text())
+            stat = pathlib.Path("/proc", str(pid), "stat")
+            assert (
+                not stat.exists()
+                or stat.read_text().rsplit(")", 1)[1].split()[0] == "Z"
+            )
+            assert os.getpid() > 0
+
     def test_unknown_configuration_keys_fail_before_runtime(self):
         config = self.config()
         config["disable_waf"] = True
