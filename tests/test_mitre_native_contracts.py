@@ -149,3 +149,21 @@ def test_impact_preserves_load_and_payloads_after_mitigated_login():
     assert not response_content_matches(
         feedback["response_contract_by_status"]["500"], "text/html", "Server Error"
     )
+
+
+def test_idor_missing_native_address_route_is_exact_and_does_not_accept_other_500s():
+    scenario = CATALOG["juice-shop-exploits/05-idor-basket-access"]
+    row = next(
+        row
+        for row in scenario["dispatch_contract"]["requirements"]
+        if row["id"] == "object-3"
+    )
+    contract = row["response_contract_by_status"]["500"]
+    assert row["path"] == "/juice-shop/api/Addresses/1"
+    assert contract["native_unexpected_path"]
+    body = "".join(contract["text_contains"])
+    assert response_content_matches(contract, "text/html", body)
+    assert not response_content_matches(
+        contract, "text/html", body.replace("/api/Addresses/1", "/api/Other/1")
+    )
+    assert not response_content_matches(contract, "text/html", "Server Error")
