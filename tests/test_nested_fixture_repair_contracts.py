@@ -422,3 +422,42 @@ def test_every_juice_workload_journals_native_challenge_and_account_changes():
         assert "TGEN_FAMILY_MARKER:?" in source
         assert "${MARKER}@example.com" in source
         assert "${RAND_ID}@test.com" not in source
+
+
+def test_preserved_missing_captcha_and_where_errors_require_exact_native_titles():
+    scenarios = json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    cases = [
+        (
+            "juice-shop-exploits/04-xss-stored-api",
+            "rating-0",
+            "Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value",
+        ),
+        (
+            "juice-shop-exploits/08-nosql-injection",
+            "patch-4",
+            "Error: Unrecognized operator: $where",
+        ),
+    ]
+    for identifier, requirement, title in cases:
+        scenario = next(r for r in scenarios if r["id"] == identifier)
+        row = next(
+            r
+            for r in scenario["dispatch_contract"]["requirements"]
+            if r["id"] == requirement
+        )
+        contract = row["response_contract_by_status"]["500"]
+        body = (
+            "<title>"
+            + title
+            + "</title><h1>OWASP Juice Shop (Express ^4.22.1)</h1><h2><em>500</em> "
+            + title
+            + "</h2>"
+        )
+        assert response_content_matches(contract, "text/html", body)
+        assert not response_content_matches(
+            contract, "text/html", "<title>Server Error</title>"
+        )
+        assert not response_content_matches(contract, "application/json", body)
+        assert not response_content_matches(
+            contract, "text/html", body.replace(title, "Unexpected error")
+        )

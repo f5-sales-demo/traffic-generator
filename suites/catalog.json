@@ -9480,8 +9480,18 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "invalid-rating",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
-            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":0\\}"
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":0\\}",
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "rating--1",
@@ -9489,8 +9499,18 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "invalid-rating",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
-            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":\\-1\\}"
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":\\-1\\}",
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "rating-6",
@@ -9498,8 +9518,18 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "invalid-rating",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
-            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":6\\}"
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":6\\}",
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "rating-999",
@@ -9507,8 +9537,18 @@
             "path": "/juice-shop/api/Feedbacks/",
             "payload_class": "invalid-rating",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
-            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":999\\}"
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "body_regex": "\\{\"comment\":\"tgen-[a-f0-9]{32}:rating\\ test\",\"rating\":999\\}",
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "readback",
@@ -10257,8 +10297,18 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
-            "body_regex": "\\{\"id\":\\{\"\\$where\":\"1==1\"\\},\"message\":\"tgen-[a-f0-9]{32}:where\\ injection\"\\}"
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "body_regex": "\\{\"id\":\\{\"\\$where\":\"1==1\"\\},\"message\":\"tgen-[a-f0-9]{32}:where\\ injection\"\\}",
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unrecognized operator: $where</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unrecognized operator: $where</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "patch-5",
