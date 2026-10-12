@@ -381,3 +381,23 @@ def test_native_review_update_requires_count_and_matching_before_after_rows():
     assert not native_identity(path, "PATCH", 200, "application/json", json.dumps(doc))
     doc["modified"] = True
     assert not native_identity(path, "PATCH", 200, "application/json", json.dumps(doc))
+
+
+def test_profile_image_native_redirect_requires_exact_route_status_media_and_body():
+    body = "Found. Redirecting to /juice-shop/profile"
+    assert native_identity(
+        "/juice-shop/profile/image/url", "POST", 302, "text/plain; charset=utf-8", body
+    )
+    for path, method, status, media, wrong in (
+        ("/juice-shop/profile", "POST", 302, "text/plain", body),
+        ("/juice-shop/profile/image/url", "GET", 302, "text/plain", body),
+        ("/juice-shop/profile/image/url", "POST", 301, "text/plain", body),
+        (
+            "/juice-shop/profile/image/url",
+            "POST",
+            302,
+            "text/plain",
+            "Found. Redirecting to https://foreign.example/",
+        ),
+    ):
+        assert not native_identity(path, method, status, media, wrong)

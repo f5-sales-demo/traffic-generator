@@ -4,6 +4,7 @@ import json
 import re
 
 HTTP_SUCCESS = 200
+HTTP_FOUND = 302
 HTTP_BAD_REQUEST = 400
 HTTP_UNAUTHORIZED = 401
 HTTP_FORBIDDEN = 403
@@ -321,6 +322,13 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             and body == "Bad Request"
         )
 
+    if path == "/juice-shop/profile/image/url" and status in (301, 302, 307, 308):
+        return (
+            method == "POST"
+            and status == HTTP_FOUND
+            and media == "text/plain"
+            and body == "Found. Redirecting to /juice-shop/profile"
+        )
     if method == "HEAD" or status in (204, 304):
         return body == ""
     if status in (301, 302, 307, 308):
