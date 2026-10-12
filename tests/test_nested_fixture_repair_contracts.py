@@ -214,3 +214,51 @@ def test_scanner_path_error_contract_requires_native_probe_and_exact_error_title
     )
     request["path"] = "/juice-shop/rest/products/search"
     assert not match_requirements({"requirements": [row]}, request)
+
+
+def test_unicode_traversal_native_denial_is_exact_and_declared_on_one_route():
+    scenarios = json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    scenario = next(
+        r for r in scenarios if r["id"] == "web-app-attacks/04-path-traversal"
+    )
+    requirement = next(
+        r
+        for r in scenario["dispatch_contract"]["requirements"]
+        if r["id"] == "traversal-13"
+    )
+    contract = requirement["response_contract_by_status"]["403"]
+    body = (
+        "<title>Error: Only .md and .pdf files are allowed!</title>"
+        "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>"
+        "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+    )
+    assert response_content_matches(contract, "text/html; charset=utf-8", body)
+    for wrong in (
+        "Forbidden",
+        body.replace("403", "500"),
+        body.replace("OWASP Juice Shop", "Unknown"),
+    ):
+        assert not response_content_matches(contract, "text/html", wrong)
+    assert not response_content_matches(contract, "application/json", body)
+    assert all(
+        "403" not in r.get("response_contract_by_status", {})
+        for r in scenario["dispatch_contract"]["requirements"]
+        if r["id"] != "traversal-13"
+    )
+    request = {"kind": "scenario", "method": "GET", "path": requirement["path"]}
+    assert match_requirements({"requirements": [requirement]}, request) == [
+        "traversal-13"
+    ]
+    request["path"] = "/juice-shop/ftp/etc/passwd"
+    assert not match_requirements({"requirements": [requirement]}, request)
+    event = {
+        "kind": "scenario",
+        "status": 403,
+        "matched_requirements": ["traversal-13"],
+        "response_assertions": {"traversal-13": True},
+        "status_specific_assertions": {"traversal-13": True},
+        "native_response_identity": True,
+    }
+    assert verify_responses({"requirements": [requirement]}, [event])["passed"]
+    event["response_assertions"] = {"traversal-13": False}
+    assert not verify_responses({"requirements": [requirement]}, [event])["passed"]

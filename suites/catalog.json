@@ -29146,7 +29146,17 @@
             "path": "/juice-shop/ftp/..%ef%bc%8f..%ef%bc%8f..%ef%bc%8fetc%ef%bc%8fpasswd",
             "payload_class": "path-traversal-encoded_payloads",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404, 403],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Only .md and .pdf files are allowed!</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "traversal-14",
