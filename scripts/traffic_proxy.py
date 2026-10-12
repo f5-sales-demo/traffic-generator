@@ -385,6 +385,15 @@ class Budget:
                 if requirement["id"] in event["matched_requirements"] and specification:
                     event["response_assertions"][requirement["id"]] = (
                         response_content_matches(specification, content_type, body)
+                        and (
+                            not specification.get("native_unexpected_path")
+                            or "<title>Error: Unexpected path: "
+                            + flow.request.path.split("?", 1)[0].removeprefix(
+                                "/juice-shop"
+                            )
+                            + "</title>"
+                            in body
+                        )
                     )
         event["status_specific_assertions"] = {
             requirement["id"]: event.get("response_assertions", {}).get(

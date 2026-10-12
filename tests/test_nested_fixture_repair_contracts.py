@@ -188,3 +188,29 @@ def test_empty_native_body_is_exact_and_repeat_delete_requires_missing_object_co
         "application/json",
         '{"detail":"Other"}',
     )
+
+
+def test_scanner_path_error_contract_requires_native_probe_and_exact_error_title():
+    scenarios = json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    row = next(r for r in scenarios if r["id"] == "web-app-attacks/02-xss")[
+        "dispatch_contract"
+    ]["requirements"][0]
+    request = {
+        "kind": "scenario",
+        "method": "GET",
+        "path": "/juice-shop/rest/dlxsynthetic/search",
+    }
+    assert match_requirements({"requirements": [row]}, request) == [
+        "native-dalfox-path-discovery"
+    ]
+    contract = row["response_contract_by_status"]["500"]
+    assert response_content_matches(
+        contract,
+        "text/html",
+        "<title>Error: Unexpected path: /rest/dlxsynthetic/search</title>",
+    )
+    assert not response_content_matches(
+        contract, "text/html", "<title>Server Error</title>"
+    )
+    request["path"] = "/juice-shop/rest/products/search"
+    assert not match_requirements({"requirements": [row]}, request)

@@ -28279,6 +28279,21 @@
       "dispatch_contract": {
         "requirements": [
           {
+            "id": "native-dalfox-path-discovery",
+            "method": "GET",
+            "path_regex": "/juice-shop/rest/(?:products/)?(?:dlx[a-z0-9]+|%3[Cc]dlx[a-z0-9]+%3[Ee])(?:/search)?",
+            "payload_class": "native-dalfox-path-discovery",
+            "minimum_dispatches": 4,
+            "expected_statuses": [500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_regex": "<title>Error: Unexpected path: /rest/(?:products/)?(?:dlx[a-z0-9]+|%3[Cc]dlx[a-z0-9]+%3[Ee])(?:/search)?</title>",
+                "native_unexpected_path": true
+              }
+            }
+          },
+          {
             "id": "payload-0-target-0",
             "method": "GET",
             "path": "/juice-shop/rest/products/search",
