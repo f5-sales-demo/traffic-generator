@@ -14,13 +14,13 @@ echo ""
 
 # --- dalfox automated tests ---
 echo "[+] Running dalfox against Juice Shop search..."
-dalfox url "${BASE}/juice-shop/rest/products/search?q=test" \
+dalfox url --url "${BASE}/juice-shop/rest/products/search?q=test" \
   --silence --no-color --timeout 10 ||
   echo "WARN: dalfox juice-shop scan returned non-zero"
 
 echo ""
 echo "[+] Running dalfox against DVWA XSS reflected..."
-dalfox url "${BASE}/dvwa/vulnerabilities/xss_r/?name=test" \
+dalfox url --url "${BASE}/dvwa/vulnerabilities/xss_r/?name=test" \
   --silence --no-color --timeout 10 ||
   echo "WARN: dalfox dvwa xss_r scan returned non-zero"
 
