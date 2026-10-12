@@ -399,7 +399,11 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
                 and document == {}
             )
         )
-    if path == "/dvwa/vulnerabilities/upload/" and method == "POST" and status == HTTP_TOO_LARGE:
+    if (
+        path == "/dvwa/vulnerabilities/upload/"
+        and method == "POST"
+        and status == HTTP_TOO_LARGE
+    ):
         return media == "text/html" and all(
             value in body
             for value in (
