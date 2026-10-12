@@ -166,6 +166,10 @@ def test_oversize_upload_rejection_is_exact_native_response_and_route_bound():
 
 def test_empty_native_body_is_exact_and_repeat_delete_requires_missing_object_contract():
     assert response_content_matches({"text_exact": ""}, "", "")
+    assert response_content_matches({"text_exact": ""}, "application/json", "")
+    assert not response_content_matches(
+        {"text_exact": "", "content_type": "text/plain"}, "application/json", ""
+    )
     assert not response_content_matches({"text_exact": ""}, "", "wrong body")
     assert native_identity(
         "/restaurant/admin/stats/disk", "GET", 200, "application/json", '{"output":""}'
@@ -181,7 +185,7 @@ def test_empty_native_body_is_exact_and_repeat_delete_requires_missing_object_co
     assert response_content_matches(
         requirement["response_contract_by_status"]["404"],
         "application/json",
-        '{"detail":"Not Found"}',
+        '{"detail":"Menu item not found"}',
     )
     assert not response_content_matches(
         requirement["response_contract_by_status"]["404"],

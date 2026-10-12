@@ -539,7 +539,10 @@ def response_content_matches(contract: dict, content_type: str, body: str) -> bo
     )
     if (
         not text_matches
-        or content_type.split(";", 1)[0] != contract.get("content_type", "")
+        or (
+            "content_type" in contract
+            and content_type.split(";", 1)[0] != contract["content_type"]
+        )
         or any(term not in body for term in contract.get("text_contains", []))
     ):
         return False

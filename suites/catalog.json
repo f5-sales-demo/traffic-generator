@@ -21540,7 +21540,7 @@
               "204": {
                 "text_exact": ""
               },
-              "404": { "content_type": "application/json", "json_document_equals": { "detail": "Not Found" } }
+              "404": { "content_type": "application/json", "json_document_equals": { "detail": "Menu item not found" } }
             }
           },
           {
