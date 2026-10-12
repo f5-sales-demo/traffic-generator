@@ -167,3 +167,28 @@ def test_idor_missing_native_address_route_is_exact_and_does_not_accept_other_50
         contract, "text/html", body.replace("/api/Addresses/1", "/api/Other/1")
     )
     assert not response_content_matches(contract, "text/html", "Server Error")
+
+
+def test_native_security_and_swagger_discovery_keep_route_identity():
+    body = "Contact: mailto:security@example.com\nEncryption: https://example.com/key.asc\nAcknowledgements: /#/score-board\nHiring: /#/jobs\nCsaf: http://localhost:3000/.well-known/csaf/provider-metadata.json\n"
+    assert native_identity(
+        "/juice-shop/.well-known/security.txt", "GET", 200, "text/plain", body
+    )
+    assert not native_identity(
+        "/juice-shop/.well-known/security.txt",
+        "GET",
+        200,
+        "text/plain",
+        "Contact: unrelated",
+    )
+    swagger = "<title>Swagger UI</title> swagger-ui-bundle.js swagger-ui-init.js"
+    assert native_identity(
+        "/juice-shop/api-docs/swagger.json", "GET", 200, "text/html", swagger
+    )
+    assert not native_identity(
+        "/juice-shop/api-docs/swagger.json", "GET", 200, "text/html", "Swagger"
+    )
+    scenario = CATALOG["juice-shop-exploits/07-sensitive-data"]
+    paths = {row["path"] for row in scenario["dispatch_contract"]["requirements"]}
+    assert "/juice-shop/ftp/coupons_2013.md.bak" in paths
+    assert "/juice-shop/ftp/package.json.bak" in paths

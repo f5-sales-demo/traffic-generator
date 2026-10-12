@@ -314,6 +314,20 @@ def review_update_identity(document: object) -> bool:
     )
 
 
+def juice_security_text_identity(media: str, body: str) -> bool:
+    """Verify native security.txt fields without copying upstream personal identities."""
+    return media == "text/plain" and all(
+        re.search(pattern, body, re.MULTILINE) is not None
+        for pattern in (
+            r"^Contact: mailto:[^\s]+$",
+            r"^Encryption: https://[^\s]+$",
+            r"^Acknowledgements: /#/score-board$",
+            r"^Hiring: /#/jobs$",
+            r"^Csaf: http://localhost:[0-9]+/\.well-known/csaf/provider-metadata\.json$",
+        )
+    )
+
+
 def juice_discovery_identity(
     path: str, method: str, status: int, media: str, body: str
 ) -> bool | None:
@@ -365,7 +379,7 @@ def juice_discovery_identity(
             and "<title>listing directory " + route + "</title>" in body
             and ("acquisitions.md" if "ftp" in path else "jwt.pub") in body
         )
-    if path == "/juice-shop/api-docs/":
+    if path in {"/juice-shop/api-docs/", "/juice-shop/api-docs/swagger.json"}:
         return media == "text/html" and all(
             term in body
             for term in (
@@ -451,6 +465,12 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
     if status is None:
         return False
     media = content_type.partition(";")[0]
+    if path == "/juice-shop/.well-known/security.txt":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and juice_security_text_identity(media, body)
+        )
     discovery = juice_discovery_identity(path, method, status, media, body)
     if discovery is not None:
         return discovery
