@@ -259,11 +259,24 @@ def waf_attribution(
                 )
                 or (
                     not signatures
-                    and response.get("method") == "TRACE"
                     and "default_detection_settings" in firewall["spec"]
                     and any(
-                        violation.get("name") == "VIOL_METHOD"
-                        and violation.get("context") == "request"
+                        (
+                            (
+                                violation.get("name") == "VIOL_METHOD"
+                                and response.get("method") == "TRACE"
+                            )
+                            or (
+                                violation.get("name")
+                                == "VIOL_EVASION_DIRECTORY_TRAVERSALS"
+                                and response.get("method") == "GET"
+                                and (
+                                    ".." in response.get("path", "")
+                                    or "%2" in response.get("path", "").lower()
+                                )
+                            )
+                        )
+                        and violation.get("context") in ("request", "url")
                         and violation.get("state") == "Enabled"
                         for violation in event.get("violations", [])
                     )

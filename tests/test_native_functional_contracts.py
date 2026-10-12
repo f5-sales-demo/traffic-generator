@@ -570,7 +570,24 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
     event["violations"][0]["state"] = "Disabled"
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not waf_attribution(response, result, tmp_path, [])
+    response["method"] = event["method"] = access["method"] = "GET"
+    response["path"] = event["req_path"] = access["req_path"] = (
+        "/juice-shop/ftp/..%2Fetc%2Fpasswd"
+    )
+    event["violations"] = [
+        {
+            "name": "VIOL_EVASION_DIRECTORY_TRAVERSALS",
+            "context": "url",
+            "state": "Enabled",
+        }
+    ]
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert waf_attribution(response, result, tmp_path, [])
+    event["violations"][0]["state"] = "Disabled"
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, [])
     event.pop("violations")
+    response["path"] = event["req_path"] = access["req_path"] = "/juice-shop/"
     response["method"] = event["method"] = access["method"] = "GET"
     event["bot_info"]["classification"] = "malicious"
     event["signatures"] = [{"id": "200003915", "state": "Enabled"}]
