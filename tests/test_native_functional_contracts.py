@@ -586,6 +586,24 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
     event["violations"][0]["state"] = "Disabled"
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not waf_attribution(response, result, tmp_path, [])
+    verify_iis_backslash_control(response, event, access, evidence, result, tmp_path)
+    verify_null_protocol_control(response, event, access, evidence, result, tmp_path)
+    event.pop("violations")
+    response["path"] = event["req_path"] = access["req_path"] = "/juice-shop/"
+    response["method"] = event["method"] = access["method"] = "GET"
+    event["bot_info"]["classification"] = "malicious"
+    event["signatures"] = [{"id": "200003915", "state": "Enabled"}]
+    event["req_id"] = "foreign-request"
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, ["200003915"])
+    event["req_id"] = "synthetic-request"
+    evidence["firewall"]["spec"] = {"monitoring": {}}
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, ["200003915"])
+
+
+def verify_iis_backslash_control(response, event, access, evidence, result, tmp_path):
+    """Check exact IIS evasion and rejection controls."""
     response["path"] = event["req_path"] = access["req_path"] = (
         r"/juice-shop/rest/track-order/\x3cscript\x3e"
     )
@@ -604,18 +622,32 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
     )
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not waf_attribution(response, result, tmp_path, [])
-    event.pop("violations")
-    response["path"] = event["req_path"] = access["req_path"] = "/juice-shop/"
-    response["method"] = event["method"] = access["method"] = "GET"
-    event["bot_info"]["classification"] = "malicious"
-    event["signatures"] = [{"id": "200003915", "state": "Enabled"}]
-    event["req_id"] = "foreign-request"
+
+
+def verify_null_protocol_control(response, event, access, evidence, result, tmp_path):
+    """Check encoded-null attribution and exact negative controls independently."""
+    response["path"] = event["req_path"] = access["req_path"] = (
+        "/juice-shop/ftp/package.json.bak%2500.md"
+    )
+    event["violations"] = [
+        {
+            "name": "VIOL_HTTP_PROTOCOL_NULL_IN_REQUEST",
+            "context": "request",
+            "state": "Enabled",
+        }
+    ]
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert waf_attribution(response, result, tmp_path, [])
     assert not waf_attribution(response, result, tmp_path, ["200003915"])
-    event["req_id"] = "synthetic-request"
-    evidence["firewall"]["spec"] = {"monitoring": {}}
+    event["violations"][0]["state"] = "Disabled"
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
-    assert not waf_attribution(response, result, tmp_path, ["200003915"])
+    assert not waf_attribution(response, result, tmp_path, [])
+    event["violations"][0]["state"] = "Enabled"
+    response["path"] = event["req_path"] = access["req_path"] = (
+        "/juice-shop/ftp/plain.md"
+    )
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, [])
 
 
 def test_direct_native_api_requires_nested_content_and_observed_response(tmp_path):

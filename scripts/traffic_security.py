@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from threading import Event
+from urllib.parse import unquote
 
 from traffic_common import atomic_json
 from traffic_schema_evidence import (
@@ -270,6 +271,12 @@ def waf_attribution(
                                 violation.get("name") == "VIOL_EVASION_IIS_BACKSLASHES"
                                 and response.get("method") == "GET"
                                 and "\\" in response.get("path", "")
+                            )
+                            or (
+                                violation.get("name")
+                                == "VIOL_HTTP_PROTOCOL_NULL_IN_REQUEST"
+                                and response.get("method") == "GET"
+                                and "\x00" in unquote(unquote(response.get("path", "")))
                             )
                             or (
                                 violation.get("name")
