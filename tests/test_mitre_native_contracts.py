@@ -107,3 +107,20 @@ def test_hydra_mitre_contract_matches_preserved_native_arguments():
     assert not re.search(
         requirement["argument_regex"], args.replace("https-get-form", "http-get-form")
     )
+
+
+def test_collection_native_file_denials_reuse_exact_qualified_contract():
+    scenario = CATALOG["mitre-attack/06-collection-exfiltration"]
+    for name in ("coupons_2013.md.bak", "package.json.bak", "eastere.gg"):
+        requirement = next(
+            row
+            for row in scenario["dispatch_contract"]["requirements"]
+            if row["path"] == "/juice-shop/ftp/" + name
+        )
+        assert 403 in requirement["expected_statuses"]
+        contract = requirement["response_contract_by_status"]["403"]
+        assert (
+            "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+            in contract["text_contains"]
+        )
+        assert not response_content_matches(contract, "text/html", "Forbidden")

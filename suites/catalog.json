@@ -15667,7 +15667,17 @@
             "path": "/juice-shop/ftp/coupons_2013.md.bak",
             "payload_class": "bulk-api-collection",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 409, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 403, 404, 405, 409, 422],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Only .md and .pdf files are allowed!</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "collection-9",
@@ -15675,7 +15685,17 @@
             "path": "/juice-shop/ftp/package.json.bak",
             "payload_class": "bulk-api-collection",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 409, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 403, 404, 405, 409, 422],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Only .md and .pdf files are allowed!</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "collection-10",
@@ -15683,7 +15703,17 @@
             "path": "/juice-shop/ftp/eastere.gg",
             "payload_class": "bulk-api-collection",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 409, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 403, 404, 405, 409, 422],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Only .md and .pdf files are allowed!</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "counter",

@@ -1,5 +1,6 @@
 """Install immutable upstream Hydra with native HTTP 401 form handling."""
 
+import argparse
 import hashlib
 import json
 import os
@@ -12,6 +13,28 @@ from urllib.request import urlopen
 
 COMMIT = "6c11ce2dff19ce81630c12b001d821dcd4d1567c"
 ARCHIVE_SHA256 = "16c4fe4771519dae3c00aada5f3b4ad192d0c82c95db8fb131bddb028b8875d6"
+
+EXECUTABLE_MODE = 0o755
+
+
+def verified_installation(destination: Path) -> bool:
+    """Verify the declared source, installer and installed executable on readback."""
+    try:
+        receipt = json.loads((destination / "native-hydra-receipt.json").read_text())
+        binary = destination / "bin/hydra"
+        return (
+            binary.is_file()
+            and not binary.is_symlink()
+            and binary.stat().st_mode & 0o777 == EXECUTABLE_MODE
+            and receipt.get("source_commit") == COMMIT
+            and receipt.get("archive_sha256") == ARCHIVE_SHA256
+            and receipt.get("installer_sha256")
+            == hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+            and receipt.get("binary_sha256")
+            == hashlib.sha256(binary.read_bytes()).hexdigest()
+        )
+    except (OSError, ValueError):
+        return False
 
 
 def install(destination: Path) -> dict:
@@ -77,7 +100,7 @@ def install(destination: Path) -> dict:
         binary.parent.mkdir(parents=True, exist_ok=True)
         staged = binary.with_name(".hydra-" + str(os.getpid()))
         shutil.copyfile(source / "hydra", staged)
-        staged.chmod(0o755)
+        staged.chmod(EXECUTABLE_MODE)
         staged.replace(binary)
         receipt = {
             "source_commit": COMMIT,
@@ -93,4 +116,9 @@ def install(destination: Path) -> dict:
 
 
 if __name__ == "__main__":
-    print(json.dumps(install(Path("/opt/traffic-generator"))))
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--destination", type=Path, default=Path("/opt/traffic-generator")
+    )
+    args = parser.parse_args()
+    print(json.dumps(install(args.destination)))

@@ -623,7 +623,7 @@ class NetworkBoundary:
         }:
             binary = native_binary(
                 tool,
-                "/opt/traffic-generator/bin" + os.pathsep + os.environ["PATH"],
+                str(self.root.parent / "bin") + os.pathsep + os.environ["PATH"],
                 self.runtime,
             )
             if not binary:
