@@ -13,6 +13,7 @@ from pathlib import Path
 from traffic_dispatch import validate_dispatch_contract
 
 MAX_SCENARIO_SECONDS = 7200
+MAX_COMPOSED_SECONDS = 90000
 APPLICATION_COUNT = 9
 
 
@@ -123,10 +124,15 @@ def validate_catalog(root: Path, catalog: dict) -> None:
         if scenario["kind"] != "csd-browser":
             recorded.add(scenario["entrypoint"])
         if (
-            scenario["timeout_seconds"] > MAX_SCENARIO_SECONDS
+            scenario["timeout_seconds"]
+            > (
+                MAX_COMPOSED_SECONDS
+                if scenario.get("nested_contract")
+                else MAX_SCENARIO_SECONDS
+            )
             or scenario["timeout_seconds"] <= 0
         ):
-            msg = "scenario deadline must be within fifteen minutes"
+            msg = "scenario deadline exceeds its declared bounded workload"
             raise ValueError(msg)
     if not (numbered | benchmark_paths) <= recorded:
         msg = "numbered executable missing from catalog"

@@ -1,5 +1,6 @@
 """Parent native load must restore before any child suite is dispatched."""
 
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -43,3 +44,23 @@ def test_costly_native_graphql_worker_uses_declared_full_batch_timeout():
     assert '--timeout "${TGEN_REQUEST_TIMEOUT:-600}s"' in script
     source = (root / "scripts/traffic_network.py").read_text()
     assert 'or scenario["id"] == "cdn-load-testing/09-origin-torture"' in source
+
+
+def test_parent_deadline_covers_full_sequential_children_and_native_drain():
+    root = Path(__file__).resolve().parents[1]
+    scenarios = json.loads((root / "suites/catalog.json").read_text())["scenarios"]
+    by_id = {row["id"]: row for row in scenarios}
+    parent = by_id["cdn-load-testing/09-origin-torture"]
+    children = [
+        by_id[identifier]
+        for identifiers in parent["nested_contract"].values()
+        for identifier in identifiers
+    ]
+    assert len(children) == 83
+    assert (
+        parent["timeout_seconds"]
+        >= sum(row["timeout_seconds"] for row in children)
+        + parent["duration_seconds"]
+        + 600
+    )
+    assert parent["duration_seconds"] == 600

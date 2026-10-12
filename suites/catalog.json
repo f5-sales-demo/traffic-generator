@@ -4764,7 +4764,7 @@
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
       "parallel": true,
-      "timeout_seconds": 7200,
+      "timeout_seconds": 86400,
       "dispatch_contract": {
         "requirements": [
           {
