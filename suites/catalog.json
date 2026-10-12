@@ -21220,7 +21220,12 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422],
+            "response_contract_by_status": {
+              "204": {
+                "text_exact": ""
+              }
+            }
           },
           {
             "id": "change-role",
@@ -21296,7 +21301,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
+            "response_contract_by_status": {
+              "404": {
+                "content_type": "application/json",
+                "json_document_equals": {
+                  "detail": "Not Found"
+                }
+              }
+            }
           },
           {
             "id": "admin-4",
@@ -21308,7 +21321,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
+            "response_contract_by_status": {
+              "404": {
+                "content_type": "application/json",
+                "json_document_equals": {
+                  "detail": "Not Found"
+                }
+              }
+            }
           },
           {
             "id": "admin-5",
@@ -21320,7 +21341,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
+            "response_contract_by_status": {
+              "404": {
+                "content_type": "application/json",
+                "json_document_equals": {
+                  "detail": "Not Found"
+                }
+              }
+            }
           },
           {
             "id": "admin-6",
@@ -21332,7 +21361,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
+            "response_contract_by_status": {
+              "404": {
+                "content_type": "application/json",
+                "json_document_equals": {
+                  "detail": "Not Found"
+                }
+              }
+            }
           },
           {
             "id": "no-auth-0",
@@ -21341,7 +21378,15 @@
             "payload_class": "unauthenticated-function-access",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
+            "response_contract_by_status": {
+              "404": {
+                "content_type": "application/json",
+                "json_document_equals": {
+                  "detail": "Not Found"
+                }
+              }
+            }
           },
           {
             "id": "no-auth-1",
@@ -21350,7 +21395,15 @@
             "payload_class": "unauthenticated-function-access",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
+            "response_contract_by_status": {
+              "404": {
+                "content_type": "application/json",
+                "json_document_equals": {
+                  "detail": "Not Found"
+                }
+              }
+            }
           },
           {
             "id": "no-auth-2",
@@ -28053,7 +28106,13 @@
             "query_values": {
               "q": "admin'--"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": ["<title>Error: SQLITE_ERROR: incomplete input</title>", "SQLITE_ERROR"]
+              }
+            }
           },
           {
             "id": "payload-4-target-1",
@@ -28382,7 +28441,16 @@
             "query_values": {
               "q": "javascript:alert('XSS')"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: SQLITE_ERROR: near &quot;XSS&quot;: syntax error</title>",
+                  "SQLITE_ERROR"
+                ]
+              }
+            }
           },
           {
             "id": "payload-5-target-1",
@@ -29107,7 +29175,7 @@
           {
             "id": "traversal-19",
             "method": "GET",
-            "path": "/dvwa/vulnerabilities/fi",
+            "path": "/dvwa/vulnerabilities/fi/",
             "payload_class": "path-traversal-payloads",
             "minimum_dispatches": 1,
             "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/passwd$",
@@ -29116,7 +29184,7 @@
           {
             "id": "traversal-20",
             "method": "GET",
-            "path": "/dvwa/vulnerabilities/fi",
+            "path": "/dvwa/vulnerabilities/fi/",
             "payload_class": "path-traversal-payloads",
             "minimum_dispatches": 1,
             "query_regex": "^page=\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$",
@@ -29125,7 +29193,7 @@
           {
             "id": "traversal-21",
             "method": "GET",
-            "path": "/dvwa/vulnerabilities/fi",
+            "path": "/dvwa/vulnerabilities/fi/",
             "payload_class": "path-traversal-payloads",
             "minimum_dispatches": 1,
             "query_regex": "^page=\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$",
@@ -29134,7 +29202,7 @@
           {
             "id": "traversal-22",
             "method": "GET",
-            "path": "/dvwa/vulnerabilities/fi",
+            "path": "/dvwa/vulnerabilities/fi/",
             "payload_class": "path-traversal-payloads",
             "minimum_dispatches": 1,
             "query_regex": "^page=\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./etc/passwd$",
@@ -29143,7 +29211,7 @@
           {
             "id": "traversal-23",
             "method": "GET",
-            "path": "/dvwa/vulnerabilities/fi",
+            "path": "/dvwa/vulnerabilities/fi/",
             "payload_class": "path-traversal-payloads",
             "minimum_dispatches": 1,
             "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/shadow$",
@@ -29152,7 +29220,7 @@
           {
             "id": "traversal-24",
             "method": "GET",
-            "path": "/dvwa/vulnerabilities/fi",
+            "path": "/dvwa/vulnerabilities/fi/",
             "payload_class": "path-traversal-payloads",
             "minimum_dispatches": 1,
             "query_regex": "^page=\\.\\./\\.\\./\\.\\./etc/hosts$",
@@ -29161,7 +29229,7 @@
           {
             "id": "traversal-25",
             "method": "GET",
-            "path": "/dvwa/vulnerabilities/fi",
+            "path": "/dvwa/vulnerabilities/fi/",
             "payload_class": "path-traversal-payloads",
             "minimum_dispatches": 1,
             "query_regex": "^page=\\.\\./\\.\\./\\.\\./proc/self/environ$",
@@ -29170,7 +29238,7 @@
           {
             "id": "traversal-26",
             "method": "GET",
-            "path": "/dvwa/vulnerabilities/fi",
+            "path": "/dvwa/vulnerabilities/fi/",
             "payload_class": "path-traversal-payloads",
             "minimum_dispatches": 1,
             "query_regex": "^page=\\.\\./\\.\\./\\.\\./windows/system32/drivers/etc/hosts$",

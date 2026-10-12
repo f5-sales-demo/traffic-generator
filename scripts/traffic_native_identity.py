@@ -434,6 +434,25 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
                 )
             )
         )
+    if (
+        path == "/restaurant/admin/stats/disk"
+        and method == "GET"
+        and status == HTTP_SUCCESS
+    ):
+        return (
+            media == "application/json"
+            and isinstance(document, dict)
+            and set(document) == {"output"}
+            and isinstance(document["output"], str)
+            and document["output"].startswith("Filesystem")
+        )
+    if path == "/restaurant/debug" and method == "GET" and status == HTTP_SUCCESS:
+        return (
+            media == "application/json"
+            and isinstance(document, dict)
+            and {"os_info", "env_vars", "local_paths", "disk_usage", "memory_usage"}
+            <= set(document)
+        )
     if path.startswith("/restaurant/"):
         return (
             document is not None
