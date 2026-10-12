@@ -277,3 +277,88 @@ def test_native_basket_denial_is_exact_single_quoted_response_and_post_route():
         ("/juice-shop/api/BasketItems/", "POST", 401, "text/html", "Forbidden"),
     ):
         assert not native_identity(path, method, status, media, wrong)
+
+
+def test_native_admin_config_version_and_bundle_require_exact_routes_and_shapes():
+    config = json.dumps(
+        {
+            "config": {
+                key: {}
+                for key in [
+                    "application",
+                    "challenges",
+                    "ctf",
+                    "hackingInstructor",
+                    "memories",
+                    "products",
+                    "server",
+                ]
+            }
+        }
+    )
+    assert native_identity(
+        "/juice-shop/rest/admin/application-configuration",
+        "GET",
+        200,
+        "application/json",
+        config,
+    )
+    assert not native_identity(
+        "/juice-shop/rest/admin/application-configuration",
+        "GET",
+        200,
+        "application/json",
+        '{"config":{}}',
+    )
+    assert not native_identity(
+        "/juice-shop/rest/admin/application-configuration",
+        "POST",
+        200,
+        "application/json",
+        config,
+    )
+    assert native_identity(
+        "/juice-shop/rest/admin/application-version",
+        "GET",
+        200,
+        "application/json",
+        '{"version":""}',
+    )
+    assert not native_identity(
+        "/juice-shop/rest/admin/application-version",
+        "GET",
+        200,
+        "application/json",
+        '{"version":null}',
+    )
+    bundle = "application-configuration application-version juice-shop Juice Shop"
+    assert native_identity(
+        "/juice-shop/main.js", "GET", 200, "application/javascript", bundle
+    )
+    assert not native_identity("/juice-shop/main.js", "GET", 200, "text/html", bundle)
+    assert not native_identity(
+        "/juice-shop/main.js",
+        "GET",
+        200,
+        "application/javascript",
+        "console.log('generic')",
+    )
+
+
+def test_sensitive_ftp_denials_have_exact_discovery_contracts():
+    scenario = next(
+        r
+        for r in json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+        if r["id"] == "juice-shop-exploits/07-sensitive-data"
+    )
+    requirements = scenario["dispatch_contract"]["requirements"]
+    for filename in ("eastere.gg", "encrypt.pyc", "suspicious_errors.yml"):
+        row = next(
+            r for r in requirements if r.get("path") == "/juice-shop/ftp/" + filename
+        )
+        assert row["minimum_dispatches"] == 1
+        contract = row["response_contract_by_status"]["403"]
+        body = "<title>Error: Only .md and .pdf files are allowed!</title><h1>OWASP Juice Shop (Express ^4.22.1)</h1><h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+        assert response_content_matches(contract, "text/html", body)
+        assert not response_content_matches(contract, "text/html", "Forbidden")
+        assert not response_content_matches(contract, "application/json", body)

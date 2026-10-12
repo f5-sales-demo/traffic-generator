@@ -425,6 +425,49 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
         and status == HTTP_SUCCESS
     ):
         return media == "application/json" and document == {"user": {}}
+    if path == "/juice-shop/rest/admin/application-configuration":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and media == "application/json"
+            and isinstance(document, dict)
+            and set(document) == {"config"}
+            and isinstance(document["config"], dict)
+            and {
+                "application",
+                "challenges",
+                "ctf",
+                "hackingInstructor",
+                "memories",
+                "products",
+                "server",
+            }
+            <= set(document["config"])
+        )
+    if path == "/juice-shop/rest/admin/application-version":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and media == "application/json"
+            and isinstance(document, dict)
+            and set(document) == {"version"}
+            and isinstance(document["version"], str)
+        )
+    if path == "/juice-shop/main.js":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and media == "application/javascript"
+            and all(
+                term in body
+                for term in (
+                    "application-configuration",
+                    "application-version",
+                    "juice-shop",
+                    "Juice Shop",
+                )
+            )
+        )
     if path == "/juice-shop/api/BasketItems/" and status == HTTP_UNAUTHORIZED:
         return (
             method == "POST"

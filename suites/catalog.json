@@ -9969,7 +9969,10 @@
         "/juice-shop/main.js.map",
         "/juice-shop/metrics",
         "/juice-shop/rest/products/search",
-        "/juice-shop/robots.txt"
+        "/juice-shop/robots.txt",
+        "/juice-shop/ftp/eastere.gg",
+        "/juice-shop/ftp/encrypt.pyc",
+        "/juice-shop/ftp/suspicious_errors.yml"
       ],
       "expected_outcome": "meaningful simulation launch; mitigation permitted; fixture, tool, transport failures fail",
       "budget": "http",
@@ -10099,6 +10102,66 @@
             "payload_class": "sensitive-file-discovery",
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+          },
+          {
+            "id": "native-ftp-denial-0",
+            "method": "GET",
+            "path": "/juice-shop/ftp/eastere.gg",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1,
+            "expected_statuses": [
+              403
+            ],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Only .md and .pdf files are allowed!</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+                ]
+              }
+            }
+          },
+          {
+            "id": "native-ftp-denial-1",
+            "method": "GET",
+            "path": "/juice-shop/ftp/encrypt.pyc",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1,
+            "expected_statuses": [
+              403
+            ],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Only .md and .pdf files are allowed!</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+                ]
+              }
+            }
+          },
+          {
+            "id": "native-ftp-denial-2",
+            "method": "GET",
+            "path": "/juice-shop/ftp/suspicious_errors.yml",
+            "payload_class": "sensitive-file-discovery",
+            "minimum_dispatches": 1,
+            "expected_statuses": [
+              403
+            ],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Only .md and .pdf files are allowed!</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+                ]
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
