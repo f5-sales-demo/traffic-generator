@@ -62,7 +62,7 @@ def test_native_hydra_and_medusa_keep_payloads_and_add_child_headers():
         + r":H=X-TGen-Child\: child-opaque:F=Invalid"
     )
     assert original[-1].endswith("application/json:F=Invalid")
-    medusa = ["-M", "http", "-m", "DIR:/dvwa/login.php", "-n", "443", "-s"]
+    medusa = ["-M", "http", "-m", "DIR:dvwa/login.php", "-n", "443", "-s"]
     assert attributed_arguments("medusa", medusa, "child-opaque") == [
         *medusa,
         "-m",

@@ -15320,7 +15320,7 @@
           {
             "id": "medusa-dvwa",
             "tool": "medusa",
-            "argument_regex": "-M http -m DIR:/dvwa/login\\.php -n 443 -s",
+            "argument_regex": "-M http -m DIR:dvwa/login\\.php -n 443 -s",
             "minimum": 1
           }
         ]
