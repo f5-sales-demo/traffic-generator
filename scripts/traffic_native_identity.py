@@ -215,6 +215,37 @@ def auxiliary_identity(
     return False
 
 
+def review_update_identity(document: object) -> bool:
+    """Require native MarsDB update count and unchanged review identities."""
+    if not isinstance(document, dict) or set(document) != {
+        "modified",
+        "original",
+        "updated",
+    }:
+        return False
+    count = document["modified"]
+    before, after = document["original"], document["updated"]
+    if (
+        isinstance(count, bool)
+        or not isinstance(count, int)
+        or count < 0
+        or not isinstance(before, list)
+        or not isinstance(after, list)
+    ):
+        return False
+    if len(before) != count or len(after) != count:
+        return False
+    return all(
+        isinstance(old, dict)
+        and isinstance(new, dict)
+        and {"_id", "product", "message", "author"} <= set(old)
+        and {"_id", "product", "message", "author"} <= set(new)
+        and all(old[key] == new[key] for key in ("_id", "product", "author"))
+        and isinstance(new["message"], str)
+        for old, new in zip(before, after, strict=True)
+    )
+
+
 def declared_support_identity(
     path: str, method: str, status: int, media: str, body: str, document: object
 ) -> bool | None:
@@ -425,6 +456,12 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
         and status == HTTP_SUCCESS
     ):
         return media == "application/json" and document == {"user": {}}
+    if path == "/juice-shop/rest/products/reviews" and status == HTTP_SUCCESS:
+        return (
+            method == "PATCH"
+            and media == "application/json"
+            and review_update_identity(document)
+        )
     if path == "/juice-shop/rest/admin/application-configuration":
         return (
             method == "GET"

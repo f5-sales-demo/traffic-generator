@@ -362,3 +362,22 @@ def test_sensitive_ftp_denials_have_exact_discovery_contracts():
         assert response_content_matches(contract, "text/html", body)
         assert not response_content_matches(contract, "text/html", "Forbidden")
         assert not response_content_matches(contract, "application/json", body)
+
+
+def test_native_review_update_requires_count_and_matching_before_after_rows():
+    before = {
+        "_id": "synthetic",
+        "product": "1",
+        "message": "before",
+        "author": "native@example.com",
+    }
+    after = {**before, "message": "tgen-" + "a" * 32 + ":updated"}
+    doc = {"modified": 1, "original": [before], "updated": [after]}
+    path = "/juice-shop/rest/products/reviews"
+    assert native_identity(path, "PATCH", 200, "application/json", json.dumps(doc))
+    assert not native_identity(path, "GET", 200, "application/json", json.dumps(doc))
+    assert not native_identity(path, "PATCH", 200, "application/json", '{"modified":1}')
+    doc["modified"] = 2
+    assert not native_identity(path, "PATCH", 200, "application/json", json.dumps(doc))
+    doc["modified"] = True
+    assert not native_identity(path, "PATCH", 200, "application/json", json.dumps(doc))
