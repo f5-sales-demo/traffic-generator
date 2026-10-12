@@ -26,7 +26,11 @@ from traffic_dispatch import (
     match_requirements,
     response_content_matches,
 )
-from traffic_native_identity import HTTP_FORBIDDEN, native_identity
+from traffic_native_identity import (
+    HTTP_FORBIDDEN,
+    native_binary_identity,
+    native_identity,
+)
 
 HTTPS_PORT = 443
 
@@ -356,6 +360,12 @@ class Budget:
             ).hexdigest()
             event["native_response_identity"] = native_identity(
                 event["path"], event["method"], status, content_type, body
+            ) or native_binary_identity(
+                event["path"],
+                event["method"],
+                status,
+                content_type,
+                flow.response.content or b"",
             )
             if (
                 current.get("functional_contract", {}).get("verifier")

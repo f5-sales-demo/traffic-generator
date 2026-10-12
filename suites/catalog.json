@@ -11158,7 +11158,17 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /api/Addresses</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /api/Addresses</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-146",
@@ -11167,7 +11177,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /api/Addresses</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /api/Addresses</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-147",
@@ -11178,7 +11198,17 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /api/Addresses/1</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /api/Addresses/1</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-147",
@@ -11187,7 +11217,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /api/Addresses/1</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /api/Addresses/1</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-148",
@@ -11258,7 +11298,15 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 403],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "application/json",
+                "json_document_equals": {
+                  "error": "Malicious activity detected"
+                }
+              }
+            }
           },
           {
             "id": "no-auth-151",
@@ -11267,7 +11315,15 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 403],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "application/json",
+                "json_document_equals": {
+                  "error": "Malicious activity detected"
+                }
+              }
+            }
           },
           {
             "id": "auth-152",
@@ -11418,7 +11474,17 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /api/Wallets</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /api/Wallets</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-159",
@@ -11427,7 +11493,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /api/Wallets</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /api/Wallets</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-160",
@@ -11438,7 +11514,17 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /api/Memories</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /api/Memories</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-160",
@@ -11447,7 +11533,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /api/Memories</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /api/Memories</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-168",
@@ -11708,7 +11804,17 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /rest/products/reviews</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /rest/products/reviews</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-180",
@@ -11717,7 +11823,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /rest/products/reviews</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /rest/products/reviews</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-181",
@@ -11829,7 +11945,17 @@
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
             "body_exact": "{\"action\":\"query\",\"query\":\"test\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /rest/chatbot/respond</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /rest/chatbot/respond</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-186",
@@ -11839,7 +11965,17 @@
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
             "body_exact": "{\"action\":\"query\",\"query\":\"test\"}",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /rest/chatbot/respond</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /rest/chatbot/respond</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-187",
@@ -11850,7 +11986,17 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /rest/chatbot/status</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /rest/chatbot/status</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-187",
@@ -11859,7 +12005,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /rest/chatbot/status</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /rest/chatbot/status</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-188",

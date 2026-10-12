@@ -461,3 +461,25 @@ def test_preserved_missing_captcha_and_where_errors_require_exact_native_titles(
         assert not response_content_matches(
             contract, "text/html", body.replace(title, "Unexpected error")
         )
+
+
+def test_quantity_native_denials_have_exact_json_contracts():
+    scenario = next(
+        r
+        for r in json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+        if r["id"] == "juice-shop-exploits/11-api-enumeration"
+    )
+    for identity in ("auth-151", "no-auth-151"):
+        row = next(
+            r
+            for r in scenario["dispatch_contract"]["requirements"]
+            if r["id"] == identity
+        )
+        contract = row["response_contract_by_status"]["403"]
+        assert response_content_matches(
+            contract, "application/json", '{"error":"Malicious activity detected"}'
+        )
+        assert not response_content_matches(
+            contract, "application/json", '{"error":"Other"}'
+        )
+        assert not response_content_matches(contract, "text/html", "Forbidden")

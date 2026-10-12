@@ -1,5 +1,6 @@
 """Application-specific native response identity; no inferred exploit or mitigation success."""
 
+import hashlib
 import json
 import re
 
@@ -12,6 +13,29 @@ HTTP_NOT_FOUND = 404
 HTTP_TOO_LARGE = 413
 HTTP_ERROR_START = 400
 NATIVE_MISSING_ORDER_STATUS = 500
+
+
+def native_binary_identity(
+    path: str, method: str, status: int | None, media: str, content: bytes
+) -> bool:
+    """Bind preserved native assets to the exact immutable upstream image bytes."""
+    assets = {
+        "/juice-shop/assets/public/images/padding/1px.png": (
+            "image/png",
+            "bcc63a01281cb11270a7cb61725ee6a09fa7108d4b6f068fe75336f65bf67e9e",
+        ),
+        "/juice-shop/video": (
+            "video/mp4",
+            "3bc057de4f5e600f24709fc39a9dfd5ee3e5df61d7c9787e60a456b55aba5b7f",
+        ),
+    }
+    return (
+        path in assets
+        and method == "GET"
+        and status == HTTP_SUCCESS
+        and media.partition(";")[0] == assets[path][0]
+        and hashlib.sha256(content).hexdigest() == assets[path][1]
+    )
 
 
 def missing_order_identity(
@@ -247,6 +271,77 @@ def review_update_identity(document: object) -> bool:
     )
 
 
+def juice_discovery_identity(
+    path: str, method: str, status: int, media: str, body: str
+) -> bool | None:
+    """Recognize exact native discovery routes and protocol response contracts."""
+    plain = {
+        (
+            "/juice-shop/rest/user/login",
+            "POST",
+            HTTP_UNAUTHORIZED,
+        ): "Invalid email or password.",
+        (
+            "/juice-shop/rest/user/change-password",
+            "GET",
+            HTTP_UNAUTHORIZED,
+        ): "Password cannot be empty.",
+        (
+            "/juice-shop/rest/user/reset-password",
+            "POST",
+            HTTP_UNAUTHORIZED,
+        ): "Wrong answer to security question.",
+        (
+            "/juice-shop/rest/continue-code/apply/test",
+            "PUT",
+            HTTP_NOT_FOUND,
+        ): "Invalid continue code.",
+        (
+            "/juice-shop/robots.txt",
+            "GET",
+            HTTP_SUCCESS,
+        ): "User-agent: *\nDisallow: /ftp",
+    }
+    key = (path, method, status)
+    if key in plain:
+        return (
+            media == ("text/plain" if status == HTTP_SUCCESS else "text/html")
+            and body == plain[key]
+        )
+    if method != "GET" or status != HTTP_SUCCESS:
+        return None
+    if path in {
+        "/juice-shop/ftp",
+        "/juice-shop/ftp/",
+        "/juice-shop/encryptionkeys",
+        "/juice-shop/encryptionkeys/",
+    }:
+        route = path.removeprefix("/juice-shop")
+        return (
+            media == "text/html"
+            and "<title>listing directory " + route + "</title>" in body
+            and ("acquisitions.md" if "ftp" in path else "jwt.pub") in body
+        )
+    if path == "/juice-shop/api-docs/":
+        return media == "text/html" and all(
+            term in body
+            for term in (
+                "<title>Swagger UI</title>",
+                "swagger-ui-bundle.js",
+                "swagger-ui-init.js",
+            )
+        )
+    if path == "/juice-shop/metrics":
+        return (
+            media == "text/plain"
+            and "# HELP juiceshop_" in body
+            and "# TYPE juiceshop_" in body
+            and re.search(r"(?m)^juiceshop_[a-zA-Z0-9_:]+(?:\{[^\n]*\})? [0-9]", body)
+            is not None
+        )
+    return None
+
+
 def declared_support_identity(
     path: str, method: str, status: int, media: str, body: str, document: object
 ) -> bool | None:
@@ -313,6 +408,9 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
     if status is None:
         return False
     media = content_type.partition(";")[0]
+    discovery = juice_discovery_identity(path, method, status, media, body)
+    if discovery is not None:
+        return discovery
     if method == "CONNECT":
         return (
             status == HTTP_BAD_REQUEST
