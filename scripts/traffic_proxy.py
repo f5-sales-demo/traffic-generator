@@ -132,10 +132,23 @@ class Budget:
             with opener.open(request, timeout=10) as response:
                 response.read()
         except HTTPError as error:
-            if error.code in (403, 429):
-                self.counts["attack_mitigated"] += 1
-        except (URLError, OSError):
-            self.counts["attack_transport_failures"] += 1
+            try:
+                with error:
+                    error.read()
+                if error.code in (403, 429):
+                    self.counts["attack_mitigated"] += 1
+            except (URLError, OSError) as failure:
+                self.filler_failure(failure)
+        except (URLError, OSError) as failure:
+            self.filler_failure(failure)
+
+    def filler_failure(self, failure: OSError) -> None:
+        """Retain a bounded error category without private addresses or response content."""
+        self.counts["attack_transport_failures"] += 1
+        cause = failure.reason if isinstance(failure, URLError) else failure
+        category = "filler:" + type(cause).__name__
+        categories = self.counts["error_categories"]
+        categories[category] = categories.get(category, 0) + 1
 
     def current_scenario(self) -> str:
         """Join requests to the supervised active scenario with a bounded synthetic identity."""
