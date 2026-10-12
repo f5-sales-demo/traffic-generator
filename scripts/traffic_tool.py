@@ -49,6 +49,18 @@ def attributed_arguments(tool: str, arguments: list[str], marker: str) -> list[s
             result[existing] += "\n" + value
         else:
             result.append("--headers=" + value)
+    elif tool == "hydra":
+        for index, argument in enumerate(result):
+            if argument in {
+                "http-get-form",
+                "http-post-form",
+                "https-get-form",
+                "https-post-form",
+            }:
+                result[index + 1] += ":H=X-TGen-Child\\: " + marker
+                break
+    elif tool == "medusa":
+        result.extend(["-m", "CUSTOM-HEADER:" + value])
     elif tool in ("curl", "ffuf", "dalfox"):
         result.extend(["-H", value])
     elif tool == "arjun":

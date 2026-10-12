@@ -99,7 +99,10 @@ def dvwa_identity(path: str, method: str, status: int, media: str, body: str) ->
     api = dvwa_api_identity(path, method, status, media, body)
     if api is not None:
         return api
-    if path == "/dvwa/vulnerabilities/" and status == HTTP_FORBIDDEN:
+    if (
+        path in {"/dvwa/vulnerabilities/", "/dvwa/config/", "/dvwa/docs/"}
+        and status == HTTP_FORBIDDEN
+    ):
         return (
             method == "GET"
             and media == "text/html"

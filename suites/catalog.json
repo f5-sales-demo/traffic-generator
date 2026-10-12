@@ -14596,27 +14596,21 @@
       "tool_contract": {
         "requirements": [
           {
-            "id": "arjun-invocation",
-            "tool": "arjun",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
-            "minimum": 1
-          },
-          {
             "id": "ffuf-invocation",
             "tool": "ffuf",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
-            "minimum": 1
-          },
-          {
-            "id": "gobuster-invocation",
-            "tool": "gobuster",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "argument_regex": "-u https?://.+/FUZZ -w ",
             "minimum": 1
           },
           {
             "id": "nikto-invocation",
             "tool": "nikto",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "argument_regex": "-h https?://",
+            "minimum": 1
+          },
+          {
+            "id": "whatweb-invocation",
+            "tool": "whatweb",
+            "argument_regex": "--color=never -q https?://",
             "minimum": 1
           }
         ]
@@ -14819,9 +14813,9 @@
       "tool_contract": {
         "requirements": [
           {
-            "id": "sqlmap-invocation",
-            "tool": "sqlmap",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "id": "hydra-dvwa",
+            "tool": "hydra",
+            "argument_regex": "https-get-form /dvwa/vulnerabilities/brute/:username=\\^USER\\^&password=\\^PASS\\^",
             "minimum": 1
           }
         ]
@@ -15035,7 +15029,7 @@
       "suite": "mitre-attack",
       "entrypoint": "suites/mitre-attack/04-credential-access.sh",
       "kind": "shell",
-      "dependencies": ["bash", "curl", "hashcat", "hydra", "john", "jq", "sqlmap"],
+      "dependencies": ["bash", "curl", "hydra", "jq", "medusa"],
       "after": ["mitre-attack/03-execution"],
       "target_paths": [
         "/dvwa/",
@@ -15077,7 +15071,7 @@
             "payload_class": "medusa-login-probe",
             "minimum_dispatches": 1,
             "header_regex": {
-              "user-agent": "(?i)medusa"
+              "user-agent": "^Medusa/2\\.2$"
             },
             "expected_statuses": [200, 302]
           },
@@ -15258,9 +15252,15 @@
       "tool_contract": {
         "requirements": [
           {
-            "id": "sqlmap-invocation",
-            "tool": "sqlmap",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "id": "hydra-juice",
+            "tool": "hydra",
+            "argument_regex": "https-post-form /juice-shop/rest/user/login:.*\\^PASS\\^",
+            "minimum": 1
+          },
+          {
+            "id": "medusa-dvwa",
+            "tool": "medusa",
+            "argument_regex": "-M http -m DIR:/dvwa/login\\.php -n 443 -s",
             "minimum": 1
           }
         ]
@@ -15376,7 +15376,13 @@
             "path": "/dvwa/config/",
             "payload_class": "application-and-file-discovery",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 403, 404, 405, 422],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_exact": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+              }
+            }
           },
           {
             "id": "discovery-8",
@@ -15384,7 +15390,13 @@
             "path": "/dvwa/docs/",
             "payload_class": "application-and-file-discovery",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 403, 404, 405, 422],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_exact": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+              }
+            }
           },
           {
             "id": "discovery-9",
@@ -15500,22 +15512,6 @@
           }
         ],
         "reject_unmatched_errors": true
-      },
-      "tool_contract": {
-        "requirements": [
-          {
-            "id": "arjun-invocation",
-            "tool": "arjun",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
-            "minimum": 1
-          },
-          {
-            "id": "ffuf-invocation",
-            "tool": "ffuf",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
-            "minimum": 1
-          }
-        ]
       },
       "fixture_refresh": [],
       "functional_contract": {
@@ -15711,16 +15707,6 @@
           }
         ],
         "reject_unmatched_errors": true
-      },
-      "tool_contract": {
-        "requirements": [
-          {
-            "id": "sqlmap-invocation",
-            "tool": "sqlmap",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
-            "minimum": 1
-          }
-        ]
       },
       "fixture_refresh": [],
       "adapter": "native-family-journal",
