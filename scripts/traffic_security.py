@@ -259,6 +259,17 @@ def waf_attribution(
                 )
                 or (
                     not signatures
+                    and response.get("method") == "TRACE"
+                    and "default_detection_settings" in firewall["spec"]
+                    and any(
+                        violation.get("name") == "VIOL_METHOD"
+                        and violation.get("context") == "request"
+                        and violation.get("state") == "Enabled"
+                        for violation in event.get("violations", [])
+                    )
+                )
+                or (
+                    not signatures
                     and "default_bot_setting" in firewall["spec"]
                     and event.get("bot_info", {}).get("classification") == "malicious"
                     and isinstance(event.get("bot_info", {}).get("name"), str)

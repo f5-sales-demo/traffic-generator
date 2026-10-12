@@ -405,6 +405,12 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             isinstance(document, (dict, list))
             and (isinstance(document, list) or bool(set(document) & {"data", "errors"}))
         ) or (media == "text/html" and ("GraphQL" in body or "Paste" in body))
+    if (
+        path == "/juice-shop/rest/user/whoami"
+        and method == "GET"
+        and status == HTTP_SUCCESS
+    ):
+        return media == "application/json" and document == {"user": {}}
     if path.startswith("/juice-shop/"):
         return (
             media == "text/html"

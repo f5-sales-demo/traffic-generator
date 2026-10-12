@@ -559,6 +559,19 @@ def test_waf_signature_requires_exact_request_and_enabled_signature(tmp_path):
     event["bot_info"]["classification"] = "unknown"
     (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
     assert not waf_attribution(response, result, tmp_path, [])
+    response["method"] = event["method"] = access["method"] = "TRACE"
+    evidence["firewall"]["spec"]["default_detection_settings"] = {}
+    event["violations"] = [
+        {"name": "VIOL_METHOD", "context": "request", "state": "Enabled"}
+    ]
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert waf_attribution(response, result, tmp_path, [])
+    assert not waf_attribution(response, result, tmp_path, ["200003915"])
+    event["violations"][0]["state"] = "Disabled"
+    (tmp_path / "control-attribution.json").write_text(json.dumps(evidence))
+    assert not waf_attribution(response, result, tmp_path, [])
+    event.pop("violations")
+    response["method"] = event["method"] = access["method"] = "GET"
     event["bot_info"]["classification"] = "malicious"
     event["signatures"] = [{"id": "200003915", "state": "Enabled"}]
     event["req_id"] = "foreign-request"

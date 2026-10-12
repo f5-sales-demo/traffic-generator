@@ -3,7 +3,11 @@
 import json
 from pathlib import Path
 
-from traffic_dispatch import response_content_matches, verify_responses
+from traffic_dispatch import (
+    match_requirements,
+    response_content_matches,
+    verify_responses,
+)
 from traffic_native_identity import native_identity
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -105,3 +109,38 @@ def test_traversal_query_paths_preserve_native_directory_slash():
     ]
     assert len(requirements) == 19
     assert all(row["path"] == "/dvwa/vulnerabilities/fi/" for row in requirements)
+
+
+def test_csrf_actor_body_matches_only_marker_owned_synthetic_identity():
+    scenarios = json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    scenario = next(row for row in scenarios if row["id"] == "web-app-attacks/09-csrf")
+    requirement = next(
+        row
+        for row in scenario["dispatch_contract"]["requirements"]
+        if row["id"] == "csrf-7"
+    )
+    request: dict = {
+        "kind": "scenario",
+        "method": "POST",
+        "path": "/juice-shop/api/Users",
+        "body": '{"email":"tgen-'
+        + "a" * 32
+        + '@example.com","password":"Test1234","passwordRepeat":"Test1234"}',
+        "headers": {
+            "content-type": "application/json",
+            "origin": "http://evil.example",
+        },
+    }
+    assert match_requirements({"requirements": [requirement]}, request) == ["csrf-7"]
+    request["body"] = request["body"].replace("tgen-", "foreign-")
+    assert not match_requirements({"requirements": [requirement]}, request)
+    assert native_identity(
+        "/juice-shop/rest/user/whoami", "GET", 200, "application/json", '{"user":{}}'
+    )
+    assert not native_identity(
+        "/juice-shop/rest/user/whoami",
+        "GET",
+        200,
+        "application/json",
+        '{"unrelated":{}}',
+    )

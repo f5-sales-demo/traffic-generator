@@ -30565,7 +30565,7 @@
             "path": "/juice-shop/api/Users",
             "payload_class": "csrf-request",
             "minimum_dispatches": 1,
-            "body_exact": "{\"email\":\"csrf@example.com\",\"password\":\"Test1234\",\"passwordRepeat\":\"Test1234\"}",
+            "body_regex": "^\\{\"email\":\"tgen-[a-f0-9]{32}@example\\.com\",\"password\":\"Test1234\",\"passwordRepeat\":\"Test1234\"\\}$",
             "headers": {
               "content-type": "application/json",
               "origin": "http://evil.example"
