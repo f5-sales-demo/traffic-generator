@@ -401,3 +401,24 @@ def test_profile_image_native_redirect_requires_exact_route_status_media_and_bod
         ),
     ):
         assert not native_identity(path, method, status, media, wrong)
+
+
+def test_every_juice_workload_journals_native_challenge_and_account_changes():
+    scenarios = json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    for scenario in scenarios:
+        if scenario["suite"] == "juice-shop-exploits":
+            assert scenario["adapter"] == "native-family-journal"
+            assert scenario["fixture_contract"]["family_restore"] == "juice-shop"
+            assert (
+                scenario["functional_contract"]["mutation_policy"]
+                == "journaled-restoration"
+            )
+            assert (
+                "family_restoration"
+                in scenario["functional_contract"]["restoration_fields"]
+            )
+    for name in ("06-admin-access.sh", "10-jwt-attacks.sh"):
+        source = (ROOT / "suites/juice-shop-exploits" / name).read_text()
+        assert "TGEN_FAMILY_MARKER:?" in source
+        assert "${MARKER}@example.com" in source
+        assert "${RAND_ID}@test.com" not in source

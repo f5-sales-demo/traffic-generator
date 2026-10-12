@@ -9130,10 +9130,13 @@
         "reject_unmatched_errors": true
       },
       "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": { "family_restore": "juice-shop" },
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
-        "mutation_policy": "read-only"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
       }
     },
     {
@@ -9340,10 +9343,13 @@
         "reject_unmatched_errors": true
       },
       "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": { "family_restore": "juice-shop" },
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
-        "mutation_policy": "read-only"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
       }
     },
     {
@@ -9940,10 +9946,13 @@
         "reject_unmatched_errors": true
       },
       "fixture_refresh": ["juice"],
+      "adapter": "native-family-journal",
+      "fixture_contract": { "family_restore": "juice-shop" },
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
-        "mutation_policy": "read-only"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
       }
     },
     {
@@ -10161,10 +10170,13 @@
         "reject_unmatched_errors": true
       },
       "fixture_refresh": [],
+      "adapter": "native-family-journal",
+      "fixture_contract": { "family_restore": "juice-shop" },
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
-        "mutation_policy": "read-only"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
       }
     },
     {
@@ -10750,10 +10762,13 @@
         "reject_unmatched_errors": true
       },
       "fixture_refresh": ["juice"],
+      "adapter": "native-family-journal",
+      "fixture_contract": { "family_restore": "juice-shop" },
       "functional_contract": {
         "verifier": "composed-native",
-        "behavior": "All declared native requests have application-specific response identity and complete expected protocol outcomes; scanner phases, tool provenance and cleanup remain required",
-        "mutation_policy": "read-only"
+        "behavior": "Preserved native Juice Shop payloads require application protocol content or exact protection attribution; process-local review and challenge changes plus exact SQL fixtures require observed scoped restoration",
+        "mutation_policy": "journaled-restoration",
+        "restoration_fields": ["family_restoration"]
       }
     },
     {
