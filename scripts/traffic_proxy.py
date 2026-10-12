@@ -26,6 +26,7 @@ from traffic_dispatch import (
     match_requirements,
     response_content_matches,
 )
+from traffic_dns_route import RoutedHTTPSHandler
 from traffic_native_identity import (
     HTTP_FORBIDDEN,
     native_binary_identity,
@@ -121,7 +122,13 @@ class Budget:
 
     def filler(self, host: str) -> None:
         """Use spare attack slots for an explicitly identified harmless SQLi simulation."""
-        opener = build_opener(ProxyHandler({}), HTTPSHandler(context=self.tls_context))
+        routes = json.loads(os.environ.get("TGEN_DNS_ROUTES", "{}"))
+        handler = (
+            RoutedHTTPSHandler(routes, self.tls_context)
+            if routes
+            else HTTPSHandler(context=self.tls_context)
+        )
+        opener = build_opener(ProxyHandler({}), handler)
         request = Request(
             "https://" + host + "/httpbin/get?tgen_synthetic=%27%20OR%201%3D1--",
             headers={

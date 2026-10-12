@@ -20,6 +20,7 @@ from types import SimpleNamespace
 from typing import Self
 
 from traffic_common import Pacer, atomic_json, terminate
+from traffic_dns_route import bind_https_route
 from traffic_order_host import host_jobs
 from traffic_tool import native_binary
 from traffic_workload import content_identity
@@ -238,15 +239,19 @@ class NetworkBoundary:
             self.state.netns_dir.mkdir(mode=0o700, parents=True)
             hosts = "127.0.0.1 localhost\n"
 
+            self.state.dns_routes = {}
             for domain in self.config["domains"]:
                 addresses = socket.getaddrinfo(
                     domain, 443, socket.AF_INET, socket.SOCK_STREAM
                 )
-                hosts += str(addresses[0][4][0]) + " " + domain + "\n"
+                self.state.dns_routes[domain] = str(addresses[0][4][0])
+                hosts += self.state.dns_routes[domain] + " " + domain + "\n"
+            atomic_json(self.runtime / "dns-routes.json", self.state.dns_routes)
             (self.state.netns_dir / "hosts").write_text(hosts)
             environment = dict(
                 os.environ,
                 TGEN_DOMAINS=json.dumps(self.config["domains"]),
+                TGEN_DNS_ROUTES=json.dumps(self.state.dns_routes),
                 TGEN_PROXY_METRICS=str(self.state.proxy_metrics),
                 PYTHONPATH=str(self.root / "scripts"),
             )
@@ -330,6 +335,8 @@ class NetworkBoundary:
             connection = http.client.HTTPSConnection(
                 domain, context=self.state.tls_context, timeout=10
             )
+            if domain in getattr(self.state, "dns_routes", {}):
+                bind_https_route(connection, self.state.dns_routes[domain])
             self.state.local.connections[domain] = connection
             self.state.local.connection_age[domain] = time.monotonic()
         self.state.pacers[domain].acquire()
