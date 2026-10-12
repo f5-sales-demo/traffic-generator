@@ -262,3 +262,18 @@ def test_unicode_traversal_native_denial_is_exact_and_declared_on_one_route():
     assert verify_responses({"requirements": [requirement]}, [event])["passed"]
     event["response_assertions"] = {"traversal-13": False}
     assert not verify_responses({"requirements": [requirement]}, [event])["passed"]
+
+
+def test_native_basket_denial_is_exact_single_quoted_response_and_post_route():
+    body = "{'error' : 'Invalid BasketId'}"
+    assert native_identity(
+        "/juice-shop/api/BasketItems/", "POST", 401, "text/html; charset=utf-8", body
+    )
+    for path, method, status, media, wrong in (
+        ("/juice-shop/api/Users/", "POST", 401, "text/html", body),
+        ("/juice-shop/api/BasketItems/", "GET", 401, "text/html", body),
+        ("/juice-shop/api/BasketItems/", "POST", 403, "text/html", body),
+        ("/juice-shop/api/BasketItems/", "POST", 401, "application/json", body),
+        ("/juice-shop/api/BasketItems/", "POST", 401, "text/html", "Forbidden"),
+    ):
+        assert not native_identity(path, method, status, media, wrong)

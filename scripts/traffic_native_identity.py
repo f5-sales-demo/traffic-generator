@@ -425,6 +425,12 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
         and status == HTTP_SUCCESS
     ):
         return media == "application/json" and document == {"user": {}}
+    if path == "/juice-shop/api/BasketItems/" and status == HTTP_UNAUTHORIZED:
+        return (
+            method == "POST"
+            and media == "text/html"
+            and body == "{'error' : 'Invalid BasketId'}"
+        )
     if path.startswith("/juice-shop/"):
         return (
             media == "text/html"
