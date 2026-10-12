@@ -213,7 +213,9 @@ MANAGED_ARC_COHORT = frozenset(
         "origin-server",
         "starlight-mega-menu",
         "statistics",
+        "gitops",
         "certificate-management",
+        "blindfold-contract",
         "traffic-generator",
         "vscode-xcsh",
         "was",
@@ -223,6 +225,20 @@ MANAGED_ARC_COHORT = frozenset(
     )
 )
 ARC_SHARED_CONTRACTS = (
+    (
+        frozenset({"f5-sales-demo/gitops"}),
+        {
+            "socketless": {"label": "managed-socketless", "profile": "ubuntu-24.04"},
+            "container-build": {
+                "label": "managed-container-build",
+                "profile": "container-build",
+            },
+            "terraform": {
+                "label": "gitops-terraform",
+                "attestation": "gitops-terraform",
+            },
+        },
+    ),
     (
         DOCS_ARC_COHORT,
         {
@@ -319,6 +335,7 @@ PROVIDER_CANDIDATE_SCALE_SETS = {
 }
 RESERVED_ARC_LABELS = frozenset(
     {
+        "gitops-terraform",
         "api-specs-enriched-compute",
         "docs-container-build",
         "docs-socketless",
@@ -408,7 +425,26 @@ def workflow_on(value):
 
 def benchmark_trust_guard_is_allowed(repository, relative, job_id, route_label, guard):
     """Require the generic same-repository guard for direct restricted routes."""
-    del repository, relative, job_id, route_label
+    if route_label == "gitops-terraform":
+        expected_events = {
+            (".github/workflows/terraform-deploy.yml", "deploy"): "push",
+            (".github/workflows/terraform-cleanup.yml", "cleanup"): "delete",
+        }
+        event = expected_events.get((relative, job_id))
+        expected_guard = (
+            "github.repository == 'f5-sales-demo/gitops' && "
+            f"(github.event_name == '{event}' || github.event_name == 'workflow_dispatch')"
+        )
+        if event == "push":
+            create_guard = expected_guard.replace(
+                "github.event_name == 'push' ||",
+                "github.event_name == 'push' || (github.event_name == 'create' && github.event.ref_type == 'branch') ||",
+            )
+            # Keep the current push/manual deployment valid during fleet rollout.
+            if guard == create_guard:
+                guard = expected_guard
+        identity_matches = repository == "f5-sales-demo/gitops" and event is not None
+        return identity_matches and guard == expected_guard
     return guard == BENCHMARK_TRUST_GUARD
 
 

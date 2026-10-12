@@ -124,6 +124,16 @@
       "memory_limit_bytes": 32212254720,
       "docker_socket": false,
       "repositories": ["f5-sales-demo/xcsh"]
+    },
+    "gitops-terraform": {
+      "label": "gitops-terraform",
+      "runner_profile": "terraform",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:1fadcbbdaf80f69c81b028b14cd1238d9a4631d95e035dbfd810a5487cd3e1ca",
+      "vm_size": "m6a.2xlarge",
+      "cpu_limit": 2,
+      "memory_limit_bytes": 4294967296,
+      "docker_socket": false,
+      "repositories": ["f5-sales-demo/gitops"]
     }
   },
   "restricted_routes": {
@@ -228,6 +238,18 @@
         "repository": "f5-sales-demo/xcsh",
         "workflow": ".github/workflows/compute-benchmark.yml",
         "job": "workload"
+      }
+    ],
+    "gitops-terraform": [
+      {
+        "repository": "f5-sales-demo/gitops",
+        "workflow": ".github/workflows/terraform-deploy.yml",
+        "job": "deploy"
+      },
+      {
+        "repository": "f5-sales-demo/gitops",
+        "workflow": ".github/workflows/terraform-cleanup.yml",
+        "job": "cleanup"
       }
     ]
   },
@@ -754,6 +776,14 @@
         }
       }
     },
+    "f5-sales-demo/blindfold-contract": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
     "f5-sales-demo/certificate-management": {
       ".github/workflows/workflow-security-audit.yml": {
         "workflow-security-audit": {
@@ -869,6 +899,14 @@
       }
     },
     "f5-sales-demo/custom-responses": {
+      ".github/workflows/workflow-security-audit.yml": {
+        "workflow-security-audit": {
+          "runs_on": "ubuntu-latest",
+          "reason": "read-only pull request workflow security audit"
+        }
+      }
+    },
+    "f5-sales-demo/gitops": {
       ".github/workflows/workflow-security-audit.yml": {
         "workflow-security-audit": {
           "runs_on": "ubuntu-latest",
@@ -1274,6 +1312,20 @@
         }
       }
     },
+    "f5-sales-demo/blindfold-contract": {
+      "runner": {
+        "arc_scale_sets": {
+          "socketless": {
+            "label": "managed-socketless",
+            "profile": "ubuntu-24.04"
+          },
+          "container-build": {
+            "label": "managed-container-build",
+            "profile": "container-build"
+          }
+        }
+      }
+    },
     "f5-sales-demo/certificate-management": {
       "runner": {
         "arc_scale_sets": {
@@ -1640,6 +1692,24 @@
           "container-build": {
             "label": "managed-container-build",
             "profile": "container-build"
+          }
+        }
+      }
+    },
+    "f5-sales-demo/gitops": {
+      "runner": {
+        "arc_scale_sets": {
+          "socketless": {
+            "label": "managed-socketless",
+            "profile": "ubuntu-24.04"
+          },
+          "container-build": {
+            "label": "managed-container-build",
+            "profile": "container-build"
+          },
+          "terraform": {
+            "label": "gitops-terraform",
+            "attestation": "gitops-terraform"
           }
         }
       }

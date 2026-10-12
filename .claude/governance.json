@@ -85,7 +85,8 @@
       ".github/workflows/super-linter.yml"
     ],
     "starlight-mega-menu": ["README.md"],
-    "traffic-generator": ["README.md"]
+    "traffic-generator": ["README.md"],
+    "blindfold-contract": ["README.md"]
   },
   "protected_files": [
     ".github/workflows/github-pages-config-sources.yml",
@@ -194,6 +195,7 @@
       "administration": "content",
       "api-protection": "content",
       "api-specs": "developer",
+      "blindfold-contract": "developer",
       "api-specs-enriched": "developer",
       "apt-repo": "scaffolding",
       "bot-advanced": "content",
@@ -233,7 +235,8 @@
       "xcsh-action": "developer",
       "xcsh-chrome-extension": "developer",
       "canada": "content",
-      "custom-responses": "content"
+      "custom-responses": "content",
+      "gitops": "content"
     }
   }
 }
