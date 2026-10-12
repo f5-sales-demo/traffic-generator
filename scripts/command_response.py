@@ -1,12 +1,14 @@
 """Classify native DVWA command output without storing environment values."""
 
 import argparse
+import hashlib
 import html
 import json
 import re
 from pathlib import Path
 
 HTTP_OK = 200
+HTTP_FORBIDDEN = 403
 
 
 def main() -> int:
@@ -16,6 +18,7 @@ def main() -> int:
     parser.add_argument("status", type=int)
     parser.add_argument("pattern")
     parser.add_argument("output", type=Path)
+    parser.add_argument("--identity")
     args = parser.parse_args()
     body = args.body.read_text(errors="replace")
     output = " ".join(
@@ -41,11 +44,14 @@ def main() -> int:
         "expected_negative": args.pattern == "negative-backtick-no-stdout",
         "status": args.status,
         "passed": application and effect,
+        "mitigation_candidate": args.status == HTTP_FORBIDDEN,
+        "synthetic_identity": args.identity,
+        "response_sha256": hashlib.sha256(args.body.read_bytes()).hexdigest(),
     }
     with args.output.open("a") as stream:
         args.output.chmod(0o600)
         stream.write(json.dumps(receipt) + "\n")
-    return int(not receipt["passed"])
+    return int(not receipt["passed"] and not receipt["mitigation_candidate"])
 
 
 if __name__ == "__main__":

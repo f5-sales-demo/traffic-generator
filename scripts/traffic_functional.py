@@ -7,6 +7,7 @@ from itertools import pairwise
 from pathlib import Path
 
 from dvga_paste_acceptance import verify_pastes
+from traffic_command_functional import verify_commands
 from traffic_csd_functional import verify_csd_libraries
 from traffic_dispatch import verify_browser_actions
 from traffic_family_functional import family_restored
@@ -122,28 +123,6 @@ def verify_slow_headers(scenario: dict, result: dict, directory: Path) -> dict:
         "behavior": scenario["functional_contract"]["behavior"],
         "observed_attempt_spacing": spacing,
         "claim": "native slow-header connection behavior; control attribution separate",
-    }
-
-
-def verify_commands(scenario: dict, result: dict, directory: Path) -> dict:
-    """Require every declared native command response, not only payload dispatch."""
-    path = directory / "command-functional.jsonl"
-    rows = (
-        [json.loads(line) for line in path.read_text().splitlines()]
-        if path.exists()
-        else []
-    )
-    required = len(scenario["dispatch_contract"]["requirements"])
-    return {
-        "passed": len(rows) == required
-        and all(row.get("passed") is True for row in rows)
-        and result.get("outcome") == "launched"
-        and result.get("dispatch_contract_verified") is True
-        and result.get("transport_failures") == 0
-        and result.get("tool_cancellations") == 0,
-        "behavior": scenario["functional_contract"]["behavior"],
-        "native_outcomes": len(rows),
-        "control_attribution": "separate WAAP evidence required",
     }
 
 
