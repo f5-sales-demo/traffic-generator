@@ -253,7 +253,7 @@ class NetworkBoundary:
             proxy_log = (self.runtime / "proxy.log").open("ab")
             self.state.proxy = subprocess.Popen(  # noqa: S603 - fixed verified proxy invocation
                 [
-                    sys.executable,
+                    shutil.which("python3") or sys.executable,
                     str(self.root / "scripts/traffic_proxy_main.py"),
                     "--mode",
                     "transparent",
