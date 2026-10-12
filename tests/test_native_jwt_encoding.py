@@ -37,7 +37,7 @@ def test_native_jwt_decode_preserves_complete_header_and_payload():
 
 
 def test_original_gnu_decoder_rejects_the_unescaped_option():
-    result = subprocess.run(  # noqa: S603 - fixed native regression against synthetic bytes
+    result = subprocess.run(
         ["/usr/bin/tr", "-_", "+/"],
         input=b"synthetic",
         capture_output=True,
