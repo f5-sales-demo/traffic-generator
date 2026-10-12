@@ -10109,9 +10109,7 @@
             "path": "/juice-shop/ftp/eastere.gg",
             "payload_class": "sensitive-file-discovery",
             "minimum_dispatches": 1,
-            "expected_statuses": [
-              403
-            ],
+            "expected_statuses": [403],
             "response_contract_by_status": {
               "403": {
                 "content_type": "text/html",
@@ -10129,9 +10127,7 @@
             "path": "/juice-shop/ftp/encrypt.pyc",
             "payload_class": "sensitive-file-discovery",
             "minimum_dispatches": 1,
-            "expected_statuses": [
-              403
-            ],
+            "expected_statuses": [403],
             "response_contract_by_status": {
               "403": {
                 "content_type": "text/html",
@@ -10149,9 +10145,7 @@
             "path": "/juice-shop/ftp/suspicious_errors.yml",
             "payload_class": "sensitive-file-discovery",
             "minimum_dispatches": 1,
-            "expected_statuses": [
-              403
-            ],
+            "expected_statuses": [403],
             "response_contract_by_status": {
               "403": {
                 "content_type": "text/html",
