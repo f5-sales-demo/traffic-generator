@@ -253,7 +253,8 @@ class NetworkBoundary:
             proxy_log = (self.runtime / "proxy.log").open("ab")
             self.state.proxy = subprocess.Popen(  # noqa: S603 - fixed verified proxy invocation
                 [
-                    shutil.which("mitmdump") or "/usr/local/bin/mitmdump",
+                    sys.executable,
+                    str(self.root / "scripts/traffic_proxy_main.py"),
                     "--mode",
                     "transparent",
                     "--listen-port",
@@ -263,9 +264,7 @@ class NetworkBoundary:
                     "--set",
                     "connection_strategy=lazy",
                     "--set",
-                    "http2=true",
-                    "--set",
-                    "http2_ping_keepalive=30",
+                    "http2=false",
                     "--set",
                     "confdir=" + str(self.runtime / "mitm-ca"),
                     "-s",
