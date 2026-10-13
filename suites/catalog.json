@@ -12650,14 +12650,13 @@
           {
             "id": "scan-2",
             "method": "GET",
-            "path": "/juice-shop/rest/track-order/test",
             "payload_class": "sqlmap-injection-probe",
             "minimum_dispatches": 1,
             "header_regex": {
               "user-agent": ".+"
             },
-            "query_regex": "(?i)(UNION|AND|OR|%27)",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
+            "path_regex": "/juice-shop/rest/track-order/test(?i:.*(?:%27|\\x27|AND|OR|UNION).*)"
           },
           {
             "id": "scan-3",
@@ -12689,9 +12688,33 @@
       "tool_contract": {
         "requirements": [
           {
-            "id": "sqlmap-invocation",
+            "id": "sqlmap-search",
             "tool": "sqlmap",
-            "argument_regex": "(juice-shop|dvwa|vampi|httpbin|https?://)",
+            "argument_regex": "(?:^| )-u https?://[^ ]+/juice-shop/rest/products/search\\?q=test(?: |$)",
+            "minimum": 1
+          },
+          {
+            "id": "sqlmap-login",
+            "tool": "sqlmap",
+            "argument_regex": "(?:^| )-r [^ ]+/login-request\\.txt(?: |$)",
+            "minimum": 1
+          },
+          {
+            "id": "sqlmap-track",
+            "tool": "sqlmap",
+            "argument_regex": "(?:^| )-u https?://[^ ]+/juice-shop/rest/track-order/test\\*(?: |$)",
+            "minimum": 1
+          },
+          {
+            "id": "sqlmap-feedback",
+            "tool": "sqlmap",
+            "argument_regex": "(?:^| )-r [^ ]+/feedback-request\\.txt(?: |$)",
+            "minimum": 1
+          },
+          {
+            "id": "sqlmap-register",
+            "tool": "sqlmap",
+            "argument_regex": "(?:^| )-r [^ ]+/register-request\\.txt(?: |$)",
             "minimum": 1
           }
         ]
