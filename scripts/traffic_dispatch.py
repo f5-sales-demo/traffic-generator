@@ -375,7 +375,9 @@ def verify_route_actions(contract: dict, receipt: dict) -> dict:
         "passed": bool(checks)
         and exact_inventory
         and all(check["passed"] for check in checks)
-        and receipt.get("browser_closed") is True,
+        and receipt.get("browser_closed") is True
+        and not receipt.get("cleanup_error")
+        and not receipt.get("failed_requests"),
         "checks": checks,
     }
 

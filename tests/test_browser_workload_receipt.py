@@ -111,3 +111,21 @@ def test_undeclared_action_cannot_count_as_catalog_coverage():
     assert not verify_route_actions(
         contract, {"actions": actions, "browser_closed": True}
     )["passed"]
+
+
+def test_completed_fragment_routes_cannot_hide_cleanup_or_transport_failure():
+    contract = {"actions": ["fragment-0"]}
+    receipt: dict[str, Any] = {
+        "actions": [{"id": "fragment-0", "performed": True, "rendered": True}],
+        "browser_closed": True,
+    }
+    assert verify_route_actions(contract, receipt)["passed"]
+    for failure in (
+        {"cleanup_error": "Native browser transport failed"},
+        {
+            "failed_requests": [
+                {"url": "https://example.invalid/x", "error": "net::ERR_ABORTED"}
+            ]
+        },
+    ):
+        assert not verify_route_actions(contract, {**receipt, **failure})["passed"]
