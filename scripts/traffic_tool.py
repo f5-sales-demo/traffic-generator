@@ -115,6 +115,13 @@ def nikto_configuration(source: Path, directory: Path, marker: str) -> Path:
 def main() -> int:
     """Execute the resolved native binary and retain only matched action identifiers."""
     binary, tool = sys.argv[1:3]
+    contract = json.loads(os.environ["TGEN_TOOL_CONTRACT"])
+    matched = [
+        requirement["id"]
+        for requirement in contract["requirements"]
+        if requirement["tool"] == tool
+        and re.search(requirement["argument_regex"], " ".join(sys.argv[3:]))
+    ]
     arguments = attributed_arguments(
         tool, sys.argv[3:], os.environ.get("TGEN_CHILD_MARKER", "")
     )
@@ -125,13 +132,6 @@ def main() -> int:
             os.environ["TGEN_CHILD_MARKER"],
         )
         arguments.extend(["-config", str(config)])
-    contract = json.loads(os.environ["TGEN_TOOL_CONTRACT"])
-    matched = [
-        requirement["id"]
-        for requirement in contract["requirements"]
-        if requirement["tool"] == tool
-        and re.search(requirement["argument_regex"], " ".join(arguments))
-    ]
     worker_marker = tool + "-" + str(os.getpid())
     arguments = worker_arguments(tool, arguments, worker_marker)
     event = {

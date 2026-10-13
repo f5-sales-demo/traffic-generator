@@ -1,5 +1,7 @@
 """Observed tool actions require intended invocation, verified binary and successful completion."""
 
+import hashlib
+import json
 import shutil
 import subprocess
 import sys
@@ -10,6 +12,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import traffic_tool
 from traffic_dispatch import verify_tool_actions
 from traffic_runtime import scenario_action_verification
 from traffic_tool import (
@@ -172,3 +175,59 @@ def test_native_load_worker_keeps_child_marker_and_final_target():
         assert result[:-3] == arguments[:-1]
         assert result[-3:-1] == ["-H", "X-TGen-Child: child-opaque"]
         assert result[-1] == arguments[-1]
+
+
+@pytest.mark.parametrize("matches", [True, False])
+def test_native_tool_contract_is_matched_before_attribution_headers(
+    tmp_path, monkeypatch, matches
+):
+    binary = tmp_path / "native-wrk"
+    binary.write_bytes(b"synthetic immutable native tool")
+    target = "https://example.test/juice-shop/rest/products/search?q=test"
+    arguments = ["-t2", "-c20", "-d15s", target]
+    requirement = {
+        "id": "native-load",
+        "tool": "wrk",
+        "argument_regex": (
+            r"^-t2 -c20 -d15s https://example\.test/juice-shop/rest/products/search\?q=test$"
+            if matches
+            else r"^-t2 -c20 -d30s "
+        ),
+    }
+    monkeypatch.setattr(
+        sys, "argv", ["traffic_tool.py", str(binary), "wrk", *arguments]
+    )
+    monkeypatch.setenv(
+        "TGEN_TOOL_CONTRACT", json.dumps({"requirements": [requirement]})
+    )
+    monkeypatch.setenv("TGEN_CHILD_MARKER", "child-opaque")
+    monkeypatch.setenv("TGEN_RESULTS_DIR", str(tmp_path))
+    calls = []
+
+    def execute(argv, *, check):
+        assert check is False
+        calls.append(argv)
+        return subprocess.CompletedProcess(argv, 0)
+
+    monkeypatch.setattr(traffic_tool.subprocess, "run", execute)
+    assert traffic_tool.main() == 0
+    events_path = tmp_path / "tool-events.jsonl"
+    events = [json.loads(line) for line in events_path.read_text().splitlines()]
+    assert len(events) == 2
+    assert events[0]["completed"] is False
+    assert events[1]["completed"] is True
+    assert events[1]["exit_code"] == 0
+    assert events[1]["binary_sha256"] == hashlib.sha256(binary.read_bytes()).hexdigest()
+    assert events[1]["matched_requirements"] == (["native-load"] if matches else [])
+    assert events_path.stat().st_mode & 0o077 == 0
+    assert calls == [
+        [
+            str(binary),
+            *arguments[:-1],
+            "-H",
+            "X-TGen-Child: child-opaque",
+            "-H",
+            "X-TGen-Worker: " + events[1]["worker_marker"],
+            target,
+        ]
+    ]
