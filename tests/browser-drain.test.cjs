@@ -22,3 +22,36 @@ test('nested browser headers accept only opaque owned markers', () => {
   assert.deepEqual(childHeaders('child-opaque'), { 'X-TGen-Child': 'child-opaque' });
   assert.throws(() => childHeaders('../foreign'));
 });
+
+test('native browser sockets close normally before browser teardown', async () => {
+  const { installSocketDrain, closeSockets } = require('../scripts/browser_requests.cjs');
+  const Original = global.WebSocket;
+  const sockets = [];
+  class NativeSocket extends EventEmitter {
+    constructor() {
+      super();
+      this.readyState = 1;
+      sockets.push(this);
+    }
+    addEventListener(event, callback) {
+      this.on(event, callback);
+    }
+    close(code) {
+      this.code = code;
+      this.readyState = 3;
+      this.emit('close', { code });
+    }
+  }
+  global.WebSocket = NativeSocket;
+  const page = { addInitScript: async (fn) => fn(), evaluate: async (fn) => fn() };
+  try {
+    await installSocketDrain(page);
+    new global.WebSocket('wss://www.example.test/juice-shop/socket.io/');
+    await closeSockets(page);
+    assert.equal(sockets[0].code, 1000);
+    assert.equal(sockets[0].readyState, 3);
+  } finally {
+    global.WebSocket = Original;
+    delete global.__tgenSockets;
+  }
+});

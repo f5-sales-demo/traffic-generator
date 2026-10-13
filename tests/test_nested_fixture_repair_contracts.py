@@ -618,3 +618,14 @@ def test_xxe_download_traversal_requires_exact_native_denial():
     assert not response_content_matches(
         contract, "text/html", body.replace("403", "500")
     )
+
+
+def test_b2b_missing_authorization_is_exact_native_denial():
+    body = "<title>UnauthorizedError: No Authorization header was found</title><h1>OWASP Juice Shop (Express ^4.22.1)</h1><h2><em>401</em> UnauthorizedError: No Authorization header was found</h2>"
+    assert native_identity("/juice-shop/b2b/v2/orders", "POST", 401, "text/html", body)
+    assert not native_identity(
+        "/juice-shop/b2b/v2/orders", "POST", 401, "text/html", "Unauthorized"
+    )
+    assert not native_identity(
+        "/juice-shop/b2b/v2/orders", "GET", 401, "text/html", body
+    )

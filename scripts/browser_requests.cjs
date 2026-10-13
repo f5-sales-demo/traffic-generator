@@ -27,3 +27,42 @@ function childHeaders(marker = process.env.TGEN_CHILD_MARKER || '') {
   return { 'X-TGen-Child': marker };
 }
 module.exports = { observeRequests, settleRequests, childHeaders };
+
+async function installSocketDrain(page) {
+  await page.addInitScript(() => {
+    const NativeSocket = globalThis.WebSocket;
+    globalThis.__tgenSockets = new Set();
+    globalThis.WebSocket = class extends NativeSocket {
+      constructor(...args) {
+        super(...args);
+        globalThis.__tgenSockets.add(this);
+        this.addEventListener('close', () => globalThis.__tgenSockets.delete(this));
+      }
+    };
+  });
+}
+async function closeSockets(page) {
+  await page.evaluate(async () => {
+    await Promise.all(
+      Array.from(
+        globalThis.__tgenSockets || [],
+        (socket) =>
+          new Promise((resolve, reject) => {
+            if (socket.readyState === 3) return resolve();
+            const timeout = setTimeout(() => reject(new Error('Native WebSocket did not close normally')), 10000);
+            socket.addEventListener(
+              'close',
+              () => {
+                clearTimeout(timeout);
+                resolve();
+              },
+              { once: true },
+            );
+            socket.close(1000, 'Native browser workload complete');
+          }),
+      ),
+    );
+  });
+}
+module.exports.installSocketDrain = installSocketDrain;
+module.exports.closeSockets = closeSockets;

@@ -12,6 +12,19 @@ def juice_generated_identity(
     path: str, method: str, status: int, media: str, body: str
 ) -> bool | None:
     """Validate native generated continue codes and B2B order response fields."""
+    if path == "/juice-shop/b2b/v2/orders" and status == HTTP_UNAUTHORIZED:
+        return (
+            method == "POST"
+            and media == "text/html"
+            and all(
+                term in body
+                for term in (
+                    "<title>UnauthorizedError: No Authorization header was found</title>",
+                    "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                    "<h2><em>401</em> UnauthorizedError: No Authorization header was found</h2>",
+                )
+            )
+        )
     if path in {"/juice-shop/rest/continue-code", "/juice-shop/b2b/v2/orders"}:
         try:
             document = json.loads(body)

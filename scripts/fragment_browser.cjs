@@ -2,11 +2,18 @@
 const { chromium } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
-const { observeRequests, settleRequests, childHeaders } = require('./browser_requests.cjs');
+const {
+  observeRequests,
+  settleRequests,
+  childHeaders,
+  installSocketDrain,
+  closeSockets,
+} = require('./browser_requests.cjs');
 (async () => {
   const actions = JSON.parse(fs.readFileSync(path.join(__dirname, '../suites/fragment-actions.json')));
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ ignoreHTTPSErrors: true, extraHTTPHeaders: childHeaders() });
+  await installSocketDrain(page);
   const state = observeRequests(page);
   const receipt = { actions: [], browser_closed: false };
   page.on('dialog', async (dialog) => {
@@ -31,7 +38,12 @@ const { observeRequests, settleRequests, childHeaders } = require('./browser_req
       receipt.actions.push(item);
     }
   } finally {
-    await browser.close();
+    try {
+      await closeSockets(page);
+      await settleRequests(state);
+    } finally {
+      await browser.close();
+    }
     receipt.browser_closed = true;
     fs.writeFileSync(path.join(process.env.TGEN_RESULTS_DIR, 'route-actions.json'), JSON.stringify(receipt), {
       mode: 0o600,
