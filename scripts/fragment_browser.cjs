@@ -7,7 +7,7 @@ const {
   settleRequests,
   childHeaders,
   installSocketDrain,
-  closeSockets,
+  finishBrowserRequests,
 } = require('./browser_requests.cjs');
 (async () => {
   const actions = JSON.parse(fs.readFileSync(path.join(__dirname, '../suites/fragment-actions.json')));
@@ -23,7 +23,7 @@ const {
     for (const action of actions) {
       const item = { id: action.id, performed: false, rendered: false };
       try {
-        await page.goto(process.env.TARGET_URL + '#/search?q=' + encodeURIComponent(action.payload), {
+        await page.goto(`${process.env.TARGET_URL}#/search?q=${encodeURIComponent(action.payload)}`, {
           waitUntil: 'domcontentloaded',
           timeout: 20000,
         });
@@ -31,7 +31,7 @@ const {
         await page.waitForSelector('app-search-result', { timeout: 15000 });
         item.rendered = (await page.locator('body').innerText()).length > 30;
         await settleRequests(state);
-        await page.screenshot({ path: path.join(process.env.TGEN_RESULTS_DIR, action.id + '.png') });
+        await page.screenshot({ path: path.join(process.env.TGEN_RESULTS_DIR, `${action.id}.png`) });
       } catch {
         item.error = 'browser route action failed';
       }
@@ -39,8 +39,7 @@ const {
     }
   } finally {
     try {
-      await closeSockets(page);
-      await settleRequests(state);
+      await finishBrowserRequests(page, state);
     } finally {
       await browser.close();
     }

@@ -1,22 +1,29 @@
 // Track application requests so native form navigation does not cancel its own work.
 function observeRequests(page) {
-  const state = { pending: new Set(), changed: Date.now() };
+  const state = { pending: new Set(), polling: new Set(), failed: new Set(), changed: Date.now() };
   page.on('request', (request) => {
-    if (new URL(request.url()).pathname.includes('/socket.io/')) return;
-    state.pending.add(request);
+    const destination = new URL(request.url()).pathname.includes('/socket.io/') ? state.polling : state.pending;
+    destination.add(request);
     state.changed = Date.now();
   });
   for (const event of ['requestfinished', 'requestfailed'])
     page.on(event, (request) => {
       state.pending.delete(request);
+      state.polling.delete(request);
+      if (event === 'requestfailed') state.failed.add(request);
       state.changed = Date.now();
     });
   return state;
 }
-async function settleRequests(state, timeoutMs = 15000, quietMs = 500) {
+async function settleRequests(state, timeoutMs = 15000, quietMs = 500, includePolling = false) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (!state.pending.size && Date.now() - state.changed >= Math.min(quietMs, timeoutMs / 2)) return;
+    if (
+      !state.pending.size &&
+      (!includePolling || !state.polling.size) &&
+      Date.now() - state.changed >= Math.min(quietMs, timeoutMs / 2)
+    )
+      return;
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   throw new Error('Application requests did not finish before browser navigation or cleanup');
@@ -66,3 +73,13 @@ async function closeSockets(page) {
 }
 module.exports.installSocketDrain = installSocketDrain;
 module.exports.closeSockets = closeSockets;
+
+async function finishBrowserRequests(page, state, timeoutMs = 60000) {
+  await closeSockets(page);
+  // The native workload is complete. Stop new callbacks while dispatched HTTP polls finish.
+  const session = await page.context().newCDPSession(page);
+  await session.send('Emulation.setScriptExecutionDisabled', { value: true });
+  await settleRequests(state, timeoutMs, 500, true);
+  if (state.failed.size) throw new Error('Native browser transport failed before cleanup completed');
+}
+module.exports.finishBrowserRequests = finishBrowserRequests;

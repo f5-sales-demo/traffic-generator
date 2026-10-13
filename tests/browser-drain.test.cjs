@@ -55,3 +55,24 @@ test('native browser sockets close normally before browser teardown', async () =
     delete global.__tgenSockets;
   }
 });
+
+test('teardown waits for outstanding native polling and rejects transport failures', async () => {
+  const { finishBrowserRequests } = require('../scripts/browser_requests.cjs');
+  const page = new EventEmitter();
+  const commands = [];
+  page.evaluate = async () => {};
+  page.context = () => ({ newCDPSession: async () => ({ send: async (...args) => commands.push(args) }) });
+  const state = observeRequests(page);
+  const polling = { url: () => 'https://www.example.test/juice-shop/socket.io/?transport=polling&sid=synthetic' };
+  page.emit('request', polling);
+  assert.equal(state.polling.size, 1);
+  await settleRequests(state, 50);
+  await assert.rejects(settleRequests(state, 1, 1, true));
+  setTimeout(() => page.emit('requestfinished', polling), 10);
+  await finishBrowserRequests(page, state, 100);
+  assert.deepEqual(commands, [['Emulation.setScriptExecutionDisabled', { value: true }]]);
+  assert.equal(state.polling.size, 0);
+  page.emit('request', polling);
+  page.emit('requestfailed', polling);
+  await assert.rejects(finishBrowserRequests(page, state, 100), /transport/);
+});
