@@ -230,3 +230,22 @@ def test_native_track_syntax_error_rejects_published_route_failure():
     assert verify_responses({"requirements": [row]}, [event])["passed"]
     event["response_assertions"] = {"scan-2": False}
     assert not verify_responses({"requirements": [row]}, [event])["passed"]
+
+
+def test_raw_sqlmap_requests_use_declared_https_transport():
+    source = (
+        Path(__file__).parents[1] / "suites/juice-shop-exploits/12-automated-sqlmap.sh"
+    ).read_text()
+    assert 'if [[ "${TARGET_PROTOCOL:-http}" == "https" ]]; then' in source
+    assert 'SQLMAP_OPTS="${SQLMAP_OPTS} --force-ssl"' in source
+    assert source.count("${SQLMAP_CMD} ${SQLMAP_OPTS}") == 5
+
+
+def test_native_login_scan_continues_past_expected_unauthenticated_response():
+    source = (
+        Path(__file__).parents[1] / "suites/juice-shop-exploits/12-automated-sqlmap.sh"
+    ).read_text()
+    login = source.split('-r "${TMPDIR}/login-request.txt"', 1)[1].split("2>&1", 1)[0]
+    assert "--ignore-code=401" in login
+    assert source.count("--ignore-code=401") == 1
+    assert "--ignore-code=403" not in source
