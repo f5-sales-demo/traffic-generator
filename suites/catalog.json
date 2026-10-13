@@ -12668,7 +12668,17 @@
               "user-agent": ".+"
             },
             "body_regex": "(?i)(UNION|AND|OR|\\x27|SLEEP)",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "scan-4",
@@ -12681,6 +12691,25 @@
             },
             "body_regex": "(?i)(UNION|AND|OR|\\x27|SLEEP)",
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
+          },
+          {
+            "id": "feedback-missing-captcha",
+            "method": "POST",
+            "path": "/juice-shop/api/Feedbacks/",
+            "payload_class": "native-missing-captcha",
+            "minimum_dispatches": 1,
+            "body_regex": "^\\{\"comment\":\"(?:[^\"\\\\]|\\\\.)*\",\"rating\":3\\}$",
+            "expected_statuses": [500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: WHERE parameter &quot;captchaId&quot; has invalid &quot;undefined&quot; value</h2>"
+                ]
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true

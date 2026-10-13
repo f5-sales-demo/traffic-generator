@@ -4,7 +4,12 @@ import json
 import re
 from pathlib import Path
 
-from traffic_dispatch import match_requirements, verify_tool_actions
+from traffic_dispatch import (
+    match_requirements,
+    response_content_matches,
+    verify_responses,
+    verify_tool_actions,
+)
 
 
 def test_all_five_sqlmap_scans_use_declared_targets_and_complete_reports():
@@ -94,3 +99,46 @@ def test_native_sqlmap_reports_survive_temporary_request_cleanup():
     assert "--output-dir=${REPORT_DIR}/sqlmap-output" in source
     for target in ("search", "login", "track", "feedback", "register"):
         assert 'tee "${REPORT_DIR}/sqlmap-' + target + '.log"' in source
+
+
+def test_sqlmap_missing_captcha_error_is_exact_and_other_errors_fail():
+    contract = sqlmap_scenario()["dispatch_contract"]
+    request = {
+        "kind": "scenario",
+        "method": "POST",
+        "path": "/juice-shop/api/Feedbacks/",
+        "body": '{"comment":"test","rating":3}',
+        "headers": {"user-agent": "native"},
+    }
+    matched = match_requirements(contract, request)
+    assert "feedback-missing-captcha" in matched
+    requirement = next(
+        row
+        for row in contract["requirements"]
+        if row["id"] == "feedback-missing-captcha"
+    )
+    content = requirement["response_contract_by_status"]["500"]
+    body = "".join(content["text_contains"])
+    assert response_content_matches(content, "text/html", body)
+    assert not response_content_matches(content, "text/html", "Internal Server Error")
+    assert not response_content_matches(
+        content, "text/html", body.replace("captchaId", "unrelated")
+    )
+    event = {
+        "kind": "scenario",
+        "status": 500,
+        "matched_requirements": matched,
+        "response_assertions": dict.fromkeys(matched, True),
+    }
+    assert verify_responses(
+        {"requirements": [requirement], "reject_unmatched_errors": True}, [event]
+    )["passed"]
+    event["response_assertions"] = {}
+    assert not verify_responses(
+        {"requirements": [requirement], "reject_unmatched_errors": True}, [event]
+    )["passed"]
+    request["path"] = "/unrelated"
+    assert "feedback-missing-captcha" not in match_requirements(contract, request)
+    request["path"] = "/juice-shop/api/Feedbacks/"
+    request["body"] = '{"comment":"test","rating":3,"captchaId":1}'
+    assert "feedback-missing-captcha" not in match_requirements(contract, request)
