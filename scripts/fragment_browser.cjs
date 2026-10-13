@@ -32,23 +32,34 @@ const {
         item.rendered = (await page.locator('body').innerText()).length > 30;
         await settleRequests(state);
         await page.screenshot({ path: path.join(process.env.TGEN_RESULTS_DIR, `${action.id}.png`) });
-      } catch {
-        item.error = 'browser route action failed';
+      } catch (error) {
+        item.error = error.message;
       }
       receipt.actions.push(item);
     }
   } finally {
     try {
       await finishBrowserRequests(page, state);
+    } catch (error) {
+      receipt.cleanup_error = error.message;
+      throw error;
     } finally {
-      await browser.close();
+      receipt.failed_requests = Array.from(state.failed, (request) => ({
+        url: request.url(),
+        error: request.failure()?.errorText || 'Native browser request failed',
+      }));
+      try {
+        await browser.close();
+        receipt.browser_closed = true;
+      } finally {
+        fs.writeFileSync(path.join(process.env.TGEN_RESULTS_DIR, 'route-actions.json'), JSON.stringify(receipt), {
+          mode: 0o600,
+        });
+      }
     }
-    receipt.browser_closed = true;
-    fs.writeFileSync(path.join(process.env.TGEN_RESULTS_DIR, 'route-actions.json'), JSON.stringify(receipt), {
-      mode: 0o600,
-    });
   }
   if (receipt.actions.some((action) => !action.performed || !action.rendered)) process.exitCode = 1;
-})().catch(() => {
+})().catch((error) => {
+  console.error(`[FAIL] Native browser workload: ${error.message}`);
   process.exitCode = 1;
 });
