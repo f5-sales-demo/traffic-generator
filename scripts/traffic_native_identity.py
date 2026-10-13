@@ -927,3 +927,53 @@ def juice_track_error_matches(
             "at /juice-shop/build/routes/trackOrder.js:50:29",
         )
     )
+
+
+def juice_login_error_matches(
+    path: str, method: str, payload: bytes, content_type: str, body: str
+) -> bool:
+    """Bind the pinned Sequelize error page to a native login compile failure."""
+    if (
+        path != "/juice-shop/rest/user/login"
+        or method != "POST"
+        or content_type.partition(";")[0] != "text/html"
+        or hashlib.sha256(body.encode()).hexdigest()
+        != "49eb674457de3379a1c5a7f845b7c1538d29e763645d3126145c918f3e19ebb7"
+    ):
+        return False
+    try:
+        document = json.loads(payload)
+    except (ValueError, UnicodeError):
+        return False
+    if not isinstance(document, dict) or not all(
+        isinstance(document.get(key), str) for key in ("email", "password")
+    ):
+        return False
+    password = hashlib.md5(
+        document["password"].encode(), usedforsecurity=False
+    ).hexdigest()
+    sql = (
+        "EXPLAIN SELECT * FROM Users WHERE email = '"  # noqa: S608 - compile-only in empty private schema
+        + document["email"]
+        + "' AND password = '"
+        + password
+        + "' AND deletedAt IS NULL"
+    )
+    connection = sqlite3.connect(":memory:")
+    try:
+        connection.execute(
+            "CREATE TABLE Users (email TEXT, password TEXT, deletedAt TEXT)"
+        )
+        try:
+            connection.execute(sql)
+        except sqlite3.OperationalError as error:
+            return bool(
+                str(error) == "incomplete input"
+                or re.fullmatch(r'near ".*": syntax error', str(error))
+                or re.fullmatch(r'unrecognized token: ".*"', str(error))
+            )
+        except sqlite3.Error:
+            return False
+        return False
+    finally:
+        connection.close()

@@ -12,6 +12,7 @@ from traffic_dispatch import (
     verify_tool_actions,
 )
 from traffic_native_identity import (
+    juice_login_error_matches,
     juice_search_error_matches,
     juice_track_error_matches,
 )
@@ -270,3 +271,48 @@ def test_native_login_scan_continues_past_expected_unauthenticated_response():
     assert "--ignore-code=401" in login
     assert source.count("--ignore-code=401") == 1
     assert "--ignore-code=403" not in source
+
+
+def test_login_error_contract_rejects_generic_response_and_valid_request(monkeypatch):
+    payload = b'{"email":"synthetic@example.com NativeProbe\'","password":"synthetic"}'
+    path = "/juice-shop/rest/user/login"
+    assert not juice_login_error_matches(path, "POST", payload, "text/html", "Error")
+
+    # Isolate compile-only request qualification from the private pinned page bytes.
+    class PinnedPageHash:
+        def hexdigest(self):
+            return "49eb674457de3379a1c5a7f845b7c1538d29e763645d3126145c918f3e19ebb7"
+
+    monkeypatch.setattr(
+        "traffic_native_identity.hashlib.sha256", lambda _: PinnedPageHash()
+    )
+    assert juice_login_error_matches(path, "POST", payload, "text/html", "pinned page")
+    for request_path, method, data, media in (
+        ("/other", "POST", payload, "text/html"),
+        (path, "GET", payload, "text/html"),
+        (path, "POST", payload, "application/json"),
+        (path, "POST", b"invalid-json", "text/html"),
+        (
+            path,
+            "POST",
+            b'{"email":"valid@example.com","password":"synthetic"}',
+            "text/html",
+        ),
+        (path, "POST", b'{"email":42,"password":"synthetic"}', "text/html"),
+    ):
+        assert not juice_login_error_matches(
+            request_path, method, data, media, "pinned page"
+        )
+
+
+def test_sqlmap_login_500_requires_exact_native_request_bound_contract():
+    contract = sqlmap_scenario()["dispatch_contract"]
+    row = next(row for row in contract["requirements"] if row["id"] == "scan-1")
+    assert row["response_contract_by_status"]["500"]["native_juice_login_error"]
+    event = {
+        "kind": "scenario",
+        "status": 500,
+        "matched_requirements": ["scan-1"],
+        "response_assertions": {"scan-1": False},
+    }
+    assert not verify_responses({"requirements": [row]}, [event])["passed"]
