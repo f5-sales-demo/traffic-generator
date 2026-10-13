@@ -15,3 +15,5 @@ def test_all_five_sqlmap_scans_use_declared_targets_and_complete_reports():
     assert '-r "${TMPDIR}/login-request.txt"' in source
     assert '-r "${TMPDIR}/feedback-request.txt"' in source
     assert '-r "${TMPDIR}/register-request.txt"' in source
+
+    assert '"username":"${MARKER}"' in source
