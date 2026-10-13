@@ -10588,7 +10588,7 @@
         "/juice-shop/file-upload",
         "/juice-shop/ftp/%2e%2e/%2e%2e/etc/passwd",
         "/juice-shop/ftp/..%252f..%252f/etc/passwd",
-        "/juice-shop/ftp/..../..../etc/passwd",
+        "/juice-shop/ftp/....//....//etc/passwd",
         "/juice-shop/ftp/package.json.bak%00.md",
         "/juice-shop/ftp/package.json.bak%2500.md",
         "/juice-shop/profile/image/url"
@@ -10755,7 +10755,7 @@
           {
             "id": "traversal-1",
             "method": "GET",
-            "path": "/juice-shop/ftp/..../..../etc/passwd",
+            "path": "/juice-shop/ftp/....//....//etc/passwd",
             "payload_class": "download-path-traversal",
             "minimum_dispatches": 1,
             "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404, 403],
