@@ -42,7 +42,8 @@ const {
       await finishBrowserRequests(page, state);
     } catch (error) {
       receipt.cleanup_error = error.message;
-      throw error;
+      console.error(`[FAIL] Native browser workload: ${error.message}`);
+      process.exitCode = 1;
     } finally {
       receipt.failed_requests = Array.from(state.failed, (request) => ({
         url: request.url(),
@@ -58,7 +59,7 @@ const {
       }
     }
   }
-  if (receipt.actions.some((action) => !action.performed || !action.rendered)) process.exitCode = 1;
+  if (receipt.actions.some((action) => action.error || !action.performed || !action.rendered)) process.exitCode = 1;
 })().catch((error) => {
   console.error(`[FAIL] Native browser workload: ${error.message}`);
   process.exitCode = 1;

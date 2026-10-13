@@ -358,6 +358,7 @@ def verify_route_actions(contract: dict, receipt: dict) -> dict:
         {
             "id": identifier,
             "passed": observed.get(identifier, {}).get("performed") is True
+            and not observed.get(identifier, {}).get("error")
             and (
                 observed.get(identifier, {}).get("rendered") is True
                 or (

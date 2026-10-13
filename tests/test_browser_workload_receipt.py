@@ -129,3 +129,18 @@ def test_completed_fragment_routes_cannot_hide_cleanup_or_transport_failure():
         },
     ):
         assert not verify_route_actions(contract, {**receipt, **failure})["passed"]
+
+
+def test_rendered_fragment_state_cannot_hide_a_later_native_action_error():
+    receipt = {
+        "actions": [
+            {
+                "id": "fragment-0",
+                "performed": True,
+                "rendered": True,
+                "error": "Application requests did not finish",
+            }
+        ],
+        "browser_closed": True,
+    }
+    assert not verify_route_actions({"actions": ["fragment-0"]}, receipt)["passed"]
