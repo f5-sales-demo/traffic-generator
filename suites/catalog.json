@@ -12733,6 +12733,7 @@
         ],
         "reject_unmatched_errors": true
       },
+      "native_report_contract": { "sqlmap": 5 },
       "tool_contract": {
         "requirements": [
           {

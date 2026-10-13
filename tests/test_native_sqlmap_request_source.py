@@ -42,6 +42,7 @@ def sqlmap_scenario():
 
 
 def test_five_distinct_native_sqlmap_invocations_are_required():
+    assert sqlmap_scenario()["native_report_contract"] == {"sqlmap": 5}
     contract = sqlmap_scenario()["tool_contract"]
     invocations = [
         "--batch --ignore-stdin -u https://example.test/juice-shop/rest/products/search?q=test --skip-urlencode -p q --dbms=sqlite --dump-all",

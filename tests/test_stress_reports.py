@@ -62,3 +62,40 @@ def test_native_report_gate_cannot_be_overwritten_by_dispatch_success(tmp_path):
     scenario_action_verification(tmp_path, scenario, result)
     assert not result["dispatch_contract_verified"]
     assert result["outcome"] == "tool_failure"
+
+
+SQLMAP_COMPLETE = """{1.9.7#stable}
+[*] starting @ 12:00:00 /2026-01-01/
+[12:00:01] [INFO] testing connection to the target URL
+[12:00:02] [WARNING] all tested parameters do not appear to be injectable
+[*] ending @ 12:00:03 /2026-01-01/
+"""
+
+
+def test_sqlmap_native_report_requires_scan_and_terminal_result():
+    assert report_matches("sqlmap", SQLMAP_COMPLETE)
+    for text in (
+        "",
+        SQLMAP_COMPLETE.split("[*] ending", maxsplit=1)[0],
+        SQLMAP_COMPLETE.replace(
+            "[12:00:01] [INFO] testing connection to the target URL\n", ""
+        ),
+        SQLMAP_COMPLETE.replace(
+            "all tested parameters do not appear to be injectable", "scan pending"
+        ),
+        SQLMAP_COMPLETE + "[CRITICAL] unable to connect to the target URL",
+        SQLMAP_COMPLETE + "[WARNING] connection timed out to the target URL",
+    ):
+        assert not report_matches("sqlmap", text)
+
+
+def test_sqlmap_requires_exact_five_completed_target_reports(tmp_path):
+    targets = ("search", "login", "track", "feedback", "register")
+    for target in targets[:-1]:
+        (tmp_path / f"sqlmap-{target}.log").write_text(SQLMAP_COMPLETE)
+    (tmp_path / "sqlmap-unrelated.log").write_text(SQLMAP_COMPLETE)
+    assert not verify_native_reports(tmp_path, {"sqlmap": 5})["passed"]
+    (tmp_path / "sqlmap-register.log").write_text(SQLMAP_COMPLETE)
+    assert verify_native_reports(tmp_path, {"sqlmap": 5})["passed"]
+    (tmp_path / "sqlmap-login.log").write_text("[*] starting @ 12:00:00")
+    assert not verify_native_reports(tmp_path, {"sqlmap": 5})["passed"]

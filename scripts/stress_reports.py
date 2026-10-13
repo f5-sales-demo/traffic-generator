@@ -47,7 +47,42 @@ def report_matches(tool: str, text: str) -> bool:
             and "Requests per second:" in text
             and "SSL read failed" not in text
         )
-    return False
+    return tool == "sqlmap" and sqlmap_report_matches(text)
+
+
+def sqlmap_report_matches(text: str) -> bool:
+    """Require actual native testing, a terminal finding, and clean completion."""
+    clean = re.sub(r"\x1b\[[0-9;]*m", "", text)
+    lower = clean.lower()
+    return (
+        bool(re.search(r"\{[0-9]+\.[0-9]+[^}]*\}", clean))
+        and "[*] starting @" in clean
+        and "[*] ending @" in clean
+        and clean.index("[*] starting @") < clean.index("[*] ending @")
+        and "testing connection to the target url" in lower
+        and any(
+            finding in lower
+            for finding in (
+                "all tested parameters do not appear to be injectable",
+                "is vulnerable",
+                "identified the following injection point",
+            )
+        )
+        and not any(
+            failure in lower
+            for failure in (
+                "unable to connect",
+                "connection timed out",
+                "connection reset",
+                "connection refused",
+                "can't establish ssl",
+                "user aborted",
+                "keyboardinterrupt",
+                "unhandled exception",
+                "no parameter(s) found for testing",
+            )
+        )
+    )
 
 
 def verify_native_reports(directory: Path, contract: dict) -> dict:
@@ -56,6 +91,11 @@ def verify_native_reports(directory: Path, contract: dict) -> dict:
     for tool, minimum in contract.items():
         pattern = "vegeta-*.bin" if tool == "vegeta" else tool + "-*.log"
         files = sorted(directory.glob(pattern))
+        if tool == "sqlmap":
+            files = [
+                directory / f"sqlmap-{target}.log"
+                for target in ("search", "login", "track", "feedback", "register")
+            ]
         rows = [
             {
                 "file": path.name,
