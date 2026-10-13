@@ -29,6 +29,7 @@ from traffic_dispatch import (
 from traffic_dns_route import RoutedHTTPSHandler
 from traffic_native_identity import (
     HTTP_FORBIDDEN,
+    juice_search_error_matches,
     native_binary_identity,
     native_dvwa_redirect_identity,
     native_identity,
@@ -443,6 +444,16 @@ class Budget:
                 if requirement["id"] in event["matched_requirements"] and specification:
                     event["response_assertions"][requirement["id"]] = (
                         response_content_matches(specification, content_type, body)
+                        and (
+                            not specification.get("native_juice_search_error")
+                            or juice_search_error_matches(
+                                event["path"],
+                                event["method"],
+                                event["query"],
+                                content_type,
+                                body,
+                            )
+                        )
                         and (
                             not specification.get("native_unexpected_path")
                             or "<title>Error: Unexpected path: "

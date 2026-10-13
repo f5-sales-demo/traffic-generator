@@ -483,3 +483,50 @@ def test_juice_journal_marker_is_injected_from_owned_baseline(tmp_path, monkeypa
 
     asyncio.run(exercise())
     assert flow.request.headers["X-TGen-Family"] == marker
+
+
+@pytest.mark.parametrize("query", ["q=test%27NativeProbe", "q=test%27OtherProbe"])
+def test_proxy_search_error_assertion_uses_actual_query(tmp_path, monkeypatch, query):
+    monkeypatch.setenv("TGEN_DOMAINS", '["www.example.test"]')
+    monkeypatch.setenv("TGEN_PROXY_METRICS", str(tmp_path / "metrics.json"))
+    spec = importlib.util.spec_from_file_location(
+        "search_proxy", ROOT / "scripts/traffic_proxy.py"
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    budget = module.Budget()
+    message = "Error: SQLITE_ERROR: near &quot;NativeProbe&quot;: syntax error"
+    body = (
+        "<title>" + message + "</title>"
+        "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>"
+        "<h2><em>500</em> " + message + "</h2>"
+    ).encode()
+    requirement = {
+        "id": "scan",
+        "response_contract_by_status": {
+            "500": {"content_type": "text/html", "native_juice_search_error": True}
+        },
+    }
+    flow = SimpleNamespace(
+        metadata={
+            "tgen_scenario": {
+                "id": "synthetic/search",
+                "phase": "execution",
+                "dispatch_path": str(tmp_path / "dispatch-events.jsonl"),
+                "dispatch_contract": {"requirements": [requirement]},
+            },
+            "tgen_matched_requirements": ["scan"],
+        },
+        request=SimpleNamespace(
+            method="GET",
+            path="/juice-shop/rest/products/search?" + query,
+            headers={},
+        ),
+        response=module.http.Response.make(500, body, {"content-type": "text/html"}),
+    )
+    budget.record_outcome(flow, status=500)
+    budget.done()
+    event = json.loads((tmp_path / "response-events.jsonl").read_text())
+    assert event["response_assertions"]["scan"] is ("NativeProbe" in query)

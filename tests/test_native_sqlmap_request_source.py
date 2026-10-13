@@ -1,5 +1,6 @@
 """Supervised SQLMap must consume preserved request files and drain native reports."""
 
+import html
 import json
 import re
 from pathlib import Path
@@ -10,6 +11,7 @@ from traffic_dispatch import (
     verify_responses,
     verify_tool_actions,
 )
+from traffic_native_identity import juice_search_error_matches
 
 
 def test_all_five_sqlmap_scans_use_declared_targets_and_complete_reports():
@@ -142,3 +144,59 @@ def test_sqlmap_missing_captcha_error_is_exact_and_other_errors_fail():
     request["path"] = "/juice-shop/api/Feedbacks/"
     request["body"] = '{"comment":"test","rating":3,"captchaId":1}'
     assert "feedback-missing-captcha" not in match_requirements(contract, request)
+
+
+def test_native_search_error_is_bound_to_requested_query_and_exact_error_frame():
+    message = 'Error: SQLITE_ERROR: near "NativeProbe": syntax error'
+    escaped = html.escape(message).replace("&#x27;", "&#39;")
+    body = (
+        "<title>" + escaped + "</title>"
+        "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>"
+        "<h2><em>500</em> " + escaped + "</h2>"
+    )
+    path = "/juice-shop/rest/products/search"
+    query = "q=test%27NativeProbe%3C%27%22%3Eprobe"
+    assert juice_search_error_matches(path, "GET", query, "text/html", body)
+    assert not juice_search_error_matches(path, "POST", query, "text/html", body)
+    assert not juice_search_error_matches("/unrelated", "GET", query, "text/html", body)
+    assert not juice_search_error_matches(
+        path, "GET", "q=test%27OtherProbe", "text/html", body
+    )
+    assert not juice_search_error_matches(path, "GET", query, "application/json", body)
+    assert not juice_search_error_matches(
+        path, "GET", query, "text/html", body.replace("500", "503")
+    )
+    assert not juice_search_error_matches(
+        path,
+        "GET",
+        query,
+        "text/html",
+        body.replace("syntax error", "database is locked"),
+    )
+    assert not juice_search_error_matches(
+        path, "GET", query, "text/html", "Internal Server Error"
+    )
+    assert not juice_search_error_matches(path, "GET", "q=test", "text/html", body)
+
+
+def test_sqlmap_search_dispatch_includes_preserved_literal_syntax_probe():
+    scenario = sqlmap_scenario()
+    request = {
+        "kind": "scenario",
+        "method": "GET",
+        "path": "/juice-shop/rest/products/search",
+        "query": "q=test'NativeProbe",
+        "headers": {"user-agent": "native"},
+    }
+    assert "scan-0" in match_requirements(scenario["dispatch_contract"], request)
+    requirement = next(
+        row
+        for row in scenario["dispatch_contract"]["requirements"]
+        if row["id"] == "scan-0"
+    )
+    assert (
+        requirement["response_contract_by_status"]["500"]["native_juice_search_error"]
+        is True
+    )
+    request["query"] = "q=test"
+    assert "scan-0" not in match_requirements(scenario["dispatch_contract"], request)

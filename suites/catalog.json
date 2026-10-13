@@ -12632,8 +12632,15 @@
             "header_regex": {
               "user-agent": ".+"
             },
-            "query_regex": "(?i)(UNION|AND|OR|%27)",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
+            "query_regex": "(?i)(UNION|AND|OR|%27|\\x27)",
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "native_juice_search_error": true,
+                "text_regex": "<title>Error: SQLITE_ERROR: (?:near .*: syntax error|incomplete input|unrecognized token: .*)</title>"
+              }
+            }
           },
           {
             "id": "scan-1",

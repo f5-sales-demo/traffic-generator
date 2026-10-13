@@ -1,8 +1,10 @@
 """Application-specific native response identity; no inferred exploit or mitigation success."""
 
 import hashlib
+import html
 import json
 import re
+import sqlite3
 from urllib.parse import parse_qs
 
 HTTP_SUCCESS = 200
@@ -798,3 +800,58 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             document is not None or media in ("text/html", "text/plain")
         )
     return False
+
+
+def juice_search_error_matches(
+    path: str, method: str, query: str, content_type: str, body: str
+) -> bool:
+    """Bind the native search error to its declared SQLite query and request criteria."""
+    if (
+        path != "/juice-shop/rest/products/search"
+        or method != "GET"
+        or content_type.partition(";")[0] != "text/html"
+    ):
+        return False
+    values = parse_qs(query, keep_blank_values=True).get("q", [])
+    if len(values) != 1:
+        return False
+    criteria = "" if values[0] == "undefined" else values[0][:200]
+    # EXPLAIN compiles the immutable native SELECT in an empty in-memory schema.
+    # No payload statement or native database is executed or modified.
+    sql = (
+        "EXPLAIN SELECT * FROM Products WHERE ((name LIKE '%"  # noqa: S608 - compile-only native syntax in empty in-memory schema
+        + criteria
+        + "%' OR description LIKE '%"
+        + criteria
+        + "%') AND deletedAt IS NULL) ORDER BY name"
+    )
+    connection = sqlite3.connect(":memory:")
+    try:
+        connection.execute(
+            "CREATE TABLE Products (id INTEGER, name TEXT, description TEXT, deletedAt TEXT)"
+        )
+        try:
+            connection.execute(sql)
+        except sqlite3.OperationalError as error:
+            message = str(error)
+            if not (
+                message == "incomplete input"
+                or re.fullmatch(r'near ".*": syntax error', message)
+                or re.fullmatch(r'unrecognized token: ".*"', message)
+            ):
+                return False
+            native = "Error: SQLITE_ERROR: " + message
+            decoded = html.unescape(body)
+            return all(
+                term in decoded
+                for term in (
+                    "<title>" + native + "</title>",
+                    "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                    "<h2><em>500</em> " + native + "</h2>",
+                )
+            )
+        except sqlite3.Error:
+            return False
+        return False
+    finally:
+        connection.close()
