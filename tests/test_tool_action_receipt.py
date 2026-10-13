@@ -158,3 +158,17 @@ def test_apachebench_preserves_explicit_user_agent():
     result = worker_arguments("ab", args, "ab-123")
     assert result.count("User-Agent: declared-synthetic") == 1
     assert "User-Agent: tgen-native-load/1.0" not in result
+
+
+def test_native_load_worker_keeps_child_marker_and_final_target():
+    arguments = [
+        "-t2",
+        "-c20",
+        "-d15s",
+        "https://www.example.test/juice-shop/rest/products/search?q=test",
+    ]
+    for tool in ("wrk", "hey", "ab"):
+        result = attributed_arguments(tool, arguments, "child-opaque")
+        assert result[:-3] == arguments[:-1]
+        assert result[-3:-1] == ["-H", "X-TGen-Child: child-opaque"]
+        assert result[-1] == arguments[-1]

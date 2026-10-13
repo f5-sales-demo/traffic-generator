@@ -66,6 +66,11 @@ def attributed_arguments(tool: str, arguments: list[str], marker: str) -> list[s
         result.extend(["-m", "CUSTOM-HEADER:" + value])
     elif tool in ("curl", "ffuf", "dalfox"):
         result.extend(["-H", value])
+    elif tool in {"wrk", "hey", "ab"}:
+        if not result or not result[-1].startswith(("http://", "https://")):
+            message = "native worker target must be final argument"
+            raise ValueError(message)
+        result[-1:-1] = ["-H", value]
     elif tool == "arjun":
         result.extend(["--headers", value])
     elif tool in ("gobuster", "feroxbuster", "nuclei"):

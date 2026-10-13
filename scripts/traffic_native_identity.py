@@ -535,6 +535,18 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
         path == "/juice-shop/api/Feedbacks/" and status == HTTP_UNAUTHORIZED
     ):
         return auxiliary_identity(path, method, status, media, body, document)
+    if path == "/httpbin/spec.json":
+        return (
+            method == "GET"
+            and status == HTTP_SUCCESS
+            and media == "application/json"
+            and isinstance(document, dict)
+            and document.get("swagger") == "2.0"
+            and document.get("info", {}).get("title") == "httpbin.org"
+            and document.get("info", {}).get("version") == "0.9.2"
+            and isinstance(document.get("paths"), dict)
+            and {"/get", "/post", "/headers", "/anything"} <= set(document["paths"])
+        )
     if path.startswith("/httpbin/"):
         return (
             isinstance(document, dict)

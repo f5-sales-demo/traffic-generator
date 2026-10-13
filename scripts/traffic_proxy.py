@@ -420,7 +420,12 @@ class Budget:
                 ).hexdigest()
                 event["native_body_verified"] = event["native_response_identity"]
             location = flow.response.headers.get("location", "")
-            if status in (301, 302, 307, 308) and not body and location:
+            if (
+                status in (301, 302, 307, 308)
+                and not body
+                and location
+                and not event["native_response_identity"]
+            ):
                 redirect = urlsplit(location)
                 event["native_response_identity"] = (
                     redirect.scheme in ("", "http", "https")

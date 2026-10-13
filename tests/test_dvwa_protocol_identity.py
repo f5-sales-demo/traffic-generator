@@ -1,5 +1,7 @@
 """Native DVWA API protocol content stays bound to its exact route and method."""
 
+import json
+
 from traffic_native_identity import native_dvwa_redirect_identity, native_identity
 
 
@@ -58,4 +60,19 @@ def test_native_redirect_needs_exact_location_and_empty_native_body():
         302,
         b"",
         "https://evil.example.com",
+    )
+
+
+def test_native_httpbin_spec_requires_application_and_route_inventory():
+    document: dict = {
+        "swagger": "2.0",
+        "info": {"title": "httpbin.org", "version": "0.9.2"},
+        "paths": {path: {} for path in ("/get", "/post", "/headers", "/anything")},
+    }
+    assert native_identity(
+        "/httpbin/spec.json", "GET", 200, "application/json", json.dumps(document)
+    )
+    document["info"]["title"] = "unrelated"
+    assert not native_identity(
+        "/httpbin/spec.json", "GET", 200, "application/json", json.dumps(document)
     )
