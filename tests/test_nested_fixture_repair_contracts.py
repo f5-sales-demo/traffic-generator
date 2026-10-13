@@ -610,6 +610,7 @@ def test_xxe_download_traversal_requires_exact_native_denial():
         r for r in scenarios if r["id"] == "juice-shop-exploits/09-file-upload-xxe"
     )["dispatch_contract"]["requirements"]
     row = next(r for r in row if r["id"] == "traversal-1")
+    assert 403 in row["expected_statuses"]
     contract = row["response_contract_by_status"]["403"]
     body = "<title>Error: Only .md and .pdf files are allowed!</title><h1>OWASP Juice Shop (Express ^4.22.1)</h1><h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
     assert response_content_matches(contract, "text/html", body)

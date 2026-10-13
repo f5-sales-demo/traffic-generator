@@ -10758,7 +10758,7 @@
             "path": "/juice-shop/ftp/..../..../etc/passwd",
             "payload_class": "download-path-traversal",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404, 403],
             "response_contract_by_status": {
               "403": {
                 "content_type": "text/html",
