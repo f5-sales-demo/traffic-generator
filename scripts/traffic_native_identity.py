@@ -5,7 +5,9 @@ import html
 import json
 import re
 import sqlite3
-from urllib.parse import parse_qs
+import subprocess
+from functools import lru_cache
+from urllib.parse import parse_qs, unquote
 
 HTTP_SUCCESS = 200
 HTTP_FOUND = 302
@@ -16,6 +18,7 @@ HTTP_NOT_FOUND = 404
 HTTP_TOO_LARGE = 413
 HTTP_ERROR_START = 400
 NATIVE_MISSING_ORDER_STATUS = 500
+NATIVE_TRACK_ID_UNITS = 60
 
 
 def native_binary_identity(
@@ -855,3 +858,72 @@ def juice_search_error_matches(
         return False
     finally:
         connection.close()
+
+
+@lru_cache(maxsize=512)
+def _juice_track_syntax_error(identifier: str) -> str | None:
+    """Compile the pinned native MarsDB selector without executing its contents."""
+    script = (
+        "const id=JSON.parse(require('fs').readFileSync(0,'utf8'));"
+        "try { new Function('obj', \"return this.orderId === '\" + id + \"'\");"
+        "process.stdout.write('null'); }"
+        "catch(error) { process.stdout.write(JSON.stringify("
+        "error instanceof SyntaxError ? 'SyntaxError: '+error.message : null)); }"
+    )
+    try:
+        result = subprocess.run(  # noqa: S603 - fixed compile-only code; request data uses JSON stdin
+            ["/usr/bin/node", "-e", script],
+            input=json.dumps(identifier),
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=5,
+        )
+        message = json.loads(result.stdout)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    return message if isinstance(message, str) else None
+
+
+def juice_track_error_matches(
+    path: str, method: str, content_type: str, body: str
+) -> bool:
+    """Require the exact compile-only error from this native track-order path."""
+    prefix = "/juice-shop/rest/track-order/"
+    if (
+        method != "GET"
+        or not path.startswith(prefix)
+        or content_type.partition(";")[0] != "text/html"
+    ):
+        return False
+    segment = path.removeprefix(prefix)
+    if not segment or "/" in segment:
+        return False
+    try:
+        identifier = unquote(segment, errors="strict")
+    except UnicodeError:
+        return False
+    identifier = re.sub(r"\r\n|\n|\r", "", identifier)
+    # Native utils.trunc removes newlines and truncates UTF-16 units to 59 + "...".
+    units = identifier.encode("utf-16-le", errors="surrogatepass")
+    if len(units) > NATIVE_TRACK_ID_UNITS * 2:
+        identifier = (
+            units[: (NATIVE_TRACK_ID_UNITS - 1) * 2].decode(
+                "utf-16-le", errors="surrogatepass"
+            )
+            + "..."
+        )
+    message = _juice_track_syntax_error(identifier)
+    if message is None:
+        return False
+    decoded = html.unescape(body)
+    return all(
+        term in decoded
+        for term in (
+            "<title>" + message + "</title>",
+            "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+            "<h2><em>500</em> " + message + "</h2>",
+            "at Object.$where (/juice-shop/node_modules/marsdb/dist/DocumentMatcher.js:419:23)",
+            "at /juice-shop/build/routes/trackOrder.js:50:29",
+        )
+    )

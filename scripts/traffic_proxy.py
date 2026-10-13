@@ -30,6 +30,7 @@ from traffic_dns_route import RoutedHTTPSHandler
 from traffic_native_identity import (
     HTTP_FORBIDDEN,
     juice_search_error_matches,
+    juice_track_error_matches,
     native_binary_identity,
     native_dvwa_redirect_identity,
     native_identity,
@@ -452,6 +453,12 @@ class Budget:
                                 event["query"],
                                 content_type,
                                 body,
+                            )
+                        )
+                        and (
+                            not specification.get("native_juice_track_error")
+                            or juice_track_error_matches(
+                                event["path"], event["method"], content_type, body
                             )
                         )
                         and (

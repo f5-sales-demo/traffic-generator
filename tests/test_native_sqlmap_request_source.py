@@ -11,7 +11,10 @@ from traffic_dispatch import (
     verify_responses,
     verify_tool_actions,
 )
-from traffic_native_identity import juice_search_error_matches
+from traffic_native_identity import (
+    juice_search_error_matches,
+    juice_track_error_matches,
+)
 
 
 def test_all_five_sqlmap_scans_use_declared_targets_and_complete_reports():
@@ -207,20 +210,38 @@ def test_native_track_syntax_error_rejects_published_route_failure():
     contract = sqlmap_scenario()["dispatch_contract"]
     row = next(row for row in contract["requirements"] if row["id"] == "scan-2")
     content = row["response_contract_by_status"]["500"]
-    body = "".join(content["text_contains"])
-    assert response_content_matches(content, "text/html", body)
-    assert not response_content_matches(
-        content, "text/html", body.replace("trackOrder.js", "otherRoute.js")
-    )
-    assert not response_content_matches(
-        content,
-        "text/html",
-        body.replace(
-            "SyntaxError: Invalid or unexpected token",
-            "Error: Unexpected path: /rest/track-order/test",
-        ),
-    )
-    assert not response_content_matches(content, "text/html", "Internal Server Error")
+    assert content["native_juice_track_error"] is True
+    for suffix, message in (
+        ("%27NativeProbe", "Unexpected identifier 'NativeProbe'"),
+        ("%27)", "Unexpected token ')'"),
+        ("%27", "Invalid or unexpected token"),
+    ):
+        path = "/juice-shop/rest/track-order/test" + suffix
+        native = "SyntaxError: " + message
+        body = (
+            "<title>" + native + "</title>"
+            "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>"
+            "<h2><em>500</em> " + native + "</h2>"
+            "at Object.$where (/juice-shop/node_modules/marsdb/dist/DocumentMatcher.js:419:23)"
+            "at /juice-shop/build/routes/trackOrder.js:50:29"
+        )
+        assert juice_track_error_matches(path, "GET", "text/html", body)
+        assert not juice_track_error_matches(
+            path, "GET", "text/html", body.replace("trackOrder.js", "otherRoute.js")
+        )
+        assert not juice_track_error_matches(path, "POST", "text/html", body)
+        assert not juice_track_error_matches(
+            path,
+            "GET",
+            "text/html",
+            body.replace(native, "Error: Unexpected path: test"),
+        )
+        assert not juice_track_error_matches(
+            "/juice-shop/rest/track-order/test", "GET", "text/html", body
+        )
+        assert not juice_track_error_matches(
+            path, "GET", "text/html", "Internal Server Error"
+        )
     event = {
         "kind": "scenario",
         "status": 500,
