@@ -9337,7 +9337,17 @@
             "path": "/juice-shop/rest/track-order/%3Csvg/onload%3Dalert%281%29//%3E",
             "payload_class": "reflected-xss-path",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unexpected path: /rest/track-order/%3Csvg/onload%3Dalert%281%29/%3E</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Unexpected path: /rest/track-order/%3Csvg/onload%3Dalert%281%29/%3E</h2>"
+                ]
+              }
+            }
           }
         ],
         "reject_unmatched_errors": true
@@ -10659,7 +10669,17 @@
             "payload_class": "multipart-xml-or-polyglot",
             "minimum_dispatches": 1,
             "body_regex": "filename=\"oversized_final\\.pdf\"",
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>MulterError: File too large</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> MulterError: File too large</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "ssrf-0",
@@ -10738,7 +10758,33 @@
             "path": "/juice-shop/ftp/..../..../etc/passwd",
             "payload_class": "download-path-traversal",
             "minimum_dispatches": 1,
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404]
+            "expected_statuses": [
+              200,
+              201,
+              204,
+              301,
+              302,
+              307,
+              308,
+              400,
+              401,
+              405,
+              409,
+              410,
+              415,
+              422,
+              404
+            ],
+            "response_contract_by_status": {
+              "403": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Only .md and .pdf files are allowed!</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "traversal-2",
@@ -12155,7 +12201,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Blocked illegal activity by ::ffff:172.18.0.1</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Blocked illegal activity by ::ffff:172.18.0.1</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-192",
@@ -12208,7 +12264,17 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Blocked illegal activity by ::ffff:172.18.0.1</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Blocked illegal activity by ::ffff:172.18.0.1</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-201",
@@ -12217,7 +12283,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Blocked illegal activity by ::ffff:172.18.0.1</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Blocked illegal activity by ::ffff:172.18.0.1</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-202",
@@ -12248,7 +12324,17 @@
             "header_regex": {
               "authorization": "Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Blocked illegal activity by ::ffff:172.18.0.1</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Blocked illegal activity by ::ffff:172.18.0.1</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-203",
@@ -12257,7 +12343,17 @@
             "payload_class": "api-enumeration",
             "minimum_dispatches": 1,
             "absent_headers": ["authorization"],
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 500],
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Blocked illegal activity by ::ffff:172.18.0.1</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> Error: Blocked illegal activity by ::ffff:172.18.0.1</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-204",
@@ -12293,7 +12389,17 @@
             "query_values": {
               "to": "https://owasp.org"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 406],
+            "response_contract_by_status": {
+              "406": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unrecognized target URL for redirect: https://owasp.org</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>406</em> Error: Unrecognized target URL for redirect: https://owasp.org</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "no-auth-205",
@@ -12305,7 +12411,17 @@
             "query_values": {
               "to": "https://owasp.org"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422]
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 404, 405, 422, 406],
+            "response_contract_by_status": {
+              "406": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>Error: Unrecognized target URL for redirect: https://owasp.org</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>406</em> Error: Unrecognized target URL for redirect: https://owasp.org</h2>"
+                ]
+              }
+            }
           },
           {
             "id": "auth-206",
@@ -28735,7 +28851,7 @@
             "response_contract_by_status": {
               "500": {
                 "content_type": "text/html",
-                "text_regex": "<title>Error: Unexpected path: /rest/(?:products/)?(?:dlx[a-z0-9]+|%3[Cc]dlx[a-z0-9]+%3[Ee])(?:/search)?</title>",
+                "text_regex": "<title>Error: Unexpected path: /rest/(?:products/)?(?:dlx[a-z0-9]+|%3[Cc]dlx[a-z0-9]+%3[Ee])(?:/search)?(?:\\?q=test)?</title>",
                 "native_unexpected_path": true
               }
             }

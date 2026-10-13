@@ -530,3 +530,43 @@ def test_proxy_search_error_assertion_uses_actual_query(tmp_path, monkeypatch, q
     budget.done()
     event = json.loads((tmp_path / "response-events.jsonl").read_text())
     assert event["response_assertions"]["scan"] is ("NativeProbe" in query)
+
+
+@pytest.mark.parametrize("query", ["q=test", "q=wrong"])
+def test_scanner_path_error_binds_complete_request_target(tmp_path, monkeypatch, query):
+    monkeypatch.setenv("TGEN_DOMAINS", '["www.example.test"]')
+    monkeypatch.setenv("TGEN_PROXY_METRICS", str(tmp_path / "metrics.json"))
+    spec = importlib.util.spec_from_file_location(
+        "scanner_proxy", ROOT / "scripts/traffic_proxy.py"
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    budget = module.Budget()
+    scenario = next(
+        row
+        for row in json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+        if row["id"] == "web-app-attacks/02-xss"
+    )
+    path = "/juice-shop/rest/dlxsynthetic/search"
+    body = b"<title>Error: Unexpected path: /rest/dlxsynthetic/search?q=test</title>"
+    flow = SimpleNamespace(
+        metadata={
+            "tgen_scenario": {
+                "id": scenario["id"],
+                "phase": "execution",
+                "dispatch_path": str(tmp_path / "dispatch-events.jsonl"),
+                "dispatch_contract": scenario["dispatch_contract"],
+            },
+            "tgen_matched_requirements": ["native-dalfox-path-discovery"],
+        },
+        request=SimpleNamespace(method="GET", path=path + "?" + query, headers={}),
+        response=module.http.Response.make(500, body, {"content-type": "text/html"}),
+    )
+    budget.record_outcome(flow, status=500)
+    budget.done()
+    event = json.loads((tmp_path / "response-events.jsonl").read_text())
+    assert event["response_assertions"]["native-dalfox-path-discovery"] is (
+        query == "q=test"
+    )

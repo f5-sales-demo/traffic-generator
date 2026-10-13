@@ -487,3 +487,133 @@ def test_quantity_native_denials_have_exact_json_contracts():
             contract, "application/json", '{"error":"Other"}'
         )
         assert not response_content_matches(contract, "text/html", "Forbidden")
+
+
+def test_credential_hydra_form_preserves_native_guesses_with_valid_options():
+    source = (ROOT / "suites/mitre-attack/04-credential-access.sh").read_text()
+    assert ":1=:" not in source
+    assert "best15.txt" in source
+    assert "-t 4 -f -I" in source
+    assert "^USER^" in source
+    assert "^PASS^" in source
+
+
+def test_native_enumeration_support_responses_are_route_and_shape_bound():
+    rows = [
+        ("/juice-shop/rest/saveLoginIp", "GET", 401, "text/plain", "Unauthorized"),
+        ("/juice-shop/rest/repeat-notification", "GET", 200, "text/plain", "OK"),
+        (
+            "/juice-shop/rest/continue-code",
+            "GET",
+            200,
+            "application/json",
+            '{"continueCode":"' + "a" * 60 + '"}',
+        ),
+        (
+            "/juice-shop/b2b/v2/orders",
+            "POST",
+            200,
+            "application/json",
+            '{"orderNo":"' + "a" * 32 + '","paymentDue":"2026-10-27T00:00:00.000Z"}',
+        ),
+    ]
+    for path, method, status, media, body in rows:
+        assert native_identity(path, method, status, media, body)
+        assert not native_identity(path, method, status, media, "wrong response")
+        assert not native_identity(path, "DELETE", status, media, body)
+    assert not native_identity(
+        "/juice-shop/rest/continue-code",
+        "GET",
+        200,
+        "application/json",
+        '{"continueCode":17}',
+    )
+    assert not native_identity(
+        "/juice-shop/b2b/v2/orders",
+        "POST",
+        200,
+        "application/json",
+        '{"orderNo":"invalid","paymentDue":"yesterday"}',
+    )
+
+
+def test_preserved_native_parent_errors_have_exact_status_contracts():
+    scenarios = {
+        r["id"]: r
+        for r in json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    }
+    cases = [
+        (
+            "juice-shop-exploits/09-file-upload-xxe",
+            "upload-7",
+            500,
+            "MulterError: File too large",
+        ),
+        (
+            "juice-shop-exploits/03-xss-dom-reflected",
+            "reflected-17",
+            500,
+            "Error: Unexpected path: /rest/track-order/%3Csvg/onload%3Dalert%281%29/%3E",
+        ),
+        (
+            "juice-shop-exploits/11-api-enumeration",
+            "no-auth-191",
+            500,
+            "Error: Blocked illegal activity by ::ffff:172.18.0.1",
+        ),
+        (
+            "juice-shop-exploits/11-api-enumeration",
+            "auth-201",
+            500,
+            "Error: Blocked illegal activity by ::ffff:172.18.0.1",
+        ),
+        (
+            "juice-shop-exploits/11-api-enumeration",
+            "auth-203",
+            500,
+            "Error: Blocked illegal activity by ::ffff:172.18.0.1",
+        ),
+        (
+            "juice-shop-exploits/11-api-enumeration",
+            "auth-205",
+            406,
+            "Error: Unrecognized target URL for redirect: https://owasp.org",
+        ),
+    ]
+    for scenario, identifier, status, message in cases:
+        row = next(
+            r
+            for r in scenarios[scenario]["dispatch_contract"]["requirements"]
+            if r["id"] == identifier
+        )
+        assert status in row["expected_statuses"]
+        contract = row["response_contract_by_status"][str(status)]
+        body = (
+            "<title>"
+            + message
+            + "</title><h1>OWASP Juice Shop (Express ^4.22.1)</h1><h2><em>"
+            + str(status)
+            + "</em> "
+            + message
+            + "</h2>"
+        )
+        assert response_content_matches(contract, "text/html", body)
+        assert not response_content_matches(
+            contract, "text/html", body.replace(message, "Server Error")
+        )
+        assert not response_content_matches(contract, "application/json", body)
+
+
+def test_xxe_download_traversal_requires_exact_native_denial():
+    scenarios = json.loads((ROOT / "suites/catalog.json").read_text())["scenarios"]
+    row = next(
+        r for r in scenarios if r["id"] == "juice-shop-exploits/09-file-upload-xxe"
+    )["dispatch_contract"]["requirements"]
+    row = next(r for r in row if r["id"] == "traversal-1")
+    contract = row["response_contract_by_status"]["403"]
+    body = "<title>Error: Only .md and .pdf files are allowed!</title><h1>OWASP Juice Shop (Express ^4.22.1)</h1><h2><em>403</em> Error: Only .md and .pdf files are allowed!</h2>"
+    assert response_content_matches(contract, "text/html", body)
+    assert not response_content_matches(contract, "text/html", "Forbidden")
+    assert not response_content_matches(
+        contract, "text/html", body.replace("403", "500")
+    )

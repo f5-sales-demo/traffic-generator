@@ -475,9 +475,7 @@ class Budget:
                         and (
                             not specification.get("native_unexpected_path")
                             or "<title>Error: Unexpected path: "
-                            + flow.request.path.split("?", 1)[0].removeprefix(
-                                "/juice-shop"
-                            )
+                            + flow.request.path.removeprefix("/juice-shop")
                             + "</title>"
                             in body
                         )

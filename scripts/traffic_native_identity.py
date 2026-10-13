@@ -9,6 +9,11 @@ import subprocess
 from functools import lru_cache
 from urllib.parse import parse_qs, unquote
 
+from traffic_juice_enumeration import (
+    juice_enumeration_identity,
+    juice_generated_identity,
+)
+
 HTTP_SUCCESS = 200
 HTTP_FOUND = 302
 HTTP_BAD_REQUEST = 400
@@ -499,9 +504,14 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             and status == HTTP_SUCCESS
             and juice_security_text_identity(media, body)
         )
-    discovery = juice_discovery_identity(path, method, status, media, body)
-    if discovery is not None:
-        return discovery
+    for classifier in (
+        juice_generated_identity,
+        juice_enumeration_identity,
+        juice_discovery_identity,
+    ):
+        discovery = classifier(path, method, status, media, body)
+        if discovery is not None:
+            return discovery
     if method == "CONNECT":
         return (
             status == HTTP_BAD_REQUEST
