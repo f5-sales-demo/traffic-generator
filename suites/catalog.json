@@ -12662,8 +12662,20 @@
             "header_regex": {
               "user-agent": ".+"
             },
-            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404],
-            "path_regex": "/juice-shop/rest/track-order/test(?i:.*(?:%27|\\x27|AND|OR|UNION).*)"
+            "expected_statuses": [200, 201, 204, 301, 302, 307, 308, 400, 401, 405, 409, 410, 415, 422, 404, 500],
+            "path_regex": "/juice-shop/rest/track-order/test(?i:.*(?:%27|\\x27|AND|OR|UNION).*)",
+            "response_contract_by_status": {
+              "500": {
+                "content_type": "text/html",
+                "text_contains": [
+                  "<title>SyntaxError: Invalid or unexpected token</title>",
+                  "<h1>OWASP Juice Shop (Express ^4.22.1)</h1>",
+                  "<h2><em>500</em> SyntaxError: Invalid or unexpected token</h2>",
+                  "at Object.$where (/juice-shop/node_modules/marsdb/dist/DocumentMatcher.js:419:23)",
+                  "at /juice-shop/build/routes/trackOrder.js:50:29"
+                ]
+              }
+            }
           },
           {
             "id": "scan-3",

@@ -200,3 +200,32 @@ def test_sqlmap_search_dispatch_includes_preserved_literal_syntax_probe():
     )
     request["query"] = "q=test"
     assert "scan-0" not in match_requirements(scenario["dispatch_contract"], request)
+
+
+def test_native_track_syntax_error_rejects_published_route_failure():
+    contract = sqlmap_scenario()["dispatch_contract"]
+    row = next(row for row in contract["requirements"] if row["id"] == "scan-2")
+    content = row["response_contract_by_status"]["500"]
+    body = "".join(content["text_contains"])
+    assert response_content_matches(content, "text/html", body)
+    assert not response_content_matches(
+        content, "text/html", body.replace("trackOrder.js", "otherRoute.js")
+    )
+    assert not response_content_matches(
+        content,
+        "text/html",
+        body.replace(
+            "SyntaxError: Invalid or unexpected token",
+            "Error: Unexpected path: /rest/track-order/test",
+        ),
+    )
+    assert not response_content_matches(content, "text/html", "Internal Server Error")
+    event = {
+        "kind": "scenario",
+        "status": 500,
+        "matched_requirements": ["scan-2"],
+        "response_assertions": {"scan-2": True},
+    }
+    assert verify_responses({"requirements": [row]}, [event])["passed"]
+    event["response_assertions"] = {"scan-2": False}
+    assert not verify_responses({"requirements": [row]}, [event])["passed"]
