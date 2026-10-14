@@ -56,7 +56,7 @@ for prefix in "" "/vampi" "/juice-shop" "/dvwa"; do
   ffuf -u "${BASE}${prefix}/FUZZ" \
     -w "$WORDLIST" \
     -t 20 \
-    -timeout 10 \
+    -timeout 30 \
     -mc all \
     -fc 404 \
     -s ||
@@ -101,7 +101,7 @@ fi
 for endpoint in "${FUZZ_ENDPOINTS[@]}"; do
   if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
     echo "[+] Paced raw CONNECT method probe: $endpoint"
-    curl -s --max-time 15 -o /dev/null -w 'CONNECT -> HTTP %{http_code}\n' \
+    curl -s --max-time 30 -o /dev/null -w 'CONNECT -> HTTP %{http_code}\n' \
       -H 'X-TGen-Raw-Method: CONNECT' "$endpoint"
   fi
   echo ""
@@ -110,7 +110,7 @@ for endpoint in "${FUZZ_ENDPOINTS[@]}"; do
     -w "$METHODS_FILE" \
     -X FUZZ \
     -t 10 \
-    -timeout 10 \
+    -timeout 30 \
     -mc all \
     -s ||
     echo "WARN: ffuf method fuzz returned non-zero"

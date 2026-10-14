@@ -1,9 +1,15 @@
 #!/bin/bash
 # Ephemeral port exhaustion test — drives TCP connection churn to find port ceiling
-# Tools: hey (primary, with -disable-keepalive), curl+xargs (fallback), ss, sysctl
+# Tools: hey (with -disable-keepalive), ss, sysctl
 # Identifies whether ip_local_port_range and tcp_tw_reuse are properly tuned
 # Estimated duration: 1-2 minutes
 set -uo pipefail
+
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v hey >/dev/null || {
+  echo "[FAIL] Required native hey missing" >&2
+  exit 1
+}
 
 TARGET="${1:?Usage: 08-ephemeral-port-stress.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
@@ -23,13 +29,8 @@ echo "  tcp_tw_reuse:  ${TW_REUSE}"
 echo "  tcp_fin_timeout: ${FIN_TIMEOUT}s"
 echo ""
 
-USE_HEY=false
-if command -v hey &>/dev/null; then
-  USE_HEY=true
-  echo "[+] Using hey -disable-keepalive (forces new TCP connections per request)"
-else
-  echo "[+] hey not found — falling back to curl+xargs"
-fi
+USE_HEY=true
+
 echo ""
 
 BATCHES=(20 50 "${TGEN_REQUESTS:-100}")
@@ -42,24 +43,12 @@ for batch in "${BATCHES[@]}"; do
 
   start_ns=$(date +%s%N)
 
-  if [[ "$USE_HEY" == "true" ]]; then
-    # hey -disable-keepalive forces Connection: close, creating one TCP connection per request
-    hey_output=$(hey -n "${batch}" -c 50 -t 5 -disable-keepalive "${BASE}/health" 2>&1)
+  # hey -disable-keepalive forces Connection: close, creating one TCP connection per request
+  hey_output=$(hey -n "${batch}" -c 50 -t 5 -disable-keepalive "${BASE}/health" 2>&1)
 
-    ok=$(echo "$hey_output" | grep '^\s*\[200\]' | awk '{print $2}' || echo 0)
-    [[ -z "$ok" ]] && ok=0
-    err=$((batch - ok))
-
-  else
-    results=$(seq "$batch" | xargs -P50 -I{} \
-      curl -sf -o /dev/null -w "%{http_code}\n" \
-      --max-time 5 --connect-timeout 3 \
-      -H "Connection: close" "$BASE/health" 2>/dev/null)
-
-    ok=$(echo "$results" | grep -c '^200$' || true)
-    err=$((batch - ok))
-  fi
-
+  ok=$(echo "$hey_output" | grep '^\s*\[200\]' | awk '{print $2}' || echo 0)
+  [[ -z "$ok" ]] && ok=0
+  err=$((batch - ok))
   end_ns=$(date +%s%N)
   wall_ms=$(((end_ns - start_ns) / 1000000))
 

@@ -35,7 +35,7 @@ PAYLOAD_EOF
 
 while IFS= read -r payload; do
   [[ -z "$payload" ]] && continue
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${payload}'''))")
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${payload}")
 
   echo "  Payload: ${payload}"
 

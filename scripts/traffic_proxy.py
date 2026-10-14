@@ -1,18 +1,41 @@
 """Mitmproxy addon: one aggregate clock for scanners, browsers, and filler attacks."""
 
 import asyncio
+import contextlib
+import hashlib
 import http.client as http_client
 import json
 import os
 import re
 import ssl
 import time
+import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 from mitmproxy import http
+from traffic_attribution import child_metadata
+from traffic_cookie_readback import native_session_cookie
+from traffic_dispatch import (
+    classify_outcome,
+    declared_socket_cleanup,
+    match_requirements,
+    response_content_matches,
+)
+from traffic_dns_route import RoutedHTTPSHandler
+from traffic_native_identity import (
+    HTTP_FORBIDDEN,
+    juice_login_error_matches,
+    juice_search_error_matches,
+    juice_track_error_matches,
+    native_binary_identity,
+    native_dvwa_redirect_identity,
+    native_identity,
+)
 
 HTTPS_PORT = 443
 
@@ -20,18 +43,22 @@ HTTPS_PORT = 443
 class Budget:
     """One nonbursting launch clock for all intercepted HTTP connections."""
 
+    maximum_pending_fillers = 200
+
     def __init__(self) -> None:
         """Initialize the shared queue and private counters."""
-        self.pending: asyncio.Queue = asyncio.Queue()
+        self.pending: asyncio.PriorityQueue = asyncio.PriorityQueue()
         self.domains = json.loads(os.environ["TGEN_DOMAINS"])
         self.metrics_path = Path(os.environ["TGEN_PROXY_METRICS"])
         self.counts: dict[str, Any] = {
+            "run_identity": uuid.uuid4().hex,
             "attack_requests": 0,
             "scenario_requests": 0,
             "filler_requests": 0,
             "attack_transport_failures": 0,
             "scenario_transport_failures": 0,
             "tool_cancellations": 0,
+            "browser_cleanup_cancellations": 0,
             "attack_mitigated": 0,
             "denied_destinations": 0,
             "error_categories": {},
@@ -41,7 +68,10 @@ class Budget:
         self.started = time.time()
         self.ticker: asyncio.Task | None = None
         self.tasks: set[asyncio.Task] = set()
-        self.maximum_pending_fillers = 200
+        self.filler_executor = ThreadPoolExecutor(
+            max_workers=self.maximum_pending_fillers,
+            thread_name_prefix="tgen-filler",
+        )
         self.scenario_file = self.metrics_path.parent / "current-scenario.json"
 
     def running(self) -> None:
@@ -54,6 +84,7 @@ class Budget:
             self.ticker.cancel()
         for task in self.tasks:
             task.cancel()
+        self.filler_executor.shutdown(wait=False, cancel_futures=True)
 
     def count(self, host: str, filler: bool) -> None:
         """Count actual request dispatches, not tool process starts."""
@@ -67,10 +98,10 @@ class Budget:
         next_slot = time.monotonic()
         while True:
             await asyncio.sleep(max(0, next_slot - time.monotonic()))
-            next_slot = max(next_slot + 0.05, time.monotonic())
+            next_slot = time.monotonic() + 0.05
             event = None
             while not self.pending.empty():
-                candidate, host = self.pending.get_nowait()
+                _priority, _sequence, candidate, host = self.pending.get_nowait()
                 if not candidate.done():
                     event = candidate
                     break
@@ -78,7 +109,7 @@ class Budget:
                 if len(self.tasks) >= self.maximum_pending_fillers:
                     continue
                 host = self.domains[self.counts["attack_requests"] % len(self.domains)]
-                task = asyncio.create_task(asyncio.to_thread(self.filler, host))
+                task = asyncio.create_task(self.run_filler(host))
                 self.tasks.add(task)
                 task.add_done_callback(self.tasks.discard)
                 self.count(host, filler=True)
@@ -86,9 +117,21 @@ class Budget:
                 self.count(host, filler=False)
                 event.set_result(None)
 
+    async def run_filler(self, host: str) -> None:
+        """Isolate blocking filler HTTP I/O from the event loop's DNS executor."""
+        await asyncio.get_running_loop().run_in_executor(
+            self.filler_executor, self.filler, host
+        )
+
     def filler(self, host: str) -> None:
         """Use spare attack slots for an explicitly identified harmless SQLi simulation."""
-        opener = build_opener(ProxyHandler({}), HTTPSHandler(context=self.tls_context))
+        routes = json.loads(os.environ.get("TGEN_DNS_ROUTES", "{}"))
+        handler = (
+            RoutedHTTPSHandler(routes, self.tls_context)
+            if routes
+            else HTTPSHandler(context=self.tls_context)
+        )
+        opener = build_opener(ProxyHandler({}), handler)
         request = Request(
             "https://" + host + "/httpbin/get?tgen_synthetic=%27%20OR%201%3D1--",
             headers={
@@ -100,10 +143,23 @@ class Budget:
             with opener.open(request, timeout=10) as response:
                 response.read()
         except HTTPError as error:
-            if error.code in (403, 429):
-                self.counts["attack_mitigated"] += 1
-        except (URLError, OSError):
-            self.counts["attack_transport_failures"] += 1
+            try:
+                with error:
+                    error.read()
+                if error.code in (403, 429):
+                    self.counts["attack_mitigated"] += 1
+            except (URLError, OSError) as failure:
+                self.filler_failure(failure)
+        except (URLError, OSError) as failure:
+            self.filler_failure(failure)
+
+    def filler_failure(self, failure: OSError) -> None:
+        """Retain a bounded error category without private addresses or response content."""
+        self.counts["attack_transport_failures"] += 1
+        cause = failure.reason if isinstance(failure, URLError) else failure
+        category = "filler:" + type(cause).__name__
+        categories = self.counts["error_categories"]
+        categories[category] = categories.get(category, 0) + 1
 
     def current_scenario(self) -> str:
         """Join requests to the supervised active scenario with a bounded synthetic identity."""
@@ -112,6 +168,28 @@ class Budget:
             return identifier.replace("/", "-")
         except (OSError, KeyError, ValueError):
             return "catalog"
+
+    def family_marker(self, flow: http.HTTPFlow, current: dict) -> None:
+        """Bind native recovery headers to the host-captured scenario baseline."""
+        if current.get("fixture_contract", {}).get("family_restore") in (
+            "juice-shop",
+            "dvga",
+        ):
+            baseline = Path(current["dispatch_path"]).parent / "family-baseline.json"
+            family = json.loads(baseline.read_text())
+            if not re.fullmatch(r"tgen-[a-f0-9]{32}", family.get("marker", "")):
+                message = "invalid native family request marker"
+                raise ValueError(message)
+            flow.request.headers["X-TGen-Family"] = family["marker"]
+
+    @staticmethod
+    def browser_action(flow: http.HTTPFlow) -> None:
+        """Retain only the declared native navigation marker in private response metadata."""
+        action_id = flow.request.headers.pop("X-TGen-Action", "")
+        if action_id and not re.fullmatch(r"ua-[0-9]+-route-[0-9]+", action_id):
+            message = "invalid native browser action identity"
+            raise ValueError(message)
+        flow.metadata["tgen_action_id"] = action_id
 
     async def request(self, flow: http.HTTPFlow) -> None:
         """All tool/browser descendants queue here immediately before upstream forwarding."""
@@ -136,14 +214,100 @@ class Budget:
         flow.request.scheme = "https" if flow.request.port == HTTPS_PORT else "http"
         if "X-MUD-User" not in flow.request.headers:
             flow.request.headers["X-MUD-User"] = (
-                "waap-scenario-" + self.current_scenario() + "-" + host
+                "showcase-" + uuid.uuid4().hex + "-request"
             )
+        try:
+            current = json.loads(self.scenario_file.read_text())
+        except (OSError, ValueError):
+            current = {"id": "catalog", "phase": "unattributed"}
+        marker = flow.request.headers.pop("X-TGen-Child", "")
+        if not marker:
+            native_marker = re.search(
+                r"(?:^| )TGen-Child/([a-z0-9-]{1,80})(?: |$)",
+                flow.request.headers.get("User-Agent", ""),
+            )
+            if native_marker:
+                marker = native_marker.group(1)
+        if marker:
+            current = child_metadata(self.metrics_path.parent, marker, current)
+        worker_marker = flow.request.headers.pop("X-TGen-Worker", "")
+        if worker_marker and not re.fullmatch(r"(?:wrk|hey|ab)-[0-9]+", worker_marker):
+            message = "invalid native worker attribution"
+            raise ValueError(message)
+        flow.metadata["tgen_worker"] = worker_marker
+        self.browser_action(flow)
+        self.family_marker(flow, current)
+        flow.metadata["tgen_scenario"] = current
         event = asyncio.get_running_loop().create_future()
         flow.metadata["tgen_pending_slot"] = event
-        await self.pending.put((event, host))
+        priority = (
+            0 if flow.request.headers.pop("X-TGen-Monitor", "") == "cache-status" else 1
+        )
+        await self.pending.put((priority, time.monotonic_ns(), event, host))
         await event
         flow.metadata.pop("tgen_pending_slot", None)
-        if flow.request.headers.pop("X-TGen-Raw-Method", "") == "CONNECT":
+        flow.metadata["tgen_upstream_dispatched"] = True
+        flow.metadata["tgen_request_sent_at"] = time.time()
+        flow.metadata["tgen_request_domain"] = host
+        flow.metadata["tgen_synthetic_identity"] = flow.request.headers.get(
+            "X-MUD-User", ""
+        )
+        flow.metadata["tgen_payload_sha256"] = hashlib.sha256(
+            flow.request.content or b""
+        ).hexdigest()
+        try:
+            current = flow.metadata["tgen_scenario"]
+            event_path = Path(current["dispatch_path"])
+            if not event_path.resolve().is_relative_to(
+                self.metrics_path.parent.resolve()
+            ):
+                message = "dispatch receipt escaped the owned results directory"
+                raise ValueError(message)
+        except (OSError, KeyError):
+            event_path = self.metrics_path.parent / "dispatch-events.jsonl"
+        raw_method = flow.request.headers.pop("X-TGen-Raw-Method", "")
+        dispatched_method = (
+            "CONNECT" if raw_method == "CONNECT" else flow.request.method
+        )
+        flow.metadata["tgen_dispatched_method"] = dispatched_method
+        observed = {
+            "body_hex": (flow.request.content or b"").hex(),
+            "kind": "scenario"
+            if current.get("phase") == "execution"
+            else "prerequisite",
+            "method": flow.metadata.get("tgen_dispatched_method", flow.request.method),
+            "path": flow.request.path.split("?", 1)[0],
+            "query": flow.request.path.partition("?")[2],
+            "body": flow.request.get_text(strict=False) or ""
+            if hasattr(flow.request, "get_text")
+            else "",
+            "headers": {
+                name.lower(): value for name, value in flow.request.headers.items()
+            },
+        }
+        matched = match_requirements(current.get("dispatch_contract", {}), observed)
+        flow.metadata["tgen_matched_requirements"] = matched
+        with event_path.open("a", encoding="utf-8") as stream:
+            event_path.chmod(0o600)
+            # This private receipt records endpoint and payload class inputs, never headers/cookies.
+            stream.write(
+                json.dumps(
+                    {
+                        "worker_marker": flow.metadata.get("tgen_worker", ""),
+                        "scenario": current.get("id"),
+                        "kind": observed["kind"],
+                        "matched_requirements": matched,
+                        "method": flow.metadata.get(
+                            "tgen_dispatched_method", flow.request.method
+                        ),
+                        "path": flow.request.path.split("?", 1)[0],
+                        "query": flow.request.path.partition("?")[2],
+                        "dispatched": time.time(),
+                    }
+                )
+                + "\n"
+            )
+        if raw_method == "CONNECT":
             flow.response = await asyncio.to_thread(
                 self.raw_connect, host, flow.request.path
             )
@@ -166,7 +330,10 @@ class Budget:
             return http.Response.make(
                 response.status,
                 response.read(1024 * 1024),
-                {"X-TGen-Execution": "paced raw CONNECT probe"},
+                {
+                    "X-TGen-Execution": "paced raw CONNECT probe",
+                    "Content-Type": response.getheader("content-type", ""),
+                },
             )
         except (OSError, http_client.HTTPException):
             self.counts["scenario_transport_failures"] += 1
@@ -174,8 +341,173 @@ class Budget:
         finally:
             connection.close()
 
+    def record_outcome(
+        self,
+        flow: http.HTTPFlow,
+        status: int | None = None,
+        transport_error: str | None = None,
+    ) -> None:
+        """Append request-scoped response evidence without retaining authentication headers."""
+        current = flow.metadata.get("tgen_scenario")
+        if not current or "dispatch_path" not in current:
+            return
+        destination = Path(current["dispatch_path"]).with_name("response-events.jsonl")
+        if not destination.resolve().is_relative_to(self.metrics_path.parent.resolve()):
+            message = "response evidence escaped the owned results directory"
+            raise ValueError(message)
+        event = {
+            "domain": flow.metadata.get("tgen_request_domain"),
+            "synthetic_identity": flow.metadata.get("tgen_synthetic_identity"),
+            "sent_at": flow.metadata.get("tgen_request_sent_at"),
+            "received_at": time.time(),
+            "payload_sha256": flow.metadata.get("tgen_payload_sha256"),
+            "worker_marker": flow.metadata.get("tgen_worker", ""),
+            "upstream_dispatched": flow.metadata.get("tgen_upstream_dispatched", False),
+            "scenario": current["id"],
+            "kind": "scenario"
+            if current.get("phase") == "execution"
+            else "prerequisite",
+            "method": flow.metadata.get("tgen_dispatched_method", flow.request.method),
+            "path": flow.request.path.split("?", 1)[0],
+            "query": flow.request.path.partition("?")[2],
+            "request_content_type": flow.request.headers.get("content-type", ""),
+            "status": status,
+            "action_id": flow.metadata.get("tgen_action_id") or None,
+            "matched_requirements": flow.metadata.get("tgen_matched_requirements", []),
+            "transport_error": transport_error,
+            "expected_statuses": current.get("expected_statuses", []),
+        }
+        if flow.response:
+            content_type = flow.response.headers.get("content-type", "")
+            body = flow.response.get_text(strict=False) or ""
+            event["response_sha256"] = hashlib.sha256(
+                flow.response.content or b""
+            ).hexdigest()
+            event["native_response_identity"] = (
+                native_dvwa_redirect_identity(
+                    flow.request.path,
+                    event["method"],
+                    status,
+                    flow.response.content or b"",
+                    flow.response.headers.get("location", ""),
+                )
+                or native_identity(
+                    event["path"], event["method"], status, content_type, body
+                )
+                or native_binary_identity(
+                    event["path"],
+                    event["method"],
+                    status,
+                    content_type,
+                    flow.response.content or b"",
+                )
+            )
+            if (
+                current.get("functional_contract", {}).get("verifier")
+                == "native-dvwa-weak-session"
+            ):
+                event["native_session_id"] = native_session_cookie(
+                    flow.response.headers.get_all("set-cookie")
+                )
+            corpus = current.get("dispatch_contract", {})
+            if (
+                corpus.get("payloads")
+                and current.get("functional_contract", {}).get("verifier")
+                == "native-dvwa-corpus"
+            ):
+                payload = parse_qs(flow.request.path.partition("?")[2]).get(
+                    corpus["parameter"], [""]
+                )[0]
+                event["corpus_payload_sha256"] = hashlib.sha256(
+                    payload.encode()
+                ).hexdigest()
+                event["native_body_verified"] = event["native_response_identity"]
+            location = flow.response.headers.get("location", "")
+            if (
+                status in (301, 302, 307, 308)
+                and not body
+                and location
+                and not event["native_response_identity"]
+            ):
+                redirect = urlsplit(location)
+                event["native_response_identity"] = (
+                    redirect.scheme in ("", "http", "https")
+                    and not (redirect.username or redirect.password)
+                    and (not redirect.hostname or redirect.hostname == event["domain"])
+                    and (bool(redirect.path) or bool(redirect.query))
+                )
+            event["response_assertions"] = {}
+            for requirement in current.get("dispatch_contract", {}).get(
+                "requirements", []
+            ):
+                specification = requirement.get("response_contract_by_status", {}).get(
+                    str(status), requirement.get("response_contract")
+                )
+                if requirement["id"] in event["matched_requirements"] and specification:
+                    event["response_assertions"][requirement["id"]] = (
+                        response_content_matches(specification, content_type, body)
+                        and (
+                            not specification.get("native_juice_search_error")
+                            or juice_search_error_matches(
+                                event["path"],
+                                event["method"],
+                                event["query"],
+                                content_type,
+                                body,
+                            )
+                        )
+                        and (
+                            not specification.get("native_juice_login_error")
+                            or juice_login_error_matches(
+                                event["path"],
+                                event["method"],
+                                flow.request.content or b"",
+                                content_type,
+                                body,
+                            )
+                        )
+                        and (
+                            not specification.get("native_juice_track_error")
+                            or juice_track_error_matches(
+                                event["path"], event["method"], content_type, body
+                            )
+                        )
+                        and (
+                            not specification.get("native_unexpected_path")
+                            or "<title>Error: Unexpected path: "
+                            + flow.request.path.removeprefix("/juice-shop")
+                            + "</title>"
+                            in body
+                        )
+                    )
+        event["status_specific_assertions"] = {
+            requirement["id"]: event.get("response_assertions", {}).get(
+                requirement["id"]
+            )
+            is True
+            for requirement in current.get("dispatch_contract", {}).get(
+                "requirements", []
+            )
+            if requirement["id"] in event["matched_requirements"]
+            and str(status) in requirement.get("response_contract_by_status", {})
+        }
+        if (
+            event["path"] == "/dvwa/vulnerabilities/"
+            and event["method"] == "GET"
+            and status == HTTP_FORBIDDEN
+            and event.get("native_response_identity") is True
+        ):
+            # Exact native directory denial may be an incidental Lua request.
+            event["status_specific_assertions"]["native-dvwa-directory"] = True
+        event["outcome"] = classify_outcome(event)
+        with destination.open("a", encoding="utf-8") as stream:
+            destination.chmod(0o600)
+            stream.write(json.dumps(event) + "\n")
+
     def response(self, flow: http.HTTPFlow) -> None:
         """Mitigation is an HTTP outcome, separate from transport failure."""
+        if flow.response:
+            self.record_outcome(flow, status=flow.response.status_code)
         if flow.response and flow.response.status_code in (403, 429):
             self.counts["attack_mitigated"] += 1
         self.persist()
@@ -185,18 +517,38 @@ class Budget:
         pending = flow.metadata.pop("tgen_pending_slot", None)
         if pending is not None and not pending.done():
             pending.cancel()
+        metadata = flow.metadata.get("tgen_scenario", {})
+        marker = {}
+        with contextlib.suppress(OSError, ValueError, KeyError):
+            marker = json.loads(
+                Path(metadata["dispatch_path"])
+                .with_name("browser-cleanup.json")
+                .read_text()
+            )
+        if flow.error and declared_socket_cleanup(flow.request.path, metadata, marker):
+            self.counts["browser_cleanup_cancellations"] += 1
+            self.persist()
+            return
         if flow.error:
+            self.record_outcome(flow, transport_error=type(flow.error).__name__)
             with (self.metrics_path.parent / "error-events.jsonl").open(
                 "a", encoding="utf-8"
             ) as stream:
                 stream.write(
                     json.dumps(
                         {
-                            "method": flow.request.method,
+                            "method": flow.metadata.get(
+                                "tgen_dispatched_method", flow.request.method
+                            ),
                             "path": flow.request.path,
                             "error": re.sub(
                                 r"b'[^']*'", "[redacted header]", flow.error.msg
                             ),
+                            "worker_marker": flow.metadata.get("tgen_worker", ""),
+                            "upstream_dispatched": flow.metadata.get(
+                                "tgen_upstream_dispatched", False
+                            ),
+                            "observed_at": time.time(),
                             "scenario": self.current_scenario(),
                         }
                     )

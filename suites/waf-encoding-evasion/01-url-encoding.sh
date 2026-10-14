@@ -24,10 +24,10 @@ declare -A PAYLOADS=(
 )
 
 ENDPOINTS=(
-  "/rest/products/search?q="
+  "/juice-shop/rest/products/search?q="
   "/?q="
-  "/search?q="
-  "/api/v1/search?query="
+  "/httpbin/get?q="
+  "/httpbin/get?query="
 )
 
 for name in $(echo "${!PAYLOADS[@]}" | tr ' ' '\n' | sort); do
