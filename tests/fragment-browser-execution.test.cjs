@@ -9,6 +9,8 @@ async function execute({
   routeFailure = false,
   screenshotFailure = false,
   cacheFailure = false,
+  bufferFailure = false,
+  forwardingFailure = false,
 } = {}) {
   const actions = [{ id: 'fragment-0', payload: 'synthetic' }];
   let receipt;
@@ -71,6 +73,18 @@ async function execute({
             receipt = JSON.parse(body);
           },
         };
+      if (name === './browser_live_responses.cjs')
+        return {
+          installLiveResponseBuffer: async (target, value) => {
+            assert.equal(target, page);
+            value.live_response_buffering = false;
+            value.buffered_responses = [];
+            if (bufferFailure) throw new Error('native buffering unavailable');
+            value.live_response_buffering = true;
+            if (forwardingFailure) value.buffered_responses.push({ fulfilled: false, error: 'Error' });
+            events.push('buffer-responses');
+          },
+        };
       if (name === './browser_requests.cjs')
         return {
           observeRequests: () => ({ failed }),
@@ -126,7 +140,7 @@ test('fragment failure after rendered state cannot pass the native workload', as
 
 test('fragment actions disable HTTP cache before any native navigation', async () => {
   const result = await execute();
-  assert.deepEqual(result.events, ['disable-cache', 'navigate']);
+  assert.deepEqual(result.events, ['disable-cache', 'buffer-responses', 'navigate']);
   assert.equal(result.receipt.http_cache_disabled, true);
   assert.equal(result.receipt.failed_requests.length, 0);
 });
@@ -140,4 +154,20 @@ test('cache isolation failure rejects workload and preserves browser cleanup evi
   assert.equal(result.receipt.actions.length, 0);
   assert.deepEqual(result.events, ['disable-cache']);
   assert.match(result.errors[0], /cache isolation unavailable/);
+});
+
+test('buffer installation failure rejects workload while retaining cleanup evidence', async () => {
+  const result = await execute({ bufferFailure: true });
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.closed, true);
+  assert.equal(result.receipt.live_response_buffering, false);
+  assert.equal(result.receipt.actions.length, 0);
+});
+
+test('failed native forwarding rejects even a rendered action and successful browser cleanup', async () => {
+  const result = await execute({ forwardingFailure: true });
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.receipt.actions[0].rendered, true);
+  assert.equal(result.receipt.browser_closed, true);
+  assert.equal(result.receipt.buffered_responses[0].fulfilled, false);
 });

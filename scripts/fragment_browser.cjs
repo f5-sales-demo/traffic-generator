@@ -1,5 +1,6 @@
 // Perform each declared DOM XSS route action in Chromium, retaining private evidence.
 const { chromium } = require('playwright');
+const { installLiveResponseBuffer } = require('./browser_live_responses.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -25,6 +26,7 @@ const {
     const session = await page.context().newCDPSession(page);
     await session.send('Network.setCacheDisabled', { cacheDisabled: true });
     receipt.http_cache_disabled = true;
+    await installLiveResponseBuffer(page, receipt);
     for (const action of actions) {
       const item = { id: action.id, performed: false, rendered: false };
       try {
@@ -64,7 +66,12 @@ const {
       }
     }
   }
-  if (receipt.actions.some((action) => action.error || !action.performed || !action.rendered)) process.exitCode = 1;
+  if (
+    !receipt.live_response_buffering ||
+    receipt.buffered_responses?.some((response) => !response.fulfilled || response.error) ||
+    receipt.actions.some((action) => action.error || !action.performed || !action.rendered)
+  )
+    process.exitCode = 1;
 })().catch((error) => {
   console.error(`[FAIL] Native browser workload: ${error.message}`);
   process.exitCode = 1;
