@@ -38,6 +38,9 @@ def test_verified_binary_and_adapter_receipt_make_reinstall_idempotent(tmp_path)
     receipt = {
         "source_commit": native.COMMIT,
         "archive_sha256": native.ARCHIVE_SHA256,
+        "installer_sha256": hashlib.sha256(
+            Path(native.__file__).read_bytes()
+        ).hexdigest(),
         "adapter_sha256": hashlib.sha256(
             Path(native.__file__).with_name("wrk_drain_adapter.py").read_bytes()
         ).hexdigest(),
@@ -47,3 +50,26 @@ def test_verified_binary_and_adapter_receipt_make_reinstall_idempotent(tmp_path)
     with patch("install_native_wrk.urlopen") as fetch:
         assert install(tmp_path) == receipt
     fetch.assert_not_called()
+
+
+def test_reproducible_defaults_and_module_paths_preserve_native_source(tmp_path):
+    source = tmp_path / "src"
+    source.mkdir()
+    lua = source / "wrk.lua"
+    suffix = "\nfunction wrk.request() return wrk.method end\nreturn wrk\n"
+    lua.write_text(native.DEFAULT_TABLE + suffix)
+    makefile = tmp_path / "Makefile"
+    makefile.write_text(
+        "PREFIX=$(abspath $(ODIR)) BUILDMODE=static install\n"
+        'PATH="obj/bin:$(PATH)" luajit -b "$(CURDIR)/$<" "$(CURDIR)/$@"\n'
+    )
+    native.reproducible_source(tmp_path)
+    assert lua.read_text() == native.DEFAULT_ASSIGNMENTS + suffix
+    assert "PREFIX=/usr/local" in makefile.read_text()
+    assert 'INSTALL_LIB="$(abspath $(ODIR))/lib"' in makefile.read_text()
+    assert (
+        'LUA_PATH="$(CURDIR)/obj/share/luajit-2.1.0-beta3/?.lua;;"'
+        in makefile.read_text()
+    )
+    with pytest.raises(ValueError, match="anchor mismatch"):
+        native.reproducible_source(tmp_path)

@@ -97,6 +97,17 @@ def install(destination: Path) -> dict:
         if not (source / "hydra").is_file():
             message = "native Hydra build produced no binary"
             raise ValueError(message)
+        subprocess.run(  # noqa: S603 - fixed tool on a verified private build
+            [
+                "/usr/bin/strip",
+                "--strip-all",
+                "--remove-section=.note.gnu.build-id",
+                "--remove-section=.comment",
+                str(source / "hydra"),
+            ],
+            check=True,
+            timeout=30,
+        )
         binary.parent.mkdir(parents=True, exist_ok=True)
         staged = binary.with_name(".hydra-" + str(os.getpid()))
         shutil.copyfile(source / "hydra", staged)
