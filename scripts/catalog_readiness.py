@@ -9,7 +9,8 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from install_native_hydra import verified_installation
+from install_native_hydra import verified_installation as hydra_verified
+from install_native_wrk import verified_installation as wrk_verified
 from traffic_catalog import load_catalog, readiness
 from traffic_runtime import validate_config
 
@@ -45,7 +46,8 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     catalog = load_catalog(root)
     result = readiness(root, catalog)
-    result["native_hydra_verified"] = verified_installation(root.parent)
+    result["native_hydra_verified"] = hydra_verified(root.parent)
+    result["native_wrk_verified"] = wrk_verified(root.parent)
     result["missing_assets"] = [
         p for p in catalog["required_assets"] if not Path(p).exists()
     ]
@@ -117,6 +119,7 @@ def main() -> int:
     result["ready"] = (
         result["ready"]
         and result["native_hydra_verified"]
+        and result["native_wrk_verified"]
         and not result["missing_assets"]
         and result["browser_ready"]
         and all(c["ready"] for c in checks)

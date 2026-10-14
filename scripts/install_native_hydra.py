@@ -43,16 +43,8 @@ def install(destination: Path) -> dict:
     installer_digest = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     receipt_path = destination / "native-hydra-receipt.json"
     binary = destination / "bin/hydra"
-    if receipt_path.exists() and binary.is_file():
-        receipt = json.loads(receipt_path.read_text())
-        if (
-            receipt.get("source_commit") == COMMIT
-            and receipt.get("archive_sha256") == ARCHIVE_SHA256
-            and receipt.get("installer_sha256") == installer_digest
-            and receipt.get("binary_sha256")
-            == hashlib.sha256(binary.read_bytes()).hexdigest()
-        ):
-            return receipt
+    if verified_installation(destination):
+        return json.loads(receipt_path.read_text())
     with tempfile.TemporaryDirectory(dir=destination) as temporary:
         root = Path(temporary)
         with urlopen(

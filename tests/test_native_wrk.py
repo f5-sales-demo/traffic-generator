@@ -35,6 +35,7 @@ def test_verified_binary_and_adapter_receipt_make_reinstall_idempotent(tmp_path)
     binary = tmp_path / "bin/wrk"
     binary.parent.mkdir()
     binary.write_bytes(b"verified")
+    binary.chmod(0o755)
     receipt = {
         "source_commit": native.COMMIT,
         "archive_sha256": native.ARCHIVE_SHA256,
@@ -73,3 +74,49 @@ def test_reproducible_defaults_and_module_paths_preserve_native_source(tmp_path)
     )
     with pytest.raises(ValueError, match="anchor mismatch"):
         native.reproducible_source(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "drift", ["binary", "mode", "symlink", "source", "installer", "adapter"]
+)
+def test_native_readback_rejects_drift_without_silent_reuse(tmp_path, drift):
+    binary = tmp_path / "bin/wrk"
+    binary.parent.mkdir()
+    binary.write_bytes(b"verified")
+    binary.chmod(0o755)
+    receipt = {
+        "source_commit": native.COMMIT,
+        "archive_sha256": native.ARCHIVE_SHA256,
+        "installer_sha256": hashlib.sha256(
+            Path(native.__file__).read_bytes()
+        ).hexdigest(),
+        "adapter_sha256": hashlib.sha256(
+            Path(native.__file__).with_name("wrk_drain_adapter.py").read_bytes()
+        ).hexdigest(),
+        "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+    }
+    path = tmp_path / "native-wrk-receipt.json"
+    path.write_text(json.dumps(receipt))
+    assert native.verified_installation(tmp_path)
+    if drift == "binary":
+        binary.write_bytes(b"drift")
+    elif drift == "mode":
+        binary.chmod(0o644)
+    elif drift == "symlink":
+        target = binary.with_name("other")
+        binary.rename(target)
+        binary.symlink_to(target)
+    else:
+        key = {
+            "source": "source_commit",
+            "installer": "installer_sha256",
+            "adapter": "adapter_sha256",
+        }[drift]
+        receipt[key] = "b" * 64
+        path.write_text(json.dumps(receipt))
+    assert not native.verified_installation(tmp_path)
+    with (
+        patch("install_native_wrk.urlopen", return_value=io.BytesIO(b"corrupt")),
+        pytest.raises(ValueError, match="digest mismatch"),
+    ):
+        install(tmp_path)

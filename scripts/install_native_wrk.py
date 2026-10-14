@@ -15,6 +15,7 @@ from wrk_drain_adapter import adapt, replace_once
 COMMIT = "a211dd5a7050b1f9e8a9870b95513060e72ac4a0"
 ARCHIVE_SHA256 = "172dd2788b22b210d37a68f11c91e82fdba6583d2a544f04b398a66507031229"
 
+EXECUTABLE_MODE = 0o755
 
 DEFAULT_TABLE = """local wrk = {
    scheme  = "http",
@@ -61,6 +62,30 @@ def reproducible_source(source: Path) -> None:
     makefile.write_text(recipe)
 
 
+def verified_installation(destination: Path) -> bool:
+    """Reject undeclared source, installer, adapter, binary or executable mode drift."""
+    try:
+        receipt = json.loads((destination / "native-wrk-receipt.json").read_text())
+        binary = destination / "bin/wrk"
+        return (
+            binary.is_file()
+            and not binary.is_symlink()
+            and binary.stat().st_mode & 0o777 == EXECUTABLE_MODE
+            and receipt.get("source_commit") == COMMIT
+            and receipt.get("archive_sha256") == ARCHIVE_SHA256
+            and receipt.get("installer_sha256")
+            == hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+            and receipt.get("adapter_sha256")
+            == hashlib.sha256(
+                Path(__file__).with_name("wrk_drain_adapter.py").read_bytes()
+            ).hexdigest()
+            and receipt.get("binary_sha256")
+            == hashlib.sha256(binary.read_bytes()).hexdigest()
+        )
+    except (OSError, ValueError):
+        return False
+
+
 def install(destination: Path) -> dict:
     """Verify upstream source and adapter before building/promoting the native binary."""
     destination.mkdir(parents=True, exist_ok=True)
@@ -70,17 +95,8 @@ def install(destination: Path) -> dict:
     ).hexdigest()
     receipt_path = destination / "native-wrk-receipt.json"
     binary = destination / "bin/wrk"
-    if receipt_path.exists() and binary.is_file():
-        receipt = json.loads(receipt_path.read_text())
-        if (
-            receipt.get("source_commit") == COMMIT
-            and receipt.get("archive_sha256") == ARCHIVE_SHA256
-            and receipt.get("installer_sha256") == installer_digest
-            and receipt.get("adapter_sha256") == adapter_digest
-            and receipt.get("binary_sha256")
-            == hashlib.sha256(binary.read_bytes()).hexdigest()
-        ):
-            return receipt
+    if verified_installation(destination):
+        return json.loads(receipt_path.read_text())
     with tempfile.TemporaryDirectory(dir=destination) as temporary:
         root = Path(temporary)
         with urlopen(
@@ -126,7 +142,7 @@ def install(destination: Path) -> dict:
         binary.parent.mkdir(parents=True, exist_ok=True)
         staged = binary.with_name(".wrk-" + str(os.getpid()))
         shutil.copyfile(source / "wrk", staged)
-        staged.chmod(0o755)
+        staged.chmod(EXECUTABLE_MODE)
         staged.replace(binary)
         receipt = {
             "source_commit": COMMIT,

@@ -27,6 +27,7 @@ def test_verified_binary_and_installer_receipt_make_reinstall_idempotent(tmp_pat
     binary = tmp_path / "bin/hydra"
     binary.parent.mkdir()
     binary.write_bytes(b"verified")
+    binary.chmod(0o755)
     receipt = {
         "source_commit": native.COMMIT,
         "archive_sha256": native.ARCHIVE_SHA256,
