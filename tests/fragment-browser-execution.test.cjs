@@ -4,15 +4,36 @@ const { readFileSync } = require('node:fs');
 const { runInNewContext } = require('node:vm');
 const path = require('node:path');
 
-async function execute({ cleanupFailure = false, routeFailure = false, screenshotFailure = false } = {}) {
+async function execute({
+  cleanupFailure = false,
+  routeFailure = false,
+  screenshotFailure = false,
+  cacheFailure = false,
+} = {}) {
   const actions = [{ id: 'fragment-0', payload: 'synthetic' }];
   let receipt;
   let closed = false;
   const errors = [];
+  const events = [];
   const scenarioProcess = { env: { TARGET_URL: 'https://example.invalid/', TGEN_RESULTS_DIR: '/private/results' } };
   const page = {
     on() {},
-    async goto() {},
+    context: () => ({
+      newCDPSession: async (target) => {
+        assert.equal(target, page);
+        return {
+          async send(command, parameters) {
+            assert.equal(command, 'Network.setCacheDisabled');
+            assert.equal(parameters.cacheDisabled, true);
+            events.push('disable-cache');
+            if (cacheFailure) throw new Error('native cache isolation unavailable');
+          },
+        };
+      },
+    }),
+    async goto() {
+      events.push('navigate');
+    },
     url: () => 'https://example.invalid/#/search?q=synthetic',
     async waitForSelector() {
       if (routeFailure) throw new Error('native route unavailable');
@@ -66,7 +87,7 @@ async function execute({ cleanupFailure = false, routeFailure = false, screensho
     process: scenarioProcess,
     console: { error: (message) => errors.push(message) },
   });
-  return { receipt, closed, errors, exitCode: scenarioProcess.exitCode };
+  return { receipt, closed, errors, events, exitCode: scenarioProcess.exitCode };
 }
 
 test('fragment workload persists native action evidence on successful cleanup', async () => {
@@ -101,4 +122,22 @@ test('fragment failure after rendered state cannot pass the native workload', as
   assert.equal(result.receipt.actions[0].performed, true);
   assert.equal(result.receipt.actions[0].rendered, true);
   assert.equal(result.receipt.actions[0].error, 'native evidence write failed');
+});
+
+test('fragment actions disable HTTP cache before any native navigation', async () => {
+  const result = await execute();
+  assert.deepEqual(result.events, ['disable-cache', 'navigate']);
+  assert.equal(result.receipt.http_cache_disabled, true);
+  assert.equal(result.receipt.failed_requests.length, 0);
+});
+
+test('cache isolation failure rejects workload and preserves browser cleanup evidence', async () => {
+  const result = await execute({ cacheFailure: true });
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.closed, true);
+  assert.equal(result.receipt.browser_closed, true);
+  assert.equal(result.receipt.http_cache_disabled, false);
+  assert.equal(result.receipt.actions.length, 0);
+  assert.deepEqual(result.events, ['disable-cache']);
+  assert.match(result.errors[0], /cache isolation unavailable/);
 });

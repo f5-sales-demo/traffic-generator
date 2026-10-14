@@ -15,11 +15,16 @@ const {
   const page = await browser.newPage({ ignoreHTTPSErrors: true, extraHTTPHeaders: childHeaders() });
   await installSocketDrain(page);
   const state = observeRequests(page);
-  const receipt = { actions: [], browser_closed: false };
+  const receipt = { actions: [], browser_closed: false, http_cache_disabled: false };
   page.on('dialog', async (dialog) => {
     await dialog.dismiss();
   });
   try {
+    // Each declared action must reach the native origin. Chromium can otherwise
+    // synthesize media byte ranges from an earlier image's cached HTML response.
+    const session = await page.context().newCDPSession(page);
+    await session.send('Network.setCacheDisabled', { cacheDisabled: true });
+    receipt.http_cache_disabled = true;
     for (const action of actions) {
       const item = { id: action.id, performed: false, rendered: false };
       try {
