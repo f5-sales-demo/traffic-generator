@@ -107,11 +107,11 @@ def install_service(destination: Path, system_root: Path = Path("/")) -> None:
     service.parent.mkdir(parents=True, exist_ok=True)
     if system_root == Path("/"):
         subprocess.run(  # noqa: S603 - installed verified catalog dependency adapter
-            ["/usr/bin/python3", str(source / "install_native_wrk.py")],
+            ["/usr/bin/python3", "-B", str(source / "install_native_wrk.py")],
             check=True,
         )
         subprocess.run(  # noqa: S603 - immutable upstream Hydra required for native form 401s
-            ["/usr/bin/python3", str(source / "install_native_hydra.py")],
+            ["/usr/bin/python3", "-B", str(source / "install_native_hydra.py")],
             check=True,
         )
     control.write_text(
