@@ -22,6 +22,10 @@ for line in ["ssn: str", "ssn = '123-45-6789'", "{'ssn': '123-45-6789'}"]:
     assert match is not None
     assert match.group("separator") in {":", "="}
 print("[OK] address-field match preserves the structured separator contract")
+assert module.safe_email("xorgctl-session@console.service")
+assert not module.safe_email("person@console.service")
+assert not module.safe_email("person@company.invalid")
+print("[OK] software unit identifiers remain distinct from contact addresses")
 PYTEST
 
 FAIL=0
