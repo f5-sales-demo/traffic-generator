@@ -737,8 +737,11 @@ def invisible_format_character(character: str) -> bool:
 
 
 def safe_email(value: str) -> bool:
-    """Return whether an email-shaped value is reserved or provenance-only."""
+    """Return whether a value is reserved, provenance-only, or a known software unit."""
     if value.lower() == "git@github.com":
+        return True
+    # This fixed console instance is a systemd software identifier, not a contact.
+    if value.lower() == "xorgctl-session@console.service":
         return True
     domain = value.rsplit("@", 1)[1].lower().rstrip(".")
     return domain in SAFE_EMAIL_DOMAINS | PROVENANCE_EMAIL_DOMAINS or any(
