@@ -35,6 +35,7 @@ from traffic_native_identity import (
     native_binary_identity,
     native_dvwa_redirect_identity,
     native_identity,
+    restaurant_registration_rejection,
 )
 
 HTTPS_PORT = 443
@@ -499,6 +500,11 @@ class Budget:
         ):
             # Exact native directory denial may be an incidental Lua request.
             event["status_specific_assertions"]["native-dvwa-directory"] = True
+        if flow.response and restaurant_registration_rejection(
+            event["path"], event["method"], status, content_type, body
+        ):
+            # Native signup conflicts also occur outside child dispatch requirements.
+            event["status_specific_assertions"]["native-restaurant-registration"] = True
         event["outcome"] = classify_outcome(event)
         with destination.open("a", encoding="utf-8") as stream:
             destination.chmod(0o600)

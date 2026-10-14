@@ -13,6 +13,7 @@ from traffic_juice_enumeration import (
     juice_enumeration_identity,
     juice_generated_identity,
 )
+from traffic_restaurant_identity import restaurant_registration_rejection
 
 HTTP_SUCCESS = 200
 HTTP_FOUND = 302
@@ -779,6 +780,10 @@ def native_identity(  # noqa: PLR0911  # pylint: disable=too-many-return-stateme
             and isinstance(document, dict)
             and {"os_info", "env_vars", "local_paths", "disk_usage", "memory_usage"}
             <= set(document)
+        )
+    if path == "/restaurant/register" and status == HTTP_FORBIDDEN:
+        return restaurant_registration_rejection(
+            path, method, status, content_type, body
         )
     if path.startswith("/restaurant/"):
         return (
