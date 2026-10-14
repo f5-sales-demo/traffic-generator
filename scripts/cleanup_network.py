@@ -26,7 +26,11 @@ def stop_owned_proxy(receipt: dict) -> None:
         return
     if actual != expected or str(script).encode() not in arguments:
         return
-    if not any(b"mitmdump" in argument for argument in arguments[:2]):
+    launcher = str(Path(script).with_name("traffic_proxy_main.py")).encode()
+    if launcher not in arguments[:2] and not any(
+        Path(os.fsdecode(argument)).name == "mitmdump"
+        for argument in arguments[:2]
+    ):
         return
     try:
         os.kill(pid, signal.SIGTERM)

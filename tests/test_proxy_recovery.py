@@ -64,3 +64,43 @@ def test_same_owned_proxy_is_signalled():
     ):
         stop_owned_proxy(receipt)
     assert kill.call_count == 1
+
+
+def test_current_owned_python_proxy_launcher_is_signalled():
+    """The deployed Python launcher must recover after operator interruption."""
+    receipt = {
+        "proxy_pid": 12345,
+        "proxy_start_ticks": "100",
+        "proxy_script": "/opt/traffic-generator/source-a/scripts/traffic_proxy.py",
+    }
+    command = b"/opt/traffic-generator/venv/bin/python3\0/opt/traffic-generator/source-a/scripts/traffic_proxy_main.py\0-s\0/opt/traffic-generator/source-a/scripts/traffic_proxy.py\0"
+    with (
+        patch(
+            "cleanup_network.Path.read_text",
+            return_value="12345 (worker) S " + "0 " * 18 + "100",
+        ),
+        patch("cleanup_network.Path.read_bytes", return_value=command),
+        patch("cleanup_network.os.kill") as kill,
+    ):
+        stop_owned_proxy(receipt)
+    assert kill.call_count == 1
+
+
+def test_different_source_proxy_launcher_is_never_signalled():
+    """A matching basename cannot authorize signalling another source's launcher."""
+    receipt = {
+        "proxy_pid": 12345,
+        "proxy_start_ticks": "100",
+        "proxy_script": "/opt/traffic-generator/source-a/scripts/traffic_proxy.py",
+    }
+    command = b"/opt/traffic-generator/venv/bin/python3\0/opt/traffic-generator/source-b/scripts/traffic_proxy_main.py\0-s\0/opt/traffic-generator/source-a/scripts/traffic_proxy.py\0"
+    with (
+        patch(
+            "cleanup_network.Path.read_text",
+            return_value="12345 (worker) S " + "0 " * 18 + "100",
+        ),
+        patch("cleanup_network.Path.read_bytes", return_value=command),
+        patch("cleanup_network.os.kill") as kill,
+    ):
+        stop_owned_proxy(receipt)
+    kill.assert_not_called()
