@@ -4,6 +4,12 @@
 # Targets: All endpoints with full header diversity, path randomization, session isolation
 # Estimated duration: 10 minutes
 set -uo pipefail
+for native_tool in wrk hey vegeta ab; do
+  command -v "$native_tool" >/dev/null || {
+    echo "[FAIL] Required native $native_tool missing" >&2
+    exit 1
+  }
+done
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-600}}"
@@ -19,6 +25,7 @@ echo "  Mode: ALL layers simultaneous"
 echo "================================================================"
 echo ""
 
+RUN_DEADLINE=$(($(date +%s) + DURATION))
 CPU_PRE=$(awk '{printf "%.2f", $1}' /proc/loadavg)
 RAM_PRE=$(free -m | awk '/Mem:/{print $3}')
 echo "Pre-storm: CPU=$CPU_PRE RAM=${RAM_PRE}MB"
@@ -26,6 +33,9 @@ echo ""
 
 LUA_BASELINE="$(dirname "$0")/_baseline.lua"
 LUA_MULTI="$(dirname "$0")/_multi-client.lua"
+WRK_THREADS="${TGEN_THREADS:-4}"
+WRK_CONNECTIONS="${TGEN_CONCURRENCY:-500}"
+[ "$WRK_THREADS" -gt "$WRK_CONNECTIONS" ] && WRK_THREADS="$WRK_CONNECTIONS"
 
 # ================================================================
 # LAYER 1: wrk with deep path randomization (7 instances)
@@ -34,7 +44,7 @@ echo "=== LAYER 1: wrk SUSTAINED LOAD (deep path randomization) ==="
 WRK_PIDS=""
 if command -v wrk >/dev/null 2>&1; then
   for ep in "/juice-shop/" "/dvwa/login.php" "/vampi/users/v1" "/httpbin/get" "/csd-demo/health" "/whoami/" "/health"; do
-    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s \
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 60s \
       -H "X-Forwarded-For: $(rand_ip)" \
       -H "Accept-Encoding: $(rand_encoding)" \
       -H "User-Agent: $(rand_ua)" \
@@ -44,13 +54,13 @@ if command -v wrk >/dev/null 2>&1; then
   done
   # Combined Lua-randomized instance
   if [ -f "$LUA_BASELINE" ]; then
-    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s -s "$LUA_BASELINE" "${BASE}/" >"$RESULTS_DIR/wrk-lua-baseline.log" 2>&1 &
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 60s -s "$LUA_BASELINE" "${BASE}/" >"$RESULTS_DIR/wrk-lua-baseline.log" 2>&1 &
     WRK_PIDS="$WRK_PIDS $!"
     echo "[+] wrk Lua-randomized: all paths (PID $!, 4t/500c)"
   fi
   # Multi-client Lua instance
   if [ -f "$LUA_MULTI" ]; then
-    wrk -t"${TGEN_THREADS:-4}" -c"${TGEN_CONCURRENCY:-500}" -d"${DURATION}s" --timeout 10s -s "$LUA_MULTI" "${BASE}/" >"$RESULTS_DIR/wrk-lua-multi.log" 2>&1 &
+    wrk -t"$WRK_THREADS" -c"$WRK_CONNECTIONS" -d"${DURATION}s" --timeout 60s -s "$LUA_MULTI" "${BASE}/" >"$RESULTS_DIR/wrk-lua-multi.log" 2>&1 &
     WRK_PIDS="$WRK_PIDS $!"
     echo "[+] wrk Lua-multi-client: vendor headers (PID $!, 4t/500c)"
   fi
@@ -63,16 +73,16 @@ echo ""
 echo "=== LAYER 2: hey SUSTAINED (diverse clients) ==="
 HEY_PIDS=""
 if command -v hey >/dev/null 2>&1; then
-  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/" >"$RESULTS_DIR/hey-juice-shop.log" 2>&1 &
+  hey -z "${DURATION}s" -t 60 -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/" >"$RESULTS_DIR/hey-juice-shop.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /juice-shop/ (PID $!, 200c)"
-  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/rest/products/search?q=apple" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
+  hey -z "${DURATION}s" -t 60 -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/juice-shop/rest/products/search?q=apple" >"$RESULTS_DIR/hey-juice-api.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /juice-shop/rest/products/search (PID $!, 200c)"
-  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/httpbin/get" >"$RESULTS_DIR/hey-httpbin.log" 2>&1 &
+  hey -z "${DURATION}s" -t 60 -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/httpbin/get" >"$RESULTS_DIR/hey-httpbin.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /httpbin/get (PID $!, 200c)"
-  hey -z "${DURATION}s" -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/vampi/users/v1" >"$RESULTS_DIR/hey-vampi.log" 2>&1 &
+  hey -z "${DURATION}s" -t 60 -c "${TGEN_CONCURRENCY:-200}" -H "X-Forwarded-For: $(rand_ip)" -H "Accept-Encoding: $(rand_encoding)" "${BASE}/vampi/users/v1" >"$RESULTS_DIR/hey-vampi.log" 2>&1 &
   HEY_PIDS="$HEY_PIDS $!"
   echo "[+] hey: /vampi/users/v1 (PID $!, 200c)"
 fi
@@ -92,7 +102,7 @@ if command -v vegeta >/dev/null 2>&1; then
       echo "Accept-Encoding: $(rand_encoding)"
       echo "Cookie: session=vegeta-${RANDOM}"
     ) >"$RESULTS_DIR/vegeta-targets-$(echo "$ep" | tr '/' '_').txt"
-    vegeta attack -rate="${TGEN_ATTACK_RATE:-500}/s" -duration="${DURATION}s" -timeout=10s \
+    vegeta attack -workers=1 -max-workers=2 -rate="${TGEN_ATTACK_RATE:-500}/s" -duration="${DURATION}s" -timeout=60s \
       -targets="$RESULTS_DIR/vegeta-targets-$(echo "$ep" | tr '/' '_').txt" 2>/dev/null |
       vegeta encode >"$RESULTS_DIR/vegeta-$(echo "$ep" | tr '/' '_').bin" &
     VEG_PIDS="$VEG_PIDS $!"
@@ -106,11 +116,14 @@ echo ""
 # ================================================================
 echo "=== LAYER 4: ab KEEPALIVE BASELINE ==="
 AB_PIDS=""
+# Exercise ApacheBench against the owned HTTP companion while other engines use HTTPS.
+AB_BASE="$BASE"
+[[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]] && AB_BASE="http://${TARGET}"
 if command -v ab >/dev/null 2>&1; then
-  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 10 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
+  ab -l -n "${TGEN_REQUESTS:-999999}" -c "${TGEN_CONCURRENCY:-300}" -k -s 60 -H "X-Forwarded-For: $(rand_ip)" "${AB_BASE}/juice-shop/" >"$RESULTS_DIR/ab-juice-shop.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /juice-shop/ (PID $!, 300c keepalive)"
-  ab -n 999999 -c "${TGEN_CONCURRENCY:-300}" -k -t "$DURATION" -s 10 -H "X-Forwarded-For: $(rand_ip)" "${BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
+  ab -l -n "${TGEN_REQUESTS:-999999}" -c "${TGEN_CONCURRENCY:-300}" -k -s 60 -H "X-Forwarded-For: $(rand_ip)" "${AB_BASE}/httpbin/get" >"$RESULTS_DIR/ab-httpbin.log" 2>&1 &
   AB_PIDS="$AB_PIDS $!"
   echo "[+] ab: /httpbin/get (PID $!, 300c keepalive)"
 fi
@@ -122,12 +135,13 @@ echo ""
 echo "=== LAYER 5: THUNDERING HERD BURSTS (every 60s) ==="
 (
   BURST_NUM=0
-  while true; do
+  while [ "$(date +%s)" -lt "$RUN_DEADLINE" ]; do
     sleep 60
+    [ "$(date +%s)" -ge "$RUN_DEADLINE" ] && break
     BURST_NUM=$((BURST_NUM + 1))
     STAMP="burst-${BURST_NUM}-$(date +%s%N)"
     if command -v hey >/dev/null 2>&1; then
-      hey -n "${TGEN_REQUESTS:-2000}" -c "${TGEN_CONCURRENCY:-500}" -t 10 "${BASE}/httpbin/get?${STAMP}" >/dev/null 2>&1
+      hey -n "${TGEN_REQUESTS:-2000}" -c "${TGEN_CONCURRENCY:-500}" -t 60 "${BASE}/httpbin/get?${STAMP}" >"$RESULTS_DIR/hey-${STAMP}.log" 2>&1
     fi
   done
 ) &
@@ -140,13 +154,13 @@ echo ""
 # ================================================================
 echo "=== LAYER 6: POST/PUT MIXED TRAFFIC ==="
 (
-  while true; do
-    curl -sf -o /dev/null --max-time 5 -X POST \
+  while [ "$(date +%s)" -lt "$RUN_DEADLINE" ]; do
+    curl -sf -o /dev/null --max-time 30 -X POST \
       -H "Content-Type: application/json" \
       -H "X-Forwarded-For: $(rand_ip)" \
       -d '{"test":true,"ts":"'"$(date +%s)"'"}' \
       "${BASE}/httpbin/post" 2>/dev/null
-    curl -sf -o /dev/null --max-time 5 -X PUT \
+    curl -sf -o /dev/null --max-time 30 -X PUT \
       -H "Content-Type: application/json" \
       -H "X-Forwarded-For: $(rand_ip)" \
       -d '{"test":true}' \
@@ -185,7 +199,10 @@ while true; do
   STALE=0
   OTHER=0
   for ep in "/juice-shop/" "/httpbin/get" "/whoami/" "/health" "/dvwa/login.php"; do
-    S=$(check_cache_status "${BASE}${ep}")
+    S=$(check_cache_status "${BASE}${ep}") || {
+      echo "[FAIL] Cache monitor request failed: $ep" >&2
+      exit 1
+    }
     case "$S" in
     HIT) HIT=$((HIT + 1)) ;;
     MISS) MISS=$((MISS + 1)) ;;
@@ -204,12 +221,18 @@ echo "  KRAKEN CDN MAX RESULTS — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "================================================================"
 echo ""
 
-# Kill all background jobs
-kill $BURST_PID $POST_PID 2>/dev/null
+# Drain every bounded worker so shutdown does not cancel an in-flight request.
+WORKER_FAILED=0
 for pid in $WRK_PIDS $HEY_PIDS $VEG_PIDS $AB_PIDS; do
-  kill "$pid" 2>/dev/null
+  wait "$pid" || WORKER_FAILED=1
 done
-sleep 2
+for pid in "$BURST_PID" "$POST_PID"; do
+  wait "$pid" || WORKER_FAILED=1
+done
+if [[ "$WORKER_FAILED" -ne 0 ]]; then
+  echo "[FAIL] Native load worker failed"
+  exit 1
+fi
 
 # Collect results
 echo "=== wrk RESULTS ==="
