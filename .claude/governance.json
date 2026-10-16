@@ -89,6 +89,7 @@
     "blindfold-contract": ["README.md"]
   },
   "protected_files": [
+    ".github/workflows/certificate-wingman-image.yml",
     ".github/workflows/certificate-current-artifacts-pr.yml",
     ".github/workflows/certificate-current-artifacts.yml",
     ".github/workflows/github-pages-config-sources.yml",
