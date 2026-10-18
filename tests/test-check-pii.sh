@@ -410,6 +410,40 @@ git -C "$repo" add fixture.ts
 git -C "$repo" commit -qm explicit-person-name
 assert_single_finding "explicit person-name fields remain enforced" "$repo" person-name high --scope head --mode enforce
 
+repo=$(new_repo repository-full-name)
+cat >"${repo}/fixture.json" <<'EOFJSON'
+{"login":"example-org","full_name":"example-org/example-repo","default_branch":"main"}
+EOFJSON
+cat >"${repo}/fixture.py" <<'EOFPY'
+result = {"text": '{"login":"example-org","full_name":"example-org/example-repo","default_branch":"main"}'}
+EOFPY
+cat >"${repo}/multiline.json" <<'EOFJSON'
+{
+  "full_name": "example-org/example-repo",
+  "default_branch": "main"
+}
+EOFJSON
+git -C "$repo" add fixture.json fixture.py multiline.json
+git -C "$repo" commit -qm repository-metadata
+assert_clean "repository full_name metadata is not a human identity" "$repo" --scope head --mode enforce
+assert_clean "serialized repository metadata is not a human identity" "$repo" --scope head --mode audit
+
+repo=$(new_repo repository-with-person-name)
+cat >"${repo}/fixture.json" <<'EOFJSON'
+{"full_name":"example-org/example-repo","default_branch":"main","owner":{"full_name":"Synthetic Person"}}
+EOFJSON
+git -C "$repo" add fixture.json
+git -C "$repo" commit -qm repository-person-metadata
+assert_single_finding "repository metadata does not exempt nested human full names" "$repo" person-name high --scope head --mode enforce
+
+repo=$(new_repo contextless-repository-shaped-name)
+cat >"${repo}/fixture.json" <<'EOFJSON'
+{"full_name":"example-org/example-repo"}
+EOFJSON
+git -C "$repo" add fixture.json
+git -C "$repo" commit -qm contextless-repository-shape
+assert_single_finding "repository-shaped full names without metadata remain enforced" "$repo" person-name high --scope head --mode enforce
+
 repo=$(new_repo documentation-expressions)
 cat >"${repo}/fixture.mdx" <<'EOF'
 ```bash

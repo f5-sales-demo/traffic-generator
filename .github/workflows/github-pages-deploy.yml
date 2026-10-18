@@ -21,10 +21,11 @@ concurrency:
 
 jobs:
   docs:
-    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@276b522810ed9fb3d91c9762d874a600fa637bbe
+    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@6a3c539235ab5ee327d3736c678f48181349de04
     with:
-      # Certificate Management requires the independent application-chain catalog field.
-      builder-image: ${{ github.repository == 'f5-sales-demo/certificate-management' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:e44440510cf1da36d4b9d95a5173238b33cff15ce18834f31dc310939ca36149' || 'ghcr.io/f5-sales-demo/docs-builder@sha256:8fcc5e4171f6b4cb44133e44619aaca352d168b5a34e0c95a5715041d721bcda' }}
+      # Certificate Management uses scoped lifecycle navigation, TOCs, and session personalization.
+      builder-image: ${{ github.repository == 'f5-sales-demo/certificate-management' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:20185a1fccb2f5a58d6a4405af1cec16e21714d15740d63ce5ae4d97db103118' || 'ghcr.io/f5-sales-demo/docs-builder@sha256:8fcc5e4171f6b4cb44133e44619aaca352d168b5a34e0c95a5715041d721bcda' }}
+      docs-title: ${{ github.repository == 'f5-sales-demo/certificate-management' && 'Certificate Management' || '' }}
       shared-mode: auto
       content-ref: ${{ github.sha }}
       content-path: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' && 'documentation' || 'docs' }}

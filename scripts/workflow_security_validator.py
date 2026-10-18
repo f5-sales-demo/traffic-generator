@@ -14,6 +14,11 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
+# Named exception groups retain Python 3.13 syntax under Python 3.14 formatting.
+WORKFLOW_READ_ERRORS = (OSError, KeyError, TypeError, yaml.YAMLError)
+ROUTE_VALUE_ERRORS = (OSError, ValueError, KeyError, TypeError, IndexError, yaml.YAMLError)
+REFERENCE_METADATA_ERRORS = (OSError, ValueError, KeyError, TypeError)
+
 POLICY_SCHEMA_VERSION = 5
 IMAGE_DIGEST_RE = re.compile(
     r"ghcr\.io/f5-sales-demo/self-hosted-runner@sha256:[0-9a-f]{64}"
@@ -1323,6 +1328,219 @@ def inventory(root, repository, policy, default_profile, routes):
     return set(actual)
 
 
+def related_finding_context(context, selected):
+    context_key = metadata(context, "symbolic", "key")
+    selected_key = metadata(selected, "symbolic", "key")
+    hidden = metadata(context, "symbolic", "kind") == "Hidden"
+    ancestor = metadata(context, "symbolic", "route", "route")
+    route = metadata(selected, "symbolic", "route", "route")
+    if not isinstance(ancestor, list) or not isinstance(route, list):
+        return False
+    parent = len(ancestor) < len(route) and route[: len(ancestor)] == ancestor
+    return hidden and context_key == selected_key and parent
+
+
+def primary_finding_location(finding):
+    """Accept one primary location with context from the same source ancestry."""
+    records = metadata(finding, "locations")
+    if not isinstance(records, list) or not records:
+        return None
+    if len(records) == 1:
+        return records[0] if isinstance(records[0], dict) else None
+    primary = [loc for loc in records if metadata(loc, "symbolic", "kind") == "Primary"]
+    if len(primary) != 1:
+        return None
+    selected = primary[0]
+    contexts = (ctx for ctx in records if ctx is not selected)
+    related = all(related_finding_context(ctx, selected) for ctx in contexts)
+    return selected if related else None
+
+
+MIN_USE_ROUTE_LENGTH = 3
+
+
+def latest_dependency_location(finding):
+    """Locate a current dependency finding in the managed xcsh caller."""
+    if (
+        not isinstance(finding, dict)
+        or finding.get("ident") != "unpinned-uses"
+        or finding.get("ignored")
+    ):
+        return None
+    location = primary_finding_location(finding)
+    if location is None:
+        return None
+    symbolic = location.get("symbolic", {})
+    relative = symbolic.get("key", {}).get("Local", {}).get("verbatim_path")
+    if relative not in (
+        "workflows/super-linter.yml",
+        ".github/workflows/super-linter.yml",
+    ):
+        return None
+    route = symbolic.get("route", {}).get("route", [])
+    if len(route) < MIN_USE_ROUTE_LENGTH or route[0] != {"Key": "jobs"}:
+        return None
+    if not isinstance(route[1].get("Key"), str):
+        return None
+    return relative, route
+
+
+def authorize_latest_dependency_finding(finding, root):
+    """Authorize only the centrally managed, repository-scoped xcsh latest calls."""
+    location = latest_dependency_location(finding)
+    if location is None:
+        return False
+    relative, route = location
+    job_id = route[1]["Key"]
+    try:
+        workflow = yaml.safe_load((root / relative).read_text())
+        job = workflow["jobs"][job_id]
+    except WORKFLOW_READ_ERRORS:
+        return False
+    guard = " ".join(str(job.get("if", "")).split())
+    if job.get("secrets") is not None:
+        return False
+    if job_id == "linked-issue" and route[2:] == [
+        {"Key": "steps"},
+        {"Index": 0},
+        {"Key": "uses"},
+    ]:
+        expected = "github.repository == 'f5-sales-demo/xcsh' && github.event.pull_request.head.repo.full_name == github.repository"
+        target = job["steps"][0].get("uses")
+        return guard == expected and target == "actions/github-script@main"
+    if job_id == "lint-xcsh" and route[2:] == [{"Key": "uses"}]:
+        expected = "always() && !startsWith(github.event.pull_request.head.ref, 'governance/reconcile-') && github.repository == 'f5-sales-demo/xcsh' && needs.linked-issue.result == 'success'"
+        return (
+            guard == expected
+            and job.get("uses")
+            == "f5-sales-demo/docs-control/.github/workflows/super-linter.yml@main"
+        )
+    return False
+
+
+CURRENT_UPSTREAM_REFS = {
+    "actions/cache": "main",
+    "actions/checkout": "main",
+    "actions/download-artifact": "main",
+    "actions/github-script": "main",
+    "actions/setup-node": "main",
+    "actions/upload-artifact": "main",
+    "astral-sh/setup-uv": "main",
+    "docker/build-push-action": "master",
+    "docker/login-action": "master",
+    "docker/metadata-action": "master",
+    "docker/setup-buildx-action": "master",
+    "f5-sales-demo/docs-control": "main",
+    "github/codeql-action": "main",
+    "oven-sh/setup-bun": "main",
+}
+CURRENT_IMAGES = {"ghcr.io/f5-sales-demo/docs-builder:latest"}
+
+
+def project_dependency_value(finding, root):
+    """Resolve a project dependency finding to its exact workflow value."""
+    if (
+        not isinstance(finding, dict)
+        or finding.get("ident") not in ("unpinned-uses", "unpinned-images")
+        or finding.get("ignored")
+    ):
+        return None
+    try:
+        location = primary_finding_location(finding)
+        if location is None:
+            return None
+        symbolic = location["symbolic"]
+        relative = symbolic["key"]["Local"]["verbatim_path"]
+        if relative == ".github/workflows/super-linter.yml":
+            return None
+        pattern = r"\.github/(?:workflows/[^/]+\.ya?ml|actions/[\w.-]+/action\.ya?ml)"
+        if not re.fullmatch(pattern, relative):
+            return None
+        value = yaml.safe_load((root / relative).read_text(encoding="utf-8"))
+        for item in symbolic["route"]["route"]:
+            value = value[item["Key"]] if "Key" in item else value[item["Index"]]
+    except ROUTE_VALUE_ERRORS:
+        value = None
+    return value
+
+
+def project_latest_allowed(finding, root, repository):
+    """Allow xcsh's approved current references without suppressing other audits."""
+    if repository != "f5-sales-demo/xcsh":
+        return False
+    value = project_dependency_value(finding, root)
+    if not isinstance(value, str):
+        return False
+    try:
+        policy_path = root / ".github/config/latest-dependencies.json"
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        if finding["ident"] == "unpinned-images":
+            image = value.removeprefix("docker://")
+            return image in CURRENT_IMAGES and image in policy["images"]
+        match = re.fullmatch(r"([\w.-]+/[\w.-]+)(?:/[^@]+)?@([^@]+)", value)
+        return bool(
+            match
+            and CURRENT_UPSTREAM_REFS.get(match[1]) == match[2]
+            and policy["actions"].get(match[1]) == match[2]
+        )
+    except REFERENCE_METADATA_ERRORS:
+        return False
+
+
+def permitted_latest(finding, root, repository):
+    """Combine canonical guarded calls with the prototype's current-ref policy."""
+    return authorize_latest_dependency_finding(finding, root) or project_latest_allowed(
+        finding, root, repository
+    )
+
+
+def metadata(value, *keys: str):
+    for key in keys:
+        if not isinstance(value, dict):
+            return None
+        value = value.get(key)
+    return value
+
+
+def unexpected_finding_details(findings):
+    """Report rule and location metadata without echoing workflow source."""
+    details = []
+    for finding in findings:
+        ident = metadata(finding, "ident")
+        locations = metadata(finding, "locations")
+        records = []
+        for location in locations if isinstance(locations, list) else []:
+            relative = metadata(
+                location,
+                "symbolic",
+                "key",
+                "Local",
+                "verbatim_path",
+            )
+            row = metadata(
+                location,
+                "concrete",
+                "location",
+                "start_point",
+                "row",
+            )
+            valid_row = isinstance(row, int) and not isinstance(row, bool)
+            line = row + 1 if valid_row and row >= 0 else None
+            records.append(
+                {
+                    "path": relative if isinstance(relative, str) else "unknown",
+                    "line": line,
+                }
+            )
+        details.append(
+            {
+                "ident": ident if isinstance(ident, str) else "unknown",
+                "locations": records,
+            }
+        )
+    return json.dumps(details, sort_keys=True)
+
+
 def validate(findings, root, repository, policy_path, governance_path):
     if not isinstance(findings, list):
         raise PolicyError("Zizmor output must be a JSON array")
@@ -1330,10 +1548,13 @@ def validate(findings, root, repository, policy_path, governance_path):
         policy_path, governance_path, repository
     )
     actual = inventory(root, repository, policy, default_profile, repository_routes)
+    latest_allowed = permitted_latest
+    findings = [item for item in findings if not latest_allowed(item, root, repository)]
     if repository_routes["kind"] == "arc":
         if findings:
             raise PolicyError(
-                "unexpected Zizmor finding for internally validated ARC scalar routes",
+                "unexpected Zizmor finding for internally validated ARC scalar routes: "
+                + unexpected_finding_details(findings),
             )
         missing = []
         for workflow, job_id in sorted(actual):

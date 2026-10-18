@@ -16,3 +16,18 @@ regexes = [
   '''00000000-0000-0000-0000-000000000000''',
   '''00000000-0000-4000-8000-[0-9a-f]{12}''',
 ]
+
+# Keep Sourcegraph's detector active; scope its exact public revision metadata exception to this rule.
+[[rules]]
+id = "sourcegraph-access-token"
+description = "Sourcegraph is a code search and navigation engine."
+regex = '''(?i)\b(\b(sgp_(?:[a-fA-F0-9]{16}|local)_[a-fA-F0-9]{40}|sgp_[a-fA-F0-9]{40}|[a-fA-F0-9]{40})\b)(?:[\x60'"\s;]|\\[nr]|$)'''
+entropy = 3
+keywords = ["sgp_", "sourcegraph"]
+
+[rules.allowlist]
+description = "Verified public API schema v12.0.9 revision metadata"
+regexTarget = "line"
+regexes = [
+  '''^\s*(?:(?:const|let|var)\s+)?commit\s*=\s*['"]e04c5d45f7a4e103e2dc84bf52b767182b4de3bc['"],?\s*$''',
+]

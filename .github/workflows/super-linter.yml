@@ -82,6 +82,7 @@ jobs:
             }
 
   lint:
+    name: ${{ github.repository == 'f5-sales-demo/xcsh' && 'legacy lint (not applicable)' || 'lint' }}
     needs: linked-issue
     # Central reconciliation commits contain only canonical blobs that already
     # passed docs-control lint and review. The reconciler attests this exact
@@ -90,10 +91,36 @@ jobs:
     if: >-
       always() &&
       !startsWith(github.event.pull_request.head.ref, 'governance/reconcile-') &&
-      (github.repository != 'f5-sales-demo/xcsh' || needs.linked-issue.result == 'success')
+      github.repository != 'f5-sales-demo/xcsh'
     # No `secrets:` — least privilege. The reusable uses only the automatic
     # GITHUB_TOKEN, so passing repository secrets would over-provision it.
-    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@276b522810ed9fb3d91c9762d874a600fa637bbe
+    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@6a3c539235ab5ee327d3736c678f48181349de04
+    with:
+      rust_edition: ${{ github.repository == 'f5-sales-demo/xcsh' && '2024' || '2021' }}
+      classify_xc_minimum_configs: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' }}
+      socketless_runner_label: ${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-socketless' || 'managed-socketless' }}
+      container_build_runner_label: ${{ github.repository == 'f5-sales-demo/xcsh' && 'xcsh-container-build' || 'managed-container-build' }}
+    permissions:
+      contents: read # checkout repository content in the reusable workflow
+      packages: read # pull lint tooling from GitHub Packages
+      statuses: write # publish the lint status context
+      pull-requests: write # annotate pull requests with lint results
+
+  lint-xcsh:
+    name: lint
+    needs: linked-issue
+    # Central reconciliation commits contain only canonical blobs that already
+    # passed docs-control lint and review. The reconciler attests this exact
+    # commit under the two required lint contexts, so do not schedule the
+    # Docker-heavy reusable workflow a second time downstream.
+    if: >-
+      always() &&
+      !startsWith(github.event.pull_request.head.ref, 'governance/reconcile-') &&
+      github.repository == 'f5-sales-demo/xcsh' &&
+      needs.linked-issue.result == 'success'
+    # No `secrets:` — least privilege. The reusable uses only the automatic
+    # GITHUB_TOKEN, so passing repository secrets would over-provision it.
+    uses: f5-sales-demo/docs-control/.github/workflows/super-linter.yml@6a3c539235ab5ee327d3736c678f48181349de04
     with:
       rust_edition: ${{ github.repository == 'f5-sales-demo/xcsh' && '2024' || '2021' }}
       classify_xc_minimum_configs: ${{ github.repository == 'f5-sales-demo/terraform-provider-xcsh' }}
