@@ -24,7 +24,7 @@ jobs:
     uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@6a3c539235ab5ee327d3736c678f48181349de04
     with:
       # Certificate Management uses scoped lifecycle navigation, TOCs, and session personalization.
-      builder-image: ${{ github.repository == 'f5-sales-demo/certificate-management' && 'ghcr.io/f5-sales-demo/docs-builder@sha256:20185a1fccb2f5a58d6a4405af1cec16e21714d15740d63ce5ae4d97db103118' || 'ghcr.io/f5-sales-demo/docs-builder@sha256:8fcc5e4171f6b4cb44133e44619aaca352d168b5a34e0c95a5715041d721bcda' }}
+      builder-image: ${{ github.repository == 'f5-sales-demo/certificate-management' && 'ghcr.io/f5-sales-demo/docs-builder:latest' || 'ghcr.io/f5-sales-demo/docs-builder@sha256:8fcc5e4171f6b4cb44133e44619aaca352d168b5a34e0c95a5715041d721bcda' }}
       docs-title: ${{ github.repository == 'f5-sales-demo/certificate-management' && 'Certificate Management' || '' }}
       shared-mode: auto
       content-ref: ${{ github.sha }}
