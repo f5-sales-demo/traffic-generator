@@ -12,7 +12,11 @@
       ".github/workflows/translation-audit.yml",
       ".github/workflows/workflow-security-audit.yml",
       ".github/workflows/require-linked-issue.yml",
-      ".github/workflows/github-pages-deploy.yml"
+      ".github/workflows/github-pages-deploy.yml",
+      ".gitignore",
+      ".pre-commit-config.yaml",
+      ".github/workflows/antigravity-review.yml",
+      "scripts/lint-mdx-prose.sh"
     ],
     "xcsh-action": ["README.md"],
     "terraform-provider-xcsh": [".github/workflows/translation-audit.yml", "scripts/locale-lint.sh"],

@@ -542,7 +542,7 @@ def validate_arc_attestations(policy):
 def remote_dependency(value):
     if not isinstance(value, str):
         raise AuditError(f"uses must be a string, got {value!r}")
-    if value.startswith(("./", "docker://")):
+    if value.startswith(("./", "$/", "docker://")):
         return None
     if "@" not in value:
         raise AuditError(f"remote action has no revision: {value}")
