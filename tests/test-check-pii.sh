@@ -322,6 +322,42 @@ git -C "$repo" add -A
 git -C "$repo" commit -qm source-field-aliases
 assert_clean "source field aliases are schema names rather than personal values" "$repo" --scope head --mode enforce
 
+repo=$(new_repo source-field-display-labels)
+cat >"${repo}/labels.ts" <<'EOF'
+const labels = {
+  namespace: 'Namespace',
+  projectId: 'Project ID',
+  account_id: 'Account ID',
+};
+EOF
+git -C "$repo" add labels.ts
+git -C "$repo" commit -qm source-field-display-labels
+assert_clean "source field display labels are structural aliases" "$repo" --scope head --mode enforce
+
+repo=$(new_repo source-field-display-label-boundary)
+cat >"${repo}/fixture.ts" <<'EOF'
+const record = { namespace: 'private-customer' };
+// namespace: 'Namespace'
+const serialized = "{ projectId: 'Project ID' }";
+const composed = { namespace: 'Namespace' + '-customer' };
+EOF
+cat >"${repo}/data.json" <<'EOF'
+{"namespace": "Namespace", "projectId": "Project ID"}
+EOF
+git -C "$repo" add -A
+git -C "$repo" commit -qm source-field-display-label-boundary
+assert_violation "display labels remain enforced outside structural aliases" "$repo" --scope head --mode enforce
+if ! python3 - "${WORK}/stdout" <<'PYTEST'; then
+import sys
+from pathlib import Path
+output = Path(sys.argv[1]).read_text()
+assert all(f"fixture.ts:{line}" in output for line in range(1, 5)), output
+assert "data.json:1" in output, output
+PYTEST
+  echo "[FAIL] non-structural display labels remain enforced"
+  FAIL=1
+fi
+
 repo=$(new_repo source-field-alias-boundary)
 cat >"${repo}/fixture.ts" <<'EOF'
 const record = { first_name: "Private Person", account: "private-customer" };
