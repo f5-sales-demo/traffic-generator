@@ -1038,7 +1038,7 @@ def source_field_alias(
     value: str,
     context: LineScanContext,
 ) -> bool:
-    """Recognize exact schema field names in active source object properties.
+    """Recognize schema field names and their display labels in source properties.
 
     This does not make field-name strings safe in serialized data, comments or
     strings containing source. The masked structure must retain the property
@@ -1055,7 +1055,9 @@ def source_field_alias(
         "last_name": "family_name",
         "family_name": "last_name",
     }
-    if value not in {key, aliases.get(key)}:
+    display_key = re.sub(r"[ _-]", "", value).casefold()
+    canonical_key = re.sub(r"[_-]", "", key).casefold()
+    if value not in {key, aliases.get(key)} and display_key != canonical_key:
         return False
     structure = context.source_structure
     if structure[match.start("key") : match.end("key")] != key:

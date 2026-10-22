@@ -26,8 +26,9 @@ entropy = 3
 keywords = ["sgp_", "sourcegraph"]
 
 [rules.allowlist]
-description = "Verified public API schema v12.0.9 revision metadata"
+description = "Verified exact API schema and CE archive revision metadata"
 regexTarget = "line"
 regexes = [
   '''^\s*(?:(?:const|let|var)\s+)?commit\s*=\s*['"]e04c5d45f7a4e103e2dc84bf52b767182b4de3bc['"],?\s*$''',
+  '''^\s*"sourceCommit"\s*:\s*"c25d01b0ae4bb828e2afec9152e579ea6178e397",?\s*$''',
 ]
