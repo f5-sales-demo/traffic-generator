@@ -43,11 +43,11 @@ echo "    Mix: ~70% legitimate, ~30% attack"
 echo ""
 
 url_file=$(mktemp)
-for _ in $(seq "$TOTAL_REQUESTS"); do
-  if ((RANDOM % 100 < 70)); then
-    echo "${LEGIT_URLS[$((RANDOM % ${#LEGIT_URLS[@]}))]}"
+for ((index = 0; index < TOTAL_REQUESTS; index++)); do
+  if ((index % 10 < 7)); then
+    echo "${LEGIT_URLS[$((index % ${#LEGIT_URLS[@]}))]}"
   else
-    echo "${ATTACK_URLS[$((RANDOM % ${#ATTACK_URLS[@]}))]}"
+    echo "${ATTACK_URLS[$((index % ${#ATTACK_URLS[@]}))]}"
   fi
 done >"$url_file"
 

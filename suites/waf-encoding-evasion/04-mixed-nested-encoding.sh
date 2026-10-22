@@ -32,7 +32,7 @@ for entry in "${PAYLOADS[@]}"; do
   name="${entry%%|*}"
   payload="${entry#*|}"
   echo "[+] ${name}"
-  for ep in "/?q=" "/search?q=" "/rest/products/search?q="; do
+  for ep in "/?q=" "/httpbin/get?q=" "/juice-shop/rest/products/search?q="; do
     code=$(curl -sk -o /dev/null -w "%{http_code}" \
       "${BASE}${ep}${payload}" --max-time 10) || code="ERR"
     printf "    GET  %-35s -> HTTP %s\n" "${ep}" "${code}"
@@ -56,7 +56,7 @@ JSON_PAYLOADS=(
 
 for payload in "${JSON_PAYLOADS[@]}"; do
   code=$(curl -sk -o /dev/null -w "%{http_code}" \
-    -X POST "${BASE}/api/v1/search" \
+    -X POST "${BASE}/httpbin/post" \
     -H "Content-Type: application/json" \
     -d "${payload}" --max-time 10) || code="ERR"
   printf "    JSON %-50s -> HTTP %s\n" "${payload:0:50}" "${code}"

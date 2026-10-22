@@ -8,8 +8,8 @@ set -euo pipefail
 TARGET="${1:?Usage: 03-testssl.sh <TARGET_FQDN>}"
 
 if [[ "${TARGET_PROTOCOL:-http}" == "http" ]]; then
-  echo "SKIP: testssl requires HTTPS target (TARGET_PROTOCOL=http)"
-  exit 0
+  echo "[FAIL]: testssl requires HTTPS target (TARGET_PROTOCOL=http)"
+  exit 1
 fi
 
 echo "[*] testssl.sh against ${TARGET}"

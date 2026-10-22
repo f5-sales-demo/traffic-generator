@@ -1,0 +1,122 @@
+"""Concrete connection behavior cannot pass from an arbitrary attempt count."""
+
+import sys
+from pathlib import Path
+from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from traffic_connections import tls_matrix
+from traffic_dispatch import (
+    declared_socket_cleanup,
+    verify_connection_probe,
+)
+
+
+def test_tls_probe_requires_all_offerings_and_certificate():
+    identifier = "ssl-scanning/01-sslscan"
+    results = [dict(check, connected=True) for check in tls_matrix(identifier)]
+    results[2]["certificate_validated"] = True
+    receipt: dict[str, Any] = {
+        "scenario": identifier,
+        "results": results,
+        "attempts": len(results),
+        "attempt_limit_per_second": 20,
+        "connections_closed": True,
+    }
+    assert verify_connection_probe(identifier, receipt)["passed"]
+    results.pop()
+    receipt["attempts"] = len(results)
+    assert not verify_connection_probe(identifier, receipt)["passed"]
+
+
+def test_slow_probe_requires_partial_headers_duration_and_cleanup():
+    identifier = "traffic-generation/02-slowloris"
+    receipt: dict[str, Any] = {
+        "scenario": identifier,
+        "results": [{"connected": True}],
+        "attempts": 1,
+        "attempt_limit_per_second": 20,
+        "connections_closed": True,
+        "maximum_slow_connections": 1,
+        "slow_header_writes": 3,
+        "elapsed_seconds": 15,
+    }
+    assert verify_connection_probe(identifier, receipt)["passed"]
+    receipt["slow_header_writes"] = 0
+    assert not verify_connection_probe(identifier, receipt)["passed"]
+
+
+def test_only_declared_long_poll_cleanup_is_expected():
+    path = "/juice-shop/socket.io/?transport=polling&sid=synthetic"
+    metadata = {"id": "csd-violations/login-credential-skimmer"}
+    marker = {"phase": "closing-browser"}
+    assert declared_socket_cleanup(path, metadata, marker)
+    assert not declared_socket_cleanup(path, metadata, {})
+    assert not declared_socket_cleanup("/juice-shop/assets/logo.png", metadata, marker)
+    assert not declared_socket_cleanup(path, {"id": "dvga-exploits/query"}, marker)
+    assert not declared_socket_cleanup(
+        "/juice-shop/socket.io/?transport=polling", metadata, marker
+    )
+
+
+def test_suppressed_slow_write_errors_cannot_establish_complete_probe():
+    identifier = "traffic-generation/02-slowloris"
+    receipt: dict[str, Any] = {
+        "scenario": identifier,
+        "results": [
+            {
+                "connected": True,
+                "write_events": [
+                    {"round": 0, "sent": False, "error_type": "BrokenPipeError"}
+                ],
+            }
+        ],
+        "attempts": 1,
+        "attempt_limit_per_second": 20,
+        "connections_closed": True,
+        "maximum_slow_connections": 1,
+        "slow_header_writes": 0,
+        "elapsed_seconds": 15,
+    }
+    assert not verify_connection_probe(identifier, receipt)["passed"]
+
+
+def test_slow_probe_distinguishes_peer_close_from_tool_failure():
+    identifier = "traffic-generation/02-slowloris"
+    receipt: dict[str, Any] = {
+        "scenario": identifier,
+        "results": [
+            {
+                "connected": True,
+                "write_events": [
+                    {"round": 0, "sent": True},
+                    {"round": 1, "sent": False, "error_type": "SSLEOFError"},
+                    {"round": 2, "sent": False, "error_type": "SSLEOFError"},
+                ],
+            }
+        ],
+        "attempts": 1,
+        "attempt_limit_per_second": 20,
+        "connections_closed": True,
+        "maximum_slow_connections": 1,
+        "slow_header_writes": 1,
+        "elapsed_seconds": 15,
+    }
+    result = verify_connection_probe(identifier, receipt)
+    assert result["passed"]
+    assert result["peer_closed_connections"] == 1
+    assert (
+        result["claim"] == "observed bounded slow-header probe; no control attribution"
+    )
+    receipt["results"][0]["write_events"][1]["error_type"] = "TimeoutError"
+    assert not verify_connection_probe(identifier, receipt)["passed"]
+
+
+def test_rapid_navigation_socket_cleanup_is_scoped_to_long_poll_and_phase():
+    path = "/juice-shop/socket.io/?transport=polling&sid=synthetic"
+    metadata = {"id": "bot-simulation/04-rapid-browsing"}
+    assert declared_socket_cleanup(path, metadata, {"phase": "navigating"})
+    assert not declared_socket_cleanup(path, metadata, {"phase": "execution"})
+    assert not declared_socket_cleanup(
+        "/juice-shop/main.js", metadata, {"phase": "navigating"}
+    )

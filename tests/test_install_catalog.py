@@ -4,9 +4,11 @@ import hashlib
 import importlib.util
 import io
 import pathlib
+import subprocess
 import tarfile
 import tempfile
 import unittest
+from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -107,6 +109,40 @@ class InstallerTests(unittest.TestCase):
                     root / "system/etc/systemd/system/tgen-continuous.service"
                 ).read_text()
             )
+
+
+def test_native_service_install_preserves_exact_source_inventory(tmp_path):
+    destination = tmp_path / "catalog"
+    source = destination / "current/scripts"
+    source.mkdir(parents=True)
+    for name in ("tgen-control", "tgen-continuous.service"):
+        (source / name).write_text("declared service artifact")
+    for name in ("install_native_wrk.py", "install_native_hydra.py"):
+        (source / name).write_text("import inventory_probe\n")
+    (source / "inventory_probe.py").write_text("NATIVE_SOURCE = 'verified'\n")
+    expected = {str(path.relative_to(source)) for path in source.rglob("*")}
+
+    class PrivateSystemRoot:
+        def __hash__(self):
+            return hash(pathlib.Path("/"))
+
+        def __truediv__(self, relative):
+            return tmp_path / "system" / relative
+
+        def __eq__(self, other):
+            return other == pathlib.Path("/")
+
+    real_run = subprocess.run
+
+    def run_native_only(argv, **kwargs):
+        if argv[0] == "/usr/bin/systemctl":
+            return subprocess.CompletedProcess(argv, 0)
+        return real_run(argv, check=kwargs.pop("check", False), **kwargs)
+
+    with patch.object(installer.subprocess, "run", side_effect=run_native_only):
+        installer.install_service(destination, cast(pathlib.Path, PrivateSystemRoot()))
+        installer.install_service(destination, cast(pathlib.Path, PrivateSystemRoot()))
+    assert {str(path.relative_to(source)) for path in source.rglob("*")} == expected
 
 
 if __name__ == "__main__":

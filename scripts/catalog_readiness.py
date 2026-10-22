@@ -9,10 +9,31 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from install_native_hydra import verified_installation as hydra_verified
+from install_native_wrk import verified_installation as wrk_verified
 from traffic_catalog import load_catalog, readiness
 from traffic_runtime import validate_config
 
-HTTP_ERROR_START, METHOD_NOT_ALLOWED = 400, 405
+HTTP_ERROR_START = 400
+
+
+def content_matches(page: dict | None, content_type: str, body: str) -> bool:
+    """Verify page identity independently of status-only readiness."""
+    return page is None or (
+        content_type == page["content_type"]
+        and page["identity"].casefold() in body.casefold()
+    )
+
+
+def application_readiness_paths(root: Path) -> dict[str, dict]:
+    """Probe declared healthy application pages independently of attack targets."""
+    return {
+        app["prefix"] + page["path"]: page
+        for app in json.loads((root / "suites/applications.json").read_text())[
+            "applications"
+        ]
+        for page in app["pages"]
+    }
 
 
 def main() -> int:
@@ -25,6 +46,8 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     catalog = load_catalog(root)
     result = readiness(root, catalog)
+    result["native_hydra_verified"] = hydra_verified(root.parent)
+    result["native_wrk_verified"] = wrk_verified(root.parent)
     result["missing_assets"] = [
         p for p in catalog["required_assets"] if not Path(p).exists()
     ]
@@ -40,9 +63,8 @@ def main() -> int:
     )
     result["browser_ready"] = browser.returncode == 0
     checks = []
-    paths = sorted(
-        {path for scenario in catalog["scenarios"] for path in scenario["target_paths"]}
-    )
+    application_pages = application_readiness_paths(root)
+    paths = sorted(application_pages)
     for domain in config["domains"]:
         for protocol in ("http", "https"):
             for path in paths:
@@ -62,21 +84,26 @@ def main() -> int:
                         )
                     with urlopen(request, timeout=10) as response:  # noqa: S310 - fixed HTTP(S) schemes
                         code = response.status
+                        content_ready = content_matches(
+                            application_pages.get(path),
+                            response.headers.get_content_type(),
+                            response.read(1024 * 1024).decode("utf-8"),
+                        )
                     checks.append(
                         {
                             "domain": domain,
                             "protocol": protocol,
                             "path": path,
-                            "ready": code < HTTP_ERROR_START,
+                            "ready": code < HTTP_ERROR_START and content_ready,
                         }
                     )
-                except HTTPError as error:
+                except HTTPError:
                     checks.append(
                         {
                             "domain": domain,
                             "protocol": protocol,
                             "path": path,
-                            "ready": error.code == METHOD_NOT_ALLOWED,
+                            "ready": False,
                         }
                     )
                 except OSError:
@@ -91,6 +118,8 @@ def main() -> int:
     result["routes"] = checks
     result["ready"] = (
         result["ready"]
+        and result["native_hydra_verified"]
+        and result["native_wrk_verified"]
         and not result["missing_assets"]
         and result["browser_ready"]
         and all(c["ready"] for c in checks)
