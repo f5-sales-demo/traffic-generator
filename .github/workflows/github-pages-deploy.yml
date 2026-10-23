@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   docs:
-    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@e1f9716f95bcaf8606b3060901da09a2970bb230
+    uses: f5-sales-demo/docs-control/.github/workflows/github-pages-deploy.yml@02de9f811af97d90ce3e761d267bf875a41d36c8
     with:
       # Certificate Management uses scoped lifecycle navigation, TOCs, and session personalization.
       builder-image: ${{ github.repository == 'f5-sales-demo/certificate-management' && 'ghcr.io/f5-sales-demo/docs-builder:latest' || 'ghcr.io/f5-sales-demo/docs-builder@sha256:8fcc5e4171f6b4cb44133e44619aaca352d168b5a34e0c95a5715041d721bcda' }}

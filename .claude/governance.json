@@ -248,7 +248,8 @@
       "xcsh-chrome-extension": "developer",
       "canada": "content",
       "custom-responses": "content",
-      "gitops": "content"
+      "gitops": "content",
+      "prompt-charity": "content"
     }
   }
 }
