@@ -45,6 +45,7 @@ self-hosted-runner:
     - nginx
     - observability
     - origin-server
+    - prompt-charity
     - starlight-llms-txt
     - starlight-mega-menu
     - statistics
