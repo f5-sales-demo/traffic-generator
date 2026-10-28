@@ -13,23 +13,23 @@ echo ""
 
 echo "=== T1046: Network Service Scanning ==="
 if [[ -n "${TGEN_INHERITED_BOUNDARY:-}" ]]; then
-  curl -skI --max-time 15 "$BASE/" | head -10
+  curl -skI --max-time 15 "$BASE/" | sed -n '1,10p'
 else
-  nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "open|filtered" | head -10
+  nmap -sV --max-rate "${TGEN_CONNECTION_RATE:-20}" -p 80,443 -Pn "$TARGET" 2>/dev/null | grep -E "open|filtered" | sed -n '1,10p'
 fi
 echo ""
 
 echo "=== T1087.004: Account Discovery — Cloud/Web Accounts ==="
 echo "  Juice Shop user enumeration:"
-curl -sf "${BASE}/juice-shop/api/Users" --max-time 10 2>/dev/null | jq '[.data[]? | {id, email, role}]' 2>/dev/null | head -30
+curl -sf "${BASE}/juice-shop/api/Users" --max-time 10 2>/dev/null | jq '[.data[]? | {id, email, role}]' 2>/dev/null | sed -n '1,30p'
 echo ""
 echo "  VAmPI user enumeration:"
-curl -sf "${BASE}/vampi/users/v1" --max-time 10 2>/dev/null | jq '.' 2>/dev/null | head -20
+curl -sf "${BASE}/vampi/users/v1" --max-time 10 2>/dev/null | jq '.' 2>/dev/null | sed -n '1,20p'
 echo ""
 
 echo "=== T1082: System Information Discovery ==="
 echo "  Server headers:"
-curl -sf -I "${BASE}" --max-time 5 2>/dev/null | grep -iE "(server|x-powered|via|x-frame|x-content|strict|content-security)" | head -10
+curl -sf -I "${BASE}" --max-time 5 2>/dev/null | grep -iE "(server|x-powered|via|x-frame|x-content|strict|content-security)" | sed -n '1,10p'
 echo ""
 echo "  Juice Shop version/config:"
 curl -sf "${BASE}/juice-shop/api/Challenges" --max-time 10 2>/dev/null | jq '{totalChallenges: (.data | length), solved: [.data[] | select(.solved==true)] | length}' 2>/dev/null

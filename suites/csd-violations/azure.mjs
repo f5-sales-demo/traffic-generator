@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import { constants, realpathSync } from 'node:fs';
-import { access } from 'node:fs/promises';
+import { access, writeFile } from 'node:fs/promises';
 // Azure launches reuse the browser engine. AWS remains governed by validateAwsRuntime.
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { runSuite, validateTarget } from './run.mjs';
-import { REVIEWED_DESTINATIONS } from './scenarios.mjs';
 
 export function validateAzure(environment) {
   if (
@@ -19,8 +18,34 @@ export function validateAzure(environment) {
   return target;
 }
 
+export function azureRoutes(target, environment) {
+  let closing = false;
+  return {
+    routeCleanup: async () => {
+      closing = true;
+      await writeFile(
+        resolve(environment.TGEN_RESULTS_DIR, 'browser-cleanup.json'),
+        JSON.stringify({
+          sourceCommit: environment.SOURCE_COMMIT,
+          phase: 'closing-browser',
+        }),
+        { mode: 0o600 },
+      );
+    },
+    routeSetup: async (context) => {
+      await context.route('**/*', async (route) => {
+        if (closing) return route.abort('blockedbyclient');
+        const url = new URL(route.request().url());
+        if (url.hostname === target.hostname) return route.continue();
+        return route.abort('blockedbyclient');
+      });
+    },
+  };
+}
+
 export async function runAzure(environment = process.env, options = {}) {
   const target = validateAzure(environment);
+  const routes = azureRoutes(target, environment);
   const require = createRequire(import.meta.url);
   const playwright = options.playwright ?? require('playwright');
   const chrome = environment.CHROME_PATH ?? playwright.chromium.executablePath();
@@ -35,6 +60,7 @@ export async function runAzure(environment = process.env, options = {}) {
     scenario: environment.CSD_SCENARIO,
     executablePath: chrome,
     headless: true,
+    drainRequests: true,
     browserArgs: ['--disable-dev-shm-usage', '--no-sandbox'],
     ignoreHTTPSErrors: true, // Only the task-owned pacing proxy certificate is intercepted.
     runtime: {
@@ -43,27 +69,7 @@ export async function runAzure(environment = process.env, options = {}) {
       artifactDigest: environment.TGEN_ARTIFACT_SHA256,
       csdEnabled: false,
     },
-    routeCleanup: async (context) => {
-      await context.unrouteAll({ behavior: 'wait' });
-    },
-    routeSetup: async (context) => {
-      await context.route('**/*', async (route) => {
-        const url = new URL(route.request().url());
-        if (url.hostname === target.hostname) return route.continue();
-        if (!REVIEWED_DESTINATIONS.includes(url.hostname)) return route.abort('blockedbyclient');
-        // Keep reviewed synthetic counters/loader attempts on the authorized WAAP route.
-        const path = route.request().method() === 'POST' ? '/httpbin/post' : '/httpbin/get';
-        const response = await route.fetch({ url: `${target.origin}${path}`, maxRetries: 2, timeout: 20000 });
-        if (route.request().resourceType() === 'script') {
-          return route.fulfill({
-            response,
-            contentType: 'application/javascript',
-            body: '/* reviewed synthetic loader simulation */',
-          });
-        }
-        return route.fulfill({ response });
-      });
-    },
+    ...routes,
     ...options,
   });
 }

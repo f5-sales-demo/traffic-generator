@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "applications": [
+    {
+      "id": "juice-shop",
+      "name": "Juice Shop",
+      "prefix": "/juice-shop/",
+      "native_prefix": "/",
+      "ports": [3001, 3002, 3003, 3004],
+      "replicas": 4,
+      "upstream": "juice_shop",
+      "dependencies": [],
+      "pages": [
+        {
+          "path": "",
+          "content_type": "text/html",
+          "identity": "Juice Shop"
+        },
+        {
+          "path": "rest/products/search",
+          "content_type": "application/json",
+          "identity": "data"
+        },
+        {
+          "path": "assets/i18n/en.json",
+          "content_type": "application/json",
+          "identity": "LOGIN"
+        }
+      ],
+      "workflows": [
+        "translated-labels",
+        "products-and-images",
+        "login",
+        "basket",
+        "supporting-pages",
+        "socket-io-affinity"
+      ],
+      "benign_path": "rest/products/search",
+      "mutation_paths": []
+    },
+    {
+      "id": "dvwa",
+      "name": "DVWA",
+      "prefix": "/dvwa/",
+      "native_prefix": "/",
+      "ports": [8101, 8102, 8103, 8104],
+      "replicas": 4,
+      "upstream": "dvwa",
+      "dependencies": ["dvwa-db"],
+      "pages": [
+        {
+          "path": "login.php",
+          "content_type": "text/html",
+          "identity": "DVWA"
+        }
+      ],
+      "workflows": ["authenticated-navigation", "styles-and-forms", "security-settings", "seeded-vulnerability-pages"],
+      "benign_path": "login.php",
+      "mutation_paths": ["logout.php", "setup.php"]
+    },
+    {
+      "id": "vampi",
+      "name": "VAmPI",
+      "prefix": "/vampi/",
+      "native_prefix": "/",
+      "ports": [5101, 5102, 5103, 5104],
+      "replicas": 4,
+      "upstream": "vampi",
+      "dependencies": [],
+      "pages": [
+        {
+          "path": "",
+          "content_type": "application/json",
+          "identity": "VAmPI"
+        },
+        {
+          "path": "openapi.json",
+          "content_type": "application/json",
+          "identity": "openapi"
+        },
+        {
+          "path": "users/v1",
+          "content_type": "application/json",
+          "identity": "username"
+        }
+      ],
+      "workflows": ["api-definition", "authentication", "users", "seeded-books"],
+      "benign_path": "",
+      "mutation_paths": []
+    },
+    {
+      "id": "httpbin",
+      "name": "HTTPBin",
+      "prefix": "/httpbin/",
+      "native_prefix": "/",
+      "ports": [8201, 8202, 8203, 8204],
+      "replicas": 4,
+      "upstream": "httpbin_up",
+      "dependencies": [],
+      "pages": [
+        {
+          "path": "",
+          "content_type": "text/html",
+          "identity": "httpbin"
+        },
+        {
+          "path": "spec.json",
+          "content_type": "application/json",
+          "identity": "swagger"
+        },
+        {
+          "path": "get",
+          "content_type": "application/json",
+          "identity": "headers"
+        }
+      ],
+      "workflows": ["local-swagger-assets", "specification", "links-and-forms"],
+      "benign_path": "get",
+      "mutation_paths": []
+    },
+    {
+      "id": "whoami",
+      "name": "whoami",
+      "prefix": "/whoami/",
+      "native_prefix": "/",
+      "ports": [8082, 8083, 8084, 8085],
+      "replicas": 4,
+      "upstream": "whoami_up",
+      "dependencies": [],
+      "pages": [
+        {
+          "path": "",
+          "content_type": "text/plain",
+          "identity": "Hostname:"
+        }
+      ],
+      "workflows": ["diagnostic-content", "proxy-headers"],
+      "benign_path": "",
+      "mutation_paths": []
+    },
+    {
+      "id": "csd-demo",
+      "name": "CSD Demo",
+      "prefix": "/csd-demo/",
+      "native_prefix": "/",
+      "ports": [5001, 5002, 5003, 5004],
+      "replicas": 4,
+      "upstream": "csd_demo",
+      "dependencies": [],
+      "pages": [
+        {
+          "path": "",
+          "content_type": "text/html",
+          "identity": "dashboard"
+        }
+      ],
+      "workflows": ["dashboard", "checkout", "receiver", "counter", "clear-log", "replica-state"],
+      "benign_path": "",
+      "mutation_paths": ["exfil/clear"]
+    },
+    {
+      "id": "dvga",
+      "name": "DVGA",
+      "prefix": "/dvga/",
+      "native_prefix": "/",
+      "ports": [5201, 5202, 5203, 5204],
+      "replicas": 4,
+      "upstream": "dvga_graphql",
+      "dependencies": [],
+      "pages": [
+        {
+          "path": "",
+          "content_type": "text/html",
+          "identity": "GraphQL"
+        }
+      ],
+      "workflows": ["styles-scripts-images", "navigation-and-forms", "graphql", "subscriptions", "seeded-pastes"],
+      "benign_path": "",
+      "mutation_paths": ["difficulty/easy", "difficulty/hard", "logout", "start_over"],
+      "proxy_read_timeout_seconds": 600
+    },
+    {
+      "id": "restaurant",
+      "name": "RESTaurant",
+      "prefix": "/restaurant/",
+      "native_prefix": "/",
+      "ports": [8301, 8302, 8303, 8304],
+      "replicas": 4,
+      "upstream": "restaurant",
+      "dependencies": ["restaurant-db"],
+      "pages": [
+        {
+          "path": "",
+          "content_type": "text/html",
+          "identity": "Swagger"
+        },
+        {
+          "path": "openapi.json",
+          "content_type": "application/json",
+          "identity": "openapi"
+        },
+        {
+          "path": "redoc",
+          "content_type": "text/html",
+          "identity": "redoc"
+        }
+      ],
+      "workflows": ["swagger", "redoc", "local-assets", "authentication", "seeded-roles"],
+      "benign_path": "openapi.json",
+      "mutation_paths": []
+    },
+    {
+      "id": "crapi",
+      "name": "crAPI",
+      "prefix": "/crapi/",
+      "native_prefix": "/",
+      "ports": [18888],
+      "replicas": 1,
+      "upstream": "crapi_frontend",
+      "dependencies": [
+        "crapi-postgres",
+        "crapi-mongo",
+        "crapi-mailhog",
+        "crapi-identity",
+        "crapi-community",
+        "crapi-workshop",
+        "crapi-chatbot"
+      ],
+      "pages": [
+        {
+          "path": "",
+          "content_type": "text/html",
+          "identity": "crAPI"
+        }
+      ],
+      "workflows": ["login", "signup", "seeded-vehicle", "community", "workshop", "deep-link-refresh", "mailhog"],
+      "benign_path": "",
+      "mutation_paths": []
+    }
+  ]
+}
