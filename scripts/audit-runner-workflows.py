@@ -24,6 +24,16 @@ PULL_REQUEST_EVENT = "github.event_name == 'pull_request' && "
 PULL_REQUEST_HEAD_REPO = "github.event.pull_request.head.repo.full_name"
 PULL_REQUEST_SOURCE = PULL_REQUEST_HEAD_REPO + " == github.repository"
 PULL_REQUEST_GUARD = PULL_REQUEST_EVENT + PULL_REQUEST_SOURCE
+CERTIFICATE_OWNER = "f5-sales-demo/certificate-management"
+CERTIFICATE_GUARD = f"github.repository == '{CERTIFICATE_OWNER}' && "
+CERTIFICATE_PR_GUARD = CERTIFICATE_GUARD + PULL_REQUEST_GUARD
+OWNER_BOUND_PR_DOCKER_GUARDS = {
+    (
+        "f5-sales-demo/certificate-management",
+        ".github/workflows/certificate-current-artifacts-pr.yml",
+        "customization",
+    ): CERTIFICATE_PR_GUARD,
+}
 BENCHMARK_TRUST_GUARD = (
     "github.event_name == 'pull_request' && "
     "github.event.action == 'labeled' && "
@@ -901,7 +911,10 @@ def audit_docker_route(  # noqa: PLR0917
         elif "schedule" in triggers:
             expected_guard = SCHEDULED_DEFAULT_BRANCH_DOCKER_GUARD
         elif triggers == {"pull_request"}:
-            expected_guard = PULL_REQUEST_GUARD
+            expected_guard = OWNER_BOUND_PR_DOCKER_GUARDS.get(
+                (repository, relative, job_id),
+                PULL_REQUEST_GUARD,
+            )
         elif "push" in triggers or triggers == {"workflow_call"}:
             expected_guard = DEFAULT_BRANCH_DOCKER_GUARD
         else:

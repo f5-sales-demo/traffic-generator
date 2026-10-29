@@ -1848,6 +1848,44 @@ def source_template_value_is_expression(
     return closes_template or starts_sentence
 
 
+def source_generated_identity_name(
+    line: str,
+    match: re.Match[str],
+    context: LineScanContext,
+) -> bool:
+    """Recognize executable names with a runtime value and their field's noun.
+
+    This does not apply to serialized strings, comments, or literal customer
+    fragments. Masked source must retain the assignment key, and the complete
+    template must end with its own generic field noun and a statement boundary.
+    """
+    source_key = context.source_structure[match.start("key") : match.end("key")]
+    if (
+        not context.source_code
+        or match.group("separator") != "="
+        or match.group("quote") != "`"
+        or source_key != match.group("key")
+    ):
+        return False
+    interpolation = source_template_interpolation(line, match.start("value"))
+    if interpolation is None:
+        return False
+    expression, closing = interpolation
+    if "`" in expression:
+        return False
+    for string in SOURCE_TEMPLATE_STRING_RE.finditer(expression):
+        value = string.group("value")
+        formatting = bool(re.fullmatch(r"[ \t._/:-]+", value))
+        if not formatting and not placeholder_value(value):
+            return False
+    expression_without_strings = SOURCE_TEMPLATE_STRING_RE.sub("", expression)
+    if not re.search(r"[A-Za-z_$]", expression_without_strings):
+        return False
+    noun = re.sub(r"(?:[_-]?(?:name|id))$", "", match.group("key").lower())
+    suffix = rf"^-{re.escape(noun)}`\s*(?:;|$)"
+    return bool(re.match(suffix, line[closing + 1 :]))
+
+
 def is_nonliteral_code_expression(
     line: str,
     match: re.Match[str],
@@ -2226,6 +2264,7 @@ def scan_structured_identity(
             is_documented_identity_expression(line, match, value, context)
             or numeric_enum_member(match, value, context)
             or source_field_alias(match, value, context)
+            or source_generated_identity_name(line, match, context)
         ):
             continue
         in_jq_span = match_is_in_spans(match, context.jq_spans)
