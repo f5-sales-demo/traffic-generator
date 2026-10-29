@@ -2381,6 +2381,33 @@ git -C "$repo" add fixture.ts
 git -C "$repo" commit -qm source-template-and-signature-expressions
 assert_clean "source template expressions and signatures are not YAML data" "$repo" --scope head --mode enforce
 
+repo=$(new_repo source-generated-identity-name)
+cat >"${repo}/fixture.ts" <<'EOF'
+const subscriptionName = `${serviceName}-subscription`;
+const subscriptionId = `${addonServiceName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}-subscription`;
+EOF
+git -C "$repo" add fixture.ts
+git -C "$repo" commit -qm generated-identity-name
+assert_clean "runtime templates with field-noun labels are generated names" "$repo" --scope head --mode enforce
+
+index=0
+while IFS= read -r expression; do
+  index=$((index + 1))
+  repo=$(new_repo "source-generated-identity-literal-${index}")
+  printf '%s\n' "$expression" >"${repo}/fixture.ts"
+  git -C "$repo" add fixture.ts
+  git -C "$repo" commit -qm generated-identity-literal
+  assert_customer_identifier "generated-name syntax retains literal identity case ${index}" "$repo" --scope head --mode enforce
+done <<'EOF'
+const subscriptionName = `${"private-customer"}-subscription`;
+const subscriptionName = `${serviceName}-private-customer`;
+const subscriptionName = `${serviceName}-subscription` + "private-customer";
+const subscriptionName = "${serviceName}-subscription";
+// subscriptionName = `${serviceName}-subscription`;
+const subscriptionName = `${serviceName}-subscription;
+const subscriptionName = `${`private-customer`}-subscription`;
+EOF
+
 repo=$(new_repo source-template-literal-composition)
 cat >"${repo}/fixture.ts" <<'EOF'
 const literal = `tenant:${"private-customer"}`;
