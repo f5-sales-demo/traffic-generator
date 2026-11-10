@@ -24,7 +24,7 @@
   },
   "profiles": {
     "ubuntu-24.04": {
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:72612c6227b25ab2edd672ef0ddcb62fea2a5b1fd5810dc93bfbd3090073030e",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
       "labels": ["ubuntu-24.04"],
       "memory": "8g",
       "cpus": "4",
@@ -34,7 +34,7 @@
       "docker_socket": false
     },
     "ubuntu-24.04-secondary": {
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:72612c6227b25ab2edd672ef0ddcb62fea2a5b1fd5810dc93bfbd3090073030e",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
       "labels": ["ubuntu-24.04"],
       "memory": "8g",
       "cpus": "4",
@@ -44,7 +44,7 @@
       "docker_socket": false
     },
     "automation": {
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:72612c6227b25ab2edd672ef0ddcb62fea2a5b1fd5810dc93bfbd3090073030e",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
       "labels": ["automation"],
       "memory": "8g",
       "cpus": "4",
@@ -64,7 +64,7 @@
       "docker_socket": false
     },
     "container-build": {
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:4b75d6b2a57f35ca9b57843e88bfd013965b2e7f22122bd21cf01b4dd4cf1f0f",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:ca013c3324f0ac3c6aa6973bfe8314c44b2a6ff47b28ebfae3b162b802bed7dc",
       "labels": ["container-build"],
       "memory": "16g",
       "cpus": "6",
@@ -78,7 +78,7 @@
     "terraform-provider-xcsh-d8": {
       "label": "managed-socketless",
       "runner_profile": "socketless",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:72612c6227b25ab2edd672ef0ddcb62fea2a5b1fd5810dc93bfbd3090073030e",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
       "vm_size": "Standard_D8ads_v5",
       "cpu_limit": 7,
       "memory_limit_bytes": 30064771072,
@@ -88,7 +88,7 @@
     "terraform-provider-xcsh-d16": {
       "label": "terraform-provider-xcsh-compute",
       "runner_profile": "compute",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:72612c6227b25ab2edd672ef0ddcb62fea2a5b1fd5810dc93bfbd3090073030e",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
       "vm_size": "Standard_D16ads_v5",
       "cpu_limit": 15,
       "memory_limit_bytes": 60129542144,
@@ -108,7 +108,7 @@
     "xcsh-compute-16-vcpu-candidate": {
       "label": "xcsh-compute-16-vcpu-candidate",
       "runner_profile": "compute-16-vcpu-candidate",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:72612c6227b25ab2edd672ef0ddcb62fea2a5b1fd5810dc93bfbd3090073030e",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
       "vm_size": "Standard_D16ads_v5",
       "cpu_limit": 15,
       "memory_limit_bytes": 60129542144,
@@ -118,7 +118,7 @@
     "xcsh-compute-f32-candidate": {
       "label": "xcsh-compute-f32-candidate",
       "runner_profile": "compute-f32-candidate",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:72612c6227b25ab2edd672ef0ddcb62fea2a5b1fd5810dc93bfbd3090073030e",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
       "vm_size": "Standard_F32s_v2",
       "cpu_limit": 15,
       "memory_limit_bytes": 32212254720,
@@ -128,7 +128,7 @@
     "gitops-terraform": {
       "label": "gitops-terraform",
       "runner_profile": "terraform",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:72612c6227b25ab2edd672ef0ddcb62fea2a5b1fd5810dc93bfbd3090073030e",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
       "vm_size": "m6a.2xlarge",
       "cpu_limit": 2,
       "memory_limit_bytes": 4294967296,
