@@ -26,6 +26,27 @@ assert module.safe_email("xorgctl-session@console.service")
 assert not module.safe_email("person@console.service")
 assert not module.safe_email("person@company.invalid")
 print("[OK] software unit identifiers remain distinct from contact addresses")
+for path, line in [
+    ("fixture.md", "Supported Namespace: system/shared"),
+    ("fixture.html", '<p class="mui-style-example">Supported Namespace: system/shared</p>'),
+]:
+    findings = set()
+    module.scan_text(path, line, findings)
+    assert not findings, (path, findings)
+for line in [
+    "Supported Namespace: system/private-namespace",
+    "Supported Namespace: system/shared-private-namespace",
+    "Supported Tenant: system/shared",
+    "Namespace: system/shared",
+    "Supported Namespace: system/shared, tenant: private-namespace",
+]:
+    findings = set()
+    module.scan_text("fixture.md", line, findings)
+    assert len(findings) == 1 and next(iter(findings)).category == "customer-identifier", findings
+findings = set()
+module.scan_text("fixture.md", "Supported Namespace: system/shared, email: person@company.invalid", findings)
+assert len(findings) == 1 and next(iter(findings)).category == "email", findings
+print("[OK] fixed supported-namespace prose preserves literal-identity enforcement")
 PYTEST
 
 FAIL=0
