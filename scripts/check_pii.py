@@ -2243,7 +2243,14 @@ def is_documented_identity_expression(
     fixed_query = normalized_value(value).startswith("system") and re.search(
         r"/api/web/namespaces/system/quota/usage\?namespace=system(?:[\"'\s]|$)", line
     )
-    return bool(positional or lookup or fixed_query)
+    supported_namespace = (
+        not context.source_code
+        and match.group("key").casefold() == "namespace"
+        and match.group("separator") == ":"
+        and re.search(r"\bSupported\s*$", line[: match.start()], re.IGNORECASE)
+        and re.fullmatch(r"system/shared(?:</p>)?", normalized_value(value))
+    )
+    return bool(positional or lookup or fixed_query or supported_namespace)
 
 
 def scan_structured_identity(
