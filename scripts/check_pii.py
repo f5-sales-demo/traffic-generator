@@ -137,6 +137,9 @@ PERSON_FIELD_RE = re.compile(
     r"['\"]?\s*(?P<separator>[:=])\s*(?P<quote>['\"`]?)"
     r"(?P<value>(?:(?!\\[rn])[^'\"`#,\r\n}\]])+)"
 )
+REPOSITORY_FULL_NAME_RE = re.compile(
+    r"[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}",
+)
 LOCALIZATION_BUNDLE_RE = re.compile(
     r"(?:bundle\.l10n|package\.nls)(?:\.[A-Za-z0-9-]+)?\.json$",
     re.IGNORECASE,
@@ -498,6 +501,7 @@ class LineScanContext:
     source_code: bool
     jq_spans: tuple[tuple[int, int], ...]
     localization_spans: tuple[tuple[int, int], ...]
+    repository_full_name_columns: frozenset[int]
     source_structure: str
     source_brace_depth: int
     enum_body_depth: int | None
@@ -876,6 +880,41 @@ def json_string_end(text: str, start: int) -> int | None:
     return None
 
 
+def repository_full_name_columns(path: str, text: str) -> dict[int, frozenset[int]]:
+    """Locate repository identifiers proven by their enclosing JSON metadata."""
+    columns: dict[int, set[int]] = {}
+    decoder = json.JSONDecoder()
+    for match in PERSON_FIELD_RE.finditer(text):
+        if match.group("key") != "full_name":
+            continue
+        value = normalized_value(structured_field_value(path, text, match))
+        if not REPOSITORY_FULL_NAME_RE.fullmatch(value):
+            continue
+        key_start = match.start("key")
+        start = text.rfind("{", 0, key_start)
+        while start >= 0:
+            try:
+                metadata, end = decoder.raw_decode(text, start)
+            except json.JSONDecodeError:
+                start = text.rfind("{", 0, start)
+                continue
+            if end <= match.end("key"):
+                start = text.rfind("{", 0, start)
+                continue
+            if (
+                isinstance(metadata, dict)
+                and metadata.get("full_name") == value
+                and isinstance(metadata.get("default_branch"), str)
+                and metadata["default_branch"].strip()
+            ):
+                line_number = text.count("\n", 0, key_start) + 1
+                line_start = text.rfind("\n", 0, key_start) + 1
+                columns.setdefault(line_number, set()).add(key_start - line_start)
+            # Parent metadata cannot establish the meaning of a nested name.
+            break
+    return {line: frozenset(values) for line, values in columns.items()}
+
+
 def localization_top_level_string_spans(
     path: str,
     text: str,
@@ -999,7 +1038,7 @@ def source_field_alias(
     value: str,
     context: LineScanContext,
 ) -> bool:
-    """Recognize exact schema field names in active source object properties.
+    """Recognize schema field names and their display labels in source properties.
 
     This does not make field-name strings safe in serialized data, comments or
     strings containing source. The masked structure must retain the property
@@ -1016,7 +1055,9 @@ def source_field_alias(
         "last_name": "family_name",
         "family_name": "last_name",
     }
-    if value not in {key, aliases.get(key)}:
+    display_key = re.sub(r"[ _-]", "", value).casefold()
+    canonical_key = re.sub(r"[_-]", "", key).casefold()
+    if value not in {key, aliases.get(key)} and display_key != canonical_key:
         return False
     structure = context.source_structure
     if structure[match.start("key") : match.end("key")] != key:
@@ -1807,6 +1848,44 @@ def source_template_value_is_expression(
     return closes_template or starts_sentence
 
 
+def source_generated_identity_name(
+    line: str,
+    match: re.Match[str],
+    context: LineScanContext,
+) -> bool:
+    """Recognize executable names with a runtime value and their field's noun.
+
+    This does not apply to serialized strings, comments, or literal customer
+    fragments. Masked source must retain the assignment key, and the complete
+    template must end with its own generic field noun and a statement boundary.
+    """
+    source_key = context.source_structure[match.start("key") : match.end("key")]
+    if (
+        not context.source_code
+        or match.group("separator") != "="
+        or match.group("quote") != "`"
+        or source_key != match.group("key")
+    ):
+        return False
+    interpolation = source_template_interpolation(line, match.start("value"))
+    if interpolation is None:
+        return False
+    expression, closing = interpolation
+    if "`" in expression:
+        return False
+    for string in SOURCE_TEMPLATE_STRING_RE.finditer(expression):
+        value = string.group("value")
+        formatting = bool(re.fullmatch(r"[ \t._/:-]+", value))
+        if not formatting and not placeholder_value(value):
+            return False
+    expression_without_strings = SOURCE_TEMPLATE_STRING_RE.sub("", expression)
+    if not re.search(r"[A-Za-z_$]", expression_without_strings):
+        return False
+    noun = re.sub(r"(?:[_-]?(?:name|id))$", "", match.group("key").lower())
+    suffix = rf"^-{re.escape(noun)}`\s*(?:;|$)"
+    return bool(re.match(suffix, line[closing + 1 :]))
+
+
 def is_nonliteral_code_expression(
     line: str,
     match: re.Match[str],
@@ -2082,7 +2161,10 @@ def scan_contacts(
                     message="email address does not use a documentation-reserved domain",
                 )
         for match in PERSON_FIELD_RE.finditer(line):
-            if match_is_in_spans(match, context.localization_spans):
+            if (
+                match_is_in_spans(match, context.localization_spans)
+                or match.start("key") in context.repository_full_name_columns
+            ):
                 continue
             value = structured_field_value(path, line, match)
             if not is_json_structured_literal(path, line, match):
@@ -2161,7 +2243,14 @@ def is_documented_identity_expression(
     fixed_query = normalized_value(value).startswith("system") and re.search(
         r"/api/web/namespaces/system/quota/usage\?namespace=system(?:[\"'\s]|$)", line
     )
-    return bool(positional or lookup or fixed_query)
+    supported_namespace = (
+        not context.source_code
+        and match.group("key").casefold() == "namespace"
+        and match.group("separator") == ":"
+        and re.search(r"\bSupported\s*$", line[: match.start()], re.IGNORECASE)
+        and re.fullmatch(r"system/shared(?:</p>)?", normalized_value(value))
+    )
+    return bool(positional or lookup or fixed_query or supported_namespace)
 
 
 def scan_structured_identity(
@@ -2182,6 +2271,7 @@ def scan_structured_identity(
             is_documented_identity_expression(line, match, value, context)
             or numeric_enum_member(match, value, context)
             or source_field_alias(match, value, context)
+            or source_generated_identity_name(line, match, context)
         ):
             continue
         in_jq_span = match_is_in_spans(match, context.jq_spans)
@@ -2515,6 +2605,7 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
     yaml = suffix in {".yaml", ".yml"}
     aliases: dict[str, bool] = {}
     localization_strings = localization_top_level_string_spans(path, text)
+    repository_names = repository_full_name_columns(path, text)
     if yaml or suffix in PROSE_DOCUMENT_SUFFIXES:
         scan_yaml_identity_blocks(path, text, findings)
     scan_multiline_identity_fields(path, text, findings)
@@ -2688,6 +2779,7 @@ def scan_text(path: str, text: str, findings: set[Finding]) -> None:
             source_code=source_code,
             jq_spans=spans,
             localization_spans=localization_strings.get(line_number, ()),
+            repository_full_name_columns=repository_names.get(line_number, frozenset()),
             source_structure=source_structure,
             source_brace_depth=line_source_brace_depth,
             enum_body_depth=enum_body_depth,
