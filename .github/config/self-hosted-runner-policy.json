@@ -630,7 +630,7 @@
         }
       }
     },
-    "f5-sales-demo/csd": {
+    "f5-sales-demo/client-side-defense": {
       ".github/workflows/workflow-security-audit.yml": {
         "workflow-security-audit": {
           "runs_on": "ubuntu-latest",
@@ -1080,7 +1080,7 @@
         }
       }
     },
-    "f5-sales-demo/csd": {
+    "f5-sales-demo/client-side-defense": {
       "runner": {
         "arc_scale_sets": {
           "socketless": {
