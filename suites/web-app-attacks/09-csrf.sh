@@ -7,6 +7,7 @@ set -uo pipefail
 
 TARGET="${1:?Usage: 09-csrf.sh <TARGET_FQDN>}"
 BASE="${TARGET_PROTOCOL:-http}://${TARGET}"
+MARKER="${TGEN_FAMILY_MARKER:?Run through the native family journal adapter}"
 
 echo "[*] CSRF protection test suite against ${TARGET}"
 echo ""
@@ -85,7 +86,7 @@ csrf_test "juice-shop POST /api/Users (forged Origin)" \
   -X POST "${BASE}/juice-shop/api/Users" \
   -H "Content-Type: application/json" \
   -H "Origin: http://evil.example" \
-  -d '{"email":"csrf@evil.example","password":"Test1234","passwordRepeat":"Test1234"}'
+  -d "{\"email\":\"${MARKER}@example.com\",\"password\":\"Test1234\",\"passwordRepeat\":\"Test1234\"}"
 
 echo ""
 

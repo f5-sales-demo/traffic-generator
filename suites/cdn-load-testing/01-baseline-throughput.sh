@@ -4,6 +4,12 @@
 # Targets: All 7 CDN endpoints with randomized sub-paths, XFF, Accept-Encoding
 # Estimated duration: 3-5 minutes
 set -uo pipefail
+
+# Native dependencies are mandatory; no alternate request engine is accepted.
+command -v wrk >/dev/null || {
+  echo "[FAIL] Required native wrk missing" >&2
+  exit 1
+}
 . "$(dirname "$0")/_lib.sh"
 
 DURATION="${TGEN_DURATION:-${2:-60}}"
@@ -37,7 +43,8 @@ for ep in "${ENDPOINTS[@]}"; do
       -H "Accept-Encoding: $(rand_encoding)" \
       "${BASE}${ep}" 2>&1 | grep -E "Requests/sec|Latency|Transfer" | sed 's/^/    /'
   else
-    echo "    [SKIP] wrk not available"
+    echo "[FAIL] Required native wrk missing" >&2
+    exit 1
   fi
   echo ""
 done
@@ -48,7 +55,8 @@ if command -v wrk >/dev/null 2>&1 && [ -f "$LUA_SCRIPT" ]; then
   wrk -t"$THREADS" -c"$CONNS" -d"${DURATION}s" --timeout 10s \
     -s "$LUA_SCRIPT" "${BASE}/" 2>&1 | grep -E "Requests/sec|Latency|Transfer|Socket" | sed 's/^/    /'
 else
-  echo "    [SKIP] wrk or Lua script not available"
+  echo "[FAIL] Required native wrk Lua phase missing" >&2
+  exit 1
 fi
 echo ""
 
@@ -60,12 +68,12 @@ for ep in "${ENDPOINTS[@]}"; do
   sleep 0.1
   # Check cache status
   STATUS=$(check_cache_status "${BASE}${ep}")
-  if [ "$STATUS" = "HIT" ]; then
-    pass "$ep → X-Cache-Status: $STATUS"
-  elif [ "$STATUS" = "MISS" ] || [ "$STATUS" = "NONE" ]; then
-    fail "$ep → X-Cache-Status: $STATUS (expected HIT after warmup)"
+  if [ "$STATUS" = "NONE" ] || [ "$STATUS" = "BYPASS" ]; then
+    pass "$ep retains declared dynamic-bypass behavior: $STATUS"
+  elif [ "$STATUS" = "HIT" ] || [ "$STATUS" = "STALE" ]; then
+    fail "$ep → X-Cache-Status: $STATUS (expected uncached dynamic application)"
   else
-    pass "$ep → X-Cache-Status: $STATUS (STALE/UPDATING acceptable)"
+    fail "$ep unexpected cache status: $STATUS"
   fi
 done
 

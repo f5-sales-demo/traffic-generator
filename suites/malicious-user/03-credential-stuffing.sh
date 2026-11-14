@@ -19,7 +19,7 @@ echo "[*] Malicious-user credential stuffing against ${TARGET} as '${USER_ID}'"
 for _n in $(seq 1 "${ITER}"); do
   curl -s -o /dev/null -m 5 "${ID_ARGS[@]}" -X POST \
     -H 'Content-Type: application/json' \
-    -d "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrong-${_n}\"}" \
+    -d "{\"email\":\"admin@example.com\",\"password\":\"wrong-${_n}\"}" \
     "${BASE}/juice-shop/rest/user/login?mud_user=${USER_ID}" ||
     echo "WARN: juice-shop login attempt ${_n} failed to send"
   curl -s -o /dev/null -m 5 "${ID_ARGS[@]}" \

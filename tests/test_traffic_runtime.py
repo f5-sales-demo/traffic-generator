@@ -45,7 +45,7 @@ class RuntimeTests(unittest.TestCase):
             ("slow_connections", 21),
             ("csd_enabled", True),
             ("protections_enabled", False),
-            ("scenario_timeout_seconds", 901),
+            ("scenario_timeout_seconds", 90001),
             ("protocol", "http"),
             ("domains", ["www.example.test"]),
             ("http_rps", 400),
@@ -57,6 +57,31 @@ class RuntimeTests(unittest.TestCase):
                 pytest.raises(ValueError, match=r"budget|bound|domains|HTTPS|domain"),
             ):
                 runtime.validate_config(config)
+
+    def test_nested_deadline_reaps_descendants_without_killing_shared_parent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            pid_file = root / "pid"
+            result = runtime.execute(
+                [
+                    "bash",
+                    "-c",
+                    'sleep 1000 & echo $! > "$1"; wait',
+                    "bash",
+                    str(pid_file),
+                ],
+                root / "nested.log",
+                dict(os.environ, TGEN_NESTED_EXECUTION="1"),
+                0.5,
+            )
+            assert result["outcome"] == "timeout"
+            pid = int(pid_file.read_text())
+            stat = pathlib.Path("/proc", str(pid), "stat")
+            assert (
+                not stat.exists()
+                or stat.read_text().rsplit(")", 1)[1].split()[0] == "Z"
+            )
+            assert os.getpid() > 0
 
     def test_unknown_configuration_keys_fail_before_runtime(self):
         config = self.config()
@@ -240,7 +265,6 @@ class RuntimeTests(unittest.TestCase):
             assert result["completed"] - result["started"] < 2
 
     def test_retention_handles_disappearing_atomic_write_temporary(self):
-
         temporary = Mock()
         temporary.is_file.return_value = True
         temporary.is_symlink.return_value = False

@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
-"""Paced equivalents for TLS, port, and slow-header scenarios on authorized hosts."""
+"""Native bounded socket probes for declared TLS and slow-header behaviors."""
 
-import contextlib
-import json
 import os
 import socket
 import ssl
 import sys
 import time
-from pathlib import Path
 from typing import Any
-
-from traffic_common import Pacer
 
 HTTPS_PORT = 443
 
@@ -75,71 +70,14 @@ def tls_probe(host: str, check: dict) -> dict:
 
 def main() -> int:
     """Run the named connection behavior within independent recorded limits."""
-    identifier, host = sys.argv[1:3]
+    _identifier, host = sys.argv[1:3]
     if host != os.environ.get("TGEN_AUTHORIZED_HOST"):
         msg = "connection target is not authorized"
         raise ValueError(msg)
-    rate = min(20, int(os.environ["TGEN_CONNECTION_RATE"]))
-    pacer = Pacer(rate)
-    results = []
-    slow = "slowloris" in identifier
-    connections = []
-    try:
-        if slow:
-            count = min(20, int(os.environ["TGEN_SLOW_CONNECTIONS"]))
-            for _ in range(count):
-                pacer.acquire()
-                connection = ssl.create_default_context().wrap_socket(
-                    socket.create_connection((host, 443), timeout=5),
-                    server_hostname=host,
-                )
-                connection.sendall(
-                    ("GET / HTTP/1.1\r\nHost: " + host + "\r\n").encode()
-                )
-                connections.append(connection)
-                results.append(
-                    {"port": 443, "connected": True, "tls": connection.version()}
-                )
-            for _ in range(3):
-                time.sleep(5)
-                for connection in connections:
-                    with contextlib.suppress(OSError):
-                        connection.sendall(b"X-Synthetic-Slow: bounded\r\n")
-        else:
-            if "ssl-scanning" not in identifier:
-                pacer.acquire()
-                try:
-                    with socket.create_connection((host, 80), timeout=5):
-                        results.append({"port": 80, "connected": True})
-                except OSError:
-                    results.append(
-                        {"port": 80, "connected": False, "transport_failure": True}
-                    )
-            for check in tls_matrix(identifier):
-                pacer.acquire()
-                results.append(tls_probe(host, check))
-    finally:
-        for connection in connections:
-            connection.close()
-    receipt = {
-        "scenario": identifier,
-        "execution": "bounded connection equivalent",
-        "scope": "authorized application ports 80 and 443",
-        "attempts": len(results),
-        "attempt_limit_per_second": rate,
-        "maximum_slow_connections": len(connections),
-        "results": results,
-    }
-    path = Path(os.environ["TGEN_RESULTS_DIR"]) / "connections.json"
-    path.write_text(json.dumps(receipt) + "\n")
-    path.chmod(0o600)
-    print(json.dumps(receipt))
-    return (
-        0
-        if any(r.get("connected") for r in results)
-        and not any(r.get("transport_failure") for r in results)
-        else 1
+    message = (
+        "generic socket substitution retired; invoke the declared native tool adapter"
     )
+    raise ValueError(message)
 
 
 if __name__ == "__main__":

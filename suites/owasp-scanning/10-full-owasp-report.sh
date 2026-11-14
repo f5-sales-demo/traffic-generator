@@ -45,7 +45,7 @@ if [[ -n "${TGEN_RESULTS_DIR:-}" ]]; then
   ARJUN_DIR="$PASS_DIR/owasp-scanning--09-arjun-param-discovery"
   for scenario in 01-zap-baseline 02-zap-active-scan 06-sqlmap-comprehensive 08-dalfox-xss-scan 09-arjun-param-discovery; do
     [[ -f "$PASS_DIR/owasp-scanning--$scenario/receipt.json" ]] || {
-      echo "SKIP: missing prerequisite scanner receipt: $scenario"
+      echo "[FAIL] Missing prerequisite scanner receipt: $scenario" >&2
       exit 1
     }
   done

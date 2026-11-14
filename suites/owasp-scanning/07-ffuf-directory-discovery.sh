@@ -88,20 +88,14 @@ fi
 echo "[*] Phase 2: Juice Shop Directory Scan"
 echo "========================================"
 
-if [[ -f "${SECLISTS}/Discovery/Web-Content/raft-medium-directories.txt" ]]; then
-  run_ffuf "Juice Shop — Raft medium directories" \
-    -u "${BASE}/juice-shop/FUZZ" \
-    -w "${SECLISTS}/Discovery/Web-Content/raft-medium-directories.txt" \
-    -mc 200,301,302 -t 50 -timeout 10 -ac
-else
-  echo "[!] raft-medium-directories.txt not found, using common.txt fallback"
-  COMMON_WL="${SECLISTS}/Discovery/Web-Content/common.txt"
-  if [[ -f "${COMMON_WL}" ]]; then
-    run_ffuf "Juice Shop — Common directories" \
-      -u "${BASE}/juice-shop/FUZZ" -w "${COMMON_WL}" ${FFUF_COMMON}
-  fi
-fi
-
+[[ -f "${SECLISTS}/Discovery/Web-Content/raft-medium-directories.txt" ]] || {
+  echo "[FAIL] Required native scanner wordlist missing" >&2
+  exit 1
+}
+run_ffuf "Juice Shop — Raft medium directories" \
+  -u "${BASE}/juice-shop/FUZZ" \
+  -w "${SECLISTS}/Discovery/Web-Content/raft-medium-directories.txt" \
+  -mc 200,301,302 -t 50 -timeout 10 -ac
 ########################################################################
 # Phase 3: DVWA directory scan
 ########################################################################
