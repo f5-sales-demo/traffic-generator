@@ -15,9 +15,9 @@ self-hosted-runner:
     - cdn
     - cdn-simulator
     - certificate-management
+    - client-side-defense
     - console
     - container-build
-    - csd
     - custom-responses
     - ddos
     - demo-resource-template

@@ -183,7 +183,8 @@
     "CODE_OF_CONDUCT.md",
     "SECURITY.md",
     "SUPPORT.md",
-    ".github/CODEOWNERS"
+    ".github/CODEOWNERS",
+    "scripts/audit_repository_rename.py"
   ],
   "repo_classes": {
     "_default": "developer",
@@ -215,7 +216,7 @@
       "cdn": "content",
       "cdn-simulator": "content",
       "console": "developer",
-      "csd": "content",
+      "client-side-defense": "content",
       "ddos": "content",
       "demo-resource-template": "scaffolding",
       "demo-resources": "content",

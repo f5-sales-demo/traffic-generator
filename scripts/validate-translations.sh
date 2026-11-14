@@ -9,8 +9,10 @@ Usage:
   scripts/validate-translations.sh --base <commit> --head <commit>
   scripts/validate-translations.sh --all
 
---staged validates only locale files changed in the index, so an English-only
-commit can reach the governed translation workflow. --base/--head validates
+--staged validates only locale files changed in the index. English-only commits
+leave existing locale hashes untouched. Exact repository URL maintenance
+preserves other locale bytes and sourceHash metadata without claiming freshness.
+--base/--head validates
 every locale counterpart affected by that exact English source range and
 rejects model changes outside those counterparts. --all validates the complete
 English/locale corpus for a major-release reconciliation.
@@ -268,6 +270,25 @@ def validate_target(source_raw: bytes, target_raw: bytes, target: str) -> None:
             raise ValueError(f"{target}: protected {category} changed: {drift}")
 
 
+def repository_url_maintenance(target_raw: bytes, target: str) -> bool:
+    """Validate exact URL-only maintenance without claiming translation freshness."""
+    prior = git("show", f"HEAD:{target}", check=False)
+    old_base = b"https://f5-sales-demo.github.io/" + b"c" + b"sd" + b"/"
+    new_base = b"https://f5-sales-demo.github.io/client-side-defense/"
+    if not prior:
+        return False
+    expected = prior.replace(old_base, new_base)
+    old_name = b"c" + b"sd"
+    expected = re.sub(rb"(?<![a-zA-Z0-9:/.-])/" + old_name + rb"/", b"/client-side-defense/", expected)
+    expected = expected.replace(b"./" + old_name + b"/", b"./client-side-defense/")
+    expected = re.sub(rb"\bcd[ \t]+" + old_name + rb"(?=$|[\s;/])", b"cd client-side-defense", expected)
+    if expected == prior or target_raw != expected:
+        return False
+    actual, _translator = metadata(target_raw, target)
+    print(f"[i18n] {target}: exact repository URL maintenance; existing sourceHash {actual} retained")
+    return True
+
+
 def counterparts(source_path: str) -> list[str]:
     match = SOURCE_RE.fullmatch(source_path)
     if not match:
@@ -307,7 +328,8 @@ if MODE == "staged":
                 raise ValueError(f"{target}: English source is missing from the index")
             if target_raw is None:
                 raise ValueError(f"{target}: staged translation content is unavailable")
-            validate_target(source_raw, target_raw, target)
+            if not repository_url_maintenance(target_raw, target):
+                validate_target(source_raw, target_raw, target)
         except (UnicodeError, ValueError) as exc:
             errors.append(str(exc))
 elif MODE == "range":

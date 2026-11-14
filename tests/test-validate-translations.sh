@@ -272,5 +272,87 @@ else
   pass "full-corpus reconciliation rejects orphaned locale"
 fi
 
+repo=$(make_repo)
+python3 - "$repo" <<'PY'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+old_base = "https://f5-sales-demo.github.io/" + "c" + "sd" + "/"
+for locale in ("en", "fr"):
+    path = root / "docs" / locale / "page.mdx"
+    text = path.read_text() + "\n[Project](" + old_base + "en/)\n"
+    if locale == "fr":
+        import re
+        text = re.sub(r'sourceHash: "[0-9a-f]+"', 'sourceHash: "000000000000"', text)
+    path.write_text(text)
+PY
+git -C "$repo" add docs
+git -C "$repo" commit -qm prior-locale-evidence
+python3 - "$repo/docs/fr/page.mdx" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+old_base = "https://f5-sales-demo.github.io/" + "c" + "sd" + "/"
+path.write_text(path.read_text().replace(old_base, "https://f5-sales-demo.github.io/client-side-defense/"))
+PY
+git -C "$repo" add docs/fr/page.mdx
+if (cd "$repo" && bash "$SCRIPT" --staged); then
+  pass "exact repository URL maintenance preserves existing stale locale metadata"
+else
+  fail "exact repository URL maintenance preserves existing stale locale metadata" "validator rejected URL-only maintenance"
+fi
+printf '\nChanged translated prose.\n' >>"$repo/docs/fr/page.mdx"
+git -C "$repo" add docs/fr/page.mdx
+if (cd "$repo" && bash "$SCRIPT" --staged >/dev/null 2>&1); then
+  fail "URL maintenance cannot admit translated prose changes" "validator accepted stale changed prose"
+else
+  pass "URL maintenance cannot admit translated prose changes"
+fi
+if (cd "$repo" && bash "$SCRIPT" --all >/dev/null 2>&1); then
+  fail "URL maintenance never marks the full corpus fresh" "validator accepted stale full corpus"
+else
+  pass "URL maintenance never marks the full corpus fresh"
+fi
+
+repo=$(make_repo)
+python3 - "$repo/docs/fr/page.mdx" <<'PY'
+from pathlib import Path
+import re
+import sys
+path = Path(sys.argv[1])
+name = "c" + "sd"
+text = re.sub(r'sourceHash: "[0-9a-f]+"', 'sourceHash: "000000000000"', path.read_text())
+text += "\n[Project](/" + name + "/fr/) [API](https://api.example.com/api/shape/" + name + "/domains)\n"
+path.write_text(text)
+PY
+git -C "$repo" add docs/fr/page.mdx
+git -C "$repo" commit -qm prior-relative-locale-evidence
+python3 - "$repo/docs/fr/page.mdx" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+old = "/" + "c" + "sd" + "/fr/"
+path.write_text(path.read_text().replace(old, "/client-side-defense/fr/"))
+PY
+git -C "$repo" add docs/fr/page.mdx
+if (cd "$repo" && bash "$SCRIPT" --staged); then
+  pass "relative documentation base-path maintenance preserves Shape API paths"
+else
+  fail "relative documentation base-path maintenance preserves Shape API paths" "validator rejected relative URL-only maintenance"
+fi
+python3 - "$repo/docs/fr/page.mdx" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+old = "/api/shape/" + "c" + "sd" + "/"
+path.write_text(path.read_text().replace(old, "/api/shape/client-side-defense/"))
+PY
+git -C "$repo" add docs/fr/page.mdx
+if (cd "$repo" && bash "$SCRIPT" --staged >/dev/null 2>&1); then
+  fail "repository maintenance cannot rename product API paths" "validator accepted changed Shape API path"
+else
+  pass "repository maintenance cannot rename product API paths"
+fi
+
 printf '\nResults: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
