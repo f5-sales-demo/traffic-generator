@@ -134,6 +134,16 @@
       "memory_limit_bytes": 4294967296,
       "docker_socket": false,
       "repositories": ["f5-sales-demo/gitops"]
+    },
+    "terraform-provider-xcsh-toolchain-canary": {
+      "label": "terraform-provider-xcsh-toolchain-canary",
+      "runner_profile": "compute",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:fde65009b9224b7ee9bd6d38e53641c6c5ea3c75d32e094cfca7ff074c189786",
+      "vm_size": "m6a.4xlarge",
+      "cpu_limit": 15,
+      "memory_limit_bytes": 60129542144,
+      "docker_socket": false,
+      "repositories": ["f5-sales-demo/terraform-provider-xcsh"]
     }
   },
   "restricted_routes": {
@@ -250,6 +260,63 @@
         "repository": "f5-sales-demo/gitops",
         "workflow": ".github/workflows/terraform-cleanup.yml",
         "job": "cleanup"
+      }
+    ],
+    "terraform-provider-xcsh-toolchain-canary": [
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/_build-test.yml",
+        "job": "build"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/_build-test.yml",
+        "job": "vet"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/_build-test.yml",
+        "job": "race"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/_build-test.yml",
+        "job": "lint"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/_generate-docs.yml",
+        "job": "generate"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/_generate-provider.yml",
+        "job": "generate"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/_tag-release.yml",
+        "job": "preflight"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/_tag-release.yml",
+        "job": "publish"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/ci.yml",
+        "job": "validate-docs-generation"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/ci.yml",
+        "job": "validate-mock-fixtures"
+      },
+      {
+        "repository": "f5-sales-demo/terraform-provider-xcsh",
+        "workflow": ".github/workflows/on-merge.yml",
+        "job": "publish-regeneration"
       }
     ]
   },
@@ -435,11 +502,11 @@
           "reason": "Homebrew cask release verification requires Apple silicon and Intel macOS"
         },
         "create-release": {
-          "runs_on": "macos-14",
+          "runs_on": "macos-26",
           "reason": "immutable release assembly verifies signed Apple assets on native macOS"
         },
         "update-homebrew": {
-          "runs_on": "macos-14",
+          "runs_on": "macos-26",
           "reason": "Homebrew cask publication verifies signed Apple release assets on macOS"
         },
         "verify-macos-pkg": {
@@ -516,6 +583,10 @@
         }
       },
       ".github/workflows/container.yml": {
+        "container-build-arm64": {
+          "runs_on": "ubuntu-24.04-arm",
+          "reason": "native ARM64 container build requires the qualified hosted ARM64 Docker environment"
+        },
         "publish-ghcr-arm64": {
           "runs_on": "ubuntu-24.04-arm",
           "reason": "native ARM64 container publication requires a hosted ARM64 Docker environment"
@@ -529,7 +600,7 @@
       },
       ".github/workflows/release-github-backfill.yml": {
         "backfill": {
-          "runs_on": "macos-14",
+          "runs_on": "macos-latest",
           "reason": "immutable GitHub release recovery verifies signed Apple assets on native macOS"
         }
       },
@@ -1544,6 +1615,10 @@
           "compute-32-vcpu-density-candidate": {
             "label": "terraform-provider-xcsh-32vcpu-candidate",
             "attestation": "terraform-provider-xcsh-32vcpu-candidate"
+          },
+          "compute-toolchain-canary": {
+            "label": "terraform-provider-xcsh-toolchain-canary",
+            "attestation": "terraform-provider-xcsh-toolchain-canary"
           }
         }
       },
