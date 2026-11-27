@@ -49,6 +49,139 @@ assert len(findings) == 1 and next(iter(findings)).category == "email", findings
 print("[OK] fixed supported-namespace prose preserves literal-identity enforcement")
 PYTEST
 
+python3 - "$PYTHON_SCANNER" <<'PROVIDERTEST'
+import importlib.util
+import json
+import sys
+
+spec = importlib.util.spec_from_file_location("scanner_provider_regression", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+provider = {
+    "name": "google",
+    "full_name": "registry.terraform.io/hashicorp/google",
+    "version_constraint": "8.12.0",
+}
+cases = [
+    ("saved provider JSON", "fixture.json", json.dumps(provider), 0),
+    ("saved multiline JSON", "fixture.json", json.dumps(provider, indent=2), 0),
+    (
+        "literal TypeScript provider",
+        "fixture.ts",
+        "const provider = { name: 'google', full_name: 'registry.terraform.io/hashicorp/google', version_constraint: '8.12.0' };",
+        0,
+    ),
+    (
+        "multiline TypeScript provider",
+        "fixture.ts",
+        "const provider = {\n  version_constraint: '8.12.0',\n  full_name: 'registry.terraform.io/hashicorp/google',\n  name: 'google',\n};",
+        0,
+    ),
+]
+for label, change in [
+    ("contextless address", {"name": None, "version_constraint": None}),
+    ("missing provider name", {"name": None}),
+    ("mismatched provider name", {"name": "aws"}),
+    ("foreign provider namespace", {"full_name": "registry.terraform.io/foreign/google"}),
+    ("missing provider constraint", {"version_constraint": None}),
+    ("unrecognized provider constraint", {"version_constraint": "not-a-version"}),
+    ("literal personal name", {"full_name": "Literal Person"}),
+    ("unknown provider metadata", {"owner": "example-org"}),
+]:
+    changed = {**provider, **change}
+    changed = {key: value for key, value in changed.items() if value is not None}
+    cases.append((label, "fixture.json", json.dumps(changed), 1))
+cases.extend([
+    ("duplicate literal key", "fixture.ts", "const p = { name: 'google', name: 'aws', full_name: 'registry.terraform.io/hashicorp/google', version_constraint: '8.12.0' };", 1),
+    ("unresolved literal name", "fixture.ts", "const p = { name: selected, full_name: 'registry.terraform.io/hashicorp/google', version_constraint: '8.12.0' };", 1),
+    ("unclosed provider object", "fixture.ts", "const p = { name: 'google', full_name: 'registry.terraform.io/hashicorp/google', version_constraint: '8.12.0';", 1),
+    ("metadata in a sibling object", "fixture.json", json.dumps({"name": "google", "version_constraint": "8.12.0", "owner": {"full_name": provider["full_name"]}}), 1),
+    ("nested personal field", "fixture.json", json.dumps({"provider": provider, "owner": {"full_name": "Literal Person"}}), 1),
+    ("escaped unresolved literal", "fixture.ts", "const p = { name: 'google', full_name: 'registry.terraform.io/hashicorp/google', version_constraint: selected.version };", 1),
+])
+failures = []
+for label, path, text, expected in cases:
+    findings = set()
+    module.scan_text(path, text, findings)
+    names = [finding for finding in findings if finding.category == "person-name"]
+    passed = len(names) == expected
+    print(f"[{'OK' if passed else 'FAIL'}] provider identity: {label}")
+    if not passed:
+        failures.append(label)
+assert not failures, failures
+print(f"[OK] {len(cases)} provider identity and personal-name cases")
+PROVIDERTEST
+
+python3 - "$PYTHON_SCANNER" <<'ARCTEST'
+import importlib.util
+import sys
+
+spec = importlib.util.spec_from_file_location("scanner_arc_regression", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+
+controller = "controllerServiceAccount:\n  name: arc-gha-rs-controller\n  namespace: arc-systems\n"
+cases = [
+    ("native controller binding", "fixture.yaml", controller, 0),
+    ("GitOps controller binding", "fixture.yml", "githubConfigSecret: example-secret\n" + controller, 0),
+    ("quoted controller scalars", "fixture.yaml", 'controllerServiceAccount:\n  name: "arc-gha-rs-controller"\n  namespace: \'arc-systems\' # controller\n', 0),
+    ("reversed controller fields", "fixture.yaml", "controllerServiceAccount:\n  namespace: arc-systems\n  name: arc-gha-rs-controller\n", 0),
+    ("ordinary namespace", "fixture.yaml", "namespace: arc-systems\n", 1),
+    ("tenant field", "fixture.yaml", "tenant: arc-systems\n", 1),
+    ("customer field", "fixture.yaml", "customer: arc-systems\n", 1),
+    ("foreign controller name", "fixture.yaml", controller.replace("arc-gha-rs-controller", "private-controller"), 1),
+    ("foreign controller namespace", "fixture.yaml", controller.replace("arc-systems", "private-namespace"), 1),
+    ("missing controller name", "fixture.yaml", controller.replace("  name: arc-gha-rs-controller\n", ""), 1),
+    ("duplicate controller name", "fixture.yaml", controller + "  name: private-controller\n", 1),
+    ("duplicate controller namespace", "fixture.yaml", controller + "  namespace: private-namespace\n", 2),
+    ("duplicate controller mapping", "fixture.yaml", controller + "controllerServiceAccount: {}\n", 1),
+    ("quoted duplicate controller mapping", "fixture.yaml", controller + '"controllerServiceAccount": {}\n', 1),
+    ("unknown controller metadata", "fixture.yaml", controller + "  owner: example-owner\n", 1),
+    ("nested namespace", "fixture.yaml", controller.replace("  namespace:", "  nested:\n    namespace:"), 1),
+    ("misindented controller name", "fixture.yaml", controller.replace("  name:", "    name:"), 1),
+    ("nested customer mapping", "fixture.yaml", "customer:\n" + "\n".join("  " + line for line in controller.splitlines()), 1),
+    ("namespace suffix", "fixture.yaml", controller.replace("arc-systems", "arc-systems-private"), 1),
+    ("anchored controller value", "fixture.yaml", controller.replace("namespace: arc-systems", "namespace: &controller arc-systems"), 1),
+    ("controller context in prose", "fixture.md", controller, 1),
+    ("separate customer value", "fixture.yaml", controller + "tenant: private-customer\n", 1),
+    ("separate ordinary namespace", "fixture.yaml", controller + "metadata:\n  namespace: arc-systems\n", 1),
+    ("separate email", "fixture.yaml", controller + "email: person@company.invalid\n", 1),
+    ("runtime namespace read", "fixture.sh", 'namespace=$(jq -er .namespace <<<"$spec")', 0),
+    ("quoted runtime filter", "fixture.sh", 'namespace=$(jq -r \' .namespace \' <<<"${spec}")', 0),
+    ("separate jq flags", "fixture.sh", '  namespace=$(jq -e -r .namespace <<<"$spec")', 0),
+    ("exported runtime read", "fixture.sh", 'export namespace=$(jq -re .namespace <<<"$spec")', 0),
+    ("dynamic tenant read", "fixture.sh", 'tenant=$(jq -er .tenant <<<"$context")', 0),
+    ("literal jq default", "fixture.sh", 'namespace=$(jq -er \'.namespace // "private-customer"\' <<<"$spec")', 1),
+    ("literal jq input", "fixture.sh", 'namespace=$(jq -er .namespace <<<\'{"namespace":"private-customer"}\')', 1),
+    ("literal jq output", "fixture.sh", 'namespace=$(jq -er \'"private-customer"\' <<<"$spec")', 1),
+    ("runtime filter mismatch", "fixture.sh", 'namespace=$(jq -er .tenant <<<"$spec")', 1),
+    ("runtime read composed with literal", "fixture.sh", 'namespace=$(jq -er .namespace <<<"$spec")-private-customer', 1),
+    ("literal assignment", "fixture.sh", "namespace=private-customer", 1),
+    ("unrelated command", "fixture.sh", "namespace=$(printf private-customer)", 1),
+    ("runtime read with adjacent literal", "fixture.sh", 'namespace=$(jq -er .namespace <<<"$spec"); tenant=private-customer', 1),
+    ("runtime expression in YAML", "fixture.yaml", 'namespace: $(jq -er .namespace <<<"$spec")', 1),
+    ("adjacent shell hash is literal output", "fixture.sh", 'namespace=$(jq -er .namespace <<<"$spec")#private-customer', 1),
+    ("separated shell comment", "fixture.sh", 'namespace=$(jq -er .namespace <<<"$spec") # generated value', 0),
+    ("literal suffix inside runtime input", "fixture.sh", 'namespace=$(jq -er .namespace <<<"${spec}-private-customer")', 1),
+    ("literal pipeline input", "fixture.sh", 'namespace=$(printf private-customer | jq -er .namespace)', 1),
+    ("controller alias mapping", "fixture.yaml", 'controllerServiceAccount: &controller\n  name: arc-gha-rs-controller\n  namespace: arc-systems\n', 1),
+    ("malformed controller scalar", "fixture.yaml", controller.replace("name: arc-gha-rs-controller", 'name: "arc-gha-rs-controller'), 1),
+
+]
+failures = []
+for label, path, text, expected in cases:
+    findings = set()
+    module.scan_text(path, text, findings)
+    passed = len(findings) == expected
+    print(f"[{'OK' if passed else 'FAIL'}] ARC classification: {label} ({len(findings)}/{expected})")
+    if not passed:
+        failures.append(label)
+assert not failures, failures
+print(f"[OK] {len(cases)} ARC infrastructure and dynamic-read privacy cases")
+ARCTEST
+
 FAIL=0
 WORK=$(mktemp -d)
 cleanup() { rm -rf "$WORK"; }
@@ -127,7 +260,8 @@ assert_customer_identifier() {
     FAIL=1
     return
   fi
-  if python3 - "${WORK}/stdout" <<'PY'; then
+  if {
+    python3 - "${WORK}/stdout" <<'PY'
 import json
 import sys
 
@@ -135,6 +269,7 @@ findings = json.load(open(sys.argv[1], encoding="utf-8"))["findings"]
 if len(findings) != 1 or findings[0]["category"] != "customer-identifier":
     raise SystemExit(1)
 PY
+  }; then
     echo "[OK] $label -> one customer-identifier finding"
   else
     echo "[FAIL] $label — expected exactly one customer-identifier finding"
@@ -154,7 +289,8 @@ assert_single_finding() {
     FAIL=1
     return
   fi
-  if python3 - "${WORK}/stdout" "$category" "$severity" <<'PY'; then
+  if {
+    python3 - "${WORK}/stdout" "$category" "$severity" <<'PY'
 import json
 import sys
 
@@ -164,6 +300,7 @@ actual = [(finding["category"], finding["severity"]) for finding in findings]
 if actual != [expected]:
     raise SystemExit(1)
 PY
+  }; then
     echo "[OK] $label -> one $severity $category finding"
   else
     echo "[FAIL] $label — expected exactly one $severity $category finding"
@@ -368,13 +505,15 @@ EOF
 git -C "$repo" add -A
 git -C "$repo" commit -qm source-field-display-label-boundary
 assert_violation "display labels remain enforced outside structural aliases" "$repo" --scope head --mode enforce
-if ! python3 - "${WORK}/stdout" <<'PYTEST'; then
+if ! {
+  python3 - "${WORK}/stdout" <<'PYTEST'
 import sys
 from pathlib import Path
 output = Path(sys.argv[1]).read_text()
 assert all(f"fixture.ts:{line}" in output for line in range(1, 5)), output
 assert "data.json:1" in output, output
 PYTEST
+}; then
   echo "[FAIL] non-structural display labels remain enforced"
   FAIL=1
 fi
@@ -393,13 +532,15 @@ EOF
 git -C "$repo" add -A
 git -C "$repo" commit -qm source-field-alias-boundary
 assert_violation "comments, serialized records and identity fixtures remain enforced" "$repo" --scope head --mode enforce
-if ! python3 - "${WORK}/stdout" <<'PYTEST'; then
+if ! {
+  python3 - "${WORK}/stdout" <<'PYTEST'
 import sys
 from pathlib import Path
 output = Path(sys.argv[1]).read_text()
 assert all(f"fixture.ts:{line}" in output for line in range(1, 6)), output
 assert "generated.json:1" in output, output
 PYTEST
+}; then
   echo "[FAIL] each non-structural field remains enforced"
   FAIL=1
 fi

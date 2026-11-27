@@ -17,18 +17,18 @@ regexes = [
   '''00000000-0000-4000-8000-[0-9a-f]{12}''',
 ]
 
-# Keep Sourcegraph's detector active; scope its exact public revision metadata exception to this rule.
+# Prefixed tokens identify themselves; public commit hashes are not credentials.
 [[rules]]
 id = "sourcegraph-access-token"
-description = "Sourcegraph is a code search and navigation engine."
-regex = '''(?i)\b(\b(sgp_(?:[a-fA-F0-9]{16}|local)_[a-fA-F0-9]{40}|sgp_[a-fA-F0-9]{40}|[a-fA-F0-9]{40})\b)(?:[\x60'"\s;]|\\[nr]|$)'''
+description = "Sourcegraph access tokens with an identifying prefix"
+regex = '''(?i)\b(sgp_(?:[a-f0-9]{16}|local)_[a-f0-9]{40}|sgp_[a-f0-9]{40})\b(?:[\x60'"\s;]|\\[nr]|$)'''
 entropy = 3
-keywords = ["sgp_", "sourcegraph"]
+keywords = ["sgp_"]
 
-[rules.allowlist]
-description = "Verified exact API schema and CE archive revision metadata"
-regexTarget = "line"
-regexes = [
-  '''^\s*(?:(?:const|let|var)\s+)?commit\s*=\s*['"]e04c5d45f7a4e103e2dc84bf52b767182b4de3bc['"],?\s*$''',
-  '''^\s*"sourceCommit"\s*:\s*"c25d01b0ae4bb828e2afec9152e579ea6178e397",?\s*$''',
-]
+# Legacy bare tokens require a credential context, not a file-wide keyword.
+[[rules]]
+id = "sourcegraph-legacy-access-token"
+description = "Legacy Sourcegraph tokens in credential assignments, flags or headers"
+regex = '''(?i)(?:\b(?:sourcegraph(?:[_-]?(?:api|access))?[_-]?(?:token|secret|key)?|(?:api|access)[_-]?token|token|secret|authorization)[\x60'"\s]*[:=][\x60'"\s]*|--(?:sourcegraph-)?token(?:=|\s+)[\x60'"]*|\b(?:bearer|token)\s+[\x60'"]*)([a-f0-9]{40})\b(?:[\x60'"\s;]|\\[nr]|$)'''
+entropy = 3
+keywords = ["sourcegraph", "token", "secret", "authorization", "bearer"]
