@@ -108,7 +108,7 @@
     "xcsh-compute-16-vcpu-candidate": {
       "label": "xcsh-compute-16-vcpu-candidate",
       "runner_profile": "compute-16-vcpu-candidate",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:26b5415d6d62ce46d7f22c146954f3eabe0fcf228bc78791ce51fd77dc6a1bc3",
       "vm_size": "Standard_D16ads_v5",
       "cpu_limit": 15,
       "memory_limit_bytes": 60129542144,
@@ -118,7 +118,7 @@
     "xcsh-compute-f32-candidate": {
       "label": "xcsh-compute-f32-candidate",
       "runner_profile": "compute-f32-candidate",
-      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:6b0b70dcb48235aea026041b73b031477eddee9bc3ffe1ddd511a34078fd6100",
+      "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:26b5415d6d62ce46d7f22c146954f3eabe0fcf228bc78791ce51fd77dc6a1bc3",
       "vm_size": "Standard_F32s_v2",
       "cpu_limit": 15,
       "memory_limit_bytes": 32212254720,
@@ -502,11 +502,11 @@
           "reason": "Homebrew cask release verification requires Apple silicon and Intel macOS"
         },
         "create-release": {
-          "runs_on": "macos-26",
+          "runs_on": "macos-15",
           "reason": "immutable release assembly verifies signed Apple assets on native macOS"
         },
         "update-homebrew": {
-          "runs_on": "macos-26",
+          "runs_on": "macos-15",
           "reason": "Homebrew cask publication verifies signed Apple release assets on macOS"
         },
         "verify-macos-pkg": {
@@ -1548,15 +1548,18 @@
         "arc_scale_sets": {
           "socketless": {
             "label": "xcsh-socketless",
-            "profile": "ubuntu-24.04"
+            "profile": "ubuntu-24.04",
+            "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:26b5415d6d62ce46d7f22c146954f3eabe0fcf228bc78791ce51fd77dc6a1bc3"
           },
           "container-build": {
             "label": "xcsh-container-build",
-            "profile": "container-build"
+            "profile": "container-build",
+            "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:2ad97a7dfa9e240e81b4771af9b9a47c1c48d89f5cd3d8449cdd46fccb879cc0"
           },
           "compute": {
             "label": "xcsh-compute",
-            "profile": "ubuntu-24.04"
+            "profile": "ubuntu-24.04",
+            "image": "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:26b5415d6d62ce46d7f22c146954f3eabe0fcf228bc78791ce51fd77dc6a1bc3"
           },
           "compute-16-vcpu-candidate": {
             "label": "xcsh-compute-16-vcpu-candidate",
