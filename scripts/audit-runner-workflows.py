@@ -431,7 +431,22 @@ def arc_scale_sets_match_contract(repository, scale_sets):
     if expected is None:
         return False
     if repository == XCSH_REPOSITORY:
-        return scale_sets == {**expected, **XCSH_CANDIDATE_SCALE_SETS}
+        qualified = {
+            name: {
+                **route,
+                "image": (
+                    "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:2ad97a7dfa9e240e81b4771af9b9a47c1c48d89f5cd3d8449cdd46fccb879cc0"
+                    if name == "container-build"
+                    else "ghcr.io/f5-sales-demo/self-hosted-runner@sha256:26b5415d6d62ce46d7f22c146954f3eabe0fcf228bc78791ce51fd77dc6a1bc3"
+                ),
+            }
+            for name, route in expected.items()
+        }
+        return scale_sets in (
+            {**expected, **XCSH_CANDIDATE_SCALE_SETS},
+            qualified,
+            {**qualified, **XCSH_CANDIDATE_SCALE_SETS},
+        )
     if repository == PROVIDER_REPOSITORY:
         return any(
             scale_sets == contract
@@ -696,9 +711,12 @@ def repository_routes(policy, repository):
                 raise AuditError("repository ARC scale sets must use safe route names")
             if not isinstance(spec, dict) or set(spec) not in (
                 {"label", "profile"},
+                {"label", "profile", "image"},
                 {"label", "attestation"},
             ):
                 raise AuditError("ARC scale set must name one profile or attestation")
+            if "image" in spec and repository != XCSH_REPOSITORY:
+                raise AuditError("repository-scoped image pins are restricted to xcsh")
             label = spec.get("label")
             profile = spec.get("profile")
             if not isinstance(label, str) or not re.fullmatch(
